@@ -1,0 +1,621 @@
+================================================================================
+  KESTREL UNIFIED PLAN — UltimateTrader EA Fixes & Improvements
+  Merged from CD, GP, GM analyses + independent code/data audit
+  Date: 2026-03-23
+================================================================================
+
+METHODOLOGY
+-----------
+Three independent analyses (CD, GP, GM) were evaluated against the actual
+codebase (~80 files, ~15k lines) and the 168-trade backtest (Mar 2025 - Mar
+2026). Each analyst brought different strengths:
+
+  CD — Deep code + data forensics. Quantified every bug's R-impact using
+       the trade CSV. Identified early invalidation as the #1 P&L destroyer.
+       Strongest on: backtest statistics, per-session/day/hour breakdowns,
+       MFE analysis, trailing system diagnosis.
+
+  GP — Deepest code-level tracing. Found call-site gaps (auto-kill wiring,
+       strategy recording), metadata fabrication in risk sizing, vol
+       adjustment applied after lot calculation without recalculation.
+       Strongest on: execution flow tracing, dead code identification,
+       telemetry integrity, disciplined fix sequencing.
+
+  GM — MQL5 platform expertise. Identified struct padding/CRC brittleness,
+       ArrayResize performance, data sync risks. Proposed "Shadow Trail"
+       concept. Strongest on: platform-specific risks, production
+       robustness, conceptual strategy improvements.
+
+EVALUATION OF EACH ANALYST
+--------------------------
+
+CD ACCURACY RATING: 9/10
+  Correct findings:
+    - Early invalidation destroying -26.90R (verified against CSV)
+    - All 6 trailing plugins running simultaneously (verified in code)
+    - Zero short trades / 100% long bias (verified in CSV + log)
+    - London session net loser at -1.60R (verified)
+    - Double volatility adjustment (verified in CTradeOrchestrator:259)
+    - TP1/TP2 partials not implemented (verified)
+    - First-signal-wins priority (verified in CSignalOrchestrator:356)
+    - Auto-kill not functioning (verified: log says "No strategy data")
+    - B/B+ setups net losers (verified: -2.84R combined)
+    - Friday net loser (verified: -1.35R)
+    - MFE left on table: 124.95R (verified against CSV MFE column)
+    - CSMCOrderBlocks zone expiration broken (verified: current_bar=0)
+    - Session engine timezone bugs (verified)
+    - Squeeze counter per-tick overcounting (verified)
+  Minor issues:
+    - Inconsistent VOL_HIGH multiplier (0.85 in one place, 0.70 in another)
+    - R-impact estimates are additive without interaction effects
+    - "Bear regime never activated" stated but not deeply investigated
+
+GP ACCURACY RATING: 9.5/10
+  Correct findings (all verified):
+    - RecordPluginTradeResult() has zero call sites (auto-kill is dead)
+    - RecordStrategyTrade() has zero call sites (strategy CSV is blank)
+    - DAY_DATA is never emitted by CDayTypeRouter (dead code branch)
+    - Risk interface fabricates SETUP_B_PLUS and PATTERN_NONE at
+      CQualityTierRiskStrategy:412 instead of using signal metadata
+    - Vol adjustment after lot sizing without recalculation at
+      CTradeOrchestrator:256 (different bug from double-application)
+    - Engine confluence is uninitialized in session engine (CSV = 0 or -10)
+    - 4 exits at exactly OriginalTP1 but labeled TRAILING not TP_HIT
+    - Orchestrator overwrites engine quality scores via text evaluator
+    - All 168 trades had ConfirmationUsed=YES (including time-sensitive
+      session and expansion signals that should skip confirmation)
+    - Summary printed twice at deinit (minor but verified)
+    - "loss avoided" sign error at CPositionCoordinator:1093
+  Unique strength: GP's checkpoint-gated fix sequence (fix telemetry first,
+    then exits, then entries) is the most disciplined approach.
+  Minor issues:
+    - "156/168 from legacy + one liquidity mode" count is slightly imprecise
+    - Does not quantify R-impact per fix (intentionally avoids speculation)
+
+GM ACCURACY RATING: 6.5/10
+  Correct findings:
+    - Hardcoded GMT offset problem (verified)
+    - Tick volume unreliability for SFP mode (valid concern, SFP is disabled)
+    - ArrayResize without reserve parameter (verified in multiple loops)
+    - StructToCharArray CRC brittleness (valid platform concern)
+    - FVG over-triggering / 8-bar cooldown patch (verified: code comment)
+    - Early invalidation too symmetrical for gold (valid conceptual critique)
+    - Asian range recalculation inefficiency (verified: 100 M15 bars/tick)
+    - Multi-timeframe data sync risk (valid production concern)
+  Problems:
+    - ZERO backtest data cited (every number is an input parameter, not a
+      result). Cannot verify any performance claim.
+    - Promotional tone in first half ("institutional-grade", "brilliant
+      inclusion") undermines critical credibility
+    - "RSI Divergence" FVG filter is a conceptual mismatch with SMC methodology
+    - "Shadow Trail" concept is interesting but unimplemented/untested
+    - "800 points = 80 pips" conversion may be wrong depending on broker
+    - No code-level fix specifics (no file:line references for proposed fixes)
+    - Fixes are conceptual descriptions, not implementable patches
+    - Claims like "eliminates one of the highest causes of EA failure"
+      are unsupported assertions
+    - Completely misses: early invalidation -26.90R, double vol adjustment,
+      first-signal-wins priority, TP1/TP2 not implemented, auto-kill dead,
+      trailing plugins all running, B/B+ quality drain, Friday/London losses
+
+CONSENSUS FINDINGS (Issues identified by 2+ analysts)
+------------------------------------------------------
+  1. All trailing plugins run simultaneously          — CD, GP
+  2. TP1/TP2 partial closes not implemented           — CD, GP
+  3. GMT/DST timezone issues in Session Engine         — CD, GP, GM
+  4. Auto-kill system dead (no call sites)            — CD, GP
+  5. Early invalidation destructive                   — CD, GM (different angles)
+  6. FVG mode issues (proxy/overtriggering)           — CD, GM
+  7. Session Engine modes underperforming             — CD, GP
+  8. Dead/unwired inputs                              — CD, GP, GM
+  9. Vol adjustment bug (double-apply or post-sizing) — CD, GP
+  10. ScoreLiquidityLevel direction bug                — CD, GP
+
+UNIQUE FINDINGS (One analyst only)
+----------------------------------
+  CD only:  MFE left on table (124.95R), session/day/hour performance
+            breakdowns, B/B+ quality drain (-2.84R), Friday losses (-1.35R),
+            TP0 = 64.8% of dollar profit, Monday = best day (+14.03R)
+  GP only:  RecordStrategyTrade() has no call sites, risk interface
+            fabricates metadata, orchestrator overwrites engine scores,
+            4 exits at TP1 mislabeled as TRAILING, DAY_DATA never emitted,
+            loss-avoided sign error, confirmation forced on all 168 trades
+  GM only:  Struct padding/CRC brittleness, ArrayResize reserve parameter,
+            Shadow Trail concept, multi-timeframe data sync validation,
+            Asian range recalculation per-tick inefficiency
+
+================================================================================
+  MERGED FIX PLAN — Ordered by Impact x Confidence
+================================================================================
+
+Sequencing follows GP's checkpoint-gated philosophy: fix measurement first,
+then the exit/trailing system (dominant P&L driver), then entry/signal system,
+then input cleanup. Within each phase, items are ordered by expected R-impact.
+
+After each phase: re-backtest to verify improvements.
+
+──────────────────────────────────────────────────────────
+ PHASE 0: TELEMETRY INTEGRITY (prerequisite — no P&L change)
+──────────────────────────────────────────────────────────
+
+Rationale (GP): "You cannot optimize what you cannot measure." Current
+telemetry has multiple integrity issues that make backtest results unreliable
+for decision-making.
+
+0.1  WIRE RecordPluginTradeResult() TO ACTUAL TRADE CLOSES
+     Source: GP (verified: zero call sites)
+     Files: CPositionCoordinator.mqh (HandleClosedPosition),
+            CSignalOrchestrator.mqh (RecordPluginTradeResult)
+     Action: In HandleClosedPosition(), after computing PnL and R-multiple,
+             call g_signalOrchestrator.RecordPluginTradeResult(pattern_name,
+             pnl, r_mult). This enables auto-kill, dynamic weighting, and
+             per-strategy CSV export.
+     Complexity: ~10 lines
+     Impact: Enables auto-kill (currently dead), enables strategy CSV export
+             (currently blank), enables dynamic weighting (currently inert)
+
+0.2  WIRE RecordStrategyTrade() CALL SITE
+     Source: GP (verified: zero call sites)
+     Files: CTradeLogger.mqh (RecordStrategyTrade), CPositionCoordinator.mqh
+     Action: Call RecordStrategyTrade() from HandleClosedPosition() with
+             pattern name, PnL, R-multiple, win/loss flag.
+     Complexity: ~5 lines
+     Impact: Strategy-level CSV will no longer be blank at deinit
+
+0.3  FIX DUPLICATE SESSION SUMMARY AT DEINIT
+     Source: GP, verified: printed once in OnDeinit() and again in
+             CTradeLogger destructor
+     Files: UltimateTrader.mq5 (OnDeinit), CTradeLogger.mqh
+     Action: Remove one of the two summary calls. Keep the OnDeinit() one.
+     Complexity: ~3 lines
+
+0.4  FIX LOSS-AVOIDED SIGN ERROR
+     Source: GP (verified at CPositionCoordinator.mqh:1093)
+     Files: CPositionCoordinator.mqh
+     Action: The loss_avoided_r calculation produces a negative value when
+             it should be positive (trades closed early lose LESS than full
+             SL). Fix the sign so the metric is interpretable.
+     Complexity: ~1 line
+
+0.5  ADD INITIALIZATION + REJECTION LOGGING
+     Source: CD
+     Files: UltimateTrader.mq5 (OnInit), CSignalOrchestrator.mqh
+     Action: Log all critical parameter values at init. Log every signal
+             rejection with reason (spread gate, shock gate, quality, session,
+             position limit, daily limit).
+     Complexity: ~30 lines
+
+0.6  FIX EXIT TYPE CLASSIFICATION (TP_HIT vs TRAILING)
+     Source: GP (4 exits at OriginalTP1 labeled TRAILING)
+     Files: CPositionCoordinator.mqh (HandleClosedPosition)
+     Action: When a position closes within tolerance of its TP1 level,
+             classify as TP_HIT, not TRAILING.
+     Complexity: ~10 lines
+
+── CHECKPOINT: Re-backtest. Verify CSV now exports strategy data. ──
+── Verify auto-kill fires for losing strategies. Verify log has rejections. ──
+
+
+──────────────────────────────────────────────────────────
+ PHASE 1: EXIT/TRAILING SYSTEM (Dominant P&L driver)
+──────────────────────────────────────────────────────────
+
+The backtest proves: 25 TRAILING exits produce +42.68R (the entire alpha).
+Everything else is breakeven or loss. Fixing the exit system has the highest
+R-impact ceiling.
+
+1.1  DISABLE OR FIX EARLY INVALIDATION
+     Source: CD (primary, -26.90R), GM (conceptual critique)
+     Evidence: 39 trades, 2.6% WR, -$1,158.60. The "loss avoided" metric
+               is -26.90R — exits are WORSE than holding to SL.
+     Files: CPositionCoordinator.mqh:1062-1108, UltimateTrader_Inputs.mqh
+     Action (immediate): Set InpEnableEarlyInvalidation = false
+     Action (better): Replace MAE/MFE symmetric check with structural
+       invalidation per GM's suggestion:
+       - Only exit if price CLOSES below the originating order block (for
+         OB Retest / FVG trades) or below the Asian range (for session trades)
+       - Remove the arbitrary 3-bar time window
+       - Keep the MFE_R < 0.05 condition (truly dead trades) but raise
+         MAE_R threshold to 0.80 (almost full-SL)
+     Complexity: 1 input change (immediate) or ~40 lines (structural fix)
+     Expected impact: +15 to +27R (CD estimate, verified against data)
+     Confidence: VERY HIGH — directly measurable from existing backtest
+
+1.2  WIRE InpTrailStrategy TO SELECT A SINGLE TRAILING PLUGIN
+     Source: CD (primary), GP (verified), GM (noted)
+     Evidence: InpTrailStrategy is dead. All 6 run. ATR at 1.35x overrides
+               Chandelier at 3.0x. System captures only 16% of MFE.
+               124.95R left on table across 168 trades.
+     Files: UltimateTrader.mq5:400-425
+     Action: After creating all trailing plugins, disable all except selected:
+       for(int t = 0; t < g_trailingPluginCount; t++)
+       {
+          g_trailingPlugins[t].SetEnabled(false); // disable all
+       }
+       // Enable only the selected one:
+       switch(InpTrailStrategy)
+       {
+          case TRAIL_ATR:        g_atrTrailing.SetEnabled(true); break;
+          case TRAIL_SWING:      g_swingTrailing.SetEnabled(true); break;
+          case TRAIL_PARABOLIC:  g_sarTrailing.SetEnabled(true); break;
+          case TRAIL_CHANDELIER: g_chandelierTrailing.SetEnabled(true); break;
+          case TRAIL_STEPPED:    g_steppedTrailing.SetEnabled(true); break;
+          case TRAIL_HYBRID:     g_hybridTrailing.SetEnabled(true); break;
+          case TRAIL_NONE:       break; // all disabled
+       }
+     Complexity: ~15 lines
+     Expected impact: +15 to +30R (CD estimate). With Chandelier-only, more
+       trades survive initial pullbacks to become runners. 35 BREAKEVEN exits
+       with avg MFE of 0.946R could convert to TRAILING exits.
+     Confidence: HIGH — the trailing exits are the proven alpha source
+
+1.3  IMPLEMENT TP1/TP2 PARTIAL CLOSES IN POSITION COORDINATOR
+     Source: CD (primary), GP (verified)
+     Evidence: TP0 fires on 85 trades (50.6%), provides 64.8% of dollar
+               profit. But broker closes 100% at TP1. TP2 never reached.
+               InpTP1Volume and InpTP2Volume are dead inputs.
+               52 trades (31%) reached 1.0R — potential TP1 zone.
+     Files: CPositionCoordinator.mqh (ManageOpenPositions), Structs.mqh
+     Action: Add TP1 and TP2 partial close logic mirroring the TP0
+       implementation. Use R-multiple triggers:
+       - TP1 at InpTP1Distance (1.3R): close 50% of REMAINING lots
+       - TP2 at InpTP2Distance (1.8R): close 50% of REMAINING lots
+       - Runner: remaining ~18.75% of original, managed by trailing
+       - Remove the broker-level TP. Let trailing manage the final exit.
+       - Fix the 115% specification: use remaining-lots not original-lots
+       State machine transitions:
+         INITIAL → TP0_HIT (at 0.5R) → TP1_HIT (at 1.3R) → TP2_HIT (at
+         1.8R) → TRAILING (managed by selected trailing plugin)
+     Complexity: ~80-100 lines (GP: "position state-machine extension")
+     Expected impact: +5 to +12R. Converts 10-15 breakeven/SL trades into
+       partial-profit + runner trades. The 35 breakeven exits that averaged
+       0.946R MFE would capture partial at TP0 + more at TP1 if reached.
+     Confidence: MEDIUM-HIGH — needs backtest verification
+
+1.4  WIRE DEAD TRAILING/BE INPUTS
+     Source: CD, GP (both verified)
+     Files: CPositionCoordinator.mqh, trailing plugin files
+     Action: Wire InpTrailBETrigger (0.8R) as explicit breakeven trigger
+       threshold. Wire InpTrailBEOffset as the offset above entry for BE.
+       Wire InpBreakevenOffset. These are currently dead.
+     Complexity: ~20 lines
+     Expected impact: Better control over breakeven behavior. Currently BE
+       triggers whenever ANY trailing plugin's SL crosses entry — with a
+       single trailing plugin (fix 1.2), this becomes more predictable.
+
+1.5  FIX HYBRID TRAILING BREAKEVEN CAP
+     Source: CD (verified at CHybridTrailing.mqh:255-256)
+     Files: CHybridTrailing.mqh
+     Action: Remove the cap that prevents SL from moving above entry.
+       The cap at entry - 10 points makes Hybrid the most conservative
+       strategy, defeating its purpose. Allow profit-locking above entry.
+     Complexity: ~5 lines (delete the cap logic)
+
+── CHECKPOINT: Re-backtest with Chandelier-only trailing, disabled early ──
+── invalidation, and TP1/TP2 partials. Expect significant R improvement. ──
+
+
+──────────────────────────────────────────────────────────
+ PHASE 2: ENTRY/SIGNAL SYSTEM
+──────────────────────────────────────────────────────────
+
+2.1  IMPLEMENT SIGNAL COLLECT-AND-RANK
+     Source: CD (primary), GP ("signal arbitration")
+     Evidence: 92.3% of trades from 2 patterns. Session Engine only 8 trades.
+               Registration order determines priority, not quality.
+     Files: CSignalOrchestrator.mqh (CheckForNewSignals)
+     Action: Replace the sequential first-valid-wins loop with:
+       1. Collect all valid signals from all plugins into a temp array
+       2. Score each by setupQuality * qualityScore * engine_confluence
+       3. Return the highest-scoring signal
+     Complexity: ~30 lines
+     Expected impact: +2 to +5R. Better signals win when multiple fire
+       simultaneously. Engine signals (Silver Bullet at 83-85 quality) would
+       beat Engulfing (82 quality) when both are valid.
+     Confidence: MEDIUM — interaction effects unknown until backtested
+
+2.2  ADD PER-PLUGIN CONFIRMATION POLICY
+     Source: GP (unique insight: all 168 trades had ConfirmationUsed=YES)
+     Evidence: Every trade including time-sensitive session breakouts and
+               expansion releases waited 1 extra H1 bar for confirmation.
+               This worsens R:R on time-sensitive setups.
+     Files: CSignalOrchestrator.mqh, CEntryStrategy.mqh
+     Action: Add a virtual method RequiresConfirmation() to CEntryStrategy.
+       Override in each engine:
+       - Legacy patterns (Engulfing, etc.): return true
+       - CLiquidityEngine: return true (structural setups benefit)
+       - CSessionEngine: return false (time-gated, delay is costly)
+       - CExpansionEngine: return false (volatility is time-decaying)
+       In the orchestrator, check plugin.RequiresConfirmation() instead of
+       the global InpEnableConfirmation flag.
+     Complexity: ~20 lines
+     Expected impact: Session and Expansion engines get faster entry,
+       potentially improving their signal count and R:R.
+     Confidence: MEDIUM — those engines had too few trades to measure
+
+2.3  REMOVE DOUBLE VOLATILITY ADJUSTMENT
+     Source: CD (primary), GP (identified different facet)
+     Evidence: GetVolatilityRiskMultiplier() applied in CQualityTierRiskStrategy
+               Step 3 AND again in CTradeOrchestrator:259. The 4 VOLATILE
+               trades had the BEST performance (PF 10.82, +0.93R avg) yet
+               were the most under-sized by this bug.
+     Files: CTradeOrchestrator.mqh:257-267
+     Action: Delete the volatility adjustment block in CTradeOrchestrator.
+             The risk strategy already handles it.
+     ALSO (GP finding): The vol adjustment in CTradeOrchestrator applies
+       AFTER lot calculation without recalculating lots. Even as a single
+       application, the implementation is wrong — it should either:
+       (a) Be removed (preferred — risk strategy handles it), or
+       (b) Trigger lot recalculation if kept
+     Complexity: Delete 8 lines
+     Expected impact: +1 to +3R. Correct sizing on volatile-regime trades.
+
+2.4  FIX RISK INTERFACE METADATA FABRICATION
+     Source: GP (unique finding, verified)
+     Files: CQualityTierRiskStrategy.mqh:412
+     Action: The risk strategy fabricates SETUP_B_PLUS and PATTERN_NONE when
+             it doesn't receive proper signal metadata. Pass the actual
+             setupQuality and patternType from the EntrySignal through to
+             the risk calculation.
+     Complexity: ~15 lines
+     Expected impact: Correct risk sizing based on actual signal quality
+       rather than fabricated defaults.
+
+2.5  ENABLE SHORT TRADING
+     Source: CD (primary, verified: zero shorts in 12 months)
+     Evidence: 100% long bias. Multiple blocking layers compound to prevent
+               any short signal from passing validation AND sizing.
+     Files: CSignalValidator.mqh, CQualityTierRiskStrategy.mqh,
+            CSignalOrchestrator.mqh, UltimateTrader_Inputs.mqh
+     Action (in order of priority):
+       a) Audit short risk multiplier: ensure it applies ONCE, not twice.
+          Currently applied in CSignalOrchestrator:515 AND in
+          CQualityTierRiskStrategy:106. Remove from orchestrator.
+       b) Raise InpScoreBearEngulfing from 42 to 70.
+       c) Relax 200 EMA short filter for engine signals that have their own
+          structural validation (OB Retest with bearish BOS, FVG with
+          bearish confluence >= 55).
+       d) Add minimum risk floor (0.2%) after all multipliers to prevent
+          the multiplicative chain from producing sub-minimum lots.
+     Complexity: Medium (~40 lines across multiple files)
+     Expected impact: +2 to +6R from capturing bearish moves.
+     Confidence: MEDIUM — needs dedicated backtest
+
+2.6  FILTER OUT B/B+ QUALITY SETUPS
+     Source: CD (verified: -2.84R from 18 trades)
+     Files: UltimateTrader_Inputs.mqh
+     Action: Raise InpPointsBSetup from 5 to 7 (minimum A quality).
+     Complexity: 1 input change
+     Expected impact: +2.84R directly measurable
+
+2.7  DISABLE LONDON SESSION ENTRIES OR EXTEND SKIP ZONE
+     Source: CD (verified: 19.2% WR, -1.60R in London)
+     Files: UltimateTrader_Inputs.mqh
+     Action: Set InpTradeLondon = false, OR extend InpSkipEndHour from 11
+             to 13 to cover the full losing window.
+     Complexity: 1 input change
+     Expected impact: +1.60R directly measurable
+
+2.8  DISABLE FRIDAY TRADING
+     Source: CD (verified: 38.7% WR, PF 0.79, -1.35R)
+     Files: UltimateTrader.mq5 (add day-of-week check in OnTick)
+     Action: Add a Friday filter that blocks new entries.
+     Complexity: ~10 lines
+     Expected impact: +1.35R directly measurable
+
+2.9  EXTEND NY SKIP ZONE TO 13:00
+     Source: CD (verified: hours 13-14 are -5.80R on 19 trades)
+     Files: UltimateTrader_Inputs.mqh
+     Action: Set InpSkipStartHour2 = 13 (currently 14)
+     Complexity: 1 input change
+     Expected impact: +2 to +4R
+
+2.10 DISABLE CSessionBreakoutEntry WHEN CSessionEngine IS ACTIVE
+     Source: CD, GP (both identified duplication)
+     Files: UltimateTrader.mq5 (OnInit)
+     Action: When InpEnableSessionEngine is true, skip registration of
+             g_sessionBreakout (the legacy plugin that duplicates London
+             BO and NY Continuation).
+     Complexity: ~5 lines
+     Expected impact: Avoids duplicate signals for same setups
+
+── CHECKPOINT: Re-backtest with all Phase 2 changes. ──
+
+
+──────────────────────────────────────────────────────────
+ PHASE 3: ENGINE HARDENING
+──────────────────────────────────────────────────────────
+
+3.1  FIX CSMCOrderBlocks ZONE EXPIRATION
+     Source: CD (verified: current_bar=0 hardcoded at :1153)
+     Files: CSMCOrderBlocks.mqh
+     Action: Replace hardcoded 0 with actual bar count.
+     Complexity: ~3 lines
+
+3.2  FIX ScoreLiquidityLevel DIRECTION BUG
+     Source: CD, GP (both verified at CLiquidityEngine.mqh:1434)
+     Files: CLiquidityEngine.mqh
+     Action: Pass signal direction and use SIGNAL_SHORT for bearish setups.
+     Complexity: ~5 lines
+
+3.3  FIX OB RETEST SL TO USE ACTUAL OB BOUNDARY
+     Source: CD (verified: uses ATR*0.8 instead of OB level)
+     Files: CLiquidityEngine.mqh:764
+     Action: Use CSMCOrderBlocks.GetOrderBlockStopLevel() for SL.
+             Add minimum SMC confluence gate (>= 30) to OB Retest.
+     Complexity: ~15 lines
+
+3.4  FIX FVG MODE TO CHECK ACTUAL FVG ZONES
+     Source: CD (confluence >= 55 used as proxy), GM (overtriggering critique)
+     Files: CLiquidityEngine.mqh:907, IMarketContext.mqh, CMarketContext.mqh
+     Action: Expose IsInBullishFVG() / IsInBearishFVG() from CSMCOrderBlocks
+             through IMarketContext. Use direct zone check instead of proxy.
+     Complexity: ~20 lines
+
+3.5  FIX SESSION ENGINE TIMEZONE HANDLING
+     Source: CD, GP, GM (all three identified this)
+     Files: CSessionEngine.mqh
+     Action (GM's approach, enhanced): Use TimeGMT() for session detection.
+       Add a daily auto-detection of broker GMT offset via:
+         m_gmt_offset = (int)(TimeCurrent() - TimeGMT()) / 3600;
+       This handles DST automatically.
+       Also fix the date boundary bug in UpdateAsianRange() that misses
+       the first hours of Asian session for non-zero GMT offsets.
+     Complexity: ~15 lines
+
+3.6  INITIALIZE ENGINE CONFLUENCE IN SESSION ENGINE
+     Source: GP (unique: CSV shows 0 or -10 only)
+     Files: CSessionEngine.mqh
+     Action: Initialize engine_confluence to a meaningful base value (50)
+             before applying location penalty. Currently uninitialized.
+     Complexity: ~5 lines
+
+3.7  FIX SQUEEZE COUNTER PER-TICK OVERCOUNTING
+     Source: CD (verified in CExpansionEngine.mqh)
+     Files: CExpansionEngine.mqh
+     Action: Add bar-time guard to only increment once per bar.
+     Complexity: ~5 lines
+
+3.8  ADD IC CONSOLIDATION WICK TOLERANCE
+     Source: CD (verified: strict containment invalidates on 1-tick protrusion)
+     Files: CExpansionEngine.mqh
+     Action: Allow wick protrusion up to 0.1 * ATR beyond IC range.
+     Complexity: ~5 lines
+
+── CHECKPOINT: Re-backtest with engine fixes. ──
+
+
+──────────────────────────────────────────────────────────
+ PHASE 4: PRODUCTION ROBUSTNESS
+──────────────────────────────────────────────────────────
+
+These fixes affect live trading reliability, not backtest P&L.
+
+4.1  MULTI-TIMEFRAME DATA SYNC VALIDATION
+     Source: GM (unique insight)
+     Files: CMarketContext.mqh, all components using iHigh/iLow on D1/W1/H4
+     Action: Before any MTF call, check:
+       if(!SeriesInfoInteger(symbol, period, SERIES_SYNCHRONIZED))
+       {
+          // retry or use cached value
+       }
+       This prevents 0.0 or stale data after terminal restart.
+     Complexity: ~30 lines across multiple files
+
+4.2  FIX STRUCT PERSISTENCE BRITTLENESS
+     Source: GM (struct padding, CRC concerns)
+     Files: CPositionCoordinator.mqh (SavePositionState/LoadPositionState)
+     Action: Replace StructToCharArray/FileWriteStruct with field-by-field
+             serialization. Use FileWriteDouble/FileWriteInteger for each
+             field. This makes persistence version-safe.
+     Complexity: ~80 lines (tedious but mechanical)
+
+4.3  OPTIMIZE ArrayResize WITH RESERVE PARAMETER
+     Source: GM (unique: memory fragmentation in loops)
+     Files: CPluginRegistry.mqh, CPositionCoordinator.mqh, market analysis
+     Action: Add reserve parameter to all ArrayResize calls in loops:
+       ArrayResize(arr, new_size, 50); // pre-allocate 50 extra slots
+     Complexity: ~15 lines (search and replace)
+
+4.4  ADD SPREAD GATE ENFORCEMENT + LOGGING
+     Source: CD (verified: spread=40 entry passed, zero gate blocks in log)
+     Files: CEnhancedTradeExecutor.mqh, UltimateTrader_Inputs.mqh
+     Action: Lower InpMaxSpreadPoints from 50 to 30 for gold.
+             Ensure spread gate rejection is logged.
+     Complexity: 1 input change + ~5 lines logging
+
+4.5  CONSIDER "SHADOW TRAIL" FOR LIVE DEPLOYMENT
+     Source: GM (unique concept)
+     Description: Instead of closing positions when price touches the
+       trailing SL intra-bar, only close if the H1 candle CLOSES below the
+       trailing level. This avoids stop-hunting wick liquidation on gold.
+     Status: Conceptual — requires careful implementation and separate
+       backtesting. Do NOT implement until Phase 1+2 fixes are proven.
+       Consider as a Phase 5 enhancement for live trading only.
+     Complexity: ~40 lines in CPositionCoordinator
+     Note: In backtesting, the tester applies SL hits intra-bar by default,
+       so this would need "Open Prices Only" mode or custom tick handling.
+
+── CHECKPOINT: Re-backtest full system. Compare against original baseline. ──
+
+
+──────────────────────────────────────────────────────────
+ PHASE 5: INPUT CLEANUP & DEAD CODE REMOVAL
+──────────────────────────────────────────────────────────
+
+5.1  CLEAN UP DEAD INPUTS
+     Source: CD, GP (both compiled lists)
+     Full list of dead/unwired inputs after Phase 1-4 fixes:
+       - InpEnableTrailOptimizer (never referenced)
+       - InpModeKillMinTrades (not wired to engines — engines use hardcoded
+         thresholds; should be wired)
+       - InpModeKillPFThreshold (same)
+       - InpEnableDynamicWeights (feature not functional)
+       - InpWeightRecalcInterval (same)
+       - InpUseStructureTargets (overridden by CAdaptiveTPManager constructor)
+     After Phase 1 fixes, InpTrailBETrigger/InpTrailBEOffset/
+     InpTP1Volume/InpTP2Volume should be wired (not dead).
+     Action: Wire InpModeKillMinTrades and InpModeKillPFThreshold to engines.
+             Wire InpUseStructureTargets via CAdaptiveTPManager.Configure().
+             Either implement or remove dynamic weights feature.
+
+5.2  IMPLEMENT DAY_DATA IN CDayTypeRouter
+     Source: GP (DAY_DATA is never emitted, dead code branch in engines)
+     Files: CDayTypeRouter.mqh
+     Action: Either implement news-day detection or remove DAY_DATA handling
+             from all engines to avoid confusion.
+
+5.3  ADD REGRESSION TEST SUITE
+     Source: GP (patch 12)
+     Files: Tests/ directory
+     Action: Add tests for:
+       - Logger accounting (sums match)
+       - Trailing selector (only selected plugin fires)
+       - Staged exits (TP0 → TP1 → TP2 → TRAILING state machine)
+       - Session GMT offset handling
+       - Liquidity score directionality
+       - Signal arbitration (best signal wins)
+
+
+================================================================================
+  EXPECTED CUMULATIVE IMPACT (Conservative estimates)
+================================================================================
+
+  Phase 0 (Telemetry):       +0R directly, but enables measurement trust
+  Phase 1 (Exit/Trailing):  +35 to +65R (early invalidation + trailing +
+                              TP partials + BE wiring)
+  Phase 2 (Entry/Signal):   +10 to +25R (signal ranking + short trading +
+                              session/day filters + vol fix)
+  Phase 3 (Engine fixes):   +2 to +8R (correctness improvements across
+                              all 3 engines)
+  Phase 4 (Production):     +0R in backtest, prevents live failures
+
+  TOTAL ESTIMATED:           +47 to +98R over the same 11.5-month period
+  vs current baseline:       +20.21R
+  Projected range:           +67 to +118R (~3.3x to 5.8x improvement)
+
+  NOTE: These estimates assume no negative interaction effects. Actual
+  results will differ. The most reliable estimates are Phase 1 items
+  (directly measurable from existing data). Phase 2+ estimates are
+  increasingly speculative. ALWAYS re-backtest after each phase.
+
+================================================================================
+  WHAT NOT TO CHANGE (Validated by backtest)
+================================================================================
+
+  1. LiqEng FVG Mitigation — 101 trades, PF 1.49, +12.81R. Working.
+  2. Bullish Engulfing — 55 trades, PF 1.38, +5.88R. Working.
+  3. Bullish Engulfing in Asia specifically — 78.6% WR, PF 6.40. Golden.
+  4. TP0 partial close at 0.5R / 25% — load-bearing, 64.8% of profit.
+  5. Quality scoring system — A+/A clearly outperform B+/B. Validated.
+  6. Batched trailing SL — smart broker communication at R-milestones.
+  7. Position persistence — binary state file with CRC survives restarts.
+  8. Shock volatility detection — 3-indicator system is well-designed.
+  9. Monday + Asia session bias — the proven profit center.
+  10. InpATRMultiplierSL = 3.0 — appropriate for gold H1.
+
+  Do NOT retune inputs until Phases 0-2 are merged and re-backtested.
+
+================================================================================
+  END OF UNIFIED PLAN
+================================================================================

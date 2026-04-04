@@ -1,0 +1,990 @@
+================================================================================
+     UNIFIED EXECUTION ROADMAP — UltimateTrader EA (Enhanced)
+     Intersection-based | Data-verified | Code-patched
+     Synthesized from: CD_ANALYSIS, GP_ANALYSIS, GM_ANALYSIS
+     Date: 2026-03-23
+================================================================================
+
+  CURRENT EA STATE (168-trade backtest, Mar 2025 — Mar 2026)
+  ───────────────────────────────────────────────────────────
+  Trades: 168 | Direction: ALL LONG (zero shorts) | Win Rate: 48.2%
+  Profit Factor: 1.43 | Net: +$1,772.71 (+20.21R) | Expectancy: +0.12R
+  Max Drawdown: 9.42R / $808 (66-day recovery)
+  Alpha source: 25 trailing exits = +42.68R (14.9% of trades, 100% of edge)
+  TP0 partials: $1,149 = 64.8% of dollar profit
+  MFE left on table: 124.95R (system captures only 16% of peak moves)
+  Worst drag: Early invalidation -26.90R across 39 trades (2.6% WR)
+
+  GROUND RULES
+  ─────────────
+  1. Only fixes VERIFIED against both code AND backtest data
+  2. Intersection items (2+ analysts agree) prioritized over solo findings
+  3. Each sprint ends with a re-backtest checkpoint with specific pass criteria
+  4. Do NOT retune any input parameters until Sprint 3 checkpoint passes
+  5. PROTECTED components (do NOT modify):
+     - LiqEng FVG Mitigation (101 trades, PF 1.49, +12.81R)
+     - Bullish Engulfing (55 trades, PF 1.38, +5.88R)
+     - TP0 mechanism at 0.5R / 25% (64.8% of dollar profit)
+     - Quality scoring system (A+/A validated, B+/B are losing)
+     - Batched trailing SL concept (R-milestone broker sends)
+     - Position persistence (binary state file with CRC32)
+
+  DEPENDENCY GRAPH
+  ─────────────────
+  Sprint 0 ──→ Sprint 1 ──→ Sprint 2 ──→ Sprint 3 ──→ Sprint 4
+     │                          │                          │
+     │  (telemetry must be      │  (exit machine must      │  (entry fixes
+     │   trustworthy before     │   work before tuning     │   before engine
+     │   measuring P&L fixes)   │   entry signals)         │   hardening)
+     │                          │                          │
+     └──────────────────────────┴──────────────────────────┴──→ Sprint 5
+                                                               (production)
+
+
+================================================================================
+  SPRINT 0 — TRUST YOUR NUMBERS  (prerequisite, ~2 hours)
+================================================================================
+
+  Rationale: GP's principle — "you cannot optimize what you cannot measure."
+  The current telemetry has 6 integrity gaps. Fix these before any P&L work
+  so that post-fix backtests produce trustworthy comparisons.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 0A. WIRE RecordPluginTradeResult() TO TRADE CLOSES                 │
+  │                                                                    │
+  │ Agreed by:  CD + GP                                                │
+  │ Evidence:   Deinit log: "WriteBacktestResultsCSV: No strategy      │
+  │             data to export." Zero auto-kill events in 12 months.   │
+  │             RecordPluginTradeResult() has ZERO call sites.         │
+  │                                                                    │
+  │ Root cause: HandleClosedPosition() (CPositionCoordinator:1126)     │
+  │             routes to engine-level RecordModeResult() at lines     │
+  │             1188-1212, but never calls the orchestrator's plugin-  │
+  │             level RecordPluginTradeResult(). The auto-kill system, │
+  │             dynamic weighting, and strategy CSV export are all dead.│
+  │                                                                    │
+  │ File:  Include/Core/CPositionCoordinator.mqh                       │
+  │ Line:  After 1212 (after engine mode recording), before 1217       │
+  │                                                                    │
+  │ CURRENT CODE (line 1214-1216):                                     │
+  │                                                                    │
+  │   // Also record at engine-level for auto-kill and dynamic weights │
+  │   // (CSignalOrchestrator tracks PluginPerformance per engine name)│
+  │                                                                    │
+  │ PATCHED CODE:                                                      │
+  │                                                                    │
+  │   // Record at plugin level for auto-kill and dynamic weighting    │
+  │   if(m_signal_orchestrator != NULL)                                │
+  │   {                                                                │
+  │      string plugin_name = m_positions[index].pattern_name;         │
+  │      if(plugin_name == "")                                         │
+  │         plugin_name = m_positions[index].engine_name;              │
+  │      m_signal_orchestrator.RecordPluginTradeResult(plugin_name,    │
+  │                                                     profit);       │
+  │   }                                                                │
+  │                                                                    │
+  │ ALSO REQUIRED:                                                     │
+  │   - Add CSignalOrchestrator pointer member to CPositionCoordinator │
+  │   - Wire it in OnInit(): g_posCoordinator.SetOrchestrator(         │
+  │                           g_signalOrchestrator)                    │
+  │                                                                    │
+  │ Lines changed: ~15                                                 │
+  │ Risk: LOW — purely additive, no existing behavior changes          │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 0B. WIRE RecordStrategyTrade() CALL SITE                           │
+  │                                                                    │
+  │ Agreed by:  GP (verified: zero call sites at CTradeLogger:566)     │
+  │ Evidence:   Strategy-level CSV is blank at deinit.                 │
+  │                                                                    │
+  │ File:  Include/Core/CPositionCoordinator.mqh                       │
+  │ Line:  After 1178 (after LogTradeExit call)                        │
+  │                                                                    │
+  │ CURRENT CODE (line 1177-1178):                                     │
+  │                                                                    │
+  │   if(m_trade_logger != NULL)                                       │
+  │      m_trade_logger.LogTradeExit(m_positions[index], profit,       │
+  │                                   exit_price);                     │
+  │                                                                    │
+  │ PATCHED CODE:                                                      │
+  │                                                                    │
+  │   if(m_trade_logger != NULL)                                       │
+  │   {                                                                │
+  │      m_trade_logger.LogTradeExit(m_positions[index], profit,       │
+  │                                   exit_price);                     │
+  │      // Wire strategy-level recording for per-strategy CSV export  │
+  │      double risk_dist = MathAbs(m_positions[index].entry_price     │
+  │                        - m_positions[index].original_sl);          │
+  │      double r_mult = (risk_dist > 0) ? profit / (risk_dist        │
+  │                     * m_positions[index].original_lots * 100) : 0; │
+  │      m_trade_logger.RecordStrategyTrade(                           │
+  │         m_positions[index].pattern_name, profit, r_mult);          │
+  │   }                                                                │
+  │                                                                    │
+  │ Lines changed: ~8                                                  │
+  │ Risk: LOW — additive logging only                                  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 0C. FIX LOSS-AVOIDED SIGN ERROR                                    │
+  │                                                                    │
+  │ Agreed by:  GP (verified at CPositionCoordinator.mqh:1093)         │
+  │                                                                    │
+  │ File:  Include/Core/CPositionCoordinator.mqh                       │
+  │ Line:  1093                                                        │
+  │                                                                    │
+  │ CURRENT CODE:                                                      │
+  │                                                                    │
+  │   m_positions[i].loss_avoided_r = (-1.0) - current_r;             │
+  │                                                                    │
+  │ EXPLANATION: If trade is at -0.3R when early-closed, this gives    │
+  │   loss_avoided = -1.0 - (-0.3) = -0.7. But -0.7 means "avoided   │
+  │   negative R" — the sign is confusing. A trade at -0.3R that       │
+  │   would have hit -1.0R SL actually avoided 0.7R of loss.          │
+  │   The formula should produce +0.7 (positive = loss saved).         │
+  │                                                                    │
+  │ PATCHED CODE:                                                      │
+  │                                                                    │
+  │   m_positions[i].loss_avoided_r = (-1.0 - current_r);             │
+  │   // Result: at -0.3R current, avoided = -1.0 - (-0.3) = -0.7    │
+  │   // This is actually correct in sign: negative means the early   │
+  │   // exit COST more than holding. The -26.90R total in the        │
+  │   // backtest confirms early exits are net destructive.            │
+  │   // NO CODE CHANGE NEEDED — the formula is mathematically correct.│
+  │   // The interpretation is: negative = exit was WORSE than SL.     │
+  │   // Fix the LOG MESSAGE to clarify interpretation:                │
+  │                                                                    │
+  │   LogPrint("[EARLY_INVALIDATION] Loss avoided: ",                  │
+  │      DoubleToString(m_positions[i].loss_avoided_r, 2), "R ",      │
+  │      (m_positions[i].loss_avoided_r > 0 ? "(SAVED)" : "(WORSE)"), │
+  │      " ($", DoubleToString(m_positions[i].loss_avoided_money, 2), │
+  │      ")");                                                         │
+  │                                                                    │
+  │ Lines changed: ~3                                                  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 0D. FIX DUPLICATE SESSION SUMMARY AT DEINIT                        │
+  │                                                                    │
+  │ Agreed by:  GP (verified: printed in OnDeinit:703 + logger dtor)   │
+  │                                                                    │
+  │ File:  UltimateTrader.mq5                                          │
+  │ Line:  703                                                         │
+  │                                                                    │
+  │ CURRENT CODE:                                                      │
+  │                                                                    │
+  │   if(g_tradeLogger != NULL) {                                      │
+  │      g_tradeLogger.LogSessionSummary();                            │
+  │      delete g_tradeLogger; g_tradeLogger = NULL;                   │
+  │   }                                                                │
+  │                                                                    │
+  │ The logger destructor ALSO calls LogSessionSummary(), causing a    │
+  │ duplicate. Remove the explicit call since delete triggers it.      │
+  │                                                                    │
+  │ PATCHED CODE:                                                      │
+  │                                                                    │
+  │   if(g_tradeLogger != NULL) {                                      │
+  │      // LogSessionSummary called automatically in destructor       │
+  │      delete g_tradeLogger; g_tradeLogger = NULL;                   │
+  │   }                                                                │
+  │                                                                    │
+  │ Lines changed: 1 (remove the explicit call)                        │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 0E. FIX EXIT TYPE CLASSIFICATION                                   │
+  │                                                                    │
+  │ Agreed by:  GP (4 exits at OriginalTP1 labeled TRAILING not TP_HIT)│
+  │                                                                    │
+  │ File:  Include/Core/CPositionCoordinator.mqh → HandleClosedPosition│
+  │ Line:  After 1140 (after getting exit_price), before logging       │
+  │                                                                    │
+  │ ADD after line 1140:                                               │
+  │                                                                    │
+  │   // Classify exit type: check if closed at TP1 level              │
+  │   double tp1_tolerance = 0.5;  // $0.50 tolerance for gold         │
+  │   bool closed_at_tp1 = (m_positions[index].tp1 > 0 &&             │
+  │      MathAbs(exit_price - m_positions[index].tp1) < tp1_tolerance);│
+  │   if(closed_at_tp1)                                                │
+  │      m_positions[index].stage_label = "TP_HIT";                    │
+  │                                                                    │
+  │ Lines changed: ~5                                                  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 0F. ADD INIT LOGGING + SIGNAL REJECTION LOGGING                    │
+  │                                                                    │
+  │ Agreed by:  CD + GP                                                │
+  │ Evidence:   Log has zero init config lines, zero rejection events. │
+  │             Impossible to verify what params were active.           │
+  │                                                                    │
+  │ File 1: UltimateTrader.mq5 → OnInit(), after line 583             │
+  │ ADD:                                                               │
+  │                                                                    │
+  │   Print("[CONFIG] EarlyInvalidation=", InpEnableEarlyInvalidation, │
+  │         " | TrailStrategy=", EnumToString(InpTrailStrategy));       │
+  │   Print("[CONFIG] TP0=", InpEnableTP0, " dist=", InpTP0Distance,  │
+  │         " vol=", InpTP0Volume, "%");                               │
+  │   Print("[CONFIG] MaxSpread=", InpMaxSpreadPoints,                 │
+  │         " | ShockDetect=", InpEnableShockDetection);               │
+  │   Print("[CONFIG] Sessions: Asia=", InpTradeAsia,                  │
+  │         " London=", InpTradeLondon, " NY=", InpTradeNY);          │
+  │   Print("[CONFIG] Skip1=", InpSkipStartHour, "-", InpSkipEndHour, │
+  │         " Skip2=", InpSkipStartHour2, "-", InpSkipEndHour2);      │
+  │   Print("[CONFIG] Quality: A+=", InpPointsAPlusSetup,              │
+  │         " A=", InpPointsASetup, " B+=", InpPointsBPlusSetup,      │
+  │         " B=", InpPointsBSetup);                                   │
+  │                                                                    │
+  │ File 2: Include/Core/CSignalOrchestrator.mqh                      │
+  │ At each "continue" rejection point, add a LogPrint:                │
+  │   Line 414: LogPrint("[REJECT] ", plugin_name, " auto-killed");    │
+  │   Line 422: LogPrint("[REJECT] ", plugin_name, " in skip zone");   │
+  │   Line 467: LogPrint("[REJECT] validator: ", signal.comment);      │
+  │   Line 475: LogPrint("[REJECT] volume: ", signal.comment);         │
+  │   Line 483: LogPrint("[REJECT] SMC: ", signal.comment);            │
+  │   Line 496: LogPrint("[REJECT] confidence=", confidence);          │
+  │   Line 508: LogPrint("[REJECT] quality below min: ",               │
+  │                       signal.comment);                             │
+  │                                                                    │
+  │ Lines changed: ~30                                                 │
+  │ Risk: LOW — logging only, no behavior change                       │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  >> CHECKPOINT 0: Re-backtest with identical inputs.
+  >> PASS CRITERIA:
+  >>   [ ] Net P&L matches baseline within $10 (no behavior change)
+  >>   [ ] Strategy CSV now contains per-strategy rows at deinit
+  >>   [ ] Session summary appears exactly once (not duplicated)
+  >>   [ ] Log contains [CONFIG] lines at start
+  >>   [ ] Log contains [REJECT] lines during signal processing
+  >>   [ ] Auto-kill fires for London Breakout (0% WR) after 10+ trades
+  >> EXPECTED: +0.00R change (telemetry only)
+
+
+================================================================================
+  SPRINT 1 — STOP THE BLEEDING  (highest R-impact, ~4 hours)
+================================================================================
+
+  These 3 fixes have the highest verified R-impact with the lowest code
+  complexity. They address the intersection of ALL three analysts' findings.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 1A. DISABLE EARLY INVALIDATION                                     │
+  │                                                                    │
+  │ Agreed by:  CD (primary: -26.90R) + GM (conceptual critique)       │
+  │                                                                    │
+  │ EVIDENCE FROM BACKTEST:                                            │
+  │   39 trades closed by early invalidation                           │
+  │   Only 1 win (2.6% WR)                                            │
+  │   Total damage: -$1,158.60 / -12.14R in realized losses           │
+  │   "Loss avoided" sum: -26.90R (NEGATIVE = exits WORSE than SL)    │
+  │   Avg hold time: 1.2 hours (too fast to judge on gold H1)         │
+  │                                                                    │
+  │ EXAMPLE TRADES:                                                    │
+  │   Ticket #21 (2025-04-02): Entered at 3128.50, SL at 3112.68.     │
+  │   Early-exited at 3124.40 after 1 bar. Loss: -$7.08 (-0.24R).     │
+  │   Price subsequently rallied to 3145+ (would have been +0.9R win) │
+  │                                                                    │
+  │   Ticket #287 (2025-12-15): Hold 0.0h, loss -$0.28 (-0.01R).      │
+  │   Same-bar entry/exit — barely had time to breathe.                │
+  │                                                                    │
+  │ WHY IT FAILS ON GOLD: XAUUSD on H1 routinely sweeps liquidity     │
+  │ (dips 0.4-0.6R) before running in profit. The MAE_R >= 0.40       │
+  │ threshold triggers during this normal sweep behavior. 3 bars       │
+  │ (3 hours) is too short to evaluate gold H1 trade quality.          │
+  │                                                                    │
+  │ File:  UltimateTrader_Inputs.mqh                                   │
+  │ Line:  366                                                         │
+  │                                                                    │
+  │ CURRENT:  input bool InpEnableEarlyInvalidation = true;            │
+  │ PATCHED:  input bool InpEnableEarlyInvalidation = false;           │
+  │                                                                    │
+  │ Lines changed: 1                                                   │
+  │ Risk: VERY LOW — disabling a feature. No code path affected.       │
+  │ Reversibility: Change back to true to restore.                     │
+  │                                                                    │
+  │ Expected impact: +15 to +27R                                       │
+  │   Conservative: 39 trades x 0.4R avg improvement = +15.6R          │
+  │   Optimistic: 39 trades x avg 0.69R recovery = +26.9R             │
+  │   (recovery estimate based on those trades' avg MFE of 0.49R       │
+  │    vs their avg exit at -0.31R = 0.80R swing potential)            │
+  │                                                                    │
+  │ FUTURE IMPROVEMENT (Sprint 6): Replace with structural invalidation│
+  │ per GM's concept — exit only if price CLOSES below the originating │
+  │ order block or FVG zone, not on arbitrary MAE/MFE thresholds.      │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 1B. WIRE InpTrailStrategy TO SELECT ONE TRAILING PLUGIN            │
+  │                                                                    │
+  │ Agreed by:  CD + GP + GM (all three — strongest consensus item)    │
+  │                                                                    │
+  │ EVIDENCE FROM BACKTEST:                                            │
+  │   25 trailing exits = +42.68R (entire alpha source)                │
+  │   143 of 168 trades (85%) never reach trailing at all              │
+  │   35 BREAKEVEN exits had avg MFE of 0.946R before reversing       │
+  │   124.95R of MFE left on table (only 16% captured)                │
+  │   ATR trailing at 1.35x produces $10-20 trail (too tight for gold)│
+  │   Chandelier at 3.0x produces $24-45 trail (gold-appropriate)     │
+  │                                                                    │
+  │ EXAMPLE TRADES showing premature stop-out:                         │
+  │   Ticket #222: Reached MFE 1.37R, closed at -0.00R (SL_HIT).      │
+  │   With wider Chandelier trail, this could have been a +1.0R win.   │
+  │                                                                    │
+  │   The 35 BREAKEVEN exits averaged 0.946R MFE. With Chandelier     │
+  │   (3x ATR trail instead of 1.35x ATR), many would survive the     │
+  │   pullback and continue to become trailing exits.                  │
+  │                                                                    │
+  │ File:  UltimateTrader.mq5                                          │
+  │ Line:  After 425 (after registering all trailing plugins)          │
+  │                                                                    │
+  │ CURRENT CODE (lines 417-427):                                      │
+  │                                                                    │
+  │   // Register based on selected strategy                           │
+  │   ArrayResize(g_trailingPlugins, 6);                               │
+  │   g_trailingPlugins[0] = g_atrTrailing;                            │
+  │   g_trailingPlugins[1] = g_swingTrailing;                          │
+  │   g_trailingPlugins[2] = g_sarTrailing;                            │
+  │   g_trailingPlugins[3] = g_chandelierTrailing;                     │
+  │   g_trailingPlugins[4] = g_steppedTrailing;                        │
+  │   g_trailingPlugins[5] = g_hybridTrailing;                         │
+  │   g_trailingPluginCount = 6;                                       │
+  │   Print("[Init] Trailing: 6 (ATR+Swing+SAR+Chandelier+...)");     │
+  │   Print("[Init] Active Trailing: ", EnumToString(InpTrailStrategy))│
+  │                                                                    │
+  │ ADD AFTER LINE 427:                                                │
+  │                                                                    │
+  │   // Wire InpTrailStrategy: disable all except selected            │
+  │   if(InpTrailStrategy != TRAIL_NONE)                               │
+  │   {                                                                │
+  │      for(int t = 0; t < g_trailingPluginCount; t++)                │
+  │         g_trailingPlugins[t].SetEnabled(false);                    │
+  │                                                                    │
+  │      switch(InpTrailStrategy)                                      │
+  │      {                                                             │
+  │         case TRAIL_ATR:       g_atrTrailing.SetEnabled(true);      │
+  │                               break;                               │
+  │         case TRAIL_SWING:     g_swingTrailing.SetEnabled(true);    │
+  │                               break;                               │
+  │         case TRAIL_PARABOLIC: g_sarTrailing.SetEnabled(true);      │
+  │                               break;                               │
+  │         case TRAIL_CHANDELIER:g_chandelierTrailing.SetEnabled(true)│
+  │                               break;                               │
+  │         case TRAIL_STEPPED:   g_steppedTrailing.SetEnabled(true);  │
+  │                               break;                               │
+  │         case TRAIL_HYBRID:    g_hybridTrailing.SetEnabled(true);   │
+  │                               break;                               │
+  │      }                                                             │
+  │      Print("[Init] TRAILING WIRED: Only ",                         │
+  │            EnumToString(InpTrailStrategy), " is active");          │
+  │   }                                                                │
+  │                                                                    │
+  │ Lines changed: ~18                                                 │
+  │ Risk: LOW — only disables unused plugins. Chandelier already works.│
+  │ Reversibility: Set InpTrailStrategy = TRAIL_NONE for old behavior. │
+  │                                                                    │
+  │ Expected impact: +15 to +30R                                       │
+  │   The 35 BREAKEVEN exits (avg MFE 0.946R) are the conversion pool.│
+  │   If even 10 of 35 survive with Chandelier trail to become runners │
+  │   at avg +1.7R (the current trailing exit average), that's +17R.   │
+  │   Additionally, some of the 48 SL_HIT losses may convert to BE.   │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 1C. REMOVE DOUBLE VOLATILITY ADJUSTMENT                            │
+  │                                                                    │
+  │ Agreed by:  CD (double application) + GP (post-sizing application) │
+  │                                                                    │
+  │ EVIDENCE:                                                          │
+  │   GetVolatilityRiskMultiplier() applied TWICE:                     │
+  │     1st: CQualityTierRiskStrategy (inside CalculatePositionSize)   │
+  │     2nd: CTradeOrchestrator.mqh line 259                           │
+  │   VOL_HIGH (0.85): effective = 0.85^2 = 0.72 (28% cut vs 15%)    │
+  │   VOL_EXTREME (0.65): effective = 0.65^2 = 0.42 (58% cut vs 35%) │
+  │                                                                    │
+  │   The 4 VOLATILE regime trades: PF 10.82, avg +0.93R — the BEST   │
+  │   performing regime, yet receiving the most aggressive downsizing. │
+  │                                                                    │
+  │   GP's additional finding: The 2nd application (CTradeOrchestrator │
+  │   line 259) adjusts risk_pct AFTER lot_size is already calculated  │
+  │   (line 200) WITHOUT recalculating lots. The adjusted risk_pct is  │
+  │   only logged, never used to resize. This means the 2nd vol       │
+  │   adjustment does nothing to actual position sizing — it only      │
+  │   corrupts the logged risk_pct. Deleting it fixes both the double │
+  │   application AND the post-sizing corruption.                      │
+  │                                                                    │
+  │ File:  Include/Core/CTradeOrchestrator.mqh                         │
+  │ Lines: 256-267                                                     │
+  │                                                                    │
+  │ DELETE THIS BLOCK:                                                 │
+  │                                                                    │
+  │   // Volatility regime risk adjustment                             │
+  │   if(m_context != NULL)                                            │
+  │   {                                                                │
+  │      double vol_mult = m_context.GetVolatilityRiskMultiplier();    │
+  │      if(MathAbs(vol_mult - 1.0) > 0.01)                           │
+  │      {                                                             │
+  │         double pre_risk = risk_pct;                                │
+  │         risk_pct *= vol_mult;                                      │
+  │         LogPrint(">>> Volatility Risk Adjust: ",                   │
+  │            DoubleToString(pre_risk, 2), "% -> ",                   │
+  │            DoubleToString(risk_pct, 2), "% (x",                   │
+  │            DoubleToString(vol_mult, 2), ")");                      │
+  │      }                                                             │
+  │   }                                                                │
+  │                                                                    │
+  │ Lines changed: Delete 12 lines                                     │
+  │ Risk: LOW — removes a duplicate. Risk strategy still handles vol.  │
+  │ Reversibility: Re-add the block if needed.                         │
+  │                                                                    │
+  │ Expected impact: +1 to +3R (corrects sizing on volatile trades)    │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  >> CHECKPOINT 1: Re-backtest with:
+  >>   InpEnableEarlyInvalidation = false
+  >>   Trailing wired to Chandelier only
+  >>   Double vol block deleted
+  >>
+  >> PASS CRITERIA:
+  >>   [ ] Net P&L significantly exceeds +20.21R baseline
+  >>   [ ] Early invalidation exits = 0 (feature disabled)
+  >>   [ ] Log shows "TRAILING WIRED: Only TRAIL_CHANDELIER is active"
+  >>   [ ] Trailing exit count exceeds 25 (baseline)
+  >>   [ ] BREAKEVEN exit count decreases from 35 (some convert to trails)
+  >>   [ ] No "Volatility Risk Adjust" log lines (block deleted)
+  >>
+  >> EXPECTED: +35 to +55R improvement → net +55 to +75R
+  >> This is the critical validation point for the entire roadmap.
+  >> If Sprint 1 fails to improve, STOP and investigate before proceeding.
+
+
+================================================================================
+  SPRINT 2 — FIX THE EXIT MACHINE  (~8 hours)
+================================================================================
+
+  The exit system is the dominant P&L driver. Sprint 2 builds the TP state
+  machine that was designed but never implemented.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 2A. IMPLEMENT TP1/TP2 PARTIAL CLOSES                               │
+  │                                                                    │
+  │ Agreed by:  CD + GP (both verified: TP1/TP2 are dead)              │
+  │                                                                    │
+  │ EVIDENCE:                                                          │
+  │   InpTP1Volume (50%) and InpTP2Volume (40%) are dead inputs.       │
+  │   Broker closes 100% of remaining lots when TP1 price is hit.     │
+  │   tp1_closed and tp2_closed are never set to true in production.   │
+  │   52 trades (31%) reached 1.0R — the zone where TP1 would fire.   │
+  │   35 BE exits had MFE 0.946R — close to TP1 at 1.3R but missed it.│
+  │                                                                    │
+  │ DESIGN:                                                            │
+  │   Mirror the existing TP0 implementation (lines 987-1051) for TP1  │
+  │   and TP2. Use REMAINING lots, not original lots, to fix the 115%  │
+  │   specification bug. Remove broker-level TP so all exits are       │
+  │   managed internally.                                              │
+  │                                                                    │
+  │   Lot distribution:                                                │
+  │     TP0 (0.5R): 25% of original → 75% remains                     │
+  │     TP1 (1.3R): 50% of remaining (37.5% of orig) → 37.5% remains │
+  │     TP2 (1.8R): 50% of remaining (18.75% of orig) → 18.75% runner│
+  │     TRAILING: runner managed by selected trailing plugin           │
+  │                                                                    │
+  │   State machine:                                                   │
+  │     STAGE_INITIAL → STAGE_TP0_HIT → STAGE_TP1_HIT →               │
+  │     STAGE_TP2_HIT → STAGE_TRAILING                                │
+  │                                                                    │
+  │ File:  Include/Core/CPositionCoordinator.mqh                       │
+  │ Location: After the TP0 block (after line 1051), add TP1 block     │
+  │                                                                    │
+  │ NEW CODE (TP1 — insert after line 1051):                           │
+  │                                                                    │
+  │   // TP1 partial close                                             │
+  │   if(m_positions[i].tp0_closed && !m_positions[i].tp1_closed       │
+  │      && m_positions[i].stage == STAGE_TP0_HIT)                     │
+  │   {                                                                │
+  │      double risk_dist = MathAbs(m_positions[i].entry_price         │
+  │                        - m_positions[i].original_sl);              │
+  │      if(risk_dist > 0)                                             │
+  │      {                                                             │
+  │         double current_price_tp1 =                                 │
+  │            PositionGetDouble(POSITION_PRICE_CURRENT);              │
+  │         double profit_r = 0;                                       │
+  │         if(m_positions[i].direction == SIGNAL_LONG)                │
+  │            profit_r = (current_price_tp1                           │
+  │                       - m_positions[i].entry_price) / risk_dist;   │
+  │         else                                                       │
+  │            profit_r = (m_positions[i].entry_price                  │
+  │                       - current_price_tp1) / risk_dist;            │
+  │                                                                    │
+  │         if(profit_r >= InpTP1Distance)                             │
+  │         {                                                          │
+  │            double close_lots = NormalizeDouble(                     │
+  │               m_positions[i].remaining_lots                        │
+  │               * InpTP1Volume / 100.0, 2);                          │
+  │            double min_lot =                                        │
+  │               SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);        │
+  │            if(close_lots < min_lot) close_lots = min_lot;          │
+  │            if(close_lots > m_positions[i].remaining_lots - min_lot)│
+  │               close_lots = m_positions[i].remaining_lots - min_lot;│
+  │                                                                    │
+  │            if(close_lots >= min_lot)                                │
+  │            {                                                       │
+  │               CTrade tp1_trade;                                    │
+  │               tp1_trade.SetExpertMagicNumber(m_magic_number);      │
+  │               if(tp1_trade.PositionClosePartial(                   │
+  │                  m_positions[i].ticket, close_lots))               │
+  │               {                                                    │
+  │                  m_positions[i].tp1_closed = true;                 │
+  │                  m_positions[i].remaining_lots -= close_lots;      │
+  │                  m_positions[i].stage = STAGE_TP1_HIT;             │
+  │                  m_positions[i].stage_label = "TP1_HIT";           │
+  │                  LogPrint("[TP1] Partial close: Ticket ",          │
+  │                     m_positions[i].ticket, " | Closed ",           │
+  │                     DoubleToString(close_lots, 2), " lots at ",    │
+  │                     DoubleToString(profit_r, 2), "R",              │
+  │                     " | Remaining: ",                              │
+  │                     DoubleToString(                                │
+  │                        m_positions[i].remaining_lots, 2));         │
+  │                  SaveOnStateChange();                              │
+  │               }                                                    │
+  │            }                                                       │
+  │         }                                                          │
+  │      }                                                             │
+  │   }                                                                │
+  │                                                                    │
+  │ REPEAT identical pattern for TP2 (check tp1_closed, stage         │
+  │ STAGE_TP1_HIT, use InpTP2Distance and InpTP2Volume).              │
+  │                                                                    │
+  │ ALSO: In CTradeOrchestrator::ExecuteSignal(), change the broker   │
+  │ execution to NOT send a TP level. Replace:                         │
+  │   Buy/Sell(lot_size, _Symbol, entry, sl, tp1, comment)            │
+  │ With:                                                              │
+  │   Buy/Sell(lot_size, _Symbol, entry, sl, 0, comment)              │
+  │ This lets the coordinator manage all exits internally.             │
+  │                                                                    │
+  │ Lines changed: ~80                                                 │
+  │ Risk: MEDIUM — changes exit behavior fundamentally.                │
+  │ Reversibility: Re-add broker TP and disable TP1/TP2 blocks.       │
+  │ Expected impact: +5 to +12R                                        │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 2B. WIRE DEAD TRAILING/BE INPUTS                                   │
+  │                                                                    │
+  │ Agreed by:  CD + GP                                                │
+  │ Dead inputs: InpTrailBETrigger (0.8R), InpTrailBEOffset (50pts),  │
+  │              InpBreakevenOffset (50pts)                             │
+  │                                                                    │
+  │ File:  Include/Core/CPositionCoordinator.mqh                       │
+  │ Line:  1256-1263 (breakeven logic inside ApplyTrailingPlugins)      │
+  │                                                                    │
+  │ CURRENT CODE:                                                      │
+  │                                                                    │
+  │   bool be_eligible = !InpEnableTP0 || pos.tp0_closed;             │
+  │   if(be_eligible)                                                  │
+  │   {                                                                │
+  │      if(pos.direction == SIGNAL_LONG                               │
+  │         && normalized_sl >= pos.entry_price)                       │
+  │         pos.at_breakeven = true;                                   │
+  │      else if(pos.direction == SIGNAL_SHORT                         │
+  │         && normalized_sl <= pos.entry_price)                       │
+  │         pos.at_breakeven = true;                                   │
+  │   }                                                                │
+  │                                                                    │
+  │ PATCHED CODE (wire InpTrailBETrigger as R-threshold):              │
+  │                                                                    │
+  │   bool be_eligible = !InpEnableTP0 || pos.tp0_closed;             │
+  │   if(be_eligible && !pos.at_breakeven)                             │
+  │   {                                                                │
+  │      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);│
+  │      double profit_r = 0;                                          │
+  │      if(risk_dist > 0)                                             │
+  │      {                                                             │
+  │         double cur = PositionGetDouble(POSITION_PRICE_CURRENT);    │
+  │         if(pos.direction == SIGNAL_LONG)                           │
+  │            profit_r = (cur - pos.entry_price) / risk_dist;         │
+  │         else                                                       │
+  │            profit_r = (pos.entry_price - cur) / risk_dist;         │
+  │      }                                                             │
+  │      // Only trigger BE after reaching InpTrailBETrigger (0.8R)    │
+  │      if(profit_r >= InpTrailBETrigger)                             │
+  │      {                                                             │
+  │         double be_sl = pos.entry_price;                            │
+  │         if(pos.direction == SIGNAL_LONG)                           │
+  │            be_sl += InpTrailBEOffset * _Point;                     │
+  │         else                                                       │
+  │            be_sl -= InpTrailBEOffset * _Point;                     │
+  │         if(pos.direction == SIGNAL_LONG                            │
+  │            && normalized_sl >= be_sl)                               │
+  │            pos.at_breakeven = true;                                │
+  │         else if(pos.direction == SIGNAL_SHORT                      │
+  │            && normalized_sl <= be_sl)                               │
+  │            pos.at_breakeven = true;                                │
+  │      }                                                             │
+  │   }                                                                │
+  │                                                                    │
+  │ Lines changed: ~20                                                 │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 2C. FIX HYBRID TRAILING BREAKEVEN CAP                              │
+  │                                                                    │
+  │ Agreed by:  CD (verified at CHybridTrailing.mqh:254-256)           │
+  │                                                                    │
+  │ File:  Include/TrailingPlugins/CHybridTrailing.mqh                 │
+  │ Lines: 254-256 (buy side) and 268-269 (sell side)                  │
+  │                                                                    │
+  │ CURRENT CODE (buy side):                                           │
+  │                                                                    │
+  │   // Don't set SL above entry (would close in profit immediately)  │
+  │   if(best_sl >= entry_price)                                       │
+  │      best_sl = entry_price - (m_breakeven_offset * point);         │
+  │                                                                    │
+  │ DELETE these 3 lines (buy side) and equivalent sell side.          │
+  │ The comment is wrong — setting SL above entry for a long is       │
+  │ profit-locking, not "closing immediately." The trailing system     │
+  │ should be allowed to lock profit.                                  │
+  │                                                                    │
+  │ Lines changed: Delete ~6 lines                                     │
+  │ Risk: LOW — only affects Hybrid strategy behavior.                 │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  >> CHECKPOINT 2: Re-backtest with TP state machine + BE wiring.
+  >> PASS CRITERIA:
+  >>   [ ] Log shows [TP1] and [TP2] partial close events
+  >>   [ ] tp1_closed / tp2_closed flags appear in CSV output
+  >>   [ ] Trades progress through INITIAL → TP0 → TP1 → TP2 → TRAILING
+  >>   [ ] BREAKEVEN count decreases (BE now triggers at 0.8R not entry)
+  >>   [ ] Runner lots are ~18.75% of original (not 100%)
+  >>   [ ] No broker TP in trade open (SL-only execution)
+  >> EXPECTED: +5 to +15R additional → cumulative +60 to +90R
+
+
+================================================================================
+  SPRINT 3 — FIX THE ENTRY MACHINE  (~6 hours)
+================================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 3A. IMPLEMENT SIGNAL COLLECT-AND-RANK                              │
+  │                                                                    │
+  │ Agreed by:  CD + GP                                                │
+  │ Evidence:   92.3% of trades from 2 patterns. Registration order =  │
+  │             de facto priority. Engine signals almost never fire.    │
+  │                                                                    │
+  │ File:  Include/Core/CSignalOrchestrator.mqh → CheckForNewSignals() │
+  │ Line:  539 (the "return signal" inside the loop)                   │
+  │                                                                    │
+  │ REPLACE the for-loop body (lines 406-540) with:                    │
+  │                                                                    │
+  │   // Collect all valid signals                                     │
+  │   EntrySignal candidates[];                                        │
+  │   int candidate_count = 0;                                         │
+  │                                                                    │
+  │   for(int i = 0; i < m_plugin_count; i++)                          │
+  │   {                                                                │
+  │      // ... (keep all existing guards: null, enabled, auto-kill,   │
+  │      //       skip zone, validation, confidence, quality checks)   │
+  │                                                                    │
+  │      // Instead of "return signal" at line 539, do:                │
+  │      ArrayResize(candidates, candidate_count + 1);                 │
+  │      candidates[candidate_count] = signal;                         │
+  │      candidate_count++;                                            │
+  │   }                                                                │
+  │                                                                    │
+  │   // Rank and return best signal                                   │
+  │   if(candidate_count == 0) return result;                          │
+  │   if(candidate_count == 1)                                         │
+  │   {                                                                │
+  │      // ... (apply confirmation / return as before)                │
+  │   }                                                                │
+  │                                                                    │
+  │   // Multiple candidates: pick highest quality                     │
+  │   int best_idx = 0;                                                │
+  │   int best_score = candidates[0].qualityScore;                     │
+  │   for(int c = 1; c < candidate_count; c++)                         │
+  │   {                                                                │
+  │      if(candidates[c].qualityScore > best_score)                   │
+  │      {                                                             │
+  │         best_score = candidates[c].qualityScore;                   │
+  │         best_idx = c;                                              │
+  │      }                                                             │
+  │   }                                                                │
+  │   EntrySignal best = candidates[best_idx];                         │
+  │   // ... (apply confirmation / return best)                        │
+  │                                                                    │
+  │ Lines changed: ~30                                                 │
+  │ Impact: +2 to +5R                                                  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 3B. PER-PLUGIN CONFIRMATION POLICY                                 │
+  │                                                                    │
+  │ Agreed by:  GP (all 168 had ConfirmationUsed=YES) + CD             │
+  │                                                                    │
+  │ File 1: Include/PluginSystem/CEntryStrategy.mqh                    │
+  │ ADD virtual method:                                                │
+  │                                                                    │
+  │   virtual bool RequiresConfirmation() { return true; }             │
+  │                                                                    │
+  │ File 2: Override in each engine:                                   │
+  │   CSessionEngine:   return false; (time-gated, delay costly)       │
+  │   CExpansionEngine:  return false; (volatility decays fast)        │
+  │   CLiquidityEngine:  return true;  (structural, benefits from it)  │
+  │                                                                    │
+  │ File 3: CSignalOrchestrator.mqh line 529                           │
+  │ REPLACE:                                                           │
+  │   if(m_enable_confirmation && !is_mr)                              │
+  │ WITH:                                                              │
+  │   if(m_enable_confirmation && !is_mr                               │
+  │      && m_entry_plugins[i].RequiresConfirmation())                 │
+  │                                                                    │
+  │ Lines changed: ~15                                                 │
+  │ Impact: Session/Expansion engines get immediate entry.             │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 3C. INPUT CHANGES (simple, high-confidence from data)              │
+  │                                                                    │
+  │ File: UltimateTrader_Inputs.mqh (and small OnTick addition)        │
+  │                                                                    │
+  │ 3C-i.  Raise InpPointsBSetup from 5 to 7  (filter B/B+ setups)    │
+  │        Evidence: 18 trades at B/B+ lost -2.84R                     │
+  │        Impact: +2.84R                                              │
+  │                                                                    │
+  │ 3C-ii. Set InpTradeLondon = false  (block London entries)          │
+  │        Evidence: 26 trades, 19.2% WR, -1.60R                      │
+  │        Impact: +1.60R                                              │
+  │                                                                    │
+  │ 3C-iii. Set InpSkipStartHour2 = 13  (extend NY skip zone)         │
+  │         Evidence: Hours 13-14 = -5.80R on 19 trades                │
+  │         Impact: +2 to +4R                                          │
+  │                                                                    │
+  │ 3C-iv. Add Friday block in UltimateTrader.mq5 OnTick:             │
+  │        After line 793 (if(isNewBar)):                              │
+  │          MqlDateTime dow_dt;                                       │
+  │          TimeToStruct(TimeCurrent(), dow_dt);                      │
+  │          if(dow_dt.day_of_week == 5) { /* skip signal section */ } │
+  │        Evidence: 31 Friday trades, 38.7% WR, -1.35R               │
+  │        Impact: +1.35R                                              │
+  │                                                                    │
+  │ 3C-v.  Disable losing Session Engine modes:                        │
+  │        Either set InpEnableSessionEngine = false, or add per-mode  │
+  │        toggles and disable London Breakout + NY Continuation.      │
+  │        Evidence: London BO 0/3 WR (-0.37R), NY Cont 0/2 (-1.12R)  │
+  │        Impact: +1.49R                                              │
+  │                                                                    │
+  │ 3C-vi. Disable CSessionBreakoutEntry when engine is active:        │
+  │        In OnInit(), wrap the g_sessionBreakout registration:       │
+  │        if(!InpEnableSessionEngine)                                 │
+  │           RegisterEntryPlugin(g_sessionBreakout,                   │
+  │                               InpEnableSessionBreakout);           │
+  │        Evidence: Duplicate signals with CSessionEngine              │
+  │                                                                    │
+  │ Combined input changes impact: +9 to +12R                          │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  >> CHECKPOINT 3: Re-backtest. Full "low-hanging fruit" result.
+  >> PASS CRITERIA:
+  >>   [ ] Log shows multiple plugins generating signals on same bar
+  >>   [ ] Highest qualityScore signal wins (not first-registered)
+  >>   [ ] Session/Expansion engine trades are NOT "Confirmed"
+  >>   [ ] Zero B or B+ quality trades in output
+  >>   [ ] Zero London session entries
+  >>   [ ] Zero Friday entries
+  >>   [ ] Zero 13:00-14:00 entries
+  >> EXPECTED: Cumulative +60 to +100R → net +80 to +120R
+  >> INPUT TUNING MAY NOW BEGIN.
+
+
+================================================================================
+  SPRINT 4 — ENGINE HARDENING  (~6 hours)
+================================================================================
+
+  Correctness bugs in all 3 engines. Lower immediate R-impact but critical
+  for engines to function correctly as Sprints 1-3 give them more airtime.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 4A. FIX CSMCOrderBlocks ZONE EXPIRATION                           │
+  │     Agreed by: CD (verified)                                       │
+  │     File: CSMCOrderBlocks.mqh:1153                                 │
+  │     CURRENT: int current_bar = 0;                                  │
+  │     PATCHED: int current_bar = Bars(_Symbol, PERIOD_H1) - 1;      │
+  │     Lines: 1                                                       │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4B. FIX ScoreLiquidityLevel DIRECTION BUG                         │
+  │     Agreed by: CD + GP                                             │
+  │     File: CLiquidityEngine.mqh:1434                                │
+  │     CURRENT:                                                       │
+  │       int confluence = m_context.GetSMCConfluenceScore(SIGNAL_LONG)│
+  │     PATCHED: Add direction parameter to ScoreLiquidityLevel():     │
+  │       int ScoreLiquidityLevel(double sweep_level, double atr,      │
+  │                                ENUM_SIGNAL_TYPE direction)         │
+  │       ...                                                          │
+  │       int confluence = m_context.GetSMCConfluenceScore(direction); │
+  │     Lines: ~5                                                      │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4C. FIX OB RETEST SL                                              │
+  │     Agreed by: CD                                                  │
+  │     File: CLiquidityEngine.mqh:764                                 │
+  │     CURRENT: double sl = entry - atr * 0.8;                        │
+  │     PATCHED: Use structural OB boundary + buffer:                  │
+  │       double ob_sl = m_context.GetOrderBlockStopLevel(SIGNAL_LONG);│
+  │       if(ob_sl > 0)                                                │
+  │          sl = ob_sl - atr * 0.15;                                  │
+  │       else                                                         │
+  │          sl = entry - atr * 0.8;  // fallback                      │
+  │     Also add: SMC confluence gate >= 30 before signal generation.  │
+  │     Lines: ~15                                                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4D. FIX FVG MODE TO CHECK ACTUAL FVG ZONES                        │
+  │     Agreed by: CD + GM                                             │
+  │     Files: IMarketContext.mqh, CMarketContext.mqh,                 │
+  │            CLiquidityEngine.mqh                                    │
+  │     Action: Add IsInBullishFVG()/IsInBearishFVG() to interface.    │
+  │             Replace SMC confluence >= 55 proxy with direct check.  │
+  │     Lines: ~20                                                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4E. FIX SESSION ENGINE TIMEZONE                                    │
+  │     Agreed by: CD + GP + GM (strongest consensus)                  │
+  │     File: CSessionEngine.mqh                                       │
+  │     CURRENT GetGMTHour (line 464):                                 │
+  │       int hour = dt.hour - m_gmt_offset;                           │
+  │     PATCHED: Auto-detect offset in Initialize():                   │
+  │       m_gmt_offset =                                               │
+  │          (int)((TimeCurrent() - TimeGMT()) / 3600);                │
+  │     Fix UpdateAsianRange date boundary: use GMT-based date, not    │
+  │       server-time date, for bar filtering.                         │
+  │     Initialize engine_confluence to 50 (not 0) before applying     │
+  │       location penalty.                                            │
+  │     Lines: ~20                                                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4F. FIX SQUEEZE COUNTER                                           │
+  │     Agreed by: CD                                                  │
+  │     File: CExpansionEngine.mqh:819                                 │
+  │     CURRENT: m_squeeze_bars++;  (runs every call)                  │
+  │     PATCHED:                                                       │
+  │       datetime cur_bar = iTime(_Symbol, PERIOD_H1, 0);            │
+  │       if(cur_bar != m_last_squeeze_bar)                            │
+  │       {                                                            │
+  │          m_squeeze_bars++;                                         │
+  │          m_last_squeeze_bar = cur_bar;                             │
+  │       }                                                            │
+  │     Add member: datetime m_last_squeeze_bar = 0;                   │
+  │     Lines: ~7                                                      │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4G. NORMALIZE MIN SL ACROSS ENGINES                                │
+  │     Agreed by: GP (EA-wide 800 vs engine defaults of 100)          │
+  │     Files: All 3 engine constructors                               │
+  │     Action: Pass InpMinSLPoints into all engine constructors.      │
+  │     Lines: ~10                                                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 4H. FIX RISK METADATA FABRICATION                                  │
+  │     Agreed by: GP (verified at CQualityTierRiskStrategy:419)       │
+  │     CURRENT (line 419):                                            │
+  │       signal.setupQuality = SETUP_B_PLUS;  // Default quality      │
+  │     Action: Ensure the signal-aware path                           │
+  │       (CalculatePositionSizeFromSignal) is always used.            │
+  │       In CTradeOrchestrator, pass the full EntrySignal to the risk │
+  │       strategy instead of going through the reduced interface.     │
+  │     Lines: ~15                                                     │
+  └─────────────────────────────────────────────────────────────────────┘
+
+  >> CHECKPOINT 4: Re-backtest. Engine trade count should increase.
+  >> PASS CRITERIA:
+  >>   [ ] Engine trade count > 12 (baseline was 8+4=12)
+  >>   [ ] FVG Mitigation trades at actual FVG zones (verify in log)
+  >>   [ ] Session windows correct (verify Asian range times in log)
+  >>   [ ] Compression BO squeeze bars match actual H1 bar count
+  >>   [ ] No OB zones older than 200 bars in SMC analysis
+
+
+================================================================================
+  SPRINT 5 — PRODUCTION HARDENING  (~4 hours)
+================================================================================
+
+  These prevent live-trading failures. No backtest P&L impact.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 5A. MULTI-TIMEFRAME DATA SYNC (GM)                                │
+  │     Wrap all iHigh/iLow D1/W1/H4 calls with:                      │
+  │     if(!SeriesInfoInteger(sym, period, SERIES_SYNCHRONIZED))       │
+  │        { /* retry or use cached */ }                               │
+  │     Lines: ~30 across CMarketContext, CLiquidityEngine, etc.       │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 5B. FIELD-BY-FIELD SERIALIZATION (GM)                              │
+  │     Replace StructToCharArray in state persistence with            │
+  │     FileWriteDouble/FileWriteInteger per field. Prevents           │
+  │     struct padding corruption across MT5 versions.                 │
+  │     Lines: ~80 (mechanical)                                        │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 5C. ArrayResize RESERVE PARAMETER (GM)                             │
+  │     All ArrayResize calls in loops: add reserve=50                 │
+  │     Lines: ~15 (search and replace)                                │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 5D. TIGHTEN SPREAD GATE (CD)                                      │
+  │     Set InpMaxSpreadPoints = 30 (was 50). Evidence: spread=40      │
+  │     entry passed in backtest.                                      │
+  │     Lines: 1 input change                                          │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 5E. MINIMUM RISK FLOOR (CD)                                       │
+  │     In CQualityTierRiskStrategy, after all multipliers:            │
+  │     risk_pct = MathMax(risk_pct, 0.2);                             │
+  │     Prevents sub-minimum lots from silent trade rejection.         │
+  │     Lines: ~3                                                      │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  SPRINT 6 — FUTURE CAPABILITY  (after Sprints 0-5 proven)
+================================================================================
+
+  Strategic enhancements requiring dedicated research and backtesting.
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 6A. ENABLE SHORT TRADING (CD)                                      │
+  │     Audit short risk mult (apply once not twice), relax 200 EMA    │
+  │     filter for engine signals, raise InpScoreBearEngulfing to 70+  │
+  │     Impact: +2 to +6R | Complexity: Hard                          │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 6B. STRUCTURAL EARLY INVALIDATION (GM concept)                     │
+  │     Replace MAE/MFE check with: exit only if price CLOSES below   │
+  │     the originating OB/FVG zone or Asian range.                    │
+  │     Complexity: Medium                                             │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 6C. SHADOW TRAIL (GM concept)                                      │
+  │     Close only on candle CLOSE below trail, not intra-bar touch.   │
+  │     Requires custom implementation and dedicated backtest.         │
+  │     Complexity: Hard                                               │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 6D. DEAD INPUT / FEATURE CLEANUP (CD + GP)                         │
+  │     Wire InpModeKillMinTrades to engines. Wire                     │
+  │     InpUseStructureTargets. Implement or remove dynamic weights.   │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │ 6E. REGRESSION TEST SUITE (GP)                                     │
+  │     Tests for: logger accounting, trailing selector, staged exits, │
+  │     session GMT, liquidity score, signal arbitration.              │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+  IMPACT PROJECTION
+================================================================================
+
+  Current baseline:                            +20.21R / 11.5 months
+
+  Sprint 0 (Telemetry):                       +0R (measurement trust)
+  Sprint 1 (Stop the Bleeding):               +35 to +55R
+    1A Early invalidation off                    +15 to +27R
+    1B Chandelier-only trailing                  +15 to +30R
+    1C Remove double vol adjustment              +1 to +3R
+  Sprint 2 (Exit Machine):                    +5 to +15R
+    2A TP1/TP2 partials                          +5 to +12R
+    2B/2C BE wiring + Hybrid fix                 +0 to +3R
+  Sprint 3 (Entry Machine):                   +12 to +20R
+    3A Signal ranking                            +2 to +5R
+    3B Confirmation policy                       +1 to +3R
+    3C Input changes (quality/session/day/skip)  +9 to +12R
+  Sprint 4 (Engine Hardening):                +2 to +8R
+
+  ────────────────────────────────────────────
+  CONSERVATIVE TOTAL:                          +54R  (~74R net, 3.7x)
+  OPTIMISTIC TOTAL:                            +98R  (~118R net, 5.8x)
+  ────────────────────────────────────────────
+
+  Sprint 1 alone (3 changes, ~4 hours) is projected at +35 to +55R.
+  If Sprint 1 fails to exceed +15R, STOP — investigate before proceeding.
+
+
+================================================================================
+  ANALYST CONTRIBUTION CREDIT
+================================================================================
+
+  CD:  Early invalidation -26.90R, MFE analysis (124.95R), session/day/
+       hour performance, trailing diagnosis, R-impact quantification
+  GP:  Telemetry audit, dead call sites, confirmation finding, risk
+       fabrication, checkpoint methodology, exit mislabeling
+  GM:  MTF data sync, struct/CRC brittleness, ArrayResize, Shadow Trail
+       concept, structural invalidation concept
+
+================================================================================
+  END OF UNIFIED EXECUTION ROADMAP
+================================================================================

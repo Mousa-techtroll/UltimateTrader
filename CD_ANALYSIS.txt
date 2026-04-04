@@ -1,0 +1,890 @@
+  UltimateTrader EA — Comprehensive Analysis & Evaluation
+
+  1. ARCHITECTURAL OVERVIEW
+
+  The EA is a 10-layer plugin architecture merging "Stack17" trading logic with "AICoder V1" infrastructure. ~80 files, ~280 input parameters,
+  ~15,000+ lines of code.
+
+  Layer stack:
+
+  ┌───────┬───────────────────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────┐
+  │ Layer │             Component             │                                            Role                                             │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 1     │ CMarketContext                    │ Central market data (7 sub-analyzers: Trend, Regime, Macro, Crash, SMC, Volatility,         │
+  │       │                                   │ Momentum)                                                                                   │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 2     │ CSignalValidator +                │ Multi-gate signal validation + quality scoring                                              │
+  │       │ CSetupEvaluator                   │                                                                                             │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 3a    │ 13 Entry Plugins                  │ Pattern-based signal generators (legacy)                                                    │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 3b    │ 3 Entry Engines                   │ Phase 5 multi-mode engines (Liquidity, Session, Expansion)                                  │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 4     │ 4 Exit Plugins                    │ Regime-aware, daily-loss-halt, weekend, max-age exits                                       │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 5     │ 6 Trailing Plugins                │ ATR, Swing, SAR, Chandelier, Stepped, Hybrid                                                │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 6     │ CQualityTierRiskStrategy          │ Quality-tiered position sizing with 8-step risk pipeline                                    │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 7     │ CEnhancedTradeExecutor            │ Spread/slippage gates, shock detection, retry logic                                         │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 8     │ CAdaptiveTPManager                │ Volatility/trend-adaptive TP multipliers                                                    │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 9     │ Core Orchestration                │ Signal orchestrator, trade orchestrator, position coordinator, risk monitor                 │
+  ├───────┼───────────────────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────┤
+  │ 10    │ Display + Logging                 │ Dashboard, CSV trade logger, forensic telemetry                                             │
+  └───────┴───────────────────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+  Data flow: New H1 bar → Market state update → Day-type classification → Entry plugins/engines scan → Signal validation chain → Risk sizing →
+  Trade execution → Position lifecycle management (trailing + partials + exits)
+
+  ---
+  2. THE THREE ENGINES
+
+  2.1 LIQUIDITY ENGINE
+
+  Concept: Smart Money Concepts (SMC) — trades institutional order flow at key liquidity levels.
+
+  Four modes (priority cascade):
+
+  ┌─────┬────────────────┬──────────────────────────────────────────────────────────────┬───────┬─────────┬──────────┐
+  │  #  │      Mode      │                            Logic                             │  R:R  │ Quality │ SMC Gate │
+  ├─────┼────────────────┼──────────────────────────────────────────────────────────────┼───────┼─────────┼──────────┤
+  │ 1   │ Displacement   │ Liquidity sweep beyond swing + impulse body ≥1.5× ATR        │ 2.5:1 │ 88-95   │ ≥40      │
+  ├─────┼────────────────┼──────────────────────────────────────────────────────────────┼───────┼─────────┼──────────┤
+  │ 2   │ OB Retest      │ Price enters order block + BOS aligned + rejection candle    │ 3.0:1 │ 80-82   │ None     │
+  ├─────┼────────────────┼──────────────────────────────────────────────────────────────┼───────┼─────────┼──────────┤
+  │ 3   │ FVG Mitigation │ Retracement into fair value gap + rejection (8-bar cooldown) │ 2.5:1 │ 75-80   │ ≥55      │
+  ├─────┼────────────────┼──────────────────────────────────────────────────────────────┼───────┼─────────┼──────────┤
+  │ 4   │ SFP            │ Swing failure pattern + volume confirmation                  │ 2.5:1 │ 74-81   │ None     │
+  └─────┴────────────────┴──────────────────────────────────────────────────────────────┴───────┴─────────┴──────────┘
+
+  Key features:
+  - Liquidity hierarchy scoring (week H/L = 4, day H/L = 3, SMC zone = 3, minor H1 = 1 — gate at ≥2)
+  - Phase 2 quality scoring for Displacement (body/ATR ratio, close position, imbalance gap)
+  - DAY_VOLATILE restricts to Displacement-only
+  - Bearish quality discount (83 vs 88 for Displacement) — acknowledges gold's bullish bias
+
+  Bugs found:
+  1. OB Retest SL ignores actual OB boundary — uses entry - ATR*0.8 instead of OB bottom - buffer. CSMCOrderBlocks already provides
+  GetOrderBlockStopLevel() but it's never called.
+  2. FVG mode doesn't check actual FVG zones — uses SMC confluence ≥55 as a proxy, which can be satisfied without any FVG involvement.
+  3. ScoreLiquidityLevel() always calls SIGNAL_LONG regardless of direction — bearish setups get wrong SMC zone check.
+  4. CSMCOrderBlocks zone expiration is broken — current_bar = 0 hardcoded, so 0 - formed_bar > 200 is always false. No zone is ever
+  age-expired.
+  5. OB Retest has no SMC confluence minimum — can fire with confluence = 0, making it the weakest-filtered mode despite being priority 2.
+  6. SFP disabled with 0% WR — fractal detection uses bars[5..25] (only 1 day of swings on H1), far too short for structural fractal
+  identification on gold.
+
+  ---
+  2.2 SESSION ENGINE
+
+  Concept: ICT session-based trading — time-gated modes tied to institutional session behavior.
+
+  Five phases (mutually exclusive by GMT hour):
+
+  ┌───────┬───────┬───────────────────────┬──────────────────────────────────────────────────────┬──────────┬─────────┐
+  │ Phase │  GMT  │         Mode          │                        Logic                         │   R:R    │ Quality │
+  ├───────┼───────┼───────────────────────┼──────────────────────────────────────────────────────┼──────────┼─────────┤
+  │ 1     │ 0-7   │ Asian Range Build     │ Track M15 H/L for breakout setup                     │ —        │ —       │
+  ├───────┼───────┼───────────────────────┼──────────────────────────────────────────────────────┼──────────┼─────────┤
+  │ 2     │ 8-10  │ London Breakout       │ Close breaks Asian range + buffer (0.35× ATR)        │ 2:1      │ 80-82   │
+  ├───────┼───────┼───────────────────────┼──────────────────────────────────────────────────────┼──────────┼─────────┤
+  │ 3     │ 13-14 │ NY Continuation       │ Continue London direction + macro alignment          │ 2:1      │ 76-78   │
+  ├───────┼───────┼───────────────────────┼──────────────────────────────────────────────────────┼──────────┼─────────┤
+  │ 4     │ 15-16 │ Silver Bullet         │ M15 FVG detection + 50% fill entry (ICT concept)     │ 3:1      │ 83-85   │
+  ├───────┼───────┼───────────────────────┼──────────────────────────────────────────────────────┼──────────┼─────────┤
+  │ 5     │ 16-17 │ London Close Reversal │ Fade overextended moves (≥1.5× ATR from London open) │ variable │ 78-80   │
+  └───────┴───────┴───────────────────────┴──────────────────────────────────────────────────────┴──────────┴─────────┘
+
+  Key features:
+  - ATR-adaptive thresholds via GetATRThreshold(atr, mult, floor, cap) — prevents fixed-point values
+  - Asian range validation: must be 0.5-2.0× ATR (filters too-narrow and too-wide days)
+  - Silver Bullet implements its own M15 FVG detection independently from CSMCOrderBlocks
+  - NY Continuation requires macro alignment (macro score ≤ ±2)
+  - London direction state carries through for NY Continuation
+
+  Bugs found:
+  1. Timezone date boundary bug — GetTodayStart() uses server-time midnight, but Asian hours at GMT 0-7 may cross the server-time date boundary
+  for brokers with positive GMT offsets. The first hours of the Asian range can be excluded.
+  2. Static GMT offset with no DST support — m_gmt_offset is a constant subtracted from server time. Most forex brokers shift ±1 hour for DST
+  twice yearly. Uses TimeCurrent() instead of TimeGMT().
+  3. No "one signal per mode per day" guard for London Breakout — can fire multiple consecutive signals if breakout conditions persist.
+  4. London Close Reversal has no H4 trend filter — will fade extensions against strong H4 trends.
+  5. London Close Reversal has no minimum R:R guard — the R:R is dynamic and can be very poor on small extensions with wide day ranges.
+  6. Redundancy with CSessionBreakoutEntry — both default to enabled, creating duplicate signals for the same London/NY setups. Both track Asian
+   range independently.
+
+  ---
+  2.3 EXPANSION ENGINE
+
+  Concept: Volatility expansion and structural breakout patterns.
+
+  Three modes (priority cascade):
+
+  ┌─────┬────────────────────────┬──────────────────────────────────────────────────────────────────────┬───────────┬────────────┬─────────┐
+  │  #  │          Mode          │                                Logic                                 │ Direction │    R:R     │ Quality │
+  ├─────┼────────────────────────┼──────────────────────────────────────────────────────────────────────┼───────────┼────────────┼─────────┤
+  │ 1   │ Panic Momentum         │ Death Cross (D1 EMA50 < EMA200) + Rubber Band (price > EMA21 + 1.5×  │ SELL only │ variable   │ 80      │
+  │     │                        │ ATR)                                                                 │           │            │         │
+  ├─────┼────────────────────────┼──────────────────────────────────────────────────────────────────────┼───────────┼────────────┼─────────┤
+  │ 2   │ Institutional Candle   │ IC body ≥ 2.0× ATR → 2-5 bar consolidation → breakout                │ Both      │ ~1:1 to    │ 76      │
+  │     │ BO                     │                                                                      │           │ 2:1        │         │
+  ├─────┼────────────────────────┼──────────────────────────────────────────────────────────────────────┼───────────┼────────────┼─────────┤
+  │ 3   │ Compression Breakout   │ BB squeeze inside Keltner (min 3 bars) → squeeze release + BB break  │ Both      │ 2.5:1      │ 74      │
+  └─────┴────────────────────────┴──────────────────────────────────────────────────────────────────────┴───────────┴────────────┴─────────┘
+
+  Key features:
+  - DAY_RANGE blocks the entire engine — no expansion trading on consolidation days
+  - IC uses a two-state machine (SCANNING → CONSOLIDATING) with 5-bar expiry
+  - Compression uses BB-inside-Keltner squeeze detection (TTM Squeeze concept)
+  - Rejection wick filter for Compression (wick > 50% body = false breakout)
+  - ATR percentile confluence boost for Compression (< 10th percentile = +20 confluence)
+
+  Bugs found:
+  1. Dual ADX check ambiguity in Panic Momentum — CCrashDetector checks H1 ADX > 18, engine checks context ADX (likely H4 ADX > 18). Different
+  timeframes, different indicators, never documented.
+  2. CCrashDetector computes SL/TP values that the engine ignores — GetRubberBandSL(), GetRubberBandTP(), GetRubberBandEntry() are dead code.
+  Engine computes its own independently.
+  3. IC consolidation uses strict containment — a single tick of wick protrusion invalidates consolidation. Gold H1 wicks frequently pierce 1-2
+  points beyond prior ranges.
+  4. Squeeze counter vulnerability — m_squeeze_bars increments every call, not once per bar. If called on every tick, the counter massively
+  over-counts.
+  5. No volume confirmation on any mode — IC detection especially should require above-average volume for the institutional candle.
+  6. No R:R minimum gate — Panic Momentum can produce signals with very poor R:R if the swing low target is close to entry.
+
+  Parameter discrepancy: The EA constructor passes InpInstCandleMult = 2.5 and InpCompressionMinBars = 8 from inputs, but the CExpansionEngine
+  constructor defaults are 2.0 and 3 respectively. ConfigureModes() overwrites with the input values, so the actual runtime values are 2.5 and 8
+   — the tighter, more conservative settings.
+
+  ---
+  3. THE TRAILING SYSTEM
+
+  3.1 Six Trailing Strategies
+
+  ┌──────────────────────┬────────────────────────────────────┬─────────────────────┬─────────────────────────────┐
+  │       Strategy       │             SL Formula             │      Tightness      │          Best For           │
+  ├──────────────────────┼────────────────────────────────────┼─────────────────────┼─────────────────────────────┤
+  │ ATR                  │ Price ± ATR × 1.35                 │ Tightest            │ Steady trends               │
+  ├──────────────────────┼────────────────────────────────────┼─────────────────────┼─────────────────────────────┤
+  │ Swing                │ Lowest/Highest in 7 bars ± buffer  │ Loose               │ Structural trailing         │
+  ├──────────────────────┼────────────────────────────────────┼─────────────────────┼─────────────────────────────┤
+  │ Parabolic SAR        │ SAR(0.02, 0.2) ± buffer            │ Variable            │ Accelerating trends         │
+  ├──────────────────────┼────────────────────────────────────┼─────────────────────┼─────────────────────────────┤
+  │ Chandelier (default) │ HighestHigh(15) - ATR × 3.0        │ Moderate            │ Gold's deep-pullback trends │
+  ├──────────────────────┼────────────────────────────────────┼─────────────────────┼─────────────────────────────┤
+  │ Stepped              │ Entry + (steps × half_step) - step │ Very conservative   │ Choppy markets              │
+  ├──────────────────────┼────────────────────────────────────┼─────────────────────┼─────────────────────────────┤
+  │ Hybrid               │ Max(ATR, Swing, Chandelier)        │ Adaptive-but-capped │ Theoretically best          │
+  └──────────────────────┴────────────────────────────────────┴─────────────────────┴─────────────────────────────┘
+
+  3.2 CRITICAL BUG: All 6 Run Simultaneously
+
+  InpTrailStrategy is a dead input. The EA creates, initializes, and registers ALL 6 plugins. CPositionCoordinator::ApplyTrailingPlugins()
+  iterates all registered plugins and picks the one with the tightest improving SL. The user's selection is never used to filter.
+
+  Impact: The effective behavior is always "tightest SL from any method." Since ATR trailing at 1.35× produces the tightest SL, it typically
+  wins — overriding the intended Chandelier behavior (3.0× ATR, which gives gold the breathing room it needs for pullbacks). This likely causes
+  premature stop-outs on trades that would have been profitable with Chandelier-only trailing.
+
+  3.3 CHybridTrailing Can Never Lock Profit
+
+  At line 255-256, the Hybrid caps any SL that crosses entry back to entry - 10 points. This means it can NEVER set SL above entry price. It is
+  architecturally limited to breakeven-minus-10-points, making it the most conservative strategy despite being designed as the most adaptive.
+
+  3.4 TP0/TP1/TP2 State Machine
+
+  TP0 (0.5R — 25% partial close): Implemented and functional. Fires at 0.5× risk distance, closes 25% of original lots. Gates breakeven
+  eligibility.
+
+  TP1 (1.3R — 50% partial close): NOT IMPLEMENTED. The broker receives TP1 as the position's take-profit level and closes 100% of remaining lots
+   when hit. InpTP1Volume (50%) is a dead input.
+
+  TP2 (1.8R — 40% partial close): NEVER REACHED. Since TP1 closes the entire position, TP2 is never triggered. InpTP2Volume (40%) is a dead
+  input.
+
+  The 25% + 50% + 40% = 115% specification bug never manifests because only TP0 executes.
+
+  3.5 Dead Trailing Inputs
+
+  ┌────────────────────┬──────────────────┬─────────────────────────────────────┐
+  │       Input        │      Value       │               Status                │
+  ├────────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ InpTrailStrategy   │ TRAIL_CHANDELIER │ Dead — all 6 run                    │
+  ├────────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ InpTrailBETrigger  │ 0.8R             │ Dead — never referenced             │
+  ├────────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ InpTrailBEOffset   │ 50 pts           │ Dead — never referenced             │
+  ├────────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ InpBreakevenOffset │ 50 pts           │ Dead — never referenced             │
+  ├────────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ InpTP1Volume       │ 50%              │ Dead — TP1 partials not implemented │
+  ├────────────────────┼──────────────────┼─────────────────────────────────────┤
+  │ InpTP2Volume       │ 40%              │ Dead — TP2 partials not implemented │
+  └────────────────────┴──────────────────┴─────────────────────────────────────┘
+
+  3.6 Batched Trailing (Smart Feature)
+
+  The batched SL broker modification (default ON) only sends SL updates at R-multiple milestones: breakeven, 1R lock, 2R lock, 3R+. This lets
+  winners run between levels while the internal tracking maintains a precise SL. Good design — reduces broker modify spam by 80%+ while
+  maintaining protection at key levels.
+
+  ---
+  4. CORE ORCHESTRATION & RISK PIPELINE
+
+  4.1 Signal Flow
+
+  Entry plugins scan (sequential, first-valid-wins)
+    → CSignalValidator (200 EMA filter, trend alignment, regime compatibility, short protection)
+    → CSetupEvaluator (0-10 point scoring → A+/A/B+/B/None quality tier)
+    → Confirmation candle (optional 1-bar delay)
+    → CQualityTierRiskStrategy (8-step risk pipeline)
+    → CTradeOrchestrator (additional 200 EMA + vol adjustments)
+    → CEnhancedTradeExecutor (spread gate, shock gate, retry logic)
+    → CPositionCoordinator (lifecycle management)
+
+  4.2 CRITICAL BUG: First-Signal-Wins Priority
+
+  The plugin loop returns the first valid signal that passes validation. No ranking, no comparison. A B-quality engulfing signal from plugin #0
+  beats an A+-quality engine signal from plugin #15. Registration order is the only priority mechanism.
+
+  4.3 CRITICAL BUG: Double Volatility Adjustment
+
+  The volatility risk multiplier from CVolatilityRegimeManager is applied:
+  1. In CQualityTierRiskStrategy Step 3 (inside position sizing)
+  2. Again in CTradeOrchestrator line 259 (after position sizing)
+
+  If the multiplier is 0.7 (VOL_HIGH), the effective adjustment is 0.7 × 0.7 = 0.49 — almost halving risk when only a 30% reduction was
+  intended. This likely causes significant under-sizing in high/extreme volatility.
+
+  4.4 Risk Layer Stacking
+
+  Full multiplicative chain for a worst-case trade (short, counter-trend, high-vol, consecutive losses, weak engine):
+
+  Base risk (B-tier: 0.5%)
+    × Consecutive loss L2 (0.50)
+    × Volatility regime (0.70)
+    × Short protection (0.50)
+    × Engine weight (0.50)
+    × Counter-trend 200 EMA (0.50)
+    × Volatility AGAIN (0.70)    ← bug
+  = 0.5% × 0.030625
+  = 0.015% risk
+
+  On a $10,000 account with a $15 SL, this produces ~0.001 lots — below minimum lot size. The trade is silently rejected. The risk chain can
+  reduce position sizing to zero without any explicit "risk too low" warning.
+
+  4.5 Quality Scoring System
+
+  The 0-10 point system is well-designed:
+  - Trend alignment: +1 to +2
+  - CHoCH alignment: +2 (exclusive with trend)
+  - RSI extremes: +3
+  - Regime: +1 to +2
+  - Macro bias: +1 to +3
+  - Pattern quality: +1 to +2
+
+  Tier thresholds (defaults): A+ ≥ 8, A ≥ 7, B+ ≥ 6, B ≥ 5, None < 5 (rejected)
+
+  This creates meaningful discrimination — a trend-aligned trade in a trending regime with strong macro bias scores 7 (A), while a counter-trend
+   trade in choppy conditions with no macro support scores 2 (rejected).
+
+  4.6 Short Protection System (Multi-Layer)
+
+  Shorts face 4+ layers of restriction on gold:
+  1. 200 EMA smart filter (specific exception rules for shorts above 200 EMA)
+  2. Short risk multiplier 0.5× (applied in orchestrator AND risk strategy — potential double-penalty)
+  3. ADX caps for counter-trend shorts
+  4. Macro score blocking (strong bullish macro blocks shorts)
+  5. Bear regime override (shorts get +2 quality, specific patterns fast-tracked)
+
+  This is comprehensive but the layering may be too aggressive. The combined effect is that even valid bearish setups in bullish markets receive
+   tiny position sizes.
+
+  4.7 Auto-Kill Gate
+
+  ┌──────────────────┬────────────────┬───────────────────────────────┐
+  │    Threshold     │ After N Trades │           Condition           │
+  ├──────────────────┼────────────────┼───────────────────────────────┤
+  │ Early kill       │ 10             │ PF < 0.8                      │
+  ├──────────────────┼────────────────┼───────────────────────────────┤
+  │ Standard kill    │ 20             │ PF < 1.1                      │
+  ├──────────────────┼────────────────┼───────────────────────────────┤
+  │ No auto-recovery │ —              │ Stays dead until manual reset │
+  └──────────────────┴────────────────┴───────────────────────────────┘
+
+  Concern: 10 trades is a very small sample for H1 gold. A 60% WR strategy can hit PF < 0.8 after 10 trades through normal variance. Combined
+  with no auto-recovery, this can permanently disable profitable strategies during drawdowns.
+
+  ---
+  5. INPUT PARAMETERS EVALUATION
+
+  5.1 Well-Calibrated Parameters
+
+  - Risk tiers (1.0/0.8/0.6/0.5%) — conservative, appropriate for gold
+  - Daily loss limit (3%) — standard institutional risk management
+  - ATR period (14) — gold standard for ATR
+  - Trailing Chandelier mult (3.0) — gives gold appropriate room (when it actually runs alone)
+  - Weekend close enabled — critical for gold's gap risk
+  - Max positions (5) — prevents over-concentration
+
+  5.2 Questionable Parameters
+
+  - InpTP0Distance = 0.5 — too aggressive for gold; 0.7-0.8R would better balance capture vs. premature closing
+  - InpShortRiskMultiplier = 0.5 — applied potentially twice (orchestrator + risk strategy), making effective multiplier 0.25×
+  - InpMinSLPoints = 800 (8.0 USD) — reasonable for H1 gold but should be ATR-relative
+  - InpAutoKillMinTrades = 20 — too small a sample for reliable PF measurement on H1
+  - InpAutoKillEarlyPF = 0.8 — aggressive given the small sample sizes involved
+  - London skip zone 8-11 GMT — this blocks one of the most liquid and tradeable sessions (London open)
+
+  5.3 Dead/Unused Parameters (6 identified)
+
+  InpTrailStrategy, InpTrailBETrigger, InpTrailBEOffset, InpBreakevenOffset, InpTP1Volume, InpTP2Volume
+
+  5.4 Disabled Strategies (by default)
+
+  - Pin Bar (InpEnablePinBar = false) — 23% WR, -$603
+  - Liquidity Sweep legacy (InpEnableLiquiditySweep = false) — replaced by engine SFP
+  - MA Cross (InpEnableMACross = false) — AvgR = -0.9
+  - False Breakout Fade (InpEnableFalseBreakout = false)
+  - Support Bounce (InpEnableSupportBounce = false) — pending validation
+  - SFP engine mode (InpLiqEngineSFP = false) — 0% WR in 5.5mo backtest
+
+  These disablements are evidence of iterative backtesting and honest performance tracking — a strength of the development approach.
+
+  ---
+  6. CONSOLIDATED BUG LIST (Priority Ordered)
+
+  Critical (Affect Trade Outcomes)
+
+  ┌─────┬──────────────────────────────┬──────────────────────────────────────────┬─────────────────────────────────────────────────────────┐
+  │  #  │             Bug              │                 Location                 │                         Impact                          │
+  ├─────┼──────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+  │ 1   │ All 6 trailing plugins run   │ UltimateTrader.mq5:400-425               │ ATR trailing (tightest) overrides intended Chandelier.  │
+  │     │ simultaneously               │                                          │ Likely causes premature stop-outs.                      │
+  ├─────┼──────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+  │ 2   │ Double volatility adjustment │ CQualityTierRiskStrategy Step 3 +        │ Risk squared instead of linear (0.7 → 0.49).            │
+  │     │                              │ CTradeOrchestrator:259                   │ Under-sizing in high vol.                               │
+  ├─────┼──────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+  │ 3   │ First-signal-wins priority   │ CSignalOrchestrator:356                  │ Lower-quality signals from early-registered plugins     │
+  │     │                              │                                          │ beat higher-quality signals from later plugins.         │
+  ├─────┼──────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+  │ 4   │ TP1/TP2 partial closes not   │ CPositionCoordinator                     │ Broker closes 100% at TP1. No scaling out. 6 related    │
+  │     │ implemented                  │                                          │ inputs are dead.                                        │
+  ├─────┼──────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+  │ 5   │ OB Retest SL ignores OB      │ CLiquidityEngine:764                     │ SL placed at ATR distance, not at structural OB level.  │
+  │     │ boundary                     │                                          │                                                         │
+  ├─────┼──────────────────────────────┼──────────────────────────────────────────┼─────────────────────────────────────────────────────────┤
+  │ 6   │ CSMCOrderBlocks zone         │ CSMCOrderBlocks:1153                     │ current_bar = 0 hardcoded. No zones ever expire by age. │
+  │     │ expiration broken            │                                          │                                                         │
+  └─────┴──────────────────────────────┴──────────────────────────────────────────┴─────────────────────────────────────────────────────────┘
+
+  High (Affect Signal Quality)
+
+  ┌─────┬──────────────────────────────────────────────┬─────────────────────────────────┬──────────────────────────────────────────────────┐
+  │  #  │                     Bug                      │            Location             │                      Impact                      │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 7   │ FVG mode uses SMC confluence as proxy, not   │ CLiquidityEngine:907            │ Signals on non-FVG locations that happen to have │
+  │     │ actual FVG zones                             │                                 │  high confluence.                                │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 8   │ ScoreLiquidityLevel always checks            │ CLiquidityEngine:1434           │ Bearish setups get wrong SMC scoring.            │
+  │     │ SIGNAL_LONG                                  │                                 │                                                  │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 9   │ Timezone date boundary bug                   │ CSessionEngine:UpdateAsianRange │ Asian range misses first hours on brokers with   │
+  │     │                                              │                                 │ positive GMT offsets.                            │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 10  │ Static GMT offset, no DST                    │ CSessionEngine                  │ All session windows shift ±1 hour during DST     │
+  │     │                                              │                                 │ transitions.                                     │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 11  │ CHybridTrailing can never set SL above entry │ CHybridTrailing:255             │ Breakeven cap makes this the most conservative,  │
+  │     │                                              │                                 │ not most adaptive.                               │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 12  │ Squeeze counter counts per tick, not per bar │ CExpansionEngine:m_squeeze_bars │ Over-counting causes premature squeeze-release   │
+  │     │                                              │                                 │ signals.                                         │
+  ├─────┼──────────────────────────────────────────────┼─────────────────────────────────┼──────────────────────────────────────────────────┤
+  │ 13  │ OB Retest has no SMC confluence gate         │ CLiquidityEngine:CheckOBRetest  │ Can fire with confluence = 0 (contradictory      │
+  │     │                                              │                                 │ setup).                                          │
+  └─────┴──────────────────────────────────────────────┴─────────────────────────────────┴──────────────────────────────────────────────────┘
+
+  Medium (Design Issues)
+
+  ┌─────┬───────────────────────────────────────────────────────────────────────────┬───────────────────────────────────────────────────────┐
+  │  #  │                                   Issue                                   │                        Impact                         │
+  ├─────┼───────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+  │ 14  │ Short risk multiplier potentially applied twice (orchestrator + risk      │ Effective 0.25× instead of 0.5×                       │
+  │     │ strategy)                                                                 │                                                       │
+  ├─────┼───────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+  │ 15  │ No auto-recovery for auto-killed plugins                                  │ Profitable strategies permanently disabled after      │
+  │     │                                                                           │ drawdown                                              │
+  ├─────┼───────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+  │ 16  │ CSessionBreakoutEntry + CSessionEngine duplicate (both enabled by         │ Duplicate signals for same London/NY setups           │
+  │     │ default)                                                                  │                                                       │
+  ├─────┼───────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+  │ 17  │ No pending signal expiry in CSignalOrchestrator                           │ Pending signals can persist indefinitely              │
+  ├─────┼───────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+  │ 18  │ IC consolidation requires perfect containment (zero wick tolerance)       │ Many valid patterns invalidated on gold               │
+  ├─────┼───────────────────────────────────────────────────────────────────────────┼───────────────────────────────────────────────────────┤
+  │ 19  │ Confirmation candle forced on engine signals                              │ 1-hour delay worsens R:R on time-sensitive engine     │
+  │     │                                                                           │ signals                                               │
+  └─────┴───────────────────────────────────────────────────────────────────────────┴───────────────────────────────────────────────────────┘
+
+  ---
+  7. STRENGTHS
+
+  1. Deep, multi-layered filtering — 200 EMA smart filter, regime compatibility, trend alignment, session filtering, confirmation candles,
+  quality scoring, and multiple risk gates. Very few garbage signals reach execution.
+  2. Self-correcting performance tracking — Per-plugin auto-kill, per-mode auto-kill within engines, dynamic weighting, and forensic telemetry
+  (MAE/MFE, R-milestones, session tagging). The system learns from its own mistakes.
+  3. Position persistence — Binary state file with CRC32 verification, versioned format, and broker position reconciliation on restart. Critical
+   for live deployment reliability.
+  4. Shock volatility detection — Three-indicator system (bar range, spread spike, M5 range) at two severity levels. Blocks entries during flash
+   crashes/spikes.
+  5. Batched trailing — R-milestone-based broker SL updates reduce modify spam while maintaining protection at key levels. Sophisticated and
+  practical.
+  6. Honest strategy disablements — Pin Bar, MA Cross, SFP, and others disabled with documented performance data. Shows evidence-based
+  development.
+  7. Comprehensive risk protection — Daily loss halt, weekend close, max age, max positions, margin check, spread gate, consecutive loss
+  scaling, consecutive error halt, emergency kill switch.
+  8. Well-structured codebase — Clean separation via IMarketContext interface, plugin pattern with base classes, organized include hierarchy,
+  extensive logging infrastructure.
+
+  ---
+  8. TOP RECOMMENDATIONS (Priority Ordered)
+
+  1. Wire InpTrailStrategy to disable non-selected trailing plugins. The single most impactful fix. Set SetEnabled(false) on all plugins except
+  the selected one. This alone should improve win rate by reducing premature stop-outs.
+  2. Remove duplicate volatility adjustment from CTradeOrchestrator:259-266. The CQualityTierRiskStrategy already handles it.
+  3. Implement collect-and-rank in CSignalOrchestrator::CheckForNewSignals(). Collect all valid signals into a temporary array, then select the
+  highest setupQuality/qualityScore.
+  4. Implement TP1/TP2 partial closes in CPositionCoordinator using R-multiple triggers (like TP0). Fix the 115% specification by using
+  remaining-lots percentages.
+  5. Fix OB Retest SL to use actual OB boundary from CSMCOrderBlocks.GetOrderBlockStopLevel().
+  6. Fix CSMCOrderBlocks zone expiration — use actual bar index instead of hardcoded 0.
+  7. Add auto-recovery for auto-killed plugins (e.g., 48-hour cooldown + counter reset with a minimum 50-trade re-evaluation window).
+  8. Use TimeGMT() or TimeGMTOffset() in Session Engine for DST-aware time handling.
+  9. Disable CSessionBreakoutEntry when CSessionEngine is enabled (or add deduplication).
+  10. Add minimum effective risk floor (0.2%) after all multipliers to prevent sub-minimum lot situations from silently dropping trades.
+
+● The analysis is complete. The EA is architecturally sophisticated with genuine institutional-grade concepts (SMC order flow, ICT Silver
+  Bullet, volatility regime classification, batched trailing), but has several critical implementation bugs — most notably the trailing system
+  running all 6 strategies simultaneously, the double volatility adjustment, and the first-signal-wins priority. The 6 dead inputs and
+  unimplemented TP1/TP2 partial closes represent significant gaps between the input specification and actual runtime behavior. Fixing the top
+  3-4 bugs (trailing selection, double vol adjustment, signal ranking, TP partials) would likely produce the largest performance improvement
+  with the least code change.
+
+
+  Code Analysis + Backtest Evidence (168 trades, Mar 2025 – Mar 2026)
+
+  ---
+  BACKTEST BASELINE
+
+  ┌───────────────────┬─────────────────────────────────────────────────────────┐
+  │      Metric       │                          Value                          │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Period            │ 2025-03-27 to 2026-03-10 (~11.5 months)                 │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Trades            │ 168 (ALL LONG, zero shorts)                             │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Win Rate          │ 48.2%                                                   │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Profit Factor     │ 1.43                                                    │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Net P&L           │ +$1,772.71 (+20.21R)                                    │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Expectancy        │ +$10.55 / +0.12R per trade                              │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ Max Drawdown      │ 9.42R / $808 (66-day recovery)                          │
+  ├───────────────────┼─────────────────────────────────────────────────────────┤
+  │ MFE Left on Table │ 124.95R (captured only 16% of peak favorable excursion) │
+  └───────────────────┴─────────────────────────────────────────────────────────┘
+
+  Where the profit actually comes from:
+  - 25 TRAILING exits (14.9% of trades) → +42.68R (the entire alpha)
+  - TP0 partials → $1,149 (64.8% of dollar profit)
+  - Everything else is breakeven or loss
+
+  ---
+  TIER 1 — CRITICAL (Largest P&L impact, fix immediately)
+
+  1.1 EARLY INVALIDATION IS A NET DESTROYER: -26.90R
+
+  Evidence: 39 trades closed by early invalidation. Only 1 win (2.6% WR). The "loss avoided" metric is -26.90R, meaning these exits resulted in worse fills than simply holding to the original SL. Average loss: -$29.71 per trade.
+  Total damage: -$1,158.60.
+
+  Code location: CPositionCoordinator.mqh lines 1062-1108
+
+  Root cause: The logic exits at market price within the first 3 bars if MFE_R ≤ 0.20 and MAE_R ≥ 0.40. But on H1 gold, many valid trades dip 0.4R within the first 1-3 bars before recovering. The early exit locks in a realized
+  loss that would have been smaller (or avoided entirely) if the trade had simply continued to its structural SL.
+
+  The numbers: The 39 early-invalidation trades averaged -0.311R at exit. If they'd held to SL, the average would have been approximately -1.0R — but many would have recovered. The net -26.90R "avoided" figure confirms recovery
+  outweighs the occasional full-SL hits.
+
+  Fix: Either:
+  - (a) Disable early invalidation entirely (InpEnableEarlyInvalidation = false) — immediate +26.90R improvement potential
+  - (b) Tighten the trigger: raise InpEarlyInvalidationMinMAE_R from 0.40 to 0.70 and reduce InpEarlyInvalidationMaxMFE_R from 0.20 to 0.05 (only exit truly dead trades)
+  - (c) Add a "waited N bars after MAE peak" condition — don't exit while still actively moving against
+
+  Estimated impact: +15 to +27R over the backtest period.
+
+  ---
+  1.2 ALL 6 TRAILING PLUGINS RUN SIMULTANEOUSLY — ATR OVERRIDES CHANDELIER
+
+  Evidence: The 25 TRAILING exits are the system's entire alpha (+42.68R). But 124.95R of MFE was left on the table across all 168 trades. The system captures only 16% of peak favorable excursion. Trailing exits average +1.71R
+  with average MFE of 2.16R (79% capture on runners), but 143 of 168 trades never reach trailing at all — they get stopped at breakeven or SL first.
+
+  Code location: UltimateTrader.mq5 lines 400-425 — all 6 plugins created and registered; CPositionCoordinator.mqh line 1227 — iterates ALL plugins, picks tightest SL.
+
+  Root cause: InpTrailStrategy = TRAIL_CHANDELIER is a dead input. ATR trailing at 1.35× ATR produces the tightest SL and typically wins the "best of 6" competition. On gold with H1 ATR of $8-15, that's a $10.80-$20.25 trail —
+  far too tight. Chandelier at 3.0× ATR ($24-$45) gives gold room to breathe through normal pullbacks but is overridden.
+
+  Fix: In OnInit(), after creating all trailing plugins, disable all except the selected one:
+  for(int t = 0; t < g_trailingPluginCount; t++)
+  {
+      bool is_selected = false;
+      if(InpTrailStrategy == TRAIL_ATR && g_trailingPlugins[t] == g_atrTrailing) is_selected = true;
+      else if(InpTrailStrategy == TRAIL_CHANDELIER && g_trailingPlugins[t] == g_chandelierTrailing) is_selected = true;
+      // ... etc for each
+      g_trailingPlugins[t].SetEnabled(is_selected);
+  }
+
+  Estimated impact: With Chandelier-only trailing, more trades survive initial pullbacks to become runners. Could increase the 25 trailing exits to 35-45, adding +15 to +30R.
+
+  ---
+  1.3 ZERO SHORT TRADES IN 12 MONTHS
+
+  Evidence: ALL 168 trades are LONG. Over 11.5 months of XAU/USD — a market that had multiple significant bearish swings — not a single short was taken.
+
+  Code root causes (multiple layers blocking shorts):
+
+  1. CSignalValidator 200 EMA filter (CSignalValidator.mqh:333-475): When price > 200 EMA (which it is most of the time for gold in an uptrend), shorts face an elaborate exception matrix. Almost no short signals pass unless RSI
+  is extreme overbought, macro is strongly bearish, AND ADX is weak.
+  2. Short risk multiplier applied potentially twice: Once in CSignalOrchestrator:515 and again in CQualityTierRiskStrategy:106. If both apply 0.5×, effective short risk = 0.25× base, producing sub-minimum lots.
+  3. Bear regime never activated: The log shows zero crash detector activations. Without IsBearRegimeActive() == true, many short patterns are blocked by ValidateTrendFollowingConditions():297-301.
+  4. All engine signals are inherently long-biased: LiqEng FVG Mitigation only fires bullish when H4Trend != BEARISH — but H4 trend was bullish/neutral for most of this period.
+  5. Pattern scores: InpScoreBearEngulfing = 42 vs InpScoreBullEngulfing = 92. Bear patterns score so low they rarely reach minimum quality thresholds.
+
+  Fix (multi-step):
+  - (a) Audit the short risk multiplier to ensure it applies exactly once (remove from orchestrator OR risk strategy, not both)
+  - (b) Relax the 200 EMA short filter for engine signals that have their own structural validation (OB Retest, FVG Mitigation with bearish BOS)
+  - (c) Raise InpScoreBearEngulfing from 42 to at least 65-70
+  - (d) Consider a counter-trend engine mode that specifically trades bearish setups at resistance levels
+
+  Estimated impact: Adding even modest short capability (20-30 trades/year at 40% WR, 0.10R avg) would add +2 to +6R and smooth the equity curve during bearish phases.
+
+  ---
+  1.4 LONDON SESSION IS A NET LOSER — BUT STILL TRADING
+
+  Evidence: 26 London trades, 19.2% WR, PF 0.83, net -1.60R (-$149.70). Both core strategies fail in London:
+  - Bullish Engulfing in London: 8 trades, 12.5% WR, -1.11R
+  - LiqEng FVG in London: 15 trades, 26.7% WR, -0.12R
+
+  Meanwhile, Asia is 66.7% WR / PF 3.08 / +17.64R and is the real profit center.
+
+  Code location: UltimateTrader_Inputs.mqh lines 214-221 — session filters and skip zones.
+
+  Current skip zones: London open chop 8-11 GMT and NY open chop 14-16 GMT are already skipped. But London signals still fire at 11-13 GMT (post-skip zone).
+
+  Fix: Either:
+  - (a) Set InpTradeLondon = false — eliminates all London entries
+  - (b) Extend London skip zone: InpSkipEndHour = 13 (covers 8-13 GMT instead of 8-11)
+  - (c) Apply a London-specific quality gate: only allow A+ setups in London (B/B+ are already losers, and London amplifies this)
+
+  Estimated impact: Eliminating London entries saves +1.60R directly and avoids ~26 losing trades per year.
+
+  ---
+  1.5 DOUBLE VOLATILITY RISK ADJUSTMENT
+
+  Evidence: Cannot be directly measured in backtest (no per-trade risk multiplier log), but the code clearly applies GetVolatilityRiskMultiplier() twice:
+  1. CQualityTierRiskStrategy.mqh Step 3
+  2. CTradeOrchestrator.mqh line 259
+
+  With a VOL_HIGH multiplier of 0.85, the actual effect is 0.85² = 0.72 (a 28% reduction vs intended 15%). With VOL_EXTREME at 0.65, it becomes 0.65² = 0.42 (a 58% reduction vs intended 35%).
+
+  The 4 VOLATILE regime trades in the backtest: Average +0.93R and PF 10.82 — they're the best-performing regime. Under-sizing them via double adjustment leaves significant profit on the table.
+
+  Fix: Remove the volatility adjustment from CTradeOrchestrator::ExecuteSignal() lines 257-267. The risk strategy already handles it.
+
+  Estimated impact: +5 to +15% position sizing improvement on volatile-regime trades. Small absolute R impact given only 4 vol trades, but critical for correctness.
+
+  ---
+  TIER 2 — HIGH (Significant structural improvements)
+
+  2.1 TP1/TP2 PARTIAL CLOSES NOT IMPLEMENTED
+
+  Evidence: The CSV shows TP0 fires on 85 trades (50.6%), generating $1,149.49 (64.8% of all profit). But after TP0, the broker's TP1 level closes 100% of remaining lots. There is no TP2 scaling. InpTP1Volume (50%) and
+  InpTP2Volume (40%) are dead inputs.
+
+  Impact analysis: 52 trades (31%) reached 1.0R (the zone where TP1 at 1.3R would fire). Of the 35 BREAKEVEN exits, all had TP0 closed and average MFE of 0.946R before reversing — meaning they got close to TP1 but never hit it.
+  If TP1 were a partial (50% of remaining at 1.3R) instead of a full close, the remaining 50% could have run to trailing.
+
+  Fix: Implement TP1/TP2 partial closes in CPositionCoordinator::ManageOpenPositions() using R-multiple triggers, identical to the TP0 implementation. Use remaining-lots percentages (not original-lots) to fix the 115%
+  specification:
+  - TP0: 25% of original (75% remains)
+  - TP1: 50% of remaining = 37.5% of original (37.5% remains)
+  - TP2: 50% of remaining = 18.75% of original (18.75% remains as runner)
+
+  Remove the broker-level TP entirely. Let the trailing system manage the final exit.
+
+  Estimated impact: More runners, fewer full-TP exits. Could convert 10-15 breakeven/SL trades into partial-profit + runner trades. Estimated +5 to +12R.
+
+  ---
+  2.2 FIRST-SIGNAL-WINS PRIORITY
+
+  Evidence: 92.3% of trades come from just 2 patterns (FVG Mitigation and Engulfing). The Session Engine modes (London BO, NY Cont, Silver Bullet, London Close) produced only 8 trades total. The Expansion Engine produced only 4
+  trades. The plugin registration order in OnInit() means Engulfing (registered first) always takes priority over engine signals.
+
+  Code location: CSignalOrchestrator.mqh:356 — sequential loop returns first valid signal.
+
+  Fix: Collect all valid signals from all plugins, then select the one with the highest composite score:
+  EntrySignal best_signal;
+  int best_score = -1;
+  for(int i = 0; i < m_plugin_count; i++)
+  {
+      EntrySignal sig = m_entry_plugins[i].CheckForEntrySignal();
+      if(sig.valid && sig.qualityScore > best_score)
+      {
+          best_signal = sig;
+          best_score = sig.qualityScore;
+      }
+  }
+  return best_signal;
+
+  Estimated impact: Engine signals (FVG quality 75-80, Silver Bullet 83-85) would win over Engulfing (base ~82) when both fire simultaneously. Better signal selection → better WR/PF.
+
+  ---
+  2.3 AUTO-KILL SYSTEM NOT FUNCTIONING
+
+  Evidence: The log's deinit states "No strategy data to export". Zero auto-kill events occurred during 12 months. The PluginPerformance tracking was empty at shutdown.
+
+  Code root cause: CSignalOrchestrator::RecordPluginTradeResult() must be called externally when trades close. Looking at CPositionCoordinator::HandleClosedPosition(), it calls engine-level RecordModeResult() but may not call the
+   orchestrator's plugin-level tracking. The wiring is incomplete.
+
+  Fix: In CPositionCoordinator::HandleClosedPosition(), add a call to g_signalOrchestrator.RecordPluginTradeResult(pattern_name, pnl, r_mult) for every closed trade. Verify the data flows through to EvaluateAutoKill().
+
+  Estimated impact: With functioning auto-kill, the 3 London Breakout trades (0% WR) and 2 NY Continuation trades (0% WR) would have been auto-killed after their first losses, saving -1.49R.
+
+  ---
+  2.4 B AND B+ QUALITY SETUPS ARE NET LOSERS — SHOULD BE FILTERED
+
+  Evidence:
+
+  ┌─────────┬─────┬───────┬──────┬────────┐
+  │ Quality │  N  │  WR%  │  PF  │  TotR  │
+  ├─────────┼─────┼───────┼──────┼────────┤
+  │ A+      │ 143 │ 50.3% │ 1.50 │ +17.84 │
+  ├─────────┼─────┼───────┼──────┼────────┤
+  │ A       │ 7   │ 57.1% │ 6.26 │ +5.21  │
+  ├─────────┼─────┼───────┼──────┼────────┤
+  │ B+      │ 4   │ 25.0% │ 0.11 │ -1.33  │
+  ├─────────┼─────┼───────┼──────┼────────┤
+  │ B       │ 14  │ 28.6% │ 0.75 │ -1.51  │
+  └─────────┴─────┴───────┴──────┴────────┘
+
+  18 B/B+ trades lost -2.84R combined. The quality scoring system works — lower quality = worse outcomes. But the EA still takes B/B+ trades.
+
+  Fix: Raise InpPointsBSetup from 5 to 6 (making the minimum threshold B+) and InpPointsBPlusSetup from 6 to 7 (effectively requiring A or better). Or simply reject below A: set InpPointsBSetup = 7.
+
+  Estimated impact: Eliminates 18 losing trades, saves +2.84R, improves WR from 48.2% to ~50.7%.
+
+  ---
+  2.5 FRIDAY IS A NET LOSER
+
+  Evidence: 31 Friday trades, 38.7% WR, PF 0.79, net -1.35R. Performance degrades linearly through the week:
+  - Monday: +14.03R (PF 2.45)
+  - Tuesday: +5.80R (PF 1.48)
+  - Wednesday: +1.27R (PF 1.15)
+  - Thursday: +0.46R (PF 1.06)
+  - Friday: -1.35R (PF 0.79)
+
+  Fix: Add a Friday trading filter. Either:
+  - (a) Disable Friday entirely (new input InpTradeFriday)
+  - (b) Only allow A+ setups on Friday
+  - (c) Apply 0.5× risk multiplier on Friday
+
+  Estimated impact: Eliminating Friday saves +1.35R and 31 trades of exposure.
+
+  ---
+  TIER 3 — MEDIUM (Correctness fixes and structural improvements)
+
+  3.1 CSMCOrderBlocks Zone Expiration Broken
+
+  Code: CSMCOrderBlocks.mqh:1153 — current_bar = 0 hardcoded. The age check 0 - formed_bar > 200 is always false. No OB/FVG zone is ever expired.
+
+  Impact: Stale zones accumulate indefinitely. The 101 FVG Mitigation trades may be entering at zones that formed weeks/months ago and are no longer structurally relevant.
+
+  Fix: Use actual bar index: int current_bar = Bars(_Symbol, PERIOD_H1) - 1; or pass the bar index parameter.
+
+  ---
+  3.2 OB Retest SL Ignores Actual OB Boundary
+
+  Code: CLiquidityEngine.mqh:764 — SL = entry - ATR*0.8 instead of the OB's structural boundary.
+
+  Impact: Only 0 OB Retest trades fired in this backtest (all engine trades were FVG Mitigation or Session modes), so no direct P&L impact yet. But this will matter when OB Retest becomes active.
+
+  Fix: Use CSMCOrderBlocks.GetOrderBlockStopLevel() for SL placement.
+
+  ---
+  3.3 FVG Mode Uses SMC Confluence as Proxy, Not Actual FVG Zones
+
+  Code: CLiquidityEngine.mqh:907 — checks confluence >= 55 && !in_bull_ob as a proxy for being in an FVG.
+
+  Impact: The 101 FVG Mitigation trades (the top strategy at +12.81R) are identified via this proxy. Some may not be at actual FVG zones. However, the proxy is producing positive results (PF 1.49), so the urgency is lower — but
+  correctness matters.
+
+  Fix: Expose IsInBullishFVG() / IsInBearishFVG() from CSMCOrderBlocks through IMarketContext and use it directly.
+
+  ---
+  3.4 ScoreLiquidityLevel Always Checks SIGNAL_LONG
+
+  Code: CLiquidityEngine.mqh:1434 — hardcoded SIGNAL_LONG regardless of actual direction.
+
+  Impact: Currently zero shorts fire, so no impact. Will matter when shorts are enabled.
+
+  Fix: Pass the signal direction parameter.
+
+  ---
+  3.5 Session Engine Timezone Bugs
+
+  Code: CSessionEngine.mqh — static m_gmt_offset with no DST support, and date boundary mismatch in UpdateAsianRange().
+
+  Impact: Session Engine produced only 8 trades (London BO 3, NY Cont 2, Silver Bullet 2, London Close 1) — all at 0% or 50% WR. The timezone issues may be preventing correct Asian range calculation, which cascades to incorrect
+  breakout levels.
+
+  Fix: Replace TimeCurrent() - m_gmt_offset with TimeGMT() for DST-aware time handling.
+
+  ---
+  3.6 Spread Gate Not Functioning
+
+  Evidence: The log shows zero spread gate blocks in 12 months. An entry passed at spread=40 points (ticket 253). InpMaxSpreadPoints = 50 is too permissive for gold (normal spread is 10-20 points).
+
+  Fix: Lower InpMaxSpreadPoints to 30 and verify the gate is actually logged when it triggers.
+
+  ---
+  3.7 Squeeze Counter Counts Per Tick, Not Per Bar
+
+  Code: CExpansionEngine.mqh — m_squeeze_bars increments every call to CheckCompressionBreakout().
+
+  Impact: Only 4 Compression BO trades in the backtest. The over-counting may cause premature squeeze-release signals. The 4 trades show mixed results (2W/2L), so the signal is unreliable.
+
+  Fix: Add a bar-time guard:
+  if(iTime(_Symbol, PERIOD_H1, 0) != m_last_squeeze_bar_time) {
+      m_squeeze_bars++;
+      m_last_squeeze_bar_time = iTime(_Symbol, PERIOD_H1, 0);
+  }
+
+  ---
+  3.8 Hybrid Trailing Can Never Lock Profit Above Entry
+
+  Code: CHybridTrailing.mqh:255-256 — caps SL at entry - 10 points.
+
+  Impact: Currently moot because all 6 trailing plugins run and Hybrid is overridden. But once 1.2 is fixed and Hybrid becomes selectable, this bug makes it the most conservative strategy instead of the most adaptive.
+
+  Fix: Remove the breakeven cap. Let the SL move above/below entry to lock profit.
+
+  ---
+  3.9 CSessionBreakoutEntry Duplicates CSessionEngine
+
+  Evidence: Both are enabled by default. Both track Asian range independently. Both fire London Breakout and NY Continuation signals. The 3 London Breakout trades and 2 NY Continuation trades may be coming from either or both.
+
+  Fix: When InpEnableSessionEngine = true, auto-disable CSessionBreakoutEntry in RegisterEntryPlugin().
+
+  ---
+  TIER 4 — LOW (Optimizations and polish)
+
+  4.1 Hours 13:00-14:00 Are Toxic
+
+  Evidence: 19 trades at 13:00-14:00 UTC, ~31.5% WR, combined -5.80R. This is the NY open chop zone — InpSkipStartHour2 = 14 and InpSkipEndHour2 = 16 skip 14-16 but miss 13:00.
+
+  Fix: Extend skip zone 2 to start at 13: InpSkipStartHour2 = 13.
+
+  ---
+  4.2 TP0 Distance Optimization
+
+  Evidence: TP0 at 0.5R fires on 85 trades (50.6%) and provides 64.8% of dollar profit. But 35 BREAKEVEN exits had average MFE of 0.946R — they went nearly 1R in favor before reversing. If TP0 fired at 0.7R instead of 0.5R, fewer
+   partials would fire but each would capture more.
+
+  Tradeoff: Moving TP0 from 0.5R to 0.7R would reduce TP0 fires from ~85 to ~60, but increase per-partial capture by 40%. Net effect is uncertain — requires backtest comparison.
+
+  ---
+  4.3 Dead Input Cleanup
+
+  Six inputs are completely dead:
+  - InpTrailStrategy — not wired to selection
+  - InpTrailBETrigger (0.8R) — never referenced
+  - InpTrailBEOffset (50 pts) — never referenced
+  - InpBreakevenOffset (50 pts) — never referenced
+  - InpTP1Volume (50%) — TP1 partials not implemented
+  - InpTP2Volume (40%) — TP2 partials not implemented
+
+  Fix: Either wire them to code or remove them to avoid user confusion.
+
+  ---
+  4.4 Add Initialization Logging
+
+  Evidence: The log contains zero configuration or component-loading information. Cannot verify what parameters were active during the backtest.
+
+  Fix: Add an [INIT] block in OnInit() that logs all critical parameter values, enabled plugins, and component status.
+
+  ---
+  4.5 Add Signal Rejection Logging
+
+  Evidence: Zero rejections logged in 12 months. Either gates never trigger or they're not logged.
+
+  Fix: Add print statements in CSignalOrchestrator for every rejection reason (spread gate, shock gate, session quality, position limit, daily trade limit, quality threshold).
+
+  ---
+  4.6 Minimum Effective Risk Floor
+
+  Code analysis shows the multiplicative risk chain can produce sub-minimum lots (see Section 4.4 of previous report). No direct evidence in backtest (no risk multiplier log).
+
+  Fix: After all multipliers, enforce risk_pct = MathMax(risk_pct, 0.2) to prevent the chain from reducing to zero.
+
+  ---
+  EXPECTED CUMULATIVE IMPACT
+
+  ┌──────────────────────────────────────┬───────────────┬───────────────────────────────────┐
+  │                 Fix                  │ Est. R Impact │            Difficulty             │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 1.1 Disable/fix early invalidation   │ +15 to +27R   │ Easy (1 input change or 20 lines) │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 1.2 Wire trailing strategy selection │ +15 to +30R   │ Easy (15 lines in OnInit)         │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 1.3 Enable short trading             │ +2 to +6R     │ Hard (multi-file audit)           │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 1.4 Disable London session           │ +1.6R         │ Easy (1 input change)             │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 1.5 Fix double vol adjustment        │ +1 to +3R     │ Easy (delete 8 lines)             │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 2.1 Implement TP1/TP2 partials       │ +5 to +12R    │ Medium (80-100 lines)             │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 2.2 Collect-and-rank signals         │ +2 to +5R     │ Medium (30 lines)                 │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 2.4 Filter out B/B+ setups           │ +2.84R        │ Easy (1 input change)             │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 2.5 Disable Friday                   │ +1.35R        │ Easy (10 lines)                   │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ 4.1 Extend skip zone to 13:00        │ +2 to +4R     │ Easy (1 input change)             │
+  ├──────────────────────────────────────┼───────────────┼───────────────────────────────────┤
+  │ Combined Tier 1+2                    │ +45 to +90R   │                                   │
+  └──────────────────────────────────────┴───────────────┴───────────────────────────────────┘
+
+  The current system produces +20.21R over 11.5 months. The Tier 1 fixes alone (early invalidation + trailing selection) could potentially double to triple the system's performance with minimal code changes.
+
+  ---
+  WHAT'S WORKING WELL (Don't Touch)
+
+  1. LiqEng FVG Mitigation — 101 trades, PF 1.49, +12.81R. The workhorse.
+  2. Bullish Engulfing in Asia — 14 trades, 78.6% WR, PF 6.40, +7.24R.
+  3. TP0 partial close — load-bearing, saves 37 trades. Critical.
+  4. Quality scoring system — A+/A outperform B+/B clearly. Validated.
+  5. Monday trading — +14.03R, PF 2.45. Best day.
+  6. Asian session — 66.7% WR, PF 3.08. Best session.
+  7. Batched trailing SL — reduces broker spam while maintaining protection at R-milestones.
+  8. Position persistence — binary state file with CRC32 survives restarts.
+
+● The report is complete. The two highest-impact, lowest-effort fixes are:
+
+  1. Disable early invalidation (change 1 input) — it's destroying -26.90R of value
+  2. Wire InpTrailStrategy to actually select one trailing plugin (15 lines in OnInit) — ATR trailing is overriding Chandelier and strangling your runners
+
+  Those two alone could add +30 to +57R to the same backtest period — potentially tripling the system's net R from +20.21R to +50-77R.

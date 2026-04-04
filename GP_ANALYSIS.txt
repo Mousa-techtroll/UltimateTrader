@@ -1,0 +1,131 @@
+Assessment
+  The strategy ideas are coherent for XAUUSD H1, but the implementation is not yet a clean “3-engine EA”. In practice it is a legacy multi-plugin EA with 3 engines appended to it, and several important controls are only partially wired or
+  not wired at all.
+
+  - The engines are registered after the legacy entry plugins, and UltimateTrader/Include/Core/CSignalOrchestrator.mqh:356 returns the first valid signal it finds. So the 3 engines are not the top-level decision-makers; they are lower-
+    priority plugins behind engulfing, BB mean reversion, range box, breakout, crash breakout, file entry, and the older phase-3.4 plugins. See the registration order in UltimateTrader/UltimateTrader.mq5:294.
+  - Engine-native qualityScore and engine_confluence are mostly telemetry, not true decision drivers. The orchestrator overwrites setupQuality, qualityScore, and riskPercent using a second text-based evaluator layer in UltimateTrader/
+    Include/Core/CSignalOrchestrator.mqh:500.
+  - Confirmation is on by default for all non-mean-reversion signals, so most engine trades are delayed one H1 bar. That especially matters for the session engine, whose edge is time-local.
+
+  Engines
+
+  - LiquidityEngine in UltimateTrader/Include/EntryPlugins/CLiquidityEngine.mqh is a priority cascade: Displacement -> OB Retest -> FVG Mitigation -> SFP. This is the best structured engine conceptually. Displacement is the strongest mode
+    in the code: it requires an H1 sweep, a displacement candle, and SMC confluence, and it is the only liquidity mode allowed on volatile days. OB Retest and FVG Mitigation are weaker implementations than their names suggest: both rely
+    more on context booleans and candle rejection than on precise zone tracking, so they behave more like “SMC-filtered rejection entries” than true execution-at-level models. SFP is the richest mode operationally, with fractal validation,
+    volume gating, optional RSI divergence, and strong forensic logging, but it is disabled by default.
+  - Liquidity-engine weaknesses: ScoreLiquidityLevel() uses GetSMCConfluenceScore(SIGNAL_LONG) for both directions in UltimateTrader/Include/EntryPlugins/CLiquidityEngine.mqh:1417, and the regime-based liquidity adjustment happens after the
+    its constructor UltimateTrader/Include/EntryPlugins/CLiquidityEngine.mqh:64, while the EA-wide stop input is InpMinSLPoints = 800 in UltimateTrader/UltimateTrader_Inputs.mqh:66.
+  - SessionEngine in UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh tracks the Asian range, then trades London breakout, NY continuation, Silver Bullet, and London close reversal. Strategically this is coherent for gold. Silver
+    Bullet is the cleanest mode because it really scans M15 FVG structure. London breakout and NY continuation are simpler momentum/continuation models using H1 closes and ATR buffers, not true retest models.
+  - Session-engine weaknesses: it assumes server time is GMT unless a hidden gmt_offset is supplied; GetGMTHour() subtracts m_gmt_offset, but the constructor default is 0 and the EA never exposes broker offset calibration, so a non-GMT
+    CSessionEngine.mqh:808. Also, despite receiving SetDayType() from the router each bar in UltimateTrader/UltimateTrader.mq5:798, the session engine does not use day type to gate entries; it only stores it into emitted signals.
+  - ExpansionEngine in UltimateTrader/Include/EntryPlugins/CExpansionEngine.mqh is the cleanest engine architecture. Panic Momentum is a short-only bear-regime expansion trade, Institutional Candle Breakout is a proper state machine, and
+    Compression Breakout is a BB-inside-Keltner squeeze release. This engine is the most internally consistent of the three.
+  - Input hygiene is the biggest structural problem. Several inputs are dead or partly dead: InpTrailStrategy, InpEnableTrailOptimizer, InpTrailBETrigger, InpTrailBEOffset, and the older Group 8 trailing/TP controls are defined in
+    UltimateTrader/UltimateTrader_Inputs.mqh:74 and UltimateTrader/UltimateTrader_Inputs.mqh:121, but the runtime always initializes and registers all six trailing plugins in UltimateTrader/UltimateTrader.mq5:397. InpModeKillMinTrades and
+    InpModeKillPFThreshold are defined in UltimateTrader/UltimateTrader_Inputs.mqh:332, but I found no SetModeKillParams() calls, so changing them does not change engine behavior. InpEnableDynamicWeights and the strategy-weight inputs are
+    also not wired. InpUseStructureTargets is ignored because CAdaptiveTPManager defaults use_structure_targets = true in its constructor UltimateTrader/Include/Core/CAdaptiveTPManager.mqh:79 and the EA never calls Configure() after
+    inside the risk plugin; signal.riskPercent acts more like a cap than a true base-risk input. There is a second issue: volatility risk is logged after lot sizing in UltimateTrader/Include/Core/CTradeOrchestrator.mqh:256, but unlike the
+    200 EMA adjustment it does not trigger a lot-size recalculation.
+  - The advertised TP/trailing workflow is not what the live code does. ManageOpenPositions() in UltimateTrader/Include/Core/CPositionCoordinator.mqh:955 implements TP0 partial close and early invalidation, then trailing and exit plugins.
+    There is no TP1 or TP2 partial-close state machine in live management. More importantly, execution sends only one broker TP, tp1, through UltimateTrader/Include/Core/CTradeOrchestrator.mqh:288 into UltimateTrader/Include/Execution/
+    CEnhancedTradeExecutor.mqh:1326 and then Buy()/Sell() in UltimateTrader/Include/Execution/CEnhancedTradeExecutor.mqh:1501. So in normal operation the broker closes the remaining position fully at TP1; TP2 is mostly an internal field,
+    not a real staged target.
+  - The trailing system is therefore misrepresented. The EA prints one “active” trailing strategy, but UltimateTrader/Include/Core/CPositionCoordinator.mqh:1227 loops over every registered trailing plugin and applies every “better” stop
+    proposal. Since all plugins are enabled by default through CTradeStrategy, the real behavior is “whichever plugin suggests the tightest improving SL wins next”, not “use InpTrailStrategy”. This makes optimization of a single trailing
+    mode misleading.
+  - Plugin-level auto-kill and dynamic weighting are present on paper but effectively dead. RecordPluginTradeResult() exists in UltimateTrader/Include/Core/CSignalOrchestrator.mqh:168, but I found no call sites anywhere in the project, so
+    plugin PF/drawdown never updates. Engine-mode auto-kill is live, but plugin-level auto-kill and rolling dynamic weights are not. Day routing has a similar issue: DAY_DATA exists, but UltimateTrader/Include/Core/CDayTypeRouter.mqh:39
+    never emits it, so the liquidity engine’s “no trading on data day” branch is dead code.
+
+  Bottom line: the 3 engines are strategically interesting and gold-oriented, but the implementation is still inconsistent end-to-end. The strongest live engine today is LiquidityEngine via Displacement; the cleanest architecture is
+  ExpansionEngine; the highest implementation risk is SessionEngine because of time-base assumptions, missing confluence initialization, and day-router non-enforcement. The trailing and multi-target system is the weakest part of the EA: it
+  is marketed as staged/selector-driven, but the live code is effectively TP0 + single broker TP + all trailing plugins competing.
+  
+  
+  
+  Issues found: 
+  
+  Critical
+
+  - Rebuild the trailing and target workflow first. Empirically, the 25 TRAILING exits made +42.68R, while every non-trailing exit combined made -22.47R. The CSV also shows 0 TP_HIT exits, 4 exits exactly at OriginalTP1 that were still
+    labeled TRAILING, 35 BREAKEVEN exits that are basically TP0 rescues, 73 BE_Before_TP1 cases, and 139/168 trades with modified stops. In code, all six trailing plugins are registered in UltimateTrader/UltimateTrader.mq5:397, all
+    strategies default enabled in UltimateTrader/Include/PluginSystem/CTradeStrategy.mqh:26, the coordinator applies every improving stop in UltimateTrader/Include/Core/CPositionCoordinator.mqh:1227, and execution only sends one broker TP
+    in UltimateTrader/Include/Core/CTradeOrchestrator.mqh:288 and UltimateTrader/Include/Execution/CEnhancedTradeExecutor.mqh:1326. I also found no production code setting tp1_closed=true or tp2_closed=true; only tests do. Fix: one selected
+    trailing mode only, real TP0/TP1/TP2 state machine, real partial closes, and wired BE trigger/offset inputs.
+  - Make the EA actually engine-first, or separate legacy and engine runs. Right now the “3-engine EA” claim is not what this backtest executed. Legacy plugins are registered before engines in UltimateTrader/UltimateTrader.mq5:294, and the
+    orchestrator returns the first valid plugin signal in UltimateTrader/Include/Core/CSignalOrchestrator.mqh:356. That is why 156/168 trades came from legacy engulfing plus one liquidity mode. Fix: explicit priority/arbitration at engine-
+    family level, or separate operation modes for legacy, engines, and hybrid.
+  - Remove universal confirmation from time-sensitive strategies. The CSV shows ConfirmationUsed=YES on all 168 trades. In code, almost every non-mean-reversion signal is stored pending in UltimateTrader/Include/Core/
+    CSignalOrchestrator.mqh:528, and confirmed positions are marked true in UltimateTrader/UltimateTrader.mq5:832. That is especially damaging for session breakouts: London was the worst session overall at -1.60R, London Breakout went 0/3,
+    and NY Continuation went 0/2. Fix: mode-specific confirmation policy; skip or relax confirmation for session breakouts, NY continuation, and expansion releases.
+
+  High
+
+  - Fix the Session Engine before trusting it. It lost -0.98R across 8 trades, and its confluence values in the CSV are only 0 or -10, which matches the code defect: constructor defaults gmt_offset=0 and m_min_sl_points=100 in
+    UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh:84, GMT is derived by subtracting that offset in UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh:464, and breakout/continuation only add a location penalty to an
+    uninitialized engine_confluence in UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh:650 and UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh:815. Fix: expose broker-GMT calibration, initialize confluence properly, and gate
+    session modes by day type.
+  - Fix liquidity-engine scoring before optimizing FVG further. MODE_FVG_MITIGATION carried the backtest, but code quality is still off: the liquidity score uses GetSMCConfluenceScore(SIGNAL_LONG) for both directions in UltimateTrader/
+    Include/EntryPlugins/CLiquidityEngine.mqh:1431, and regime adjustment happens after the gate in displacement and SFP in UltimateTrader/Include/EntryPlugins/CLiquidityEngine.mqh:520 and UltimateTrader/Include/EntryPlugins/
+    CLiquidityEngine.mqh:1180. Fix: direction-aware scoring and regime adjustment before thresholding.
+  - Fix risk sizing so it uses the actual signal metadata. 85% of trades were labeled SETUP_A_PLUS, yet A+ expectancy was only about +0.125R, which means the quality layer is not discriminating well. Part of the reason is structural: the
+    reduced risk interface fabricates SETUP_B_PLUS and PATTERN_NONE in UltimateTrader/Include/RiskPlugins/CQualityTierRiskStrategy.mqh:412, and volatility risk is adjusted after lot sizing in UltimateTrader/Include/Core/
+    CTradeOrchestrator.mqh:256. Fix: use the signal-aware sizing path and recalculate lots after every risk adjustment.
+  - Stop optimizing dead or misleading inputs. InpTrailStrategy, InpEnableTrailOptimizer, InpTrailBETrigger, InpTrailBEOffset, InpTP1Volume, InpTP2Volume, and InpBreakevenOffset are defined in UltimateTrader/UltimateTrader_Inputs.mqh:74 and
+    UltimateTrader/UltimateTrader_Inputs.mqh:121, but in live code they are effectively unused beyond an init print. InpModeKillMinTrades and InpModeKillPFThreshold are defined in UltimateTrader/UltimateTrader_Inputs.mqh:332, but
+    SetModeKillParams() has no call sites. InpEnableDynamicWeights and InpWeightRecalcInterval are only defined, not used. Fix: wire them end-to-end or remove them from the exposed parameter surface.
+
+  Medium
+
+  - Normalize stop-distance handling across engines. EA-wide InpMinSLPoints = 800 is defined in UltimateTrader/UltimateTrader_Inputs.mqh:69, but liquidity defaults to 100 in UltimateTrader/Include/EntryPlugins/CLiquidityEngine.mqh:64,
+    expansion defaults to 100 in UltimateTrader/Include/EntryPlugins/CExpansionEngine.mqh:72, and session hardcodes 100 in UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh:121. Fix: pass the same min-stop input into every engine.
+  - Fix the analytics layer so the backtest is trustworthy. Early-invalidation “loss avoided” is signed backwards in UltimateTrader/Include/Core/CPositionCoordinator.mqh:1093, which is why the summary prints negative avoided loss. The
+    summary is duplicated because OnDeinit() calls it in UltimateTrader/UltimateTrader.mq5:703 and the logger destructor calls it again in UltimateTrader/Include/Display/CTradeLogger.mqh:1083. WriteBacktestResultsCSV() reports no strategy
+    data because RecordStrategyTrade() exists in UltimateTrader/Include/Display/CTradeLogger.mqh:566 but I found no call sites. Engine/mode snapshots are written with FILE_COMMON in UltimateTrader/Include/Display/CTradeLogger.mqh:940 and
+    UltimateTrader/Include/Display/CTradeLogger.mqh:1025, so the log should print the actual location, not just the filename.
+  - Treat bearish and dormant strategies as unvalidated. This backtest gives zero empirical coverage for shorts, displacement, OB retest, SFP, institutional candle, or panic momentum. Fix: run dedicated bearish and per-mode validation sets
+    before claiming the 3 engines are production-ready.
+
+
+
+ Do these in this order. Do not retune inputs until patches 1 through 8 are merged and re-backtested.
+
+  1. Telemetry integrity. Files, in order: UltimateTrader/Include/Display/CTradeLogger.mqh, UltimateTrader/UltimateTrader.mq5, UltimateTrader/Include/Core/CPositionCoordinator.mqh. Patch: fix duplicate session summary logging, add explicit
+     BE accounting so Trades = Wins + Losses + BE, fix early-exit “loss avoided” sign, log the real FILE_COMMON export path, and call RecordStrategyTrade() from LogTradeExit(). Expected impact: no direct PnL change, but it removes three
+     current measurement defects and makes every later optimization trustworthy.
+  2. Emergency session kill switches. Files, in order: UltimateTrader/UltimateTrader_Inputs.mqh, UltimateTrader/UltimateTrader.mq5, UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh. Patch: expose toggles for London Breakout and NY
+     Continuation, plus a broker GMT offset input, instead of hard-wiring those modes on when the session engine is enabled. Expected impact: immediate containment of the currently losing session subset, which was -0.37R for
+     MODE_LONDON_BREAKOUT and -1.12R for MODE_NY_CONTINUATION.
+  3. Position state-machine extension. Files, in order: UltimateTrader/Include/Common/Structs.mqh, UltimateTrader/Include/Core/CPositionCoordinator.mqh, UltimateTrader/Tests/TestPartialCloseStateMachine.mq5, UltimateTrader/Tests/
+     TestPositionPersistence.mq5. Patch: make TP lifecycle explicit with INITIAL -> TP0 -> TP1 -> RUNNER/FINAL, store selected trailing mode on the position, and persist real target-hit state instead of leaving tp1_closed and tp2_closed
+     effectively unused in production. Expected impact: foundation patch; not the biggest standalone PnL mover, but required before any exit or trailing fix is real.
+  4. Real staged exit execution. Files, in order: UltimateTrader/Include/Core/CTradeOrchestrator.mqh, UltimateTrader/Include/Execution/CEnhancedTradeExecutor.mqh, UltimateTrader/Include/Core/CPositionCoordinator.mqh, UltimateTrader/
+     UltimateTrader_Inputs.mqh. Patch: stop treating tp1 as the universal broker TP, support SL-only, single-target, and staged-target execution modes, and let the coordinator manage internal TP1/TP2 partials cleanly. Expected impact:
+     highest structural PnL impact, because the current backtest had 0 real TP_HIT exits while the profitable subset depended on trailing.
+  5. Single trailing mode wiring. Files, in order: UltimateTrader/UltimateTrader.mq5, UltimateTrader/Include/Core/CPositionCoordinator.mqh, UltimateTrader/Include/PluginSystem/CTradeStrategy.mqh, trailing plugin files under UltimateTrader/
+     Include/TrailingPlugins. Patch: register only the selected trailing plugin, persist trailing_mode, and make InpTrailStrategy control actual runtime behavior instead of just an init print. Expected impact: very high. In the sample, 25
+     TRAILING exits generated +42.68R; every non-trailing exit combined generated -22.47R.
+  6. Breakeven and TP0 semantics cleanup. Files, in order: UltimateTrader/Include/Core/CPositionCoordinator.mqh, UltimateTrader/UltimateTrader_Inputs.mqh, UltimateTrader/Include/Display/CTradeLogger.mqh. Patch: wire InpTrailBETrigger,
+     InpTrailBEOffset, InpTP1Volume, InpTP2Volume, and InpBreakevenOffset into real behavior, and separate TP0 rescue from true break-even in reporting. Expected impact: high on expectancy quality, because 35 exits were BREAKEVEN and most
+     of those were TP0 rescues rather than runner wins.
+  7. Signal arbitration and confirmation policy split. Files, in order: UltimateTrader/Include/Core/CSignalOrchestrator.mqh, UltimateTrader/UltimateTrader_Inputs.mqh, UltimateTrader/UltimateTrader.mq5. Patch: stop first-hit plugin
+     arbitration, collect all candidates on a bar, rank them, and support per-mode confirmation policy so session and expansion breakouts are not always delayed one H1 bar. Expected impact: high but trade-mix-changing; right now all 168
+     executed trades used confirmation, which is especially bad for session-local setups.
+  8. Session engine rehab. Files, in order: UltimateTrader/Include/EntryPlugins/CSessionEngine.mqh, UltimateTrader/UltimateTrader_Inputs.mqh, UltimateTrader/UltimateTrader.mq5, UltimateTrader/Include/Validation/CSetupEvaluator.mqh. Patch:
+     use broker-GMT offset, initialize engine_confluence, enforce day-type gating, pass the real min-stop input, and rename comments so setup scoring recognizes them. Expected impact: moderate immediate PnL, but necessary if this is
+     supposed to be a real 3-engine EA rather than a mostly legacy/FVG system.
+  9. Liquidity engine hardening. Files, in order: UltimateTrader/Include/EntryPlugins/CLiquidityEngine.mqh, UltimateTrader/UltimateTrader.mq5, UltimateTrader/UltimateTrader_Inputs.mqh. Patch: make SMC confluence direction-aware, apply
+     regime adjustment before thresholding, pass the global min-stop input into the engine, and add stricter mode/session filters around FVG mitigation. Expected impact: moderate-to-high, because MODE_FVG_MITIGATION was 101/168 trades and
+     +12.81R, so even small error-rate improvements matter.
+  10. Risk and quality pipeline cleanup. Files, in order: UltimateTrader/Include/RiskPlugins/CQualityTierRiskStrategy.mqh, UltimateTrader/Include/Core/CTradeOrchestrator.mqh, UltimateTrader/Include/Validation/CSetupEvaluator.mqh,
+     UltimateTrader/Include/Validation/CMarketFilters.mqh. Patch: use the signal-aware sizing path, recalculate lot size after volatility scaling, align evaluator string rules with actual engine comments, and either make pattern-confidence
+     truly pattern-aware or remove the misleading label. Expected impact: moderate; it should reduce over-allocation to weak trades and stop over-labeling almost everything as SETUP_A_PLUS.
+  11. Input wiring and dormant-feature cleanup. Files, in order: UltimateTrader/UltimateTrader_Inputs.mqh, UltimateTrader/UltimateTrader.mq5, UltimateTrader/Include/Core/CAdaptiveTPManager.mqh, UltimateTrader/Include/Core/
+     CSignalOrchestrator.mqh, UltimateTrader/Include/Core/CDayTypeRouter.mqh. Patch: wire InpUseStructureTargets via Configure(), propagate InpModeKill* into engines, either implement dynamic weights and plugin performance recording or
+     remove them from inputs, and either implement DAY_DATA or delete the dead branch. Expected impact: low direct PnL, high maintainability, and a much more honest optimization surface.
+  12. Regression harness. Files: UltimateTrader/Tests. Patch: add focused tests for logger accounting, trailing selector behavior, staged exits, session GMT conversion, liquidity score directionality, and orchestrator arbitration. Expected
+     impact: no direct PnL, but it is what stops this refactor from silently breaking the EA again.
+
+  Checkpoint order should be 1-2, then 3-6, then backtest; after that do 7-10, then backtest again; only then do input retuning. 
