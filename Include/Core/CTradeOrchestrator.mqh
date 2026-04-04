@@ -253,6 +253,41 @@ public:
          }
       }
 
+      // Reward-room obstacle check: reject if next structural obstacle is too close
+      // This is a geometry filter, not a quality filter — checks whether the trade
+      // destination is reachable, independent of entry signal strength.
+      if(InpEnableRewardRoom && InpMinRoomToObstacle > 0 && risk_distance > 0)
+      {
+         double nearest_obstacle = FindNearestObstacle(entry_price, sig_type);
+         if(nearest_obstacle > 0)
+         {
+            double room = MathAbs(nearest_obstacle - entry_price);
+            double room_in_r = room / risk_distance;
+
+            if(room_in_r < InpMinRoomToObstacle)
+            {
+               int digs = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+               LogPrint("TRADE REJECTED: Reward room ", DoubleToString(room_in_r, 2),
+                        "R < min ", DoubleToString(InpMinRoomToObstacle, 1),
+                        "R | Obstacle at ", DoubleToString(nearest_obstacle, digs),
+                        " | Entry=", DoubleToString(entry_price, digs));
+               LogRiskAudit(signal, sig_type, requested_risk_pct,
+                            false, false,
+                            StringFormat("REWARD_ROOM_%.2fR<%.1fR_OBS_%.2f", room_in_r, InpMinRoomToObstacle, nearest_obstacle),
+                            adjusted_risk_pct, false,
+                            false, 1.0, final_risk_pct, 0, 0,
+                            "REJECT_INSUFFICIENT_ROOM");
+               return position;
+            }
+            else
+            {
+               LogPrint("RewardRoom: OK | Room=", DoubleToString(room_in_r, 1),
+                        "R to obstacle at ", DoubleToString(nearest_obstacle,
+                        (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS)));
+            }
+         }
+      }
+
       // Calculate risk via CRiskStrategy plugin
       double risk_pct = signal.riskPercent;
 
@@ -384,6 +419,8 @@ public:
          position.pattern_type = signal.patternType;
          position.lot_size = lot_size;
          position.entry_price = entry_price;
+         position.requested_entry_price = entry_price;
+         position.executed_entry_price = (exec_result.executedPrice > 0.0) ? exec_result.executedPrice : entry_price;
          position.stop_loss = sl;
          position.tp1 = tp1;
          position.tp2 = tp2;
@@ -396,6 +433,13 @@ public:
          position.at_breakeven = false;
          position.initial_risk_pct = risk_pct;
          position.signal_source = signal.source;
+         position.entry_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+         position.entry_equity = AccountInfoDouble(ACCOUNT_EQUITY);
+         position.entry_risk_amount = position.entry_balance * position.initial_risk_pct / 100.0;
+
+         double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+         if(point > 0.0)
+            position.entry_slippage = MathAbs(position.executed_entry_price - position.requested_entry_price) / point;
 
          // v3.1 Phase D: Transfer engine telemetry fields
          position.engine_mode = signal.engine_mode;
@@ -662,5 +706,107 @@ private:
          multiplier = 1.05;
 
       return base_risk * multiplier;
+   }
+
+   //+------------------------------------------------------------------+
+   //| Find nearest structural obstacle in trade direction               |
+   //| Sources: H4 swing pivots, PDH/PDL, weekly H/L, round $50,       |
+   //|          active SMC order block zones                             |
+   //| Returns price level of nearest obstacle, or 0 if none found      |
+   //+------------------------------------------------------------------+
+   double FindNearestObstacle(double entry_price, ENUM_SIGNAL_TYPE direction)
+   {
+      double nearest = 0;
+
+      if(direction == SIGNAL_LONG)
+      {
+         // 1. H4 swing highs above entry (2-left, 2-right confirmed pivots)
+         double high[];
+         ArraySetAsSeries(high, true);
+         if(CopyHigh(_Symbol, PERIOD_H4, 0, 100, high) > 0)
+         {
+            for(int i = 2; i < 98; i++)
+            {
+               if(high[i] > high[i-1] && high[i] > high[i-2] &&
+                  high[i] > high[i+1] && high[i] > high[i+2])
+               {
+                  if(high[i] > entry_price)
+                  {
+                     if(nearest == 0 || high[i] < nearest)
+                        nearest = high[i];
+                  }
+               }
+            }
+         }
+
+         // 2. Prior day high
+         double pdh = iHigh(_Symbol, PERIOD_D1, 1);
+         if(pdh > entry_price && (nearest == 0 || pdh < nearest))
+            nearest = pdh;
+
+         // 3. Prior week high
+         double pwh = iHigh(_Symbol, PERIOD_W1, 1);
+         if(pwh > entry_price && (nearest == 0 || pwh < nearest))
+            nearest = pwh;
+
+         // 4. Round $50 psychological level above
+         double round_above = MathCeil((entry_price + 0.01) / 50.0) * 50.0;
+         if(round_above > entry_price && (nearest == 0 || round_above < nearest))
+            nearest = round_above;
+
+         // 5. Active SMC bearish order block (supply zone) above
+         if(m_context != NULL)
+         {
+            double smc_resist = m_context.GetNearestSMCResistance(entry_price);
+            if(smc_resist > entry_price && (nearest == 0 || smc_resist < nearest))
+               nearest = smc_resist;
+         }
+      }
+      else
+      {
+         // 1. H4 swing lows below entry (2-left, 2-right confirmed pivots)
+         double low[];
+         ArraySetAsSeries(low, true);
+         if(CopyLow(_Symbol, PERIOD_H4, 0, 100, low) > 0)
+         {
+            for(int i = 2; i < 98; i++)
+            {
+               if(low[i] < low[i-1] && low[i] < low[i-2] &&
+                  low[i] < low[i+1] && low[i] < low[i+2])
+               {
+                  if(low[i] < entry_price)
+                  {
+                     if(nearest == 0 || low[i] > nearest)
+                        nearest = low[i];
+                  }
+               }
+            }
+         }
+
+         // 2. Prior day low
+         double pdl = iLow(_Symbol, PERIOD_D1, 1);
+         if(pdl > 0 && pdl < entry_price && (nearest == 0 || pdl > nearest))
+            nearest = pdl;
+
+         // 3. Prior week low
+         double pwl = iLow(_Symbol, PERIOD_W1, 1);
+         if(pwl > 0 && pwl < entry_price && (nearest == 0 || pwl > nearest))
+            nearest = pwl;
+
+         // 4. Round $50 psychological level below
+         double round_below = MathFloor((entry_price - 0.01) / 50.0) * 50.0;
+         if(round_below > 0 && round_below < entry_price && (nearest == 0 || round_below > nearest))
+            nearest = round_below;
+
+         // 5. Active SMC bullish order block (demand zone) below
+         if(m_context != NULL)
+         {
+            double smc_support = m_context.GetNearestSMCSupport(entry_price);
+            if(smc_support > 0 && smc_support < entry_price && (nearest == 0 || smc_support > nearest))
+               nearest = smc_support;
+         }
+      }
+
+      return nearest;
    }
 };

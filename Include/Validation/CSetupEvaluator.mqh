@@ -228,6 +228,29 @@ public:
       else if(StringFind(pattern, "Panic Momentum") >= 0)
          points += 2;
 
+      // Factor 5: Choppiness Index regime confirmation (±1 point)
+      // CI < 40 = strong trend (directionally efficient), CI > 60 = choppy (random)
+      if(InpEnableCIScoring && m_context != NULL)
+      {
+         double ci = m_context.GetChoppinessIndex();
+         bool is_mr = (StringFind(pattern, "BB Mean") >= 0 ||
+                       StringFind(pattern, "Range Box") >= 0 ||
+                       StringFind(pattern, "False Breakout") >= 0);
+
+         if(!is_mr)
+         {
+            // Trend-following patterns
+            if(ci < 40.0) points += 1;       // Strong trend — confirms environment
+            else if(ci > 55.0) points -= 1;  // Choppy — poor for trend entries
+         }
+         else
+         {
+            // Mean reversion patterns
+            if(ci > 60.0) points += 1;       // Choppy — ideal for MR
+            else if(ci < 40.0) points -= 1;  // Strong trend — dangerous for MR
+         }
+      }
+
       // Cap total quality score at 10
       if(points > 10)
          points = 10;

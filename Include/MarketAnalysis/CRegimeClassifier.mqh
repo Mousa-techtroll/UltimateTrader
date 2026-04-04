@@ -46,6 +46,11 @@ private:
       // Volatility expansion hysteresis (Phase H6)
       int                  m_vol_expanding_bars;   // consecutive bars of expansion
 
+      // Regime thrash cooldown
+      datetime             m_change_times[10];     // Circular buffer of regime change timestamps
+      int                  m_change_write_idx;     // Write index into buffer
+      datetime             m_thrash_cooldown_end;  // Cooldown expiry (0 = inactive)
+
 public:
       //+------------------------------------------------------------------+
       //| Constructor                                                      |
@@ -74,6 +79,11 @@ public:
 
             // Volatility expansion hysteresis
             m_vol_expanding_bars = 0;
+
+            // Thrash cooldown initialization
+            ArrayInitialize(m_change_times, 0);
+            m_change_write_idx = 0;
+            m_thrash_cooldown_end = 0;
       }
 
       //+------------------------------------------------------------------+
@@ -187,11 +197,31 @@ public:
 
             m_regime_data.last_update = TimeCurrent();
 
-            // Log regime change
+            // Log regime change and track for thrash detection
             if(m_regime_data.regime != m_previous_regime && m_previous_regime != REGIME_UNKNOWN)
             {
                   LogPrint("REGIME CHANGE: ", EnumToString(m_previous_regime), " -> ", EnumToString(m_regime_data.regime),
                            " (raw=", EnumToString(raw_regime), ")");
+
+                  // Record change timestamp for thrash detection
+                  m_change_times[m_change_write_idx] = TimeCurrent();
+                  m_change_write_idx = (m_change_write_idx + 1) % 10;
+
+                  // Count changes in last 4 hours
+                  datetime four_hours_ago = TimeCurrent() - 4 * 3600;
+                  int recent_changes = 0;
+                  for(int j = 0; j < 10; j++)
+                  {
+                        if(m_change_times[j] > four_hours_ago)
+                              recent_changes++;
+                  }
+
+                  if(recent_changes > 2)
+                  {
+                        m_thrash_cooldown_end = TimeCurrent() + 4 * 3600;
+                        LogPrint("REGIME THRASHING: ", recent_changes, " changes in 4h — cooldown until ",
+                                 TimeToString(m_thrash_cooldown_end));
+                  }
             }
 
             m_previous_regime = m_regime_data.regime;
@@ -205,6 +235,7 @@ public:
       double GetATR() const { return m_regime_data.atr_current; }
       double GetBBWidth() const { return m_regime_data.bb_width; }
       bool IsVolatilityExpanding() const { return m_regime_data.volatility_expanding; }
+      bool IsThrashCooldownActive() const { return (m_thrash_cooldown_end > 0 && TimeCurrent() < m_thrash_cooldown_end); }
 
 private:
       //+------------------------------------------------------------------+

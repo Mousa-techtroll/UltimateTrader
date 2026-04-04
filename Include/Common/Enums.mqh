@@ -101,7 +101,11 @@ enum ENUM_PATTERN_TYPE
    PATTERN_LONDON_CLOSE_REV,       // London close reversal
    PATTERN_COMPRESSION_BO,         // Compression/squeeze breakout
    PATTERN_INSTITUTIONAL_CANDLE,   // Institutional candle breakout
-   PATTERN_PANIC_MOMENTUM          // Panic momentum (Death Cross + Rubber Band)
+   PATTERN_PANIC_MOMENTUM,         // Panic momentum (Death Cross + Rubber Band)
+
+   // S3/S6 Range Structure patterns (AGRE v2)
+   PATTERN_RANGE_EDGE_FADE,        // S3: Validated range box edge sweep-and-reclaim
+   PATTERN_FAILED_BREAK_REVERSAL   // S6: Failed breakout spike-and-snap reversal
 };
 
 //+------------------------------------------------------------------+

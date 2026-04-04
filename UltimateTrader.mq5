@@ -44,6 +44,9 @@
 #include "Include/EntryPlugins/CBBMeanReversionEntry.mqh"
 #include "Include/EntryPlugins/CRangeBoxEntry.mqh"
 #include "Include/EntryPlugins/CFalseBreakoutFadeEntry.mqh"
+#include "Include/EntryPlugins/CRangeEdgeFade.mqh"
+#include "Include/EntryPlugins/CFailedBreakReversal.mqh"
+#include "Include/MarketAnalysis/CRangeBoxDetector.mqh"
 #include "Include/EntryPlugins/CVolatilityBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CCrashBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CSupportBounceEntry.mqh"
@@ -121,6 +124,9 @@ CMACrossEntry          *g_maCrossEntry       = NULL;
 CBBMeanReversionEntry  *g_bbMREntry          = NULL;
 CRangeBoxEntry         *g_rangeBoxEntry      = NULL;
 CFalseBreakoutFadeEntry *g_fbfEntry          = NULL;
+CRangeEdgeFade         *g_rangeEdgeFade      = NULL;
+CFailedBreakReversal   *g_failedBreakRev     = NULL;
+CRangeBoxDetector      *g_rangeBoxDetector   = NULL;
 CVolatilityBreakoutEntry *g_volBreakoutEntry = NULL;
 CCrashBreakoutEntry    *g_crashEntry         = NULL;
 CSupportBounceEntry    *g_supportBounceEntry = NULL;
@@ -138,6 +144,39 @@ CPullbackContinuationEngine *g_pullbackEngine = NULL;
 // Entry plugin array for orchestrator
 CEntryStrategy         *g_entryPlugins[];
 int                     g_entryPluginCount   = 0;
+
+// Breakout probation state
+struct SBreakoutProbation
+{
+   bool        active;
+   double      level;           // Price must hold outside this level
+   bool        is_long;
+   int         bars_held;       // Consecutive H1 bars held outside
+   datetime    started;
+   EntrySignal stored_signal;   // Original signal for deferred execution
+   // Risk modifiers captured at trigger time
+   double      session_mult;
+   double      regime_mult;
+
+   void Reset()
+   {
+      active = false;
+      level = 0;
+      is_long = false;
+      bars_held = 0;
+      started = 0;
+      session_mult = 1.0;
+      regime_mult = 1.0;
+   }
+};
+SBreakoutProbation g_breakoutProbation;
+
+bool IsBreakoutPattern(ENUM_PATTERN_TYPE pt)
+{
+   return (pt == PATTERN_VOLATILITY_BREAKOUT ||
+           pt == PATTERN_COMPRESSION_BO ||
+           pt == PATTERN_INSTITUTIONAL_CANDLE);
+}
 
 // Exit Plugins
 CRegimeAwareExit       *g_regimeExit         = NULL;
@@ -222,6 +261,7 @@ int OnInit()
 {
    g_isBacktesting = (bool)MQLInfoInteger(MQL_TESTER);
    g_lastBarTime = iTime(_Symbol, PERIOD_H1, 1);  // Previous bar so first bar triggers isNewBar
+   g_breakoutProbation.Reset();
 
    Print("==========================================================");
    Print("  UltimateTrader EA v1.0 - Initializing");
@@ -319,8 +359,35 @@ int OnInit()
    g_supportBounceEntry = new CSupportBounceEntry(NULL);
 
    RegisterEntryPlugin(g_bbMREntry,       InpEnableBBMeanReversion);
-   RegisterEntryPlugin(g_rangeBoxEntry,   InpEnableRangeBox);
-   RegisterEntryPlugin(g_fbfEntry,        InpEnableFalseBreakout);
+
+   // S3/S6 Option B-lite: when enabled, S3/S6 replace RangeBox + FalseBreakout
+   // BB Mean Reversion stays for comparison
+   if(InpEnableS3S6)
+   {
+      // Initialize shared range box detector
+      g_rangeBoxDetector = new CRangeBoxDetector();
+      if(g_rangeBoxDetector != NULL) g_rangeBoxDetector.Init();
+
+      // S6: Failed-Breakout Reversal
+      g_failedBreakRev = new CFailedBreakReversal(g_rangeBoxDetector);
+      RegisterEntryPlugin(g_failedBreakRev, true);
+
+      // S3: Range Edge Fade
+      g_rangeEdgeFade = new CRangeEdgeFade(g_rangeBoxDetector);
+      RegisterEntryPlugin(g_rangeEdgeFade, true);
+
+      // Disable replaced plugins
+      RegisterEntryPlugin(g_rangeBoxEntry, false);
+      RegisterEntryPlugin(g_fbfEntry,      false);
+      Print("[Init] S3/S6 ACTIVE — RangeBox + FalseBreakout replaced");
+   }
+   else
+   {
+      // Legacy behavior
+      RegisterEntryPlugin(g_rangeBoxEntry,   InpEnableRangeBox);
+      RegisterEntryPlugin(g_fbfEntry,        InpEnableFalseBreakout);
+   }
+
    RegisterEntryPlugin(g_supportBounceEntry, InpEnableSupportBounce);
 
    // Volatility Breakout
@@ -904,6 +971,9 @@ void OnDeinit(const int reason)
    if(g_bbMREntry != NULL)         { g_bbMREntry.Deinitialize(); delete g_bbMREntry; }
    if(g_rangeBoxEntry != NULL)     { g_rangeBoxEntry.Deinitialize(); delete g_rangeBoxEntry; }
    if(g_fbfEntry != NULL)          { g_fbfEntry.Deinitialize(); delete g_fbfEntry; }
+   if(g_rangeEdgeFade != NULL)     { g_rangeEdgeFade.Deinitialize(); delete g_rangeEdgeFade; }
+   if(g_failedBreakRev != NULL)    { g_failedBreakRev.Deinitialize(); delete g_failedBreakRev; }
+   if(g_rangeBoxDetector != NULL)  { g_rangeBoxDetector.Deinit(); delete g_rangeBoxDetector; }
    if(g_volBreakoutEntry != NULL)  { g_volBreakoutEntry.Deinitialize(); delete g_volBreakoutEntry; }
    if(g_crashEntry != NULL)        { g_crashEntry.Deinitialize(); delete g_crashEntry; }
    if(g_supportBounceEntry != NULL){ g_supportBounceEntry.Deinitialize(); delete g_supportBounceEntry; }
@@ -1039,6 +1109,106 @@ void OnTick()
       //--- 1. Update market state (all Stack17 analysis components)
       g_stateManager.UpdateMarketState();
 
+      //--- 1a. Update shared range box detector (S3/S6)
+      if(g_rangeBoxDetector != NULL)
+         g_rangeBoxDetector.Update();
+
+      //--- 1b. Process breakout probation (before new signals so S6 can override failures)
+      if(InpEnableBreakoutProbation && g_breakoutProbation.active)
+      {
+         double h1_close = iClose(_Symbol, PERIOD_H1, 1);  // Last completed H1
+         bool held = g_breakoutProbation.is_long
+            ? (h1_close > g_breakoutProbation.level)
+            : (h1_close < g_breakoutProbation.level);
+
+         if(held)
+         {
+            g_breakoutProbation.bars_held++;
+            if(g_breakoutProbation.bars_held >= 2)
+            {
+               // Acceptance confirmed — execute stored signal at current price
+               Print("[BreakoutProbation] ACCEPTED after ", g_breakoutProbation.bars_held,
+                     " bars outside ", DoubleToString(g_breakoutProbation.level, 2));
+
+               EntrySignal accepted_sig = g_breakoutProbation.stored_signal;
+               accepted_sig.entryPrice = g_breakoutProbation.is_long
+                  ? SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                  : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+               accepted_sig.riskPercent *= g_breakoutProbation.session_mult;
+               accepted_sig.riskPercent *= g_breakoutProbation.regime_mult;
+
+               if(g_posCoordinator.GetPositionCount() < InpMaxPositions &&
+                  !g_riskMonitor.IsTradingHalted() && g_riskMonitor.CanTrade())
+               {
+                  SPosition pos_bp = g_tradeOrchestrator.ExecuteSignal(accepted_sig);
+                  if(pos_bp.ticket > 0)
+                  {
+                     pos_bp.stage = STAGE_INITIAL;
+                     pos_bp.original_lots = pos_bp.lot_size;
+                     pos_bp.remaining_lots = pos_bp.lot_size;
+                     pos_bp.mae = 0;
+                     pos_bp.mfe = 0;
+                     pos_bp.stage_label = "INITIAL";
+                     pos_bp.original_sl = pos_bp.stop_loss;
+                     pos_bp.original_tp1 = pos_bp.tp1;
+                     pos_bp.signal_id = accepted_sig.signal_id;
+                     pos_bp.engine_name = accepted_sig.plugin_name != "" ? accepted_sig.plugin_name : accepted_sig.comment;
+                     pos_bp.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+                     pos_bp.entry_session = (int)GetCurrentTradingSession();
+                     pos_bp.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
+                     pos_bp.entry_regime = (int)g_marketContext.GetCurrentRegime();
+                     pos_bp.confirmation_used = true;
+
+                     if(g_regimeScaler != NULL && g_regimeScaler.IsExitEnabled())
+                     {
+                        SRegimeRiskScore rScore = g_regimeScaler.Evaluate(GetPointer(g_marketContext));
+                        SRegimeExitProfile ep = g_regimeScaler.GetExitProfile(rScore.riskClass);
+                        pos_bp.exit_regime_class = (int)rScore.riskClass;
+                        pos_bp.exit_be_trigger = ep.beTrigger;
+                        pos_bp.exit_chandelier_mult = ep.chandelierMult;
+                        pos_bp.exit_tp0_distance = ep.tp0Distance;
+                        pos_bp.exit_tp0_volume = ep.tp0Volume;
+                        pos_bp.exit_tp1_distance = ep.tp1Distance;
+                        pos_bp.exit_tp1_volume = ep.tp1Volume;
+                        pos_bp.exit_tp2_distance = ep.tp2Distance;
+                        pos_bp.exit_tp2_volume = ep.tp2Volume;
+                        Print("[RegimeExit] Trade #", pos_bp.ticket, " stamped: ", ep.label);
+                     }
+
+                     g_posCoordinator.AddPosition(pos_bp);
+                     g_riskMonitor.IncrementTradesToday();
+                     g_riskMonitor.RecordExecutionSuccess();
+
+                     if(g_tradeLogger != NULL)
+                     {
+                        g_tradeLogger.LogSignalDetected(
+                           accepted_sig.comment,
+                           (accepted_sig.action == "BUY" || accepted_sig.action == "buy") ? SIGNAL_LONG : SIGNAL_SHORT,
+                           accepted_sig.setupQuality, accepted_sig.regimeAtSignal);
+                        g_tradeLogger.LogTradeEntry(pos_bp, pos_bp.entry_risk_amount);
+                     }
+
+                     Print("[BreakoutProbation] Executed: ", accepted_sig.comment, " ticket=", pos_bp.ticket);
+                  }
+               }
+               g_breakoutProbation.Reset();
+            }
+            else
+            {
+               Print("[BreakoutProbation] Bar ", g_breakoutProbation.bars_held,
+                     "/2 held outside ", DoubleToString(g_breakoutProbation.level, 2));
+            }
+         }
+         else
+         {
+            // Price closed back inside — breakout failed, S6 may override this bar
+            Print("[BreakoutProbation] FAILED: H1 closed at ", DoubleToString(h1_close, 2),
+                  " inside level ", DoubleToString(g_breakoutProbation.level, 2),
+                  " — cancelled");
+            g_breakoutProbation.Reset();
+         }
+      }
+
       //--- 1b. Update day-type classification (Phase 5)
       if(g_dayRouter != NULL)
       {
@@ -1147,9 +1317,7 @@ void OnTick()
                         pending.pattern_name, pending.signal_type,
                         pending.quality, pending.regime);
 
-                     // v3.2 FIX: Log confirmed trade entry to CSV
-                     double risk_amount = position.initial_risk_pct * AccountInfoDouble(ACCOUNT_BALANCE) / 100.0;
-                     g_tradeLogger.LogTradeEntry(position, risk_amount);
+                     g_tradeLogger.LogTradeEntry(position, position.entry_risk_amount);
                   }
                }
                else
@@ -1218,6 +1386,11 @@ void OnTick()
          {
             // Spread too wide, skip signal processing this tick
             Print("[SpreadGate] Spread too wide, skipping signal check");
+         }
+         else if(InpEnableThrashCooldown && g_marketContext.IsRegimeThrashing())
+         {
+            // Regime changed >2x in 4 hours — skip entries until conditions settle
+            Print("[ThrashCooldown] Regime thrashing — entries blocked");
          }
          else
          {
@@ -1296,7 +1469,37 @@ void OnTick()
                               DoubleToString(signal.riskPercent, 2), "%");
                   }
 
-                  // Execute immediately
+                  // Breakout probation: divert breakout signals to 2-bar acceptance check
+                  bool probation_diverted = false;
+                  if(InpEnableBreakoutProbation && IsBreakoutPattern(signal.patternType) &&
+                     !g_breakoutProbation.active)
+                  {
+                     g_breakoutProbation.active = true;
+                     g_breakoutProbation.level = (signal.action == "BUY" || signal.action == "buy")
+                        ? SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                        : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+                     g_breakoutProbation.is_long = (signal.action == "BUY" || signal.action == "buy");
+                     g_breakoutProbation.bars_held = 0;
+                     g_breakoutProbation.started = TimeCurrent();
+                     g_breakoutProbation.stored_signal = signal;
+                     g_breakoutProbation.session_mult = signal.session_risk_multiplier;
+                     g_breakoutProbation.regime_mult = signal.regime_risk_multiplier;
+                     probation_diverted = true;
+
+                     Print("[BreakoutProbation] STARTED: ", signal.comment,
+                           " | Level=", DoubleToString(g_breakoutProbation.level, 2),
+                           " | Need 2 H1 closes outside");
+                  }
+
+                  // Cancel active probation if a non-breakout signal takes priority
+                  if(!probation_diverted && g_breakoutProbation.active)
+                  {
+                     Print("[BreakoutProbation] Cancelled — new signal taking priority: ", signal.comment);
+                     g_breakoutProbation.Reset();
+                  }
+
+                  if(!probation_diverted)
+                  {
                   SPosition position = g_tradeOrchestrator.ExecuteSignal(signal);
 
                   if(position.ticket > 0)
@@ -1355,15 +1558,14 @@ void OnTick()
                            (signal.action == "BUY" || signal.action == "buy") ? SIGNAL_LONG : SIGNAL_SHORT,
                            signal.setupQuality, signal.regimeAtSignal);
 
-                        // v3.2 FIX: Log trade entry to CSV
-                        double risk_amount = position.initial_risk_pct * AccountInfoDouble(ACCOUNT_BALANCE) / 100.0;
-                        g_tradeLogger.LogTradeEntry(position, risk_amount);
+                        g_tradeLogger.LogTradeEntry(position, position.entry_risk_amount);
                      }
                   }
                   else
                   {
                      g_riskMonitor.RecordExecutionError();
                   }
+                  } // end if(!probation_diverted)
                   } // end if(!entry_rejected)
                }
             }
@@ -1417,6 +1619,10 @@ void OnTick()
                   orphan.entry_regime = (int)g_marketContext.GetCurrentRegime();
                   orphan.entry_session = (int)GetCurrentTradingSession();
                   orphan.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
+                  orphan.requested_entry_price = orphan.entry_price;
+                  orphan.executed_entry_price = orphan.entry_price;
+                  orphan.entry_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+                  orphan.entry_equity = AccountInfoDouble(ACCOUNT_EQUITY);
 
                   g_posCoordinator.AddPosition(orphan);
                   g_riskMonitor.IncrementTradesToday();
@@ -1424,8 +1630,13 @@ void OnTick()
                   if(g_tradeLogger != NULL)
                   {
                      double risk_dist = MathAbs(orphan.entry_price - orphan.stop_loss);
-                     double risk_amt = (risk_dist > 0) ? orphan.lot_size * risk_dist * 100.0 : 0;
-                     g_tradeLogger.LogTradeEntry(orphan, risk_amt);
+                     double tick_value = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+                     double tick_size = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+                     double risk_amt = 0.0;
+                     if(risk_dist > 0 && tick_value > 0 && tick_size > 0)
+                        risk_amt = (risk_dist / tick_size) * tick_value * orphan.lot_size;
+                     orphan.entry_risk_amount = risk_amt;
+                     g_tradeLogger.LogTradeEntry(orphan, orphan.entry_risk_amount);
                   }
 
                   Print("[ORPHAN ADOPTED] Ticket=", bp_ticket,

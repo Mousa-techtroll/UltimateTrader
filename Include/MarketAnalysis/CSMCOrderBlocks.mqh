@@ -707,6 +707,12 @@ public:
       return result;
    }
 
+   //+------------------------------------------------------------------+
+   //| Public accessors for zone finding (used by reward-room filter)    |
+   //+------------------------------------------------------------------+
+   SSMCZone GetNearestZoneAbove(double price, bool is_bearish)  { return FindNearestZoneAbove(price, is_bearish); }
+   SSMCZone GetNearestZoneBelow(double price, bool is_bullish)  { return FindNearestZoneBelow(price, is_bullish); }
+
 private:
    //+------------------------------------------------------------------+
    //| Update CHoCH swing point tracking arrays                         |

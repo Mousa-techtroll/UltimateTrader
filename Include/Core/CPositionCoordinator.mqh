@@ -267,6 +267,9 @@ private:
 
    double CalculatePositionRiskDollars(const SPosition &pos)
    {
+      if(pos.entry_risk_amount > 0.0)
+         return pos.entry_risk_amount;
+
       double lots = (pos.original_lots > 0) ? pos.original_lots : ((pos.lot_size > 0) ? pos.lot_size : pos.remaining_lots);
       double reference_sl = (pos.original_sl > 0) ? pos.original_sl : pos.stop_loss;
       double risk_dist = MathAbs(pos.entry_price - reference_sl);
@@ -278,6 +281,125 @@ private:
 
       double risk_ticks = risk_dist / tick_size;
       return risk_ticks * tick_value * lots;
+   }
+
+   int FindTrackedPositionIndex(ulong ticket)
+   {
+      for(int i = 0; i < m_position_count; i++)
+      {
+         if(m_positions[i].ticket == ticket)
+            return i;
+      }
+      return -1;
+   }
+
+   double GetCurrentMarketPrice(const SPosition &pos)
+   {
+      if(PositionSelectByTicket(pos.ticket))
+      {
+         double current = PositionGetDouble(POSITION_PRICE_CURRENT);
+         if(current > 0.0)
+            return current;
+      }
+
+      if(pos.direction == SIGNAL_LONG)
+         return SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      return SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   }
+
+   double CalculateLockedR(const SPosition &pos, double stop_loss)
+   {
+      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
+      if(risk_dist <= 0.0 || stop_loss <= 0.0)
+         return 0.0;
+
+      if(pos.direction == SIGNAL_LONG)
+         return (stop_loss - pos.entry_price) / risk_dist;
+      return (pos.entry_price - stop_loss) / risk_dist;
+   }
+
+   bool GetLatestExitDeal(ulong position_ticket,
+                          ulong &deal_ticket,
+                          double &net_profit,
+                          double &deal_price,
+                          datetime &deal_time,
+                          double &deal_volume)
+   {
+      deal_ticket = 0;
+      net_profit = 0.0;
+      deal_price = 0.0;
+      deal_time = 0;
+      deal_volume = 0.0;
+
+      if(!HistorySelectByPosition(position_ticket))
+         return false;
+
+      int deals = HistoryDealsTotal();
+      for(int i = deals - 1; i >= 0; i--)
+      {
+         ulong hist_deal = HistoryDealGetTicket(i);
+         long entry_type = HistoryDealGetInteger(hist_deal, DEAL_ENTRY);
+         if(entry_type != DEAL_ENTRY_OUT &&
+            entry_type != DEAL_ENTRY_OUT_BY &&
+            entry_type != DEAL_ENTRY_INOUT)
+            continue;
+
+         ulong deal_position_id = (ulong)HistoryDealGetInteger(hist_deal, DEAL_POSITION_ID);
+         if(deal_position_id != 0 && deal_position_id != position_ticket)
+            continue;
+
+         deal_ticket = hist_deal;
+         net_profit = HistoryDealGetDouble(hist_deal, DEAL_PROFIT)
+                    + HistoryDealGetDouble(hist_deal, DEAL_SWAP)
+                    + HistoryDealGetDouble(hist_deal, DEAL_COMMISSION);
+         deal_price = HistoryDealGetDouble(hist_deal, DEAL_PRICE);
+         deal_time = (datetime)HistoryDealGetInteger(hist_deal, DEAL_TIME);
+         deal_volume = HistoryDealGetDouble(hist_deal, DEAL_VOLUME);
+         return true;
+      }
+
+      return false;
+   }
+
+   void RegisterPartialClose(SPosition &pos,
+                             string event_type,
+                             string reason,
+                             double close_lots,
+                             double realized_pnl,
+                             double deal_price,
+                             datetime deal_time)
+   {
+      pos.partial_close_count++;
+      pos.partial_realized_pnl += realized_pnl;
+
+      if(m_trade_logger != NULL)
+         m_trade_logger.LogPartialCloseEvent(pos, event_type, reason,
+                                             deal_price, close_lots, realized_pnl, deal_time);
+   }
+
+   void StampExitRequest(SPosition &pos, string reason, string detail = "")
+   {
+      pos.exit_request_reason = reason;
+      pos.exit_request_time = TimeCurrent();
+      pos.exit_request_price = GetCurrentMarketPrice(pos);
+
+      if(m_trade_logger != NULL)
+      {
+         m_trade_logger.LogExitRequest(pos, reason, pos.exit_request_price);
+
+         if(detail != "")
+            m_trade_logger.LogTradeLifecycleEvent(pos,
+                                                  "EXIT_TRIGGER",
+                                                  reason,
+                                                  pos.exit_request_price,
+                                                  0.0,
+                                                  0.0,
+                                                  pos.stop_loss,
+                                                  pos.stop_loss,
+                                                  detail,
+                                                  pos.exit_request_time,
+                                                  true);
+      }
    }
 
    //+------------------------------------------------------------------+
@@ -1107,27 +1229,25 @@ public:
                      bool closed = tp0_trade.PositionClosePartial(m_positions[i].ticket, close_lots);
                      if(closed)
                      {
-                        // Get actual broker-calculated profit from deal history
                         double tp0_actual_profit = 0;
-                        if(HistorySelectByPosition(m_positions[i].ticket))
-                        {
-                           int deals = HistoryDealsTotal();
-                           // The last deal is the TP0 partial close we just executed
-                           if(deals > 0)
-                           {
-                              ulong last_deal = HistoryDealGetTicket(deals - 1);
-                              tp0_actual_profit = HistoryDealGetDouble(last_deal, DEAL_PROFIT)
-                                                + HistoryDealGetDouble(last_deal, DEAL_SWAP)
-                                                + HistoryDealGetDouble(last_deal, DEAL_COMMISSION);
-                           }
-                        }
+                        double tp0_deal_price = current_price_tp0;
+                        datetime tp0_deal_time = TimeCurrent();
+                        double tp0_deal_volume = close_lots;
+                        ulong tp0_deal_ticket = 0;
+                        GetLatestExitDeal(m_positions[i].ticket, tp0_deal_ticket,
+                                          tp0_actual_profit, tp0_deal_price,
+                                          tp0_deal_time, tp0_deal_volume);
 
                         m_positions[i].tp0_closed = true;
                         m_positions[i].tp0_lots = close_lots;
                         m_positions[i].tp0_profit = tp0_actual_profit;
+                        m_positions[i].tp0_time = tp0_deal_time;
                         m_positions[i].remaining_lots -= close_lots;
                         m_positions[i].stage = STAGE_TP0_HIT;
                         m_positions[i].stage_label = "TP0_HIT";
+                        RegisterPartialClose(m_positions[i], "TP0_PARTIAL", "TP0",
+                                             close_lots, tp0_actual_profit,
+                                             tp0_deal_price, tp0_deal_time);
 
                         LogPrint("[TP0] Partial close: Ticket ", m_positions[i].ticket,
                                  " | Closed ", DoubleToString(close_lots, 2), " lots at ",
@@ -1174,24 +1294,25 @@ public:
                      bool closed_tp1 = tp1_trade.PositionClosePartial(m_positions[i].ticket, close_lots_tp1);
                      if(closed_tp1)
                      {
-                        // Get actual broker-calculated profit from deal history
                         double tp1_actual_profit = 0;
-                        if(HistorySelectByPosition(m_positions[i].ticket))
-                        {
-                           int deals_tp1 = HistoryDealsTotal();
-                           if(deals_tp1 > 0)
-                           {
-                              ulong last_deal_tp1 = HistoryDealGetTicket(deals_tp1 - 1);
-                              tp1_actual_profit = HistoryDealGetDouble(last_deal_tp1, DEAL_PROFIT)
-                                                + HistoryDealGetDouble(last_deal_tp1, DEAL_SWAP)
-                                                + HistoryDealGetDouble(last_deal_tp1, DEAL_COMMISSION);
-                           }
-                        }
+                        double tp1_deal_price = current_price_tp1;
+                        datetime tp1_deal_time = TimeCurrent();
+                        double tp1_deal_volume = close_lots_tp1;
+                        ulong tp1_deal_ticket = 0;
+                        GetLatestExitDeal(m_positions[i].ticket, tp1_deal_ticket,
+                                          tp1_actual_profit, tp1_deal_price,
+                                          tp1_deal_time, tp1_deal_volume);
 
                         m_positions[i].tp1_closed = true;
+                        m_positions[i].tp1_lots = close_lots_tp1;
+                        m_positions[i].tp1_profit = tp1_actual_profit;
+                        m_positions[i].tp1_time = tp1_deal_time;
                         m_positions[i].remaining_lots -= close_lots_tp1;
                         m_positions[i].stage = STAGE_TP1_HIT;
                         m_positions[i].stage_label = "TP1_HIT";
+                        RegisterPartialClose(m_positions[i], "TP1_PARTIAL", "TP1",
+                                             close_lots_tp1, tp1_actual_profit,
+                                             tp1_deal_price, tp1_deal_time);
 
                         LogPrint("[TP1] Partial close: Ticket ", m_positions[i].ticket,
                                  " | Closed ", DoubleToString(close_lots_tp1, 2), " lots at ",
@@ -1238,24 +1359,25 @@ public:
                      bool closed_tp2 = tp2_trade.PositionClosePartial(m_positions[i].ticket, close_lots_tp2);
                      if(closed_tp2)
                      {
-                        // Get actual broker-calculated profit from deal history
                         double tp2_actual_profit = 0;
-                        if(HistorySelectByPosition(m_positions[i].ticket))
-                        {
-                           int deals_tp2 = HistoryDealsTotal();
-                           if(deals_tp2 > 0)
-                           {
-                              ulong last_deal_tp2 = HistoryDealGetTicket(deals_tp2 - 1);
-                              tp2_actual_profit = HistoryDealGetDouble(last_deal_tp2, DEAL_PROFIT)
-                                                + HistoryDealGetDouble(last_deal_tp2, DEAL_SWAP)
-                                                + HistoryDealGetDouble(last_deal_tp2, DEAL_COMMISSION);
-                           }
-                        }
+                        double tp2_deal_price = current_price_tp2;
+                        datetime tp2_deal_time = TimeCurrent();
+                        double tp2_deal_volume = close_lots_tp2;
+                        ulong tp2_deal_ticket = 0;
+                        GetLatestExitDeal(m_positions[i].ticket, tp2_deal_ticket,
+                                          tp2_actual_profit, tp2_deal_price,
+                                          tp2_deal_time, tp2_deal_volume);
 
                         m_positions[i].tp2_closed = true;
+                        m_positions[i].tp2_lots = close_lots_tp2;
+                        m_positions[i].tp2_profit = tp2_actual_profit;
+                        m_positions[i].tp2_time = tp2_deal_time;
                         m_positions[i].remaining_lots -= close_lots_tp2;
                         m_positions[i].stage = STAGE_TP2_HIT;
                         m_positions[i].stage_label = "TP2_HIT";
+                        RegisterPartialClose(m_positions[i], "TP2_PARTIAL", "TP2",
+                                             close_lots_tp2, tp2_actual_profit,
+                                             tp2_deal_price, tp2_deal_time);
 
                         LogPrint("[TP2] Partial close: Ticket ", m_positions[i].ticket,
                                  " | Closed ", DoubleToString(close_lots_tp2, 2), " lots at ",
@@ -1314,10 +1436,12 @@ public:
                   m_positions[i].loss_avoided_money = m_positions[i].loss_avoided_r * risk_dollars;
                   m_positions[i].early_exit_triggered = true;
                   m_positions[i].early_exit_reason = "EARLY_INVALIDATION";
-
-                  CTrade early_trade;
-                  early_trade.SetExpertMagicNumber(m_magic_number);
-                  early_trade.PositionClose(m_positions[i].ticket);
+                  StampExitRequest(m_positions[i],
+                                   "EARLY_INVALIDATION",
+                                   StringFormat("bars=%d | mfe_r=%.2f | mae_r=%.2f | current_r=%.2f | saved_r=%.2f",
+                                                m_positions[i].bars_since_entry, mfe_r, mae_r,
+                                                current_r, m_positions[i].loss_avoided_r));
+                  ClosePosition(m_positions[i].ticket, "EARLY_INVALIDATION");
 
                   // Sprint 0C: Clarify sign — negative = exit was WORSE than holding to SL
                   LogPrint("[EARLY_INVALIDATION] Loss avoided: ",
@@ -1396,11 +1520,175 @@ public:
                         " | Stage: ", m_positions[i].stage_label,
                         " | Remaining: ", DoubleToString(m_positions[i].remaining_lots, 2),
                         " | Reason: ", exit_reason);
-
-               CTrade runner_trade;
-               runner_trade.SetExpertMagicNumber(m_magic_number);
-               runner_trade.PositionClose(m_positions[i].ticket);
+               StampExitRequest(m_positions[i], "RUNNER_EXIT:" + exit_reason,
+                                "runner management close");
+               ClosePosition(m_positions[i].ticket, "RUNNER_EXIT:" + exit_reason);
                continue;  // Will be cleaned up in next tick's HandleClosedPosition
+            }
+         }
+
+         // Anti-stall decay: S3/S6 MR/reversal trades only
+         // If trade hasn't reached +0.8R within 5 M15 bars (~75 min), reduce to 50% + BE
+         // If hasn't reached midpoint within 8 M15 bars (~2h), close remainder
+         // NEVER applied to trend patterns or runners (Smart Runner lesson)
+         if(InpEnableAntiStall &&
+            (m_positions[i].pattern_type == PATTERN_RANGE_EDGE_FADE ||
+             m_positions[i].pattern_type == PATTERN_FAILED_BREAK_REVERSAL))
+         {
+            double risk_dist_as = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
+            if(risk_dist_as > 0 && !m_positions[i].tp1_closed)
+            {
+               int minutes_open = (int)(TimeCurrent() - m_positions[i].open_time) / 60;
+               int m15_bars_open = minutes_open / 15;
+
+               double current_price_as = PositionGetDouble(POSITION_PRICE_CURRENT);
+               double profit_r_as = (m_positions[i].direction == SIGNAL_LONG)
+                  ? (current_price_as - m_positions[i].entry_price) / risk_dist_as
+                  : (m_positions[i].entry_price - current_price_as) / risk_dist_as;
+
+               // Stage 2 (8 bars): close remainder if still stalling
+               if(m15_bars_open >= 8 && profit_r_as < 1.0)
+               {
+                  LogPrint("[AntiStall] CLOSE: ", m_positions[i].pattern_name,
+                           " ticket ", m_positions[i].ticket,
+                           " | ", m15_bars_open, " M15 bars | Profit: ",
+                           DoubleToString(profit_r_as, 2), "R — stalled too long");
+                  StampExitRequest(m_positions[i],
+                                   "ANTI_STALL_CLOSE",
+                                   StringFormat("m15_bars=%d | profit_r=%.2f", m15_bars_open, profit_r_as));
+                  ClosePosition(m_positions[i].ticket, "ANTI_STALL_CLOSE");
+                  continue;
+               }
+
+               // Stage 1 (5 bars): reduce to 50% and move stop to BE
+               if(m15_bars_open >= 5 && profit_r_as < 0.8 && !m_positions[i].at_breakeven)
+               {
+                  // Partial close: reduce to ~50% of remaining
+                  double close_lots = NormalizeDouble(m_positions[i].remaining_lots * 0.50, 2);
+                  double min_lot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+                  if(close_lots >= min_lot && m_positions[i].remaining_lots - close_lots >= min_lot)
+                  {
+                     CTrade as_partial;
+                     as_partial.SetExpertMagicNumber(m_magic_number);
+                     if(as_partial.PositionClosePartial(m_positions[i].ticket, close_lots))
+                     {
+                        double as_actual_profit = 0.0;
+                        double as_deal_price = current_price_as;
+                        datetime as_deal_time = TimeCurrent();
+                        double as_deal_volume = close_lots;
+                        ulong as_deal_ticket = 0;
+                        GetLatestExitDeal(m_positions[i].ticket, as_deal_ticket,
+                                          as_actual_profit, as_deal_price,
+                                          as_deal_time, as_deal_volume);
+
+                        m_positions[i].remaining_lots -= close_lots;
+                        RegisterPartialClose(m_positions[i],
+                                             "ANTI_STALL_PARTIAL",
+                                             "ANTI_STALL_REDUCE",
+                                             close_lots,
+                                             as_actual_profit,
+                                             as_deal_price,
+                                             as_deal_time);
+                        LogPrint("[AntiStall] REDUCE 50%: ", m_positions[i].pattern_name,
+                                 " ticket ", m_positions[i].ticket,
+                                 " | ", m15_bars_open, " M15 bars | Profit: ",
+                                 DoubleToString(profit_r_as, 2), "R");
+                     }
+                  }
+
+                  // Move stop to breakeven
+                  double be_sl = m_positions[i].entry_price;
+                  if(m_positions[i].direction == SIGNAL_LONG)
+                     be_sl += InpTrailBEOffset * _Point;
+                  else
+                     be_sl -= InpTrailBEOffset * _Point;
+
+                  be_sl = NormalizeDouble(be_sl, (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS));
+                  bool improves = (m_positions[i].direction == SIGNAL_LONG)
+                     ? (be_sl > m_positions[i].stop_loss)
+                     : (be_sl < m_positions[i].stop_loss);
+
+                  if(improves)
+                  {
+                     double old_sl = m_positions[i].stop_loss;
+                     m_positions[i].stop_loss = be_sl;
+                     m_positions[i].at_breakeven = true;
+                     m_positions[i].trailing_internal_updates++;
+                     m_positions[i].last_trailing_time = TimeCurrent();
+                     m_positions[i].last_trailing_from_sl = old_sl;
+                     m_positions[i].last_trailing_to_sl = be_sl;
+                     m_positions[i].last_trailing_reason = "ANTI_STALL_BE";
+                     m_positions[i].max_locked_r = MathMax(m_positions[i].max_locked_r,
+                                                           CalculateLockedR(m_positions[i], be_sl));
+                     if(m_positions[i].breakeven_time == 0)
+                        m_positions[i].breakeven_time = TimeCurrent();
+
+                     if(m_trade_logger != NULL)
+                     {
+                        double event_price = GetCurrentMarketPrice(m_positions[i]);
+                        m_trade_logger.LogTrailingEvent(m_positions[i],
+                                                        "TRAIL_INTERNAL",
+                                                        "ANTI_STALL_BE",
+                                                        event_price,
+                                                        old_sl,
+                                                        be_sl,
+                                                        StringFormat("m15_bars=%d | profit_r=%.2f", m15_bars_open, profit_r_as),
+                                                        m_positions[i].last_trailing_time,
+                                                        true);
+                        m_trade_logger.LogTrailingEvent(m_positions[i],
+                                                        "BREAKEVEN_ARMED",
+                                                        "ANTI_STALL_BE",
+                                                        event_price,
+                                                        old_sl,
+                                                        be_sl,
+                                                        "",
+                                                        m_positions[i].breakeven_time,
+                                                        true);
+                     }
+
+                     if(!InpDisableBrokerTrailing)
+                     {
+                        CTrade be_trade;
+                        be_trade.SetExpertMagicNumber(m_magic_number);
+                        double cur_tp = 0;
+                        if(PositionSelectByTicket(m_positions[i].ticket))
+                           cur_tp = PositionGetDouble(POSITION_TP);
+                        if(be_trade.PositionModify(m_positions[i].ticket, be_sl, cur_tp))
+                        {
+                           m_positions[i].trailing_broker_updates++;
+                           if(m_trade_logger != NULL)
+                           {
+                              m_trade_logger.LogTrailingEvent(m_positions[i],
+                                                              "TRAIL_BROKER_OK",
+                                                              "ANTI_STALL_BE",
+                                                              GetCurrentMarketPrice(m_positions[i]),
+                                                              old_sl,
+                                                              be_sl,
+                                                              "",
+                                                              TimeCurrent(),
+                                                              true);
+                           }
+                        }
+                        else
+                        {
+                           m_positions[i].trailing_broker_failures++;
+                           if(m_trade_logger != NULL)
+                           {
+                              m_trade_logger.LogTrailingEvent(m_positions[i],
+                                                              "TRAIL_BROKER_FAIL",
+                                                              "ANTI_STALL_BE",
+                                                              GetCurrentMarketPrice(m_positions[i]),
+                                                              old_sl,
+                                                              be_sl,
+                                                              be_trade.ResultComment(),
+                                                              TimeCurrent(),
+                                                              true);
+                           }
+                        }
+                     }
+                  }
+                  SaveOnStateChange();
+               }
             }
          }
 
@@ -1408,10 +1696,11 @@ public:
          ApplyTrailingPlugins(m_positions[i]);
 
          // Check exit strategy plugins
-         if(CheckExitPlugins(m_positions[i]))
+         string plugin_exit_reason = "";
+         if(CheckExitPlugins(m_positions[i], plugin_exit_reason))
          {
             // Exit signal triggered - close position
-            ClosePosition(m_positions[i].ticket, "Exit strategy triggered");
+            ClosePosition(m_positions[i].ticket, plugin_exit_reason);
          }
       }
    }
@@ -1424,17 +1713,13 @@ private:
    {
       double profit = 0;
       double exit_price = 0;
+      datetime exit_time = TimeCurrent();
+      double exit_volume = m_positions[index].remaining_lots;
+      ulong deal_ticket = 0;
 
-      if(HistorySelectByPosition(m_positions[index].ticket))
-      {
-         int deals = HistoryDealsTotal();
-         if(deals > 0)
-         {
-            ulong deal_ticket = HistoryDealGetTicket(deals - 1);
-            profit = HistoryDealGetDouble(deal_ticket, DEAL_PROFIT);
-            exit_price = HistoryDealGetDouble(deal_ticket, DEAL_PRICE);
-         }
-      }
+      GetLatestExitDeal(m_positions[index].ticket, deal_ticket, profit, exit_price, exit_time, exit_volume);
+      if(exit_price <= 0.0)
+         exit_price = GetCurrentMarketPrice(m_positions[index]);
 
       // Sprint 0E: Classify exit type — check if closed at TP1 level
       double tp1_tolerance = 0.50;  // $0.50 tolerance for gold
@@ -1457,7 +1742,7 @@ private:
          double mfe_r = (risk_dist > 0) ? m_positions[index].mfe / risk_dist : 0;
          double mae_r = (risk_dist > 0) ? m_positions[index].mae / risk_dist : 0;
          double hold_hours = (m_positions[index].open_time > 0) ?
-            (double)(TimeCurrent() - m_positions[index].open_time) / 3600.0 : 0;
+            (double)(exit_time - m_positions[index].open_time) / 3600.0 : 0;
 
          Print("[SFP_FORENSIC] ===== EXIT =====");
          Print("[SFP_FORENSIC] Ticket: ", m_positions[index].ticket,
@@ -1487,7 +1772,7 @@ private:
 
       // Log trade exit to CSV
       if(m_trade_logger != NULL)
-         m_trade_logger.LogTradeExit(m_positions[index], profit, exit_price);
+         m_trade_logger.LogTradeExit(m_positions[index], profit, exit_price, exit_time);
 
       if(m_quality_risk_strategy != NULL)
          m_quality_risk_strategy.RecordTradeResult(profit);
@@ -1513,9 +1798,10 @@ private:
       if(m_trade_logger != NULL)
       {
          double risk_dollars_strat = CalculatePositionRiskDollars(m_positions[index]);
-         double r_mult_strat = (risk_dollars_strat > 0) ? profit / risk_dollars_strat : 0;
+         double total_trade_pnl = profit + m_positions[index].partial_realized_pnl;
+         double r_mult_strat = (risk_dollars_strat > 0) ? total_trade_pnl / risk_dollars_strat : 0;
          m_trade_logger.RecordStrategyTrade(
-            m_positions[index].pattern_name, profit, r_mult_strat);
+            m_positions[index].pattern_name, total_trade_pnl, r_mult_strat);
       }
 
       // Remove from array
@@ -1596,13 +1882,22 @@ private:
             {
                double normalized_sl = NormalizeDouble(update.newStopLoss,
                   (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS));
+               double old_sl = pos.stop_loss;
+               datetime trail_time = TimeCurrent();
+               double current_market_price = GetCurrentMarketPrice(pos);
+               bool was_at_breakeven = pos.at_breakeven;
 
                // Always update internal tracking (drives breakeven logic, logging, persistence)
                pos.stop_loss = normalized_sl;
+               pos.trailing_internal_updates++;
+               pos.last_trailing_time = trail_time;
+               pos.last_trailing_from_sl = old_sl;
+               pos.last_trailing_to_sl = normalized_sl;
+               pos.last_trailing_reason = update.reason;
+               pos.max_locked_r = MathMax(pos.max_locked_r, CalculateLockedR(pos, normalized_sl));
 
                // Check if at breakeven using the per-position BE trigger and global offset
                bool be_eligible = !InpEnableTP0 || pos.tp0_closed;
-               bool was_at_breakeven = pos.at_breakeven;
                if(be_eligible)
                {
                   double risk_dist_be = MathAbs(pos.entry_price - pos.original_sl);
@@ -1639,9 +1934,37 @@ private:
                if(pos.at_breakeven && !was_at_breakeven)
                {
                   pos.be_before_tp1 = !pos.tp1_closed;
+                  if(pos.breakeven_time == 0)
+                     pos.breakeven_time = trail_time;
                   state_changed = true;
                }
                state_changed = true;
+
+               if(m_trade_logger != NULL)
+               {
+                  m_trade_logger.LogTrailingEvent(pos,
+                                                  "TRAIL_INTERNAL",
+                                                  update.reason,
+                                                  current_market_price,
+                                                  old_sl,
+                                                  normalized_sl,
+                                                  "",
+                                                  trail_time,
+                                                  true);
+
+                  if(pos.at_breakeven && !was_at_breakeven)
+                  {
+                     m_trade_logger.LogTrailingEvent(pos,
+                                                     "BREAKEVEN_ARMED",
+                                                     update.reason,
+                                                     current_market_price,
+                                                     old_sl,
+                                                     normalized_sl,
+                                                     "",
+                                                     pos.breakeven_time,
+                                                     true);
+                  }
+               }
 
                // --- BROKER SL MODIFICATION ---
                // InpDisableBrokerTrailing = true → REVERT to pre-fix behavior (no broker modify)
@@ -1736,14 +2059,40 @@ private:
 
                      if(trail_trade.PositionModify(pos.ticket, normalized_sl, current_tp))
                      {
+                        pos.trailing_broker_updates++;
                         LogPrint("Trailing SL SENT to broker: ticket ", pos.ticket,
                                  " | SL -> ", DoubleToString(normalized_sl, 2),
                                  " (", update.reason, ")");
+                        if(m_trade_logger != NULL)
+                        {
+                           m_trade_logger.LogTrailingEvent(pos,
+                                                           "TRAIL_BROKER_OK",
+                                                           update.reason,
+                                                           GetCurrentMarketPrice(pos),
+                                                           old_sl,
+                                                           normalized_sl,
+                                                           "",
+                                                           TimeCurrent(),
+                                                           true);
+                        }
                      }
                      else
                      {
+                        pos.trailing_broker_failures++;
                         LogPrint("WARNING: Trailing SL modify FAILED: ticket ", pos.ticket,
                                  " | Error: ", trail_trade.ResultComment());
+                        if(m_trade_logger != NULL)
+                        {
+                           m_trade_logger.LogTrailingEvent(pos,
+                                                           "TRAIL_BROKER_FAIL",
+                                                           update.reason,
+                                                           GetCurrentMarketPrice(pos),
+                                                           old_sl,
+                                                           normalized_sl,
+                                                           trail_trade.ResultComment(),
+                                                           TimeCurrent(),
+                                                           true);
+                        }
                      }
                   }
                }
@@ -1759,8 +2108,10 @@ private:
    //+------------------------------------------------------------------+
    //| Check exit strategy plugins for a position                        |
    //+------------------------------------------------------------------+
-   bool CheckExitPlugins(SPosition &pos)
+   bool CheckExitPlugins(SPosition &pos, string &exit_reason)
    {
+      exit_reason = "";
+
       for(int e = 0; e < m_exit_count; e++)
       {
          if(m_exit_plugins[e] == NULL || !m_exit_plugins[e].IsEnabled())
@@ -1776,6 +2127,21 @@ private:
          if(exit_sig.valid)
          {
             LogPrint("Exit signal for ticket ", pos.ticket, ": ", exit_sig.reason);
+            exit_reason = "EXIT_PLUGIN:" + exit_sig.reason;
+            if(m_trade_logger != NULL)
+            {
+               m_trade_logger.LogTradeLifecycleEvent(pos,
+                                                     "EXIT_PLUGIN_SIGNAL",
+                                                     exit_reason,
+                                                     GetCurrentMarketPrice(pos),
+                                                     0.0,
+                                                     0.0,
+                                                     pos.stop_loss,
+                                                     pos.stop_loss,
+                                                     m_exit_plugins[e].GetName(),
+                                                     TimeCurrent(),
+                                                     true);
+            }
             return true;
          }
       }
@@ -1787,14 +2153,24 @@ private:
    //| Uses CTrade directly since CEnhancedTradeExecutor focuses on      |
    //| opening trades; position closing is simpler and more reliable.    |
    //+------------------------------------------------------------------+
-   void ClosePosition(ulong ticket, string reason)
+   bool ClosePosition(ulong ticket, string reason)
    {
       LogPrint("Closing position ", ticket, ": ", reason);
 
       if(!PositionSelectByTicket(ticket))
       {
          LogPrint("Position ", ticket, " not found - may already be closed");
-         return;
+         return false;
+      }
+
+      int tracked_index = FindTrackedPositionIndex(ticket);
+      if(tracked_index >= 0)
+      {
+         bool needs_stamp = (m_positions[tracked_index].exit_request_reason != reason ||
+                             m_positions[tracked_index].exit_request_time <= 0 ||
+                             TimeCurrent() - m_positions[tracked_index].exit_request_time > 1);
+         if(needs_stamp)
+            StampExitRequest(m_positions[tracked_index], reason);
       }
 
       // Use CTrade for position closing
@@ -1804,11 +2180,25 @@ private:
       if(!trade.PositionClose(ticket))
       {
          LogPrint("ERROR: Failed to close position ", ticket, " - ", trade.ResultComment());
+         if(tracked_index >= 0 && m_trade_logger != NULL)
+         {
+            m_trade_logger.LogTradeLifecycleEvent(m_positions[tracked_index],
+                                                  "EXIT_REQUEST_FAILED",
+                                                  reason,
+                                                  m_positions[tracked_index].exit_request_price,
+                                                  0.0,
+                                                  0.0,
+                                                  m_positions[tracked_index].stop_loss,
+                                                  m_positions[tracked_index].stop_loss,
+                                                  trade.ResultComment(),
+                                                  TimeCurrent(),
+                                                  true);
+         }
+         return false;
       }
-      else
-      {
-         LogPrint("Position ", ticket, " closed successfully: ", reason);
-      }
+
+      LogPrint("Position ", ticket, " closed successfully: ", reason);
+      return true;
    }
 
    //+------------------------------------------------------------------+
@@ -1818,9 +2208,9 @@ private:
    {
       for(int i = m_position_count - 1; i >= 0; i--)
       {
-         // Get exit details before closing
-         double exit_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+         double exit_price = GetCurrentMarketPrice(m_positions[i]);
          double profit = 0;
+         datetime exit_time = TimeCurrent();
 
          if(PositionSelectByTicket(m_positions[i].ticket))
          {
@@ -1828,18 +2218,37 @@ private:
             exit_price = PositionGetDouble(POSITION_PRICE_CURRENT);
          }
 
-         ClosePosition(m_positions[i].ticket, reason);
+         bool closed = ClosePosition(m_positions[i].ticket, reason);
 
-         // Log exit (HandleClosedPosition won't run because we zero the array below)
+         if(!closed)
+            continue;
+
+         ulong deal_ticket = 0;
+         double exit_volume = m_positions[i].remaining_lots;
+         double deal_profit = 0.0;
+         double deal_price = exit_price;
+         datetime deal_time = exit_time;
+         if(GetLatestExitDeal(m_positions[i].ticket, deal_ticket, deal_profit, deal_price, deal_time, exit_volume))
+         {
+            profit = deal_profit;
+            exit_price = deal_price;
+            exit_time = deal_time;
+         }
+
          if(m_trade_logger != NULL)
-            m_trade_logger.LogTradeExit(m_positions[i], profit, exit_price);
+            m_trade_logger.LogTradeExit(m_positions[i], profit, exit_price, exit_time);
 
          if(m_quality_risk_strategy != NULL)
             m_quality_risk_strategy.RecordTradeResult(profit);
 
-         // Record mode result for performance tracking
          double risk_dollars = CalculatePositionRiskDollars(m_positions[i]);
-         double r_multiple = (risk_dollars > 0) ? profit / risk_dollars : 0;
+         double total_trade_pnl = profit + m_positions[i].partial_realized_pnl;
+         double total_r_multiple = (risk_dollars > 0) ? total_trade_pnl / risk_dollars : 0;
+         double runner_r_multiple = (risk_dollars > 0) ? profit / risk_dollars : 0;
+
+         if(m_trade_logger != NULL)
+            m_trade_logger.RecordStrategyTrade(
+               m_positions[i].pattern_name, total_trade_pnl, total_r_multiple);
 
          ENUM_ENGINE_MODE mode = m_positions[i].engine_mode;
          if(mode != MODE_NONE)
@@ -1847,22 +2256,22 @@ private:
             if(m_liquidity_engine != NULL &&
                (mode == MODE_DISPLACEMENT || mode == MODE_OB_RETEST ||
                 mode == MODE_FVG_MITIGATION || mode == MODE_SFP))
-               m_liquidity_engine.RecordModeResult(mode, profit, r_multiple,
+               m_liquidity_engine.RecordModeResult(mode, profit, runner_r_multiple,
                   m_positions[i].mae, m_positions[i].mfe);
             else if(m_session_engine != NULL &&
                (mode == MODE_LONDON_BREAKOUT || mode == MODE_NY_CONTINUATION ||
                 mode == MODE_SILVER_BULLET || mode == MODE_LONDON_CLOSE))
-               m_session_engine.RecordModeResult(mode, profit, r_multiple,
+               m_session_engine.RecordModeResult(mode, profit, runner_r_multiple,
                   m_positions[i].mae, m_positions[i].mfe);
             else if(m_expansion_engine != NULL &&
                (mode == MODE_PANIC_MOMENTUM || mode == MODE_INSTITUTIONAL_CANDLE ||
                 mode == MODE_COMPRESSION_BO))
-               m_expansion_engine.RecordModeResult(mode, profit, r_multiple,
+               m_expansion_engine.RecordModeResult(mode, profit, runner_r_multiple,
                   m_positions[i].mae, m_positions[i].mfe);
          }
+
+         RemovePosition(i);
       }
-      m_position_count = 0;
-      ArrayResize(m_positions, 0);
 
       // Persist empty state after closing all
       SaveOnStateChange();

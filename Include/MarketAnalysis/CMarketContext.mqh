@@ -499,6 +499,22 @@ public:
       return m_smc_order_blocks.GetAnalysis().in_bearish_fvg;
    }
 
+   virtual double GetNearestSMCResistance(double price) override
+   {
+      if(m_smc_order_blocks == NULL) return 0;
+      SSMCZone zone = m_smc_order_blocks.GetNearestZoneAbove(price, true);
+      if(zone.is_valid) return zone.bottom;  // Bottom of supply zone = first resistance hit
+      return 0;
+   }
+
+   virtual double GetNearestSMCSupport(double price) override
+   {
+      if(m_smc_order_blocks == NULL) return 0;
+      SSMCZone zone = m_smc_order_blocks.GetNearestZoneBelow(price, true);
+      if(zone.is_valid) return zone.top;  // Top of demand zone = first support hit
+      return 0;
+   }
+
    //--- Crash Detection (from CCrashDetector) ---
 
    virtual bool IsBearRegimeActive()
@@ -541,6 +557,41 @@ public:
    {
       if(m_volatility_mgr == NULL) return 1.0;
       return m_volatility_mgr.GetSLMultiplier();
+   }
+
+   //--- Regime Thrash Cooldown ---
+
+   virtual bool IsRegimeThrashing() override
+   {
+      if(m_regime_classifier == NULL) return false;
+      return m_regime_classifier.IsThrashCooldownActive();
+   }
+
+   //--- Choppiness Index CI(10) on H1 ---
+
+   virtual double GetChoppinessIndex() override
+   {
+      double sum_tr = 0;
+      double highest = -DBL_MAX;
+      double lowest = DBL_MAX;
+
+      for(int i = 1; i <= 10; i++)  // Last 10 completed H1 bars
+      {
+         double h = iHigh(_Symbol, PERIOD_H1, i);
+         double l = iLow(_Symbol, PERIOD_H1, i);
+         double c_prev = iClose(_Symbol, PERIOD_H1, i + 1);
+
+         double tr = MathMax(h - l, MathMax(MathAbs(h - c_prev), MathAbs(l - c_prev)));
+         sum_tr += tr;
+
+         if(h > highest) highest = h;
+         if(l < lowest) lowest = l;
+      }
+
+      double range = highest - lowest;
+      if(range < _Point * 10) return 50.0;
+
+      return 100.0 * MathLog(sum_tr / range) / MathLog(10.0);
    }
 
    //--- Health (from AICoder HealthMonitor - placeholder) ---

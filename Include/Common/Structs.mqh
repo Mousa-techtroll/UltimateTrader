@@ -118,6 +118,11 @@ struct SPosition
    int                  entry_session;      // Session tag (ENUM_TRADING_SESSION)
    bool                 confirmation_used;  // Confirmation candle was used
    datetime             bar_time_at_entry;  // Bar time for session tagging
+   double               requested_entry_price; // Requested entry price before execution
+   double               executed_entry_price;  // Broker-reported fill price
+   double               entry_balance;      // Balance snapshot at entry
+   double               entry_equity;       // Equity snapshot at entry
+   double               entry_risk_amount;  // Risk amount in money at entry
 
    // v3.1 Phase D: Engine telemetry fields (from EntrySignal at trade open)
    string               engine_name;        // Engine that generated this trade
@@ -135,6 +140,15 @@ struct SPosition
    bool   tp0_closed;            // TP0 partial executed?
    double tp0_lots;              // Lots closed at TP0
    double tp0_profit;            // Profit captured at TP0
+   datetime tp0_time;            // Time TP0 partial executed
+   double tp1_lots;              // Lots closed at TP1
+   double tp1_profit;            // Profit captured at TP1
+   datetime tp1_time;            // Time TP1 partial executed
+   double tp2_lots;              // Lots closed at TP2
+   double tp2_profit;            // Profit captured at TP2
+   datetime tp2_time;            // Time TP2 partial executed
+   int    partial_close_count;   // Total number of partial close executions
+   double partial_realized_pnl;  // Total realized PnL from partial closes
 
    // Early invalidation (Sprint 2)
    int    bars_since_entry;       // Bar counter since entry
@@ -142,6 +156,18 @@ struct SPosition
    string early_exit_reason;      // "EARLY_INVALIDATION" or ""
    double loss_avoided_r;         // How much R was saved vs full SL (0 if not early-closed)
    double loss_avoided_money;     // Dollar equivalent
+   datetime breakeven_time;       // When BE was first armed
+   int    trailing_internal_updates; // Count of internal SL improvements
+   int    trailing_broker_updates;   // Count of broker SL modifications sent successfully
+   int    trailing_broker_failures;  // Count of failed broker SL modifications
+   datetime last_trailing_time;      // Last time trailing improved
+   double last_trailing_from_sl;     // Previous SL before last trail update
+   double last_trailing_to_sl;       // New SL after last trail update
+   double max_locked_r;              // Best locked-in R by trailing/breakeven
+   string last_trailing_reason;      // Reason from trailing plugin
+   string exit_request_reason;       // Requested/manual close reason before final fill
+   datetime exit_request_time;       // When exit was requested
+   double exit_request_price;        // Market price when exit was requested
 
    // Regime-based exit profile (v2.0 — frozen at trade open, NOT live)
    int    exit_regime_class;      // ENUM_REGIME_RISK_CLASS snapshot at entry
@@ -166,13 +192,24 @@ struct SPosition
       trailing_mode = 0; entry_regime = 0; stage_label = "";
       mae = 0; mfe = 0; entry_spread = 0; entry_slippage = 0;
       entry_session = 0; confirmation_used = false; bar_time_at_entry = 0;
+      requested_entry_price = 0; executed_entry_price = 0;
+      entry_balance = 0; entry_equity = 0; entry_risk_amount = 0;
       engine_name = ""; engine_mode = MODE_NONE; day_type = DAY_TREND;
       engine_confluence = 0;
       reached_050r = false; reached_100r = false;
       peak_r_before_be = 0; be_before_tp1 = false;
-      tp0_closed = false; tp0_lots = 0; tp0_profit = 0;
+      tp0_closed = false; tp0_lots = 0; tp0_profit = 0; tp0_time = 0;
+      tp1_lots = 0; tp1_profit = 0; tp1_time = 0;
+      tp2_lots = 0; tp2_profit = 0; tp2_time = 0;
+      partial_close_count = 0; partial_realized_pnl = 0;
       bars_since_entry = 0; early_exit_triggered = false;
       early_exit_reason = ""; loss_avoided_r = 0; loss_avoided_money = 0;
+      breakeven_time = 0;
+      trailing_internal_updates = 0; trailing_broker_updates = 0;
+      trailing_broker_failures = 0; last_trailing_time = 0;
+      last_trailing_from_sl = 0; last_trailing_to_sl = 0; max_locked_r = 0;
+      last_trailing_reason = ""; exit_request_reason = "";
+      exit_request_time = 0; exit_request_price = 0;
       // Regime exit defaults (= current Inp* behavior when module disabled)
       exit_regime_class = 1;  // RISK_CLASS_NORMAL
       exit_be_trigger = 0.8; exit_chandelier_mult = 3.0;

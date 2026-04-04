@@ -1,10 +1,11 @@
 //+------------------------------------------------------------------+
 //| CRegimeAwareExit.mqh                                            |
-//| Exit plugin: Closes positions when regime changes to CHOPPY     |
-//| Based on Stack 1.7 PositionManager::ShouldClosePosition logic   |
+//| Exit plugin: Regime-aware position management                   |
+//| v2: Structure-based invalidation — CHOPPY regime alone does NOT |
+//|     close trend positions. Requires H1 EMA(50) structural break.|
 //+------------------------------------------------------------------+
 #property copyright "UltimateTrader"
-#property version   "1.00"
+#property version   "2.00"
 #property strict
 
 #include "../PluginSystem/CExitStrategy.mqh"
@@ -14,18 +15,25 @@
 
 //--- Input parameters - Declared in UltimateTrader_Inputs.mqh
 // input bool   InpAutoCloseOnChoppy = true;       // Declared in UltimateTrader_Inputs.mqh
+// input bool   InpStructureBasedExit = true;       // Declared in UltimateTrader_Inputs.mqh
 input int    InpMacroOppositionThreshold = 3;   // Macro score threshold for force close
 
 //+------------------------------------------------------------------+
-//| CRegimeAwareExit - Closes positions when regime becomes CHOPPY  |
-//| Preserves mean reversion positions (BB, Range, FalseBrkout)      |
-//| Also closes on strong macro opposition                           |
+//| CRegimeAwareExit - Structure-aware regime exit                   |
+//| When InpStructureBasedExit=true:                                 |
+//|   CHOPPY regime alone does NOT close trend positions.            |
+//|   Requires H1 close through EMA(50) against the trade.          |
+//| When InpStructureBasedExit=false:                                |
+//|   Legacy behavior — immediate close on CHOPPY for trend trades.  |
+//| Mean reversion positions always survive CHOPPY (unchanged).      |
+//| Macro opposition exit unchanged.                                 |
 //+------------------------------------------------------------------+
 class CRegimeAwareExit : public CExitStrategy
 {
 private:
    IMarketContext   *m_context;
-   ENUM_PATTERN_TYPE m_current_pattern;  // Set by coordinator before CheckForExitSignal
+   ENUM_PATTERN_TYPE m_current_pattern;
+   int               m_handle_ema50_h1;
 
    // Mean reversion pattern types that THRIVE in choppy markets
    bool IsMeanReversionPattern(ENUM_PATTERN_TYPE pattern)
@@ -33,6 +41,29 @@ private:
       return (pattern == PATTERN_BB_MEAN_REVERSION ||
               pattern == PATTERN_RANGE_BOX ||
               pattern == PATTERN_FALSE_BREAKOUT_FADE);
+   }
+
+   //+------------------------------------------------------------------+
+   //| Check if H1 price structure has broken against the trade          |
+   //| Returns true if last completed H1 bar closed through EMA(50)     |
+   //| in the adverse direction — meaning the trend structure failed.    |
+   //+------------------------------------------------------------------+
+   bool IsStructureBroken(int pos_type)
+   {
+      if(m_handle_ema50_h1 == INVALID_HANDLE)
+         return true;  // Fail-safe: if indicator unavailable, fall back to closing
+
+      double ema50[];
+      ArraySetAsSeries(ema50, true);
+      if(CopyBuffer(m_handle_ema50_h1, 0, 1, 1, ema50) <= 0)
+         return true;  // Fail-safe
+
+      double h1_close = iClose(_Symbol, PERIOD_H1, 1);  // Last COMPLETED H1 bar
+
+      if(pos_type == POSITION_TYPE_BUY)
+         return (h1_close < ema50[0]);   // Long structure breaks below EMA50
+      else
+         return (h1_close > ema50[0]);   // Short structure breaks above EMA50
    }
 
 public:
@@ -43,6 +74,7 @@ public:
    {
       m_context = context;
       m_current_pattern = PATTERN_NONE;
+      m_handle_ema50_h1 = INVALID_HANDLE;
    }
 
    //+------------------------------------------------------------------+
@@ -54,9 +86,14 @@ public:
    //| Plugin metadata                                                   |
    //+------------------------------------------------------------------+
    virtual string GetName() override    { return "RegimeAwareExit"; }
-   virtual string GetVersion() override { return "1.00"; }
+   virtual string GetVersion() override { return "2.00"; }
    virtual string GetAuthor() override  { return "UltimateTrader"; }
-   virtual string GetDescription() override { return "Closes trend positions when regime becomes CHOPPY"; }
+   virtual string GetDescription() override
+   {
+      if(InpStructureBasedExit)
+         return "Structure-based: CHOPPY close requires H1 EMA50 break";
+      return "Legacy: closes trend positions on CHOPPY regime";
+   }
 
    //+------------------------------------------------------------------+
    //| Set market context                                                |
@@ -68,8 +105,14 @@ public:
    //+------------------------------------------------------------------+
    virtual bool Initialize() override
    {
+      m_handle_ema50_h1 = iMA(_Symbol, PERIOD_H1, 50, 0, MODE_EMA, PRICE_CLOSE);
+
+      if(m_handle_ema50_h1 == INVALID_HANDLE)
+         Print("CRegimeAwareExit: WARNING - Failed to create H1 EMA(50) handle");
+
       m_isInitialized = true;
-      Print("CRegimeAwareExit initialized: AutoCloseChoppy=", InpAutoCloseOnChoppy);
+      Print("CRegimeAwareExit v2 initialized: AutoCloseChoppy=", InpAutoCloseOnChoppy,
+            " | StructureBased=", InpStructureBasedExit);
       return true;
    }
 
@@ -78,6 +121,9 @@ public:
    //+------------------------------------------------------------------+
    virtual void Deinitialize() override
    {
+      if(m_handle_ema50_h1 != INVALID_HANDLE)
+         IndicatorRelease(m_handle_ema50_h1);
+      m_handle_ema50_h1 = INVALID_HANDLE;
       m_isInitialized = false;
    }
 
@@ -100,23 +146,41 @@ public:
       int pos_type = (int)PositionGetInteger(POSITION_TYPE);
       string comment = PositionGetString(POSITION_COMMENT);
 
-      // Use pattern_type set by coordinator from SPosition struct
       ENUM_PATTERN_TYPE pattern = m_current_pattern;
 
-      // CHOPPY regime: close trend-following positions, keep mean reversion
+      // CHOPPY regime handling
       if(InpAutoCloseOnChoppy && current_regime == REGIME_CHOPPY)
       {
+         // Mean reversion positions always survive CHOPPY
          if(!IsMeanReversionPattern(pattern))
          {
-            signal.shouldExit = true;
-            signal.ticket = ticket;
-            signal.reason = "CHOPPY regime - auto close trend position (" + comment + ")";
-            Print("CRegimeAwareExit: ", signal.reason, " #", ticket);
-            return signal;
+            if(InpStructureBasedExit)
+            {
+               // Structure-based: only close if H1 has broken EMA(50) against the trade
+               if(IsStructureBroken(pos_type))
+               {
+                  signal.shouldExit = true;
+                  signal.ticket = ticket;
+                  signal.reason = "CHOPPY + structure break (H1 < EMA50) - closing (" + comment + ")";
+                  Print("CRegimeAwareExit: ", signal.reason, " #", ticket);
+                  return signal;
+               }
+               // Structure intact — regime is CHOPPY but trade stays open
+            }
+            else
+            {
+               // Legacy: immediate close on CHOPPY
+               signal.shouldExit = true;
+               signal.ticket = ticket;
+               signal.reason = "CHOPPY regime - auto close trend position (" + comment + ")";
+               Print("CRegimeAwareExit: ", signal.reason, " #", ticket);
+               return signal;
+            }
          }
       }
 
       // Macro opposition: close when macro strongly opposes position direction
+      // (unchanged — macro opposition is fundamental, not classifier noise)
       if(pos_type == POSITION_TYPE_BUY && macro_score <= -InpMacroOppositionThreshold)
       {
          signal.shouldExit = true;

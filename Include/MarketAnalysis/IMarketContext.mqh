@@ -47,6 +47,8 @@ public:
    virtual bool                 IsInBearishOrderBlock()  { return false; }
    virtual bool                 IsInBullishFVG()         { return false; }
    virtual bool                 IsInBearishFVG()         { return false; }
+   virtual double               GetNearestSMCResistance(double price) { return 0; }
+   virtual double               GetNearestSMCSupport(double price)    { return 0; }
 
    //--- Crash Detection (from CCrashDetector)
    virtual bool                 IsBearRegimeActive()     { return false; }
@@ -60,6 +62,10 @@ public:
    //--- Health (from AICoder HealthMonitor)
    virtual ENUM_HEALTH_STATUS   GetSystemHealth()        { return HEALTH_EXCELLENT; }
    virtual double               GetHealthRiskAdjustment(){ return 1.0; }
+
+   //--- Choppiness Index
+   virtual double               GetChoppinessIndex()     { return 50.0; }
+   virtual bool                 IsRegimeThrashing()      { return false; }
 
    //--- SMC / Structure
    virtual ENUM_BOS_TYPE        GetRecentBOS()           { return BOS_NONE; }

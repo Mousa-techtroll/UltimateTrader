@@ -205,12 +205,11 @@ public:
 
       // =============================================================
       // BEARISH ENGULFING
-      // Sprint fix: Relaxed H4 trend gate to allow shorts in all conditions.
-      // The signal validator and risk strategy provide downstream short protection
-      // (200 EMA filter, short risk multiplier, quality scoring). Blocking at
-      // the plugin level prevented ANY short signals from being generated.
+      // DISABLED by data: -25.9R across 6 years (2019-2025), net loser in 4/6 years.
+      // Dominates every major loss streak. Toggle: InpEnableBearishEngulfing
       // =============================================================
-      if(trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL || trend_bias == TREND_BULLISH)
+      if(InpEnableBearishEngulfing &&
+         (trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL || trend_bias == TREND_BULLISH))
       {
          bool prev_bullish = (close[2] > open[2]);
          bool curr_bearish = (close[1] < open[1]);

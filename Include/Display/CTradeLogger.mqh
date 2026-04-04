@@ -35,9 +35,53 @@ private:
       return s;
    }
 
+   string BoolToYesNo(bool value)
+   {
+      return value ? "YES" : "NO";
+   }
+
+   void AddCsvField(string &fields[], string value)
+   {
+      int size = ArraySize(fields);
+      ArrayResize(fields, size + 1);
+      fields[size] = value;
+   }
+
+   string JoinCsvFields(string &fields[])
+   {
+      string line = "";
+      int size = ArraySize(fields);
+      for(int i = 0; i < size; i++)
+      {
+         if(i > 0)
+            line += ",";
+         line += fields[i];
+      }
+      return line;
+   }
+
+   void WriteCsvFields(int handle, string &fields[], bool flush_now = false)
+   {
+      if(handle == INVALID_HANDLE)
+         return;
+
+      FileWriteString(handle, JoinCsvFields(fields) + "\r\n");
+      if(flush_now)
+         FileFlush(handle);
+   }
+
+   string FormatOptionalTime(datetime value)
+   {
+      if(value <= 0)
+         return "";
+      return TimeToString(value, TIME_DATE | TIME_MINUTES);
+   }
+
    // CSV file for trade statistics
    string   m_csv_filename;
    int      m_csv_handle;
+   string   m_event_csv_filename;
+   int      m_event_csv_handle;
 
    // Audit ledgers for Track 0 observability
    string   m_candidate_csv_filename;
@@ -85,6 +129,134 @@ private:
       return -1;
    }
 
+   string DirectionToString(const SPosition &pos)
+   {
+      return (pos.direction == SIGNAL_LONG) ? "LONG" : "SHORT";
+   }
+
+   double GetRiskDistance(const SPosition &pos)
+   {
+      return MathAbs(pos.entry_price - pos.original_sl);
+   }
+
+   double GetRiskMoney(const SPosition &pos)
+   {
+      if(pos.entry_risk_amount > 0.0)
+         return pos.entry_risk_amount;
+
+      double lots = (pos.original_lots > 0.0) ? pos.original_lots : ((pos.lot_size > 0.0) ? pos.lot_size : pos.remaining_lots);
+      double reference_sl = (pos.original_sl > 0.0) ? pos.original_sl : pos.stop_loss;
+      double risk_dist = MathAbs(pos.entry_price - reference_sl);
+      double tick_value = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+      double tick_size = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+
+      if(lots <= 0.0 || risk_dist <= 0.0 || tick_value <= 0.0 || tick_size <= 0.0)
+         return 0.0;
+
+      return (risk_dist / tick_size) * tick_value * lots;
+   }
+
+   double GetPriceR(const SPosition &pos, double price)
+   {
+      double risk_dist = GetRiskDistance(pos);
+      if(risk_dist <= 0.0 || price <= 0.0)
+         return 0.0;
+
+      if(pos.direction == SIGNAL_LONG)
+         return (price - pos.entry_price) / risk_dist;
+      return (pos.entry_price - price) / risk_dist;
+   }
+
+   void WriteTradeEvent(SPosition &pos,
+                        string event_type,
+                        string event_reason,
+                        double event_price = 0.0,
+                        double close_lots = 0.0,
+                        double event_pnl = 0.0,
+                        double old_sl = 0.0,
+                        double new_sl = 0.0,
+                        string detail = "",
+                        datetime event_time = 0,
+                        bool flush_now = true)
+   {
+      if(m_event_csv_handle == INVALID_HANDLE)
+         return;
+
+      string regime = RegimeIntToString(pos.entry_regime);
+      string session = SessionToString(pos.entry_session);
+      string engine_mode_str = EnumToString(pos.engine_mode);
+      string day_type_str = EnumToString(pos.day_type);
+      int digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+
+      double risk_dist = GetRiskDistance(pos);
+      double risk_money = GetRiskMoney(pos);
+      double total_realized_pnl = pos.partial_realized_pnl;
+      if(event_type == "EXIT_FILL")
+         total_realized_pnl += event_pnl;
+
+      double current_price = event_price;
+      if(current_price <= 0.0 && PositionSelectByTicket(pos.ticket))
+         current_price = PositionGetDouble(POSITION_PRICE_CURRENT);
+
+      double current_r = GetPriceR(pos, current_price);
+      double mae_r = (risk_dist > 0.0) ? pos.mae / risk_dist : 0.0;
+      double mfe_r = (risk_dist > 0.0) ? pos.mfe / risk_dist : 0.0;
+
+      datetime stamp = (event_time > 0) ? event_time : TimeCurrent();
+
+      FileWrite(m_event_csv_handle,
+                TimeToString(stamp, TIME_DATE | TIME_SECONDS),
+                (long)pos.ticket,
+                SanitizeCSV(pos.signal_id),
+                SanitizeCSV(pos.pattern_name),
+                DirectionToString(pos),
+                pos.stage_label,
+                event_type,
+                SanitizeCSV(event_reason),
+                SanitizeCSV(detail),
+                DoubleToString(pos.entry_price, digits),
+                DoubleToString(pos.requested_entry_price, digits),
+                DoubleToString(pos.executed_entry_price, digits),
+                DoubleToString(current_price, digits),
+                DoubleToString(old_sl, digits),
+                DoubleToString(new_sl, digits),
+                DoubleToString(pos.original_sl, digits),
+                DoubleToString(pos.original_tp1, digits),
+                DoubleToString(pos.tp2, digits),
+                DoubleToString(risk_dist, digits),
+                DoubleToString(risk_money, 2),
+                DoubleToString(pos.original_lots, 2),
+                DoubleToString(pos.remaining_lots, 2),
+                DoubleToString(close_lots, 2),
+                DoubleToString(event_pnl, 2),
+                DoubleToString(pos.partial_realized_pnl, 2),
+                DoubleToString(total_realized_pnl, 2),
+                DoubleToString(current_r, 2),
+                DoubleToString(mae_r, 2),
+                DoubleToString(mfe_r, 2),
+                BoolToYesNo(pos.at_breakeven),
+                BoolToYesNo(pos.tp0_closed),
+                BoolToYesNo(pos.tp1_closed),
+                BoolToYesNo(pos.tp2_closed),
+                IntegerToString(pos.partial_close_count),
+                IntegerToString(pos.trailing_internal_updates),
+                IntegerToString(pos.trailing_broker_updates),
+                IntegerToString(pos.trailing_broker_failures),
+                DoubleToString(pos.max_locked_r, 2),
+                regime,
+                session,
+                SanitizeCSV(pos.engine_name),
+                engine_mode_str,
+                day_type_str,
+                FormatOptionalTime(pos.breakeven_time),
+                FormatOptionalTime(pos.exit_request_time),
+                SanitizeCSV(pos.exit_request_reason),
+                DoubleToString(pos.exit_request_price, digits));
+
+      if(flush_now)
+         FileFlush(m_event_csv_handle);
+   }
+
    //+------------------------------------------------------------------+
    //| Helper: Convert ENUM_TRADING_SESSION int to string               |
    //+------------------------------------------------------------------+
@@ -123,6 +295,8 @@ public:
    {
       m_csv_filename = "";
       m_csv_handle = INVALID_HANDLE;
+      m_event_csv_filename = "";
+      m_event_csv_handle = INVALID_HANDLE;
       m_candidate_csv_filename = "";
       m_candidate_csv_handle = INVALID_HANDLE;
       m_risk_csv_filename = "";
@@ -169,30 +343,72 @@ public:
 
       if(m_csv_handle != INVALID_HANDLE)
       {
-         // v3.2: Single-row CSV with original SL/TP, trailing SL, holding time, risk distance
-         // Sprint 1: Added R-milestone + TP0 columns
-         FileWrite(m_csv_handle,
-                   "RowType", "Ticket", "SignalID", "Pattern", "Direction", "Source",
-                   "Regime", "Quality", "Session",
-                   "EngineName", "EngineMode", "DayType", "Confluence",
-                   "Spread", "Slippage", "ConfirmationUsed", "BarTime",
-                   "EntryTime", "EntryPrice",
-                   "OriginalSL", "CurrentSL", "OriginalTP1", "TP2",
-                   "RiskPct", "LotSize", "RiskDistance",
-                   "ExitTime", "ExitPrice", "PnL_Money", "PnL_R",
-                   "HoldingHours", "MAE", "MFE", "MAE_R", "MFE_R",
-                   "ExitReason", "Result",
-                   "Runner_PnL", "Runner_R", "TP0_PnL", "TP0_R", "Total_PnL", "Total_R",
-                   "WouldBeFlatWithoutTP0",
-                   "Reached05R", "Reached10R", "PeakR_BeforeBE", "BE_Before_TP1",
-                   "TP0_Closed", "TP0_Lots",
-                   "EarlyExit", "EarlyExitReason", "LossAvoided_R", "LossAvoided_Money");
+         // Enriched per-trade snapshot. Entry/exit rows share a wide schema so
+         // every trade can be audited without joining the event ledger.
+         string csv_header[];
+         AddCsvField(csv_header, "RowType"); AddCsvField(csv_header, "Ticket"); AddCsvField(csv_header, "SignalID");
+         AddCsvField(csv_header, "Pattern"); AddCsvField(csv_header, "Direction"); AddCsvField(csv_header, "Source");
+         AddCsvField(csv_header, "Regime"); AddCsvField(csv_header, "Quality"); AddCsvField(csv_header, "Session");
+         AddCsvField(csv_header, "EngineName"); AddCsvField(csv_header, "EngineMode"); AddCsvField(csv_header, "DayType");
+         AddCsvField(csv_header, "Confluence"); AddCsvField(csv_header, "Spread"); AddCsvField(csv_header, "Slippage");
+         AddCsvField(csv_header, "ConfirmationUsed"); AddCsvField(csv_header, "BarTime"); AddCsvField(csv_header, "EntryTime");
+         AddCsvField(csv_header, "EntryPrice"); AddCsvField(csv_header, "OriginalSL"); AddCsvField(csv_header, "CurrentSL");
+         AddCsvField(csv_header, "OriginalTP1"); AddCsvField(csv_header, "TP2"); AddCsvField(csv_header, "RiskPct");
+         AddCsvField(csv_header, "LotSize"); AddCsvField(csv_header, "RiskDistance"); AddCsvField(csv_header, "RequestedEntryPrice");
+         AddCsvField(csv_header, "ExecutedEntryPrice"); AddCsvField(csv_header, "EntryBalance"); AddCsvField(csv_header, "EntryRiskMoney");
+         AddCsvField(csv_header, "OriginalLots"); AddCsvField(csv_header, "RemainingLots"); AddCsvField(csv_header, "Stage");
+         AddCsvField(csv_header, "ExitRegimeClass"); AddCsvField(csv_header, "ExitBETrigger"); AddCsvField(csv_header, "ExitChandelier");
+         AddCsvField(csv_header, "ExitTP0Dist"); AddCsvField(csv_header, "ExitTP0Vol"); AddCsvField(csv_header, "ExitTP1Dist");
+         AddCsvField(csv_header, "ExitTP1Vol"); AddCsvField(csv_header, "ExitTP2Dist"); AddCsvField(csv_header, "ExitTP2Vol");
+         AddCsvField(csv_header, "ExitTime"); AddCsvField(csv_header, "ExitPrice"); AddCsvField(csv_header, "PnL_Money");
+         AddCsvField(csv_header, "PnL_R"); AddCsvField(csv_header, "HoldingHours"); AddCsvField(csv_header, "MAE");
+         AddCsvField(csv_header, "MFE"); AddCsvField(csv_header, "MAE_R"); AddCsvField(csv_header, "MFE_R");
+         AddCsvField(csv_header, "PartialCloseCount"); AddCsvField(csv_header, "PartialRealized_PnL"); AddCsvField(csv_header, "PartialRealized_R");
+         AddCsvField(csv_header, "TP0_Time"); AddCsvField(csv_header, "TP1_Time"); AddCsvField(csv_header, "TP1_Lots");
+         AddCsvField(csv_header, "TP1_PnL"); AddCsvField(csv_header, "TP2_Time"); AddCsvField(csv_header, "TP2_Lots");
+         AddCsvField(csv_header, "TP2_PnL"); AddCsvField(csv_header, "BE_Time"); AddCsvField(csv_header, "TrailInternalUpdates");
+         AddCsvField(csv_header, "TrailBrokerUpdates"); AddCsvField(csv_header, "TrailBrokerFailures"); AddCsvField(csv_header, "LastTrailTime");
+         AddCsvField(csv_header, "LastTrailReason"); AddCsvField(csv_header, "MaxLockedR"); AddCsvField(csv_header, "ExitRequestTime");
+         AddCsvField(csv_header, "ExitRequestReason"); AddCsvField(csv_header, "ExitRequestPrice"); AddCsvField(csv_header, "ExitReason");
+         AddCsvField(csv_header, "Result"); AddCsvField(csv_header, "Runner_PnL"); AddCsvField(csv_header, "Runner_R");
+         AddCsvField(csv_header, "TP0_PnL"); AddCsvField(csv_header, "TP0_R"); AddCsvField(csv_header, "Total_PnL");
+         AddCsvField(csv_header, "Total_R"); AddCsvField(csv_header, "WouldBeFlatWithoutTP0"); AddCsvField(csv_header, "Reached05R");
+         AddCsvField(csv_header, "Reached10R"); AddCsvField(csv_header, "PeakR_BeforeBE"); AddCsvField(csv_header, "BE_Before_TP1");
+         AddCsvField(csv_header, "TP0_Closed"); AddCsvField(csv_header, "TP0_Lots"); AddCsvField(csv_header, "EarlyExit");
+         AddCsvField(csv_header, "EarlyExitReason"); AddCsvField(csv_header, "LossAvoided_R"); AddCsvField(csv_header, "LossAvoided_Money");
+         WriteCsvFields(m_csv_handle, csv_header, false);
          LogPrint("CTradeLogger: CSV file created: ", m_csv_filename);
       }
       else
       {
          LogPrint("ERROR: Could not create CSV file: ", m_csv_filename);
          success = false;
+      }
+
+      m_event_csv_filename = StringFormat("UltTrader_TradeEvents_%s_%04d%02d%02d_%02d%02d.csv",
+                                          _Symbol, dt.year, dt.mon, dt.day, dt.hour, dt.min);
+      m_event_csv_handle = FileOpen(m_event_csv_filename, FILE_WRITE | FILE_CSV | FILE_COMMON, ',');
+
+      if(m_event_csv_handle != INVALID_HANDLE)
+      {
+         FileWrite(m_event_csv_handle,
+                   "Time", "Ticket", "SignalID", "Pattern", "Direction", "Stage",
+                   "EventType", "EventReason", "Detail",
+                   "EntryPrice", "RequestedEntryPrice", "ExecutedEntryPrice", "EventPrice",
+                   "OldSL", "NewSL", "OriginalSL", "OriginalTP1", "TP2",
+                   "RiskDistance", "RiskMoney",
+                   "OriginalLots", "RemainingLots", "CloseLots",
+                   "EventPnL", "PartialRealizedPnL", "TotalRealizedPnL",
+                   "CurrentR", "MAE_R", "MFE_R",
+                   "AtBreakeven", "TP0Closed", "TP1Closed", "TP2Closed",
+                   "PartialCloseCount", "TrailInternalUpdates", "TrailBrokerUpdates", "TrailBrokerFailures",
+                   "MaxLockedR", "Regime", "Session", "EngineName", "EngineMode", "DayType",
+                   "BETime", "ExitRequestTime", "ExitRequestReason", "ExitRequestPrice");
+         LogPrint("CTradeLogger: Event file created: ", m_event_csv_filename);
+      }
+      else
+      {
+         LogPrint("WARNING: Could not create trade events file: ", m_event_csv_filename);
       }
 
       // Create candidate audit ledger
@@ -259,6 +475,54 @@ public:
       return success;
    }
 
+   void LogTradeLifecycleEvent(SPosition &pos,
+                               string event_type,
+                               string event_reason,
+                               double event_price = 0.0,
+                               double close_lots = 0.0,
+                               double event_pnl = 0.0,
+                               double old_sl = 0.0,
+                               double new_sl = 0.0,
+                               string detail = "",
+                               datetime event_time = 0,
+                               bool flush_now = true)
+   {
+      WriteTradeEvent(pos, event_type, event_reason, event_price, close_lots,
+                      event_pnl, old_sl, new_sl, detail, event_time, flush_now);
+   }
+
+   void LogExitRequest(SPosition &pos, string reason, double request_price = 0.0)
+   {
+      WriteTradeEvent(pos, "EXIT_REQUEST", reason, request_price, 0.0, 0.0,
+                      pos.stop_loss, pos.stop_loss, "", pos.exit_request_time, true);
+   }
+
+   void LogPartialCloseEvent(SPosition &pos,
+                             string event_type,
+                             string reason,
+                             double event_price,
+                             double close_lots,
+                             double realized_pnl,
+                             datetime event_time = 0)
+   {
+      WriteTradeEvent(pos, event_type, reason, event_price, close_lots,
+                      realized_pnl, pos.stop_loss, pos.stop_loss, "", event_time, true);
+   }
+
+   void LogTrailingEvent(SPosition &pos,
+                         string event_type,
+                         string reason,
+                         double event_price,
+                         double old_sl,
+                         double new_sl,
+                         string detail = "",
+                         datetime event_time = 0,
+                         bool flush_now = true)
+   {
+      WriteTradeEvent(pos, event_type, reason, event_price, 0.0, 0.0,
+                      old_sl, new_sl, detail, event_time, flush_now);
+   }
+
    //+------------------------------------------------------------------+
    //| Log trade entry to CSV                                            |
    //| Phase 1.2: Write expanded fields from SPosition                  |
@@ -267,7 +531,7 @@ public:
    {
       if(m_csv_handle == INVALID_HANDLE) return;
 
-      string direction = (pos.direction == SIGNAL_LONG) ? "LONG" : "SHORT";
+      string direction = DirectionToString(pos);
       string quality = EnumToString(pos.setup_quality);
       string source = EnumToString(pos.signal_source);
       string regime = RegimeIntToString(pos.entry_regime);
@@ -282,52 +546,108 @@ public:
       string safe_engine = SanitizeCSV(pos.engine_name);
 
       // Risk distance in price
-      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
+      double risk_dist = GetRiskDistance(pos);
+      double risk_money = (pos.entry_risk_amount > 0.0) ? pos.entry_risk_amount : risk_amount;
+      double entry_balance = (pos.entry_balance > 0.0) ? pos.entry_balance : AccountInfoDouble(ACCOUNT_BALANCE);
+      double original_lots = (pos.original_lots > 0.0) ? pos.original_lots : pos.lot_size;
 
-      // v3.2: Entry row with RowType tag and original SL/TP
-      FileWrite(m_csv_handle,
-                "ENTRY",                                                    // RowType
-                (long)pos.ticket,                                           // Ticket
-                safe_signal_id,                                             // SignalID
-                safe_pattern,                                               // Pattern (sanitized)
-                direction,                                                  // Direction
-                source,                                                     // Source
-                regime,                                                     // Regime
-                quality,                                                    // Quality
-                session,                                                    // Session
-                safe_engine,                                                // EngineName (sanitized)
-                engine_mode_str,                                            // EngineMode
-                day_type_str,                                               // DayType
-                IntegerToString(pos.engine_confluence),                     // Confluence
-                DoubleToString(pos.entry_spread, 2),                        // Spread
-                DoubleToString(pos.entry_slippage, 2),                      // Slippage
-                confirmation,                                               // ConfirmationUsed
-                TimeToString(pos.bar_time_at_entry, TIME_DATE|TIME_MINUTES),// BarTime
-                TimeToString(pos.open_time, TIME_DATE | TIME_MINUTES),      // EntryTime
-                DoubleToString(pos.entry_price, digits),                    // EntryPrice
-                DoubleToString(pos.original_sl, digits),                    // OriginalSL
-                DoubleToString(pos.stop_loss, digits),                      // CurrentSL
-                DoubleToString(pos.original_tp1, digits),                   // OriginalTP1
-                DoubleToString(pos.tp2, digits),                            // TP2
-                DoubleToString(pos.initial_risk_pct, 2),                    // RiskPct
-                DoubleToString(pos.lot_size, 2),                            // LotSize
-                DoubleToString(risk_dist, digits),                          // RiskDistance
-                "", "", "", "",                                             // ExitTime, ExitPrice, PnL, PnL_R
-                "",                                                         // HoldingHours
-                "", "", "", "",                                             // MAE, MFE, MAE_R, MFE_R
-                "",                                                         // ExitReason
-                "",                                                         // Result
-                "", "", "", "", "", "",                                     // Runner_PnL/R, TP0_PnL/R, Total_PnL/R
-                "",                                                         // WouldBeFlatWithoutTP0
-                "", "", "", "", "", "",                                    // R-milestones + TP0_Closed/Lots
-                "", "", "", "");                                           // EarlyExit, EarlyExitReason, LossAvoided_R/Money
+      string entry_fields[];
+      AddCsvField(entry_fields, "ENTRY");
+      AddCsvField(entry_fields, IntegerToString((long)pos.ticket));
+      AddCsvField(entry_fields, safe_signal_id);
+      AddCsvField(entry_fields, safe_pattern);
+      AddCsvField(entry_fields, direction);
+      AddCsvField(entry_fields, source);
+      AddCsvField(entry_fields, regime);
+      AddCsvField(entry_fields, quality);
+      AddCsvField(entry_fields, session);
+      AddCsvField(entry_fields, safe_engine);
+      AddCsvField(entry_fields, engine_mode_str);
+      AddCsvField(entry_fields, day_type_str);
+      AddCsvField(entry_fields, IntegerToString(pos.engine_confluence));
+      AddCsvField(entry_fields, DoubleToString(pos.entry_spread, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.entry_slippage, 2));
+      AddCsvField(entry_fields, confirmation);
+      AddCsvField(entry_fields, FormatOptionalTime(pos.bar_time_at_entry));
+      AddCsvField(entry_fields, FormatOptionalTime(pos.open_time));
+      AddCsvField(entry_fields, DoubleToString(pos.entry_price, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.original_sl, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.stop_loss, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.original_tp1, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.tp2, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.initial_risk_pct, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.lot_size, 2));
+      AddCsvField(entry_fields, DoubleToString(risk_dist, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.requested_entry_price, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.executed_entry_price, digits));
+      AddCsvField(entry_fields, DoubleToString(entry_balance, 2));
+      AddCsvField(entry_fields, DoubleToString(risk_money, 2));
+      AddCsvField(entry_fields, DoubleToString(original_lots, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.remaining_lots, 2));
+      AddCsvField(entry_fields, pos.stage_label);
+      AddCsvField(entry_fields, IntegerToString(pos.exit_regime_class));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_be_trigger, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_chandelier_mult, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_tp0_distance, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_tp0_volume, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_tp1_distance, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_tp1_volume, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_tp2_distance, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.exit_tp2_volume, 2));
+      AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, IntegerToString(pos.partial_close_count));
+      AddCsvField(entry_fields, DoubleToString(pos.partial_realized_pnl, 2));
+      AddCsvField(entry_fields, "0.00");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, IntegerToString(pos.trailing_internal_updates));
+      AddCsvField(entry_fields, IntegerToString(pos.trailing_broker_updates));
+      AddCsvField(entry_fields, IntegerToString(pos.trailing_broker_failures));
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, DoubleToString(pos.max_locked_r, 2));
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, BoolToYesNo(pos.reached_050r));
+      AddCsvField(entry_fields, BoolToYesNo(pos.reached_100r));
+      AddCsvField(entry_fields, DoubleToString(pos.peak_r_before_be, 2));
+      AddCsvField(entry_fields, BoolToYesNo(pos.be_before_tp1));
+      AddCsvField(entry_fields, BoolToYesNo(pos.tp0_closed));
+      AddCsvField(entry_fields, DoubleToString(pos.tp0_lots, 2));
+      AddCsvField(entry_fields, BoolToYesNo(pos.early_exit_triggered));
+      AddCsvField(entry_fields, SanitizeCSV(pos.early_exit_reason));
+      AddCsvField(entry_fields, DoubleToString(pos.loss_avoided_r, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.loss_avoided_money, 2));
+      WriteCsvFields(m_csv_handle, entry_fields, true);
 
-      FileFlush(m_csv_handle);
+      LogTradeLifecycleEvent(pos,
+                             "ENTRY_OPENED",
+                             pos.pattern_name,
+                             (pos.executed_entry_price > 0.0) ? pos.executed_entry_price : pos.entry_price,
+                             0.0,
+                             0.0,
+                             pos.original_sl,
+                             pos.stop_loss,
+                             StringFormat("risk=$%.2f | requested=%s | fill=%s",
+                                          risk_money,
+                                          DoubleToString(pos.requested_entry_price, digits),
+                                          DoubleToString(pos.executed_entry_price, digits)),
+                             pos.open_time,
+                             true);
 
       LogSystem(LOG_LEVEL_SIGNAL,
                 StringFormat("ENTRY: %s %s | Ticket: %d | Pattern: %s | Quality: %s | Risk: %.2f%% ($%.2f) | SL: %s (dist: %s) | Session: %s | Spread: %.2f | Regime: %s | Engine: %s/%s",
                              direction, _Symbol, pos.ticket, pos.pattern_name, quality,
-                             pos.initial_risk_pct, risk_amount,
+                             pos.initial_risk_pct, risk_money,
                              DoubleToString(pos.original_sl, digits), DoubleToString(risk_dist, digits),
                              session, pos.entry_spread, regime,
                              pos.engine_name, engine_mode_str));
@@ -339,11 +659,11 @@ public:
    //| Log trade exit to CSV                                             |
    //| Phase 1.2: Include MAE, MFE from SPosition                      |
    //+------------------------------------------------------------------+
-   void LogTradeExit(SPosition &pos, double profit, double exit_price)
+   void LogTradeExit(SPosition &pos, double profit, double exit_price, datetime exit_time = 0)
    {
       if(m_csv_handle == INVALID_HANDLE) return;
 
-      string direction = (pos.direction == SIGNAL_LONG) ? "LONG" : "SHORT";
+      string direction = DirectionToString(pos);
       string quality = EnumToString(pos.setup_quality);
       string source = EnumToString(pos.signal_source);
       string regime = RegimeIntToString(pos.entry_regime);
@@ -357,27 +677,20 @@ public:
       string safe_pattern = SanitizeCSV(pos.pattern_name);
       string safe_engine = SanitizeCSV(pos.engine_name);
 
-      // Compute runner PnL (what the remaining lots produced)
-      double runner_pnl = profit;  // profit param = broker's DEAL_PROFIT for the runner close
-      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
-      double risk_dollars = pos.initial_risk_pct * AccountInfoDouble(ACCOUNT_BALANCE) / 100.0;
+      double runner_pnl = profit;
+      double risk_dist = GetRiskDistance(pos);
+      double risk_dollars = GetRiskMoney(pos);
       double runner_r = (risk_dollars > 0) ? runner_pnl / risk_dollars : 0;
 
-      // Compute TP0 PnL in R-multiples
       double tp0_pnl = pos.tp0_closed ? pos.tp0_profit : 0;
       double tp0_r = (risk_dollars > 0) ? tp0_pnl / risk_dollars : 0;
+      double partial_realized_pnl = pos.partial_realized_pnl;
+      double partial_realized_r = (risk_dollars > 0) ? partial_realized_pnl / risk_dollars : 0;
 
-      // Total trade PnL = runner + TP0
-      double total_pnl = runner_pnl + tp0_pnl;
-      double total_r = runner_r + tp0_r;
+      double total_pnl = runner_pnl + partial_realized_pnl;
+      double total_r = (risk_dollars > 0) ? total_pnl / risk_dollars : 0;
+      bool would_be_flat = (pos.tp0_closed && (total_pnl - tp0_pnl) <= 0.01 && total_pnl > 0.01);
 
-      // Legacy compatibility: PnL_Money and PnL_R in the main columns = TOTAL
-      double pnl_r = total_r;
-
-      // WouldBeFlatWithoutTP0: TP0 captured profit, runner ended flat/loss, but total is positive
-      bool would_be_flat = (pos.tp0_closed && runner_pnl <= 0.01 && total_pnl > 0.01);
-
-      // MAE/MFE as R-multiples
       double mae_r = 0, mfe_r = 0;
       if(risk_dist > 0)
       {
@@ -385,91 +698,140 @@ public:
          mfe_r = pos.mfe / risk_dist;
       }
 
-      // Holding time in hours
+      datetime effective_exit_time = (exit_time > 0) ? exit_time : TimeCurrent();
       double holding_hours = 0;
       if(pos.open_time > 0)
-         holding_hours = (double)(TimeCurrent() - pos.open_time) / 3600.0;
+         holding_hours = (double)(effective_exit_time - pos.open_time) / 3600.0;
 
-      // Exit reason detection
-      string exit_reason = "UNKNOWN";
-      if(pos.early_exit_triggered)
+      string exit_reason = pos.exit_request_reason;
+      if(exit_reason == "" && pos.early_exit_triggered)
          exit_reason = pos.early_exit_reason;
-      else if(pos.at_breakeven && MathAbs(exit_price - pos.entry_price) < risk_dist * 0.1)
+      else if(exit_reason == "" && pos.at_breakeven && risk_dist > 0 && MathAbs(exit_price - pos.entry_price) < risk_dist * 0.1)
          exit_reason = "BREAKEVEN";
-      else if(pos.direction == SIGNAL_LONG && exit_price <= pos.stop_loss + risk_dist * 0.05)
+      else if(exit_reason == "" && pos.direction == SIGNAL_LONG && exit_price <= pos.stop_loss + risk_dist * 0.05)
          exit_reason = "SL_HIT";
-      else if(pos.direction == SIGNAL_SHORT && exit_price >= pos.stop_loss - risk_dist * 0.05)
+      else if(exit_reason == "" && pos.direction == SIGNAL_SHORT && exit_price >= pos.stop_loss - risk_dist * 0.05)
          exit_reason = "SL_HIT";
-      else if(pos.tp1_closed || pos.tp2_closed)
+      else if(exit_reason == "" && pos.stage_label == "TP_HIT")
          exit_reason = "TP_HIT";
-      else if(profit > 0)
+      else if(exit_reason == "" && pos.tp2_closed)
+         exit_reason = "TP2_HIT";
+      else if(exit_reason == "" && pos.tp1_closed)
+         exit_reason = "TP1_HIT";
+      else if(exit_reason == "" && profit > 0)
          exit_reason = "TRAILING";
-      else
+      else if(exit_reason == "")
          exit_reason = "SL_HIT";
 
-      // Result based on TOTAL trade PnL (runner + TP0), not runner alone
       string result = "BE";
       if(total_pnl > 0.01) result = "WIN";
       else if(total_pnl < -0.01) result = "LOSS";
 
-      // v3.2: Exit row with all computed fields
-      FileWrite(m_csv_handle,
-                "EXIT",                                                     // RowType
-                (long)pos.ticket,                                           // Ticket
-                safe_signal_id,                                             // SignalID
-                safe_pattern,                                               // Pattern (sanitized)
-                direction,                                                  // Direction
-                source,                                                     // Source
-                regime,                                                     // Regime
-                quality,                                                    // Quality
-                session,                                                    // Session
-                safe_engine,                                                // EngineName (sanitized)
-                engine_mode_str,                                            // EngineMode
-                day_type_str,                                               // DayType
-                IntegerToString(pos.engine_confluence),                     // Confluence
-                DoubleToString(pos.entry_spread, 2),                        // Spread
-                DoubleToString(pos.entry_slippage, 2),                      // Slippage
-                confirmation,                                               // ConfirmationUsed
-                TimeToString(pos.bar_time_at_entry, TIME_DATE|TIME_MINUTES),// BarTime
-                TimeToString(pos.open_time, TIME_DATE | TIME_MINUTES),      // EntryTime
-                DoubleToString(pos.entry_price, digits),                    // EntryPrice
-                DoubleToString(pos.original_sl, digits),                    // OriginalSL
-                DoubleToString(pos.stop_loss, digits),                      // CurrentSL (after trailing)
-                DoubleToString(pos.original_tp1, digits),                   // OriginalTP1
-                DoubleToString(pos.tp2, digits),                            // TP2
-                DoubleToString(pos.initial_risk_pct, 2),                    // RiskPct
-                DoubleToString(pos.lot_size, 2),                            // LotSize
-                DoubleToString(risk_dist, digits),                          // RiskDistance
-                TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES),      // ExitTime
-                DoubleToString(exit_price, digits),                         // ExitPrice
-                DoubleToString(total_pnl, 2),                               // PnL_Money (TOTAL = runner + TP0)
-                DoubleToString(total_r, 2),                                 // PnL_R (TOTAL)
-                DoubleToString(holding_hours, 1),                           // HoldingHours
-                DoubleToString(pos.mae, 2),                                 // MAE ($)
-                DoubleToString(pos.mfe, 2),                                 // MFE ($)
-                DoubleToString(mae_r, 2),                                   // MAE_R
-                DoubleToString(mfe_r, 2),                                   // MFE_R
-                exit_reason,                                                // ExitReason
-                result,                                                     // Result
-                DoubleToString(runner_pnl, 2),                               // Runner_PnL
-                DoubleToString(runner_r, 2),                                // Runner_R
-                DoubleToString(tp0_pnl, 2),                                 // TP0_PnL
-                DoubleToString(tp0_r, 2),                                   // TP0_R
-                DoubleToString(total_pnl, 2),                               // Total_PnL
-                DoubleToString(total_r, 2),                                 // Total_R
-                would_be_flat ? "YES" : "NO",                               // WouldBeFlatWithoutTP0
-                pos.reached_050r ? "YES" : "NO",                            // Reached05R
-                pos.reached_100r ? "YES" : "NO",                            // Reached10R
-                DoubleToString(pos.peak_r_before_be, 2),                    // PeakR_BeforeBE
-                pos.be_before_tp1 ? "YES" : "NO",                          // BE_Before_TP1
-                pos.tp0_closed ? "YES" : "NO",                             // TP0_Closed
-                DoubleToString(pos.tp0_lots, 2),                            // TP0_Lots
-                pos.early_exit_triggered ? "YES" : "NO",                   // EarlyExit
-                pos.early_exit_reason,                                     // EarlyExitReason
-                DoubleToString(pos.loss_avoided_r, 2),                     // LossAvoided_R
-                DoubleToString(pos.loss_avoided_money, 2));                // LossAvoided_Money
+      string exit_fields[];
+      AddCsvField(exit_fields, "EXIT");
+      AddCsvField(exit_fields, IntegerToString((long)pos.ticket));
+      AddCsvField(exit_fields, safe_signal_id);
+      AddCsvField(exit_fields, safe_pattern);
+      AddCsvField(exit_fields, direction);
+      AddCsvField(exit_fields, source);
+      AddCsvField(exit_fields, regime);
+      AddCsvField(exit_fields, quality);
+      AddCsvField(exit_fields, session);
+      AddCsvField(exit_fields, safe_engine);
+      AddCsvField(exit_fields, engine_mode_str);
+      AddCsvField(exit_fields, day_type_str);
+      AddCsvField(exit_fields, IntegerToString(pos.engine_confluence));
+      AddCsvField(exit_fields, DoubleToString(pos.entry_spread, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.entry_slippage, 2));
+      AddCsvField(exit_fields, confirmation);
+      AddCsvField(exit_fields, FormatOptionalTime(pos.bar_time_at_entry));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.open_time));
+      AddCsvField(exit_fields, DoubleToString(pos.entry_price, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.original_sl, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.stop_loss, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.original_tp1, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.tp2, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.initial_risk_pct, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.lot_size, 2));
+      AddCsvField(exit_fields, DoubleToString(risk_dist, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.requested_entry_price, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.executed_entry_price, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.entry_balance, 2));
+      AddCsvField(exit_fields, DoubleToString(risk_dollars, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.original_lots, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.remaining_lots, 2));
+      AddCsvField(exit_fields, pos.stage_label);
+      AddCsvField(exit_fields, IntegerToString(pos.exit_regime_class));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_be_trigger, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_chandelier_mult, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_tp0_distance, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_tp0_volume, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_tp1_distance, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_tp1_volume, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_tp2_distance, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_tp2_volume, 2));
+      AddCsvField(exit_fields, FormatOptionalTime(effective_exit_time));
+      AddCsvField(exit_fields, DoubleToString(exit_price, digits));
+      AddCsvField(exit_fields, DoubleToString(total_pnl, 2));
+      AddCsvField(exit_fields, DoubleToString(total_r, 2));
+      AddCsvField(exit_fields, DoubleToString(holding_hours, 1));
+      AddCsvField(exit_fields, DoubleToString(pos.mae, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.mfe, 2));
+      AddCsvField(exit_fields, DoubleToString(mae_r, 2));
+      AddCsvField(exit_fields, DoubleToString(mfe_r, 2));
+      AddCsvField(exit_fields, IntegerToString(pos.partial_close_count));
+      AddCsvField(exit_fields, DoubleToString(partial_realized_pnl, 2));
+      AddCsvField(exit_fields, DoubleToString(partial_realized_r, 2));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.tp0_time));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.tp1_time));
+      AddCsvField(exit_fields, DoubleToString(pos.tp1_lots, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.tp1_profit, 2));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.tp2_time));
+      AddCsvField(exit_fields, DoubleToString(pos.tp2_lots, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.tp2_profit, 2));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.breakeven_time));
+      AddCsvField(exit_fields, IntegerToString(pos.trailing_internal_updates));
+      AddCsvField(exit_fields, IntegerToString(pos.trailing_broker_updates));
+      AddCsvField(exit_fields, IntegerToString(pos.trailing_broker_failures));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.last_trailing_time));
+      AddCsvField(exit_fields, SanitizeCSV(pos.last_trailing_reason));
+      AddCsvField(exit_fields, DoubleToString(pos.max_locked_r, 2));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.exit_request_time));
+      AddCsvField(exit_fields, SanitizeCSV(pos.exit_request_reason));
+      AddCsvField(exit_fields, DoubleToString(pos.exit_request_price, digits));
+      AddCsvField(exit_fields, SanitizeCSV(exit_reason));
+      AddCsvField(exit_fields, result);
+      AddCsvField(exit_fields, DoubleToString(runner_pnl, 2));
+      AddCsvField(exit_fields, DoubleToString(runner_r, 2));
+      AddCsvField(exit_fields, DoubleToString(tp0_pnl, 2));
+      AddCsvField(exit_fields, DoubleToString(tp0_r, 2));
+      AddCsvField(exit_fields, DoubleToString(total_pnl, 2));
+      AddCsvField(exit_fields, DoubleToString(total_r, 2));
+      AddCsvField(exit_fields, BoolToYesNo(would_be_flat));
+      AddCsvField(exit_fields, BoolToYesNo(pos.reached_050r));
+      AddCsvField(exit_fields, BoolToYesNo(pos.reached_100r));
+      AddCsvField(exit_fields, DoubleToString(pos.peak_r_before_be, 2));
+      AddCsvField(exit_fields, BoolToYesNo(pos.be_before_tp1));
+      AddCsvField(exit_fields, BoolToYesNo(pos.tp0_closed));
+      AddCsvField(exit_fields, DoubleToString(pos.tp0_lots, 2));
+      AddCsvField(exit_fields, BoolToYesNo(pos.early_exit_triggered));
+      AddCsvField(exit_fields, SanitizeCSV(pos.early_exit_reason));
+      AddCsvField(exit_fields, DoubleToString(pos.loss_avoided_r, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.loss_avoided_money, 2));
+      WriteCsvFields(m_csv_handle, exit_fields, true);
 
-      FileFlush(m_csv_handle);
+      LogTradeLifecycleEvent(pos,
+                             "EXIT_FILL",
+                             exit_reason,
+                             exit_price,
+                             pos.remaining_lots,
+                             runner_pnl,
+                             pos.stop_loss,
+                             pos.stop_loss,
+                             StringFormat("runner=$%.2f | partials=$%.2f | total=$%.2f | result=%s",
+                                          runner_pnl, partial_realized_pnl, total_pnl, result),
+                             effective_exit_time,
+                             true);
 
       // Update statistics (using TOTAL trade PnL)
       m_total_pnl += total_pnl;
@@ -1203,6 +1565,13 @@ public:
          FileClose(m_csv_handle);
          m_csv_handle = INVALID_HANDLE;
          LogPrint("CTradeLogger: CSV file closed: ", m_csv_filename);
+      }
+
+      if(m_event_csv_handle != INVALID_HANDLE)
+      {
+         FileClose(m_event_csv_handle);
+         m_event_csv_handle = INVALID_HANDLE;
+         LogPrint("CTradeLogger: Event file closed: ", m_event_csv_filename);
       }
 
       if(m_candidate_csv_handle != INVALID_HANDLE)

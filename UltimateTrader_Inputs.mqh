@@ -29,6 +29,13 @@ input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier
 input int    InpMaxPositions = 5;            // Max concurrent positions
 input double InpMaxMarginUsage = 80.0;       // Max margin usage %
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
+input bool   InpStructureBasedExit = false; // Structure exit: require H1 EMA50 break before CHOPPY close (no-op in testing)
+input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
+input bool   InpEnableThrashCooldown = true; // Block entries after >2 regime changes in 4 hours
+input bool   InpEnableBreakoutProbation = false; // 2-bar H1 probation for breakout entries (no-op: breakout plugins mostly disabled)
+input bool   InpEnableS3S6 = true;          // S3/S6: Range edge fade + failed-break reversal (replaces RangeBox + FBF)
+input bool   InpEnableS6Short = false;     // S6 short side DISABLED: -8.9R across 6yrs, net negative
+input bool   InpEnableAntiStall = true;     // Anti-stall: reduce stalling S3/S6 trades at 5/8 M15 bars
 input int    InpMaxPositionAgeHours = 72;    // Max position age (hours)
 input bool   InpCloseBeforeWeekend = true;   // Close positions before weekend
 input int    InpWeekendCloseHour = 20;       // Weekend close hour (server time)
@@ -69,6 +76,8 @@ input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
 input double InpMinSLPoints = 800.0;         // Minimum SL distance (points)
 input double InpScoringRRTarget = 2.5;       // R:R for scoring
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
+input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
+input double InpMinRoomToObstacle = 2.0;     // Min room to structural obstacle (R-multiples)
 input int    InpRSIPeriod = 14;              // RSI period
 
 //--- Group 8: TRAILING STOP
@@ -196,7 +205,8 @@ input group "══════ PATTERN SCORE ADJUSTMENTS ══════"
 input int    InpScoreBullEngulfing = 92;     // Bullish Engulfing score
 input int    InpScoreBullPinBar = 88;        // Bullish Pin Bar score
 input int    InpScoreBullMACross = 82;       // Bullish MA Cross score
-input int    InpScoreBearEngulfing = 75;     // Bearish Engulfing score (raised from 42: enable shorts)
+input int    InpScoreBearEngulfing = 0;      // Bearish Engulfing score (dead input — use InpEnableBearishEngulfing instead)
+input bool   InpEnableBearishEngulfing = false; // Bearish Engulfing DISABLED: -25.9R/6yrs, worst strategy
 input int    InpScoreBearPinBar = 60;        // Bearish Pin Bar score (raised from 15)
 input int    InpScoreBearMACross = 55;       // Bearish MA Cross score (raised from 18)
 input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score
@@ -317,7 +327,7 @@ input group "══════ SESSION ENGINE ══════"
 input bool   InpEnableSessionEngine = true;                    // Enable Session Engine (timezone fixed in Sprint 4E)
 input bool   InpSessionLondonBO = false;                       // London Breakout mode (DISABLED: 0% WR in backtest)
 input bool   InpSessionNYCont = false;                         // NY Continuation mode (DISABLED: 0% WR in backtest)
-input bool   InpSessionSilverBullet = true;                    // Silver Bullet mode (3:1 R:R, high quality)
+input bool   InpSessionSilverBullet = false;                   // Silver Bullet DISABLED: -2.1R across 6yrs, always losing
 input bool   InpSessionLondonClose = false;                    // London Close Reversal mode (DISABLED: 27% WR, -$229 in 2yr backtest)
 input double InpLondonCloseExtMult = 1.5;                      // LC reversal min extension (x ATR)
 input int    InpSilverBulletStartGMT = 15;                     // Silver Bullet start hour (GMT)
