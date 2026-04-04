@@ -196,7 +196,16 @@ public:
       // =============================================================
       // BEARISH PIN BAR: Long upper wick, short lower wick
       // Close should be in lower 30% of candle range
+      // Asia-only gate: non-Asia loses -11.7R across 234 trades (London/NY institutional flow kills it)
       // =============================================================
+      if(InpBearPinBarAsiaOnly)
+      {
+         MqlDateTime dt_bpb;
+         TimeToStruct(TimeCurrent(), dt_bpb);
+         if(dt_bpb.hour >= 8)  // Not Asia (Asia = 0-8 server time)
+            return signal;
+      }
+
       if(trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL)
       {
          if(upper_wick > body_size * m_wick_body_ratio &&

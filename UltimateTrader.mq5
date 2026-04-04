@@ -1399,6 +1399,28 @@ void OnTick()
 
             if(signal.valid)
             {
+               // Long extension filter: block longs when gold already rose >X% in 72h
+               if(InpLongExtensionFilter &&
+                  (signal.action == "BUY" || signal.action == "buy"))
+               {
+                  double bid_ext = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+                  double price_72h = iClose(_Symbol, PERIOD_H1, 72);
+                  if(price_72h > 0)
+                  {
+                     double pct_rise = (bid_ext - price_72h) / price_72h * 100.0;
+                     if(pct_rise > InpLongExtensionPct)
+                     {
+                        Print("[ExtensionFilter] LONG blocked: +",
+                              DoubleToString(pct_rise, 2), "% rise in 72h > ",
+                              DoubleToString(InpLongExtensionPct, 1), "% threshold");
+                        signal.valid = false;
+                     }
+                  }
+               }
+            }
+
+            if(signal.valid)
+            {
                // Check position limits
                if(g_posCoordinator.GetPositionCount() < InpMaxPositions)
                {

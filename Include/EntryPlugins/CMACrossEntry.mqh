@@ -165,7 +165,16 @@ public:
       // BULLISH MA CROSS: Fast crossed above slow on bar[1]
       // bar[2]: fast <= slow (before cross)
       // bar[1]: fast > slow  (after cross)
+      // NY session gate: NY loses -3.6R across 72 trades (Asia +4.2R, London +8.7R)
       // =============================================================
+      if(InpBullMACrossBlockNY)
+      {
+         MqlDateTime dt_mc;
+         TimeToStruct(TimeCurrent(), dt_mc);
+         if(dt_mc.hour >= 13)  // NY = 13:00+ server time
+            return signal;
+      }
+
       if(trend_bias == TREND_BULLISH || trend_bias == TREND_NEUTRAL)
       {
          if(ma_fast[2] <= ma_slow[2] && ma_fast[1] > ma_slow[1])

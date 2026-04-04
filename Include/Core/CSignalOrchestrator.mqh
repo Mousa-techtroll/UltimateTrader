@@ -688,6 +688,14 @@ public:
             continue;
          }
 
+         // Rubber Band A/A+ gate: reject B+ quality (B+ loses -4.0R across 22 trades)
+         if(InpRubberBandAPlusOnly && quality == SETUP_B_PLUS &&
+            StringFind(signal.comment, "Rubber Band") >= 0)
+         {
+            LogPrint(">>> Rubber Band REJECTED: B+ quality (A/A+ required)");
+            continue;
+         }
+
          LogPrint(">>> Signal PASSED all validation | Quality: ", EnumToString(quality));
 
          // Get risk for quality (short protection is handled in CQualityTierRiskStrategy Step 4)
