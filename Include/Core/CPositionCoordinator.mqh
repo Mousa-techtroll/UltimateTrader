@@ -1963,6 +1963,28 @@ public:
             }
          }
 
+         // Universal stall detector: close trades stuck in INITIAL stage (before TP0)
+         // Data: 148 trades stall 8h+ without TP0. 96% end as losses. Only 4% recover.
+         // Closing at market instead of waiting for full SL saves +40.7R across 7 years.
+         // Positive in ALL 7 years. Does NOT touch runners (only fires before TP0).
+         if(InpEnableUniversalStall &&
+            m_positions[i].stage == STAGE_INITIAL &&
+            !m_positions[i].tp0_closed)
+         {
+            int hours_open = (int)(TimeCurrent() - m_positions[i].open_time) / 3600;
+            if(hours_open >= InpStallHours)
+            {
+               LogPrint("[UniversalStall] CLOSE: ", m_positions[i].pattern_name,
+                        " ticket ", m_positions[i].ticket,
+                        " | ", hours_open, "h without TP0 | Stage: INITIAL");
+
+               CTrade stall_trade;
+               stall_trade.SetExpertMagicNumber(m_magic_number);
+               stall_trade.PositionClose(m_positions[i].ticket);
+               continue;
+            }
+         }
+
          // Anti-stall decay: S3/S6 MR/reversal trades only
          // If trade hasn't reached +0.8R within 5 M15 bars (~75 min), reduce to 50% + BE
          // If hasn't reached midpoint within 8 M15 bars (~2h), close remainder

@@ -1594,6 +1594,30 @@ void OnTick()
                               DoubleToString(signal.riskPercent, 2), "%");
                   }
 
+                  // Quality-differentiated trending boost: A+ gets more capital in TRENDING
+                  // A+ at +0.141 avg R vs A at +0.111 vs B+ at +0.064 in TRENDING regime
+                  // Pure sizing — same trades, different capital allocation
+                  if(InpEnableQualityTrendBoost && signal.riskPercent > 0 &&
+                     g_marketContext.GetCurrentRegime() == REGIME_TRENDING)
+                  {
+                     double qt_mult = 1.0;
+                     if(signal.setupQuality == SETUP_A_PLUS)
+                        qt_mult = 1.08;  // A+ gets 8% more in TRENDING (1.25 * 1.08 = 1.35 effective)
+                     else if(signal.setupQuality == SETUP_B_PLUS)
+                        qt_mult = 0.88;  // B+ gets 12% less in TRENDING (1.25 * 0.88 = 1.10 effective)
+                     // A stays at 1.0 (unchanged 1.25x)
+
+                     if(qt_mult != 1.0)
+                     {
+                        double pre_qt = signal.riskPercent;
+                        signal.riskPercent *= qt_mult;
+                        Print("[QualityTrendBoost] ", EnumToString(signal.setupQuality),
+                              " in TRENDING | Risk: ", DoubleToString(pre_qt, 2),
+                              "% -> ", DoubleToString(signal.riskPercent, 2),
+                              "% (x", DoubleToString(qt_mult, 2), ")");
+                     }
+                  }
+
                   // ATR velocity risk boost: increase size when ATR is accelerating
                   // Applied as multiplier (not quality point) to avoid butterfly effect on signal selection
                   if(InpEnableATRVelocity && signal.riskPercent > 0)
