@@ -1594,6 +1594,26 @@ void OnTick()
                               DoubleToString(signal.riskPercent, 2), "%");
                   }
 
+                  // ATR velocity risk boost: increase size when ATR is accelerating
+                  // Applied as multiplier (not quality point) to avoid butterfly effect on signal selection
+                  if(InpEnableATRVelocity && signal.riskPercent > 0)
+                  {
+                     double atr_vel = g_marketContext.GetATRVelocity();
+                     bool is_mr = (signal.patternType == PATTERN_BB_MEAN_REVERSION ||
+                                   signal.patternType == PATTERN_RANGE_EDGE_FADE ||
+                                   signal.patternType == PATTERN_FALSE_BREAKOUT_FADE);
+                     if(!is_mr && atr_vel > InpATRVelocityBoostPct)
+                     {
+                        double pre_atr_risk = signal.riskPercent;
+                        signal.riskPercent *= InpATRVelocityRiskMult;
+                        Print("[ATRVelocity] Boost: ATR accel ",
+                              DoubleToString(atr_vel, 1), "% > ",
+                              DoubleToString(InpATRVelocityBoostPct, 0),
+                              "% | Risk: ", DoubleToString(pre_atr_risk, 2),
+                              "% -> ", DoubleToString(signal.riskPercent, 2), "%");
+                     }
+                  }
+
                   // Breakout probation: divert breakout signals to 2-bar acceptance check
                   bool probation_diverted = false;
                   if(InpEnableBreakoutProbation && IsBreakoutPattern(signal.patternType) &&

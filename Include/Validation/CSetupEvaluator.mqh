@@ -251,6 +251,11 @@ public:
          }
       }
 
+      // Factor 6: ATR Expansion Velocity — REMOVED from quality scoring
+      // Implemented as risk multiplier instead (see UltimateTrader.mq5 execution path)
+      // Quality point approach caused butterfly effect: changed signal selection order,
+      // killing 80 trades in 2025 even as boost-only.
+
       // Cap total quality score at 10
       if(points > 10)
          points = 10;

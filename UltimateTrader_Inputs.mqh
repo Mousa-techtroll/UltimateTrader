@@ -31,6 +31,9 @@ input double InpMaxMarginUsage = 80.0;       // Max margin usage %
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
 input bool   InpStructureBasedExit = false; // Structure exit: require H1 EMA50 break before CHOPPY close (no-op in testing)
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
+input bool   InpEnableATRVelocity = true;  // ATR velocity as RISK MULTIPLIER (not quality point — avoids butterfly effect)
+input double InpATRVelocityBoostPct = 15.0; // ATR acceleration threshold (%)
+input double InpATRVelocityRiskMult = 1.15; // Risk multiplier when ATR accelerating (1.15 = +15% size)
 input bool   InpEnableThrashCooldown = true; // Block entries after >2 regime changes in 4 hours
 input bool   InpEnableBreakoutProbation = false; // 2-bar H1 probation for breakout entries (no-op: breakout plugins mostly disabled)
 input bool   InpEnableS3S6 = true;          // S3/S6: Range edge fade + failed-break reversal (replaces RangeBox + FBF)
@@ -194,7 +197,7 @@ input bool   InpEnableEngulfing = true;      // Enable Engulfing
 input bool   InpEnablePinBar = true;         // Pin Bar ON (baseline — Bearish PF 1.48 carries 2023)
 input bool   InpEnableLiquiditySweep = false;// Enable Liquidity Sweep (DISABLED: engine SFP mode replaces this)
 input bool   InpEnableMACross = true;        // Enable MA Cross (baseline)
-input bool   InpEnableBBMeanReversion = true;// Enable BB Mean Reversion
+input bool   InpEnableBBMeanReversion = false;// BB MR DISABLED: -1.1R/10 trades, never positive
 input bool   InpEnableRangeBox = true;       // Enable Range Box
 input bool   InpEnableFalseBreakout = true;  // Enable False Breakout Fade (baseline)
 input bool   InpEnableSupportBounce = false; // Enable Support Bounce (disabled pending validation)
@@ -372,7 +375,7 @@ input int    InpWeightRecalcInterval = 10;                      // Recalculate w
 
 //--- Group 37a: PULLBACK CONTINUATION ENGINE
 input group "══════ PULLBACK CONTINUATION ENGINE ══════"
-input bool   InpEnablePullbackCont = true;                     // Enable Pullback Continuation Engine
+input bool   InpEnablePullbackCont = false;                    // Pullback Cont DISABLED: -0.5R/38 trades, no edge
 input int    InpPBCLookbackBars = 20;                          // Lookback for swing extreme
 input int    InpPBCMinPullbackBars = 2;                        // Min pullback duration (bars)
 input int    InpPBCMaxPullbackBars = 10;                       // Max pullback duration (bars)

@@ -63,8 +63,9 @@ public:
    virtual ENUM_HEALTH_STATUS   GetSystemHealth()        { return HEALTH_EXCELLENT; }
    virtual double               GetHealthRiskAdjustment(){ return 1.0; }
 
-   //--- Choppiness Index
+   //--- Choppiness Index & ATR Velocity
    virtual double               GetChoppinessIndex()     { return 50.0; }
+   virtual double               GetATRVelocity()         { return 0.0; }
    virtual bool                 IsRegimeThrashing()      { return false; }
 
    //--- SMC / Structure

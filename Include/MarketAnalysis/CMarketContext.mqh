@@ -567,6 +567,30 @@ public:
       return m_regime_classifier.IsThrashCooldownActive();
    }
 
+   //--- ATR Velocity (5-bar rate of change on H1) ---
+
+   virtual double GetATRVelocity() override
+   {
+      // Use iATR without creating/releasing handles — shared handles in MT5 are
+      // reference-counted, and releasing here would corrupt other components' ATR access.
+      // Instead, read H1 ATR values directly from price data.
+      double atr_vals[6];
+      for(int i = 0; i < 6; i++)
+      {
+         double h = iHigh(_Symbol, PERIOD_H1, i + 1);
+         double l = iLow(_Symbol, PERIOD_H1, i + 1);
+         double c_prev = iClose(_Symbol, PERIOD_H1, i + 2);
+         atr_vals[i] = MathMax(h - l, MathMax(MathAbs(h - c_prev), MathAbs(l - c_prev)));
+      }
+
+      // Simple ATR proxy: average TR of bars 1-3 vs bars 4-6
+      double atr_recent = (atr_vals[0] + atr_vals[1] + atr_vals[2]) / 3.0;
+      double atr_older = (atr_vals[3] + atr_vals[4] + atr_vals[5]) / 3.0;
+      if(atr_older <= 0) return 0.0;
+
+      return (atr_recent - atr_older) / atr_older * 100.0;
+   }
+
    //--- Choppiness Index CI(10) on H1 ---
 
    virtual double GetChoppinessIndex() override
