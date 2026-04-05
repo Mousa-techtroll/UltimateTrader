@@ -158,14 +158,20 @@ public:
       double pattern_high = m_pending_signal.pattern_high;
       double pattern_low  = m_pending_signal.pattern_low;
 
+      // Strictness as fraction of pattern range (bug fix: was price multiplier)
+      double pattern_range = pattern_high - pattern_low;
+      double strictness_offset = pattern_range * MathMax(0, m_confirmation_strictness);
+
       if(m_pending_signal.signal_type == SIGNAL_LONG)
       {
-         bool closed_higher = (conf_close > pattern_high * m_confirmation_strictness);
+         double confirm_level = pattern_high - strictness_offset;
+         bool closed_higher = (conf_close > confirm_level);
          bool is_bullish    = (conf_close > conf_open);
          bool no_break_low  = (conf_low >= pattern_low * 0.998);
 
          LogPrint(">>> LONG Confirmation Check:");
-         LogPrint("    Pattern High: ", pattern_high, " | Conf Close: ", conf_close);
+         LogPrint("    Pattern High: ", pattern_high, " | Confirm Level: ", confirm_level,
+                  " | Conf Close: ", conf_close);
          LogPrint("    Closed Higher: ", closed_higher, " | Is Bullish: ", is_bullish,
                   " | No Break Low: ", no_break_low);
 
@@ -173,12 +179,14 @@ public:
       }
       else if(m_pending_signal.signal_type == SIGNAL_SHORT)
       {
-         bool closed_lower  = (conf_close < pattern_low * m_confirmation_strictness);
+         double confirm_level = pattern_low + strictness_offset;
+         bool closed_lower  = (conf_close < confirm_level);
          bool is_bearish    = (conf_close < conf_open);
          bool no_break_high = (conf_high <= pattern_high * 1.002);
 
          LogPrint(">>> SHORT Confirmation Check:");
-         LogPrint("    Pattern Low: ", pattern_low, " | Conf Close: ", conf_close);
+         LogPrint("    Pattern Low: ", pattern_low, " | Confirm Level: ", confirm_level,
+                  " | Conf Close: ", conf_close);
          LogPrint("    Closed Lower: ", closed_lower, " | Is Bearish: ", is_bearish,
                   " | No Break High: ", no_break_high);
 

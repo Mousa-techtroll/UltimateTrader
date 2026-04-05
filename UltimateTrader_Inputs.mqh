@@ -254,7 +254,7 @@ input int    InpSkipEndHour2 = 11;           // Skip zone 2 end (GMT) — set to
 //--- Group 21: CONFIRMATION
 input group "══════ CONFIRMATION CANDLE ══════"
 input bool   InpEnableConfirmation = true;   // Enable confirmation candle
-input double InpConfirmationStrictness = 0.995; // Confirmation strictness
+input double InpConfirmationStrictness = 0.50;  // Confirmation strictness: fraction of pattern range as tolerance (0=exact, 1=full range allowed)
 
 //--- Group 22: SETUP QUALITY THRESHOLDS
 input group "══════ SETUP QUALITY THRESHOLDS ══════"
