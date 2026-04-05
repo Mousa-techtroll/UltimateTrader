@@ -210,8 +210,16 @@ input bool   InpEnableBearishEngulfing = false; // Bearish Engulfing DISABLED: -
 input bool   InpBearPinBarAsiaOnly = true;     // Bearish Pin Bar: Asia session only (+11.7R saved)
 input bool   InpRubberBandAPlusOnly = true;   // Rubber Band Short: require A/A+ quality (+4.0R saved)
 input bool   InpBullMACrossBlockNY = true;   // Bullish MA Cross: block New York session (+3.6R saved)
-input bool   InpLongExtensionFilter = false; // Long extension filter (no-op at 1.5%/72h — never triggers)
-input double InpLongExtensionPct = 1.5;      // Max % rise in 72h before blocking longs
+input bool   InpLongExtensionFilter = true;  // Momentum exhaustion: block longs rising >0.5%/72h when weekly EMA20 falling
+input double InpLongExtensionPct = 0.5;      // 72h rise threshold (only fires when weekly trend is falling)
+input bool   InpBlockCountertrendRubberBandShort = false; // Deprecated no-op: reverted after mismatch between audit label and runtime gate
+input double InpCountertrendShortMin24hRisePct = 0.6;    // Deprecated no-op
+input double InpCountertrendShortMin72hRisePct = 1.5;    // Deprecated no-op
+input double InpCountertrendShortMaxADX = 30.0;          // Deprecated no-op
+input bool   InpCountertrendShortAsiaExempt = true;      // Deprecated no-op
+input bool   InpPrior24hContinuationLongFilter = false; // Deprecated no-op: reverted after worsening live-equivalent results
+input double InpPrior24hContinuationMinPct = 0.0; // Deprecated no-op
+input int    InpPrior24hContinuationH4Bars = 6; // Deprecated no-op
 input int    InpScoreBearPinBar = 60;        // Bearish Pin Bar score (raised from 15)
 input int    InpScoreBearMACross = 55;       // Bearish MA Cross score (raised from 18)
 input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score
@@ -479,3 +487,19 @@ input double InpConfirmedMinClosePos = 0.60;                      // Rule B: min
 input bool   InpConfirmedRequireStructureReclaim = false;         // Rule C: structure reclaim — CQF-2 DISABLED (too strict, killed $5K profit)
 input int    InpConfirmedMinScore = 2;                            // Min rules passed (of 3) to execute
 input bool   InpConfirmedStricterInChop = true;                   // Require score=3 in CHOPPY/VOLATILE
+
+//--- Group 47: RUNNER EXIT MODE
+input group "══════ RUNNER EXIT MODE ══════"
+input bool               InpEnableRunnerExitMode = false;         // Runner mode OFF: -$391 in isolation test (v8). Trail system untouchable.
+input ENUM_SETUP_QUALITY InpRunnerMinQuality = SETUP_A;           // Minimum setup quality for runner mode
+input int                InpRunnerMinConfluence = 75;             // Minimum confluence to qualify at entry
+input bool               InpRunnerAllowNormalRegime = false;      // Keep off: off-trend runner treatment widened losses in GoldHistory validation
+input int                InpRunnerNormalMinConfluence = 85;       // Reserved for future revalidation if NORMAL runner mode returns
+input bool               InpRunnerUseEntryLockedChandFloor = true;// Preserve the entry-stamped Chandelier width for runner-managed trades
+input bool               InpRunnerAllowPromotion = true;          // Promote proven strong trades after entry
+input double             InpRunnerPromoteAtR = 1.25;              // Base proof threshold before relaxed runner management
+input double             InpRunnerPromoteMaxMAE_R = 0.35;         // Base MAE cap; pattern-specific rules can tighten further
+input double             InpRunnerTrailLockStepR1 = 0.50;         // Broker trail step while locked profit is below 2R
+input double             InpRunnerTrailLockStepR2 = 0.75;         // Broker trail step once locked profit is 2R+
+input double             InpRunnerTrailBarCloseMinStepR = 0.25;   // Minimum locked-R improvement for H1 cadence sends
+input int                InpRunnerBrokerTrailCooldownBars = 1;    // Minimum H1 bars between runner broker trail sends

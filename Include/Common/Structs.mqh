@@ -180,6 +180,17 @@ struct SPosition
    double exit_tp2_distance;      // TP2 R-distance
    double exit_tp2_volume;        // TP2 volume %
 
+   // Runner exit telemetry / behavior
+   ENUM_RUNNER_EXIT_MODE  runner_exit_mode;        // Standard vs runner-managed trade
+   bool                   runner_promoted_in_trade;// Did this become a runner after entry?
+   datetime               runner_promotion_time;   // When runner mode was promoted
+   ENUM_TRAIL_SEND_POLICY trail_send_policy;       // Broker trail cadence for this trade
+   string                 last_trail_gate_reason;  // Last broker-trail gate decision
+   double                 last_effective_chandelier_mult; // Effective trailing multiplier in use
+   double                 last_live_chandelier_mult;      // Latest live-regime multiplier
+   double                 last_entry_locked_chandelier_mult; // Entry-stamped multiplier snapshot
+   datetime               last_broker_trailing_time;      // Last successful broker SL modify
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -216,6 +227,15 @@ struct SPosition
       exit_tp0_distance = 0.70; exit_tp0_volume = 15.0;
       exit_tp1_distance = 1.3; exit_tp1_volume = 40.0;
       exit_tp2_distance = 1.8; exit_tp2_volume = 30.0;
+      runner_exit_mode = RUNNER_EXIT_STANDARD;
+      runner_promoted_in_trade = false;
+      runner_promotion_time = 0;
+      trail_send_policy = TRAIL_SEND_EVERY_UPDATE;
+      last_trail_gate_reason = "";
+      last_effective_chandelier_mult = 0;
+      last_live_chandelier_mult = 0;
+      last_entry_locked_chandelier_mult = 0;
+      last_broker_trailing_time = 0;
    }
 };
 
@@ -267,6 +287,11 @@ struct PersistedPosition
    bool     tp0_closed;
    double   tp0_lots;
    double   tp0_profit;
+   int      runner_exit_mode;     // ENUM_RUNNER_EXIT_MODE cast to int
+   bool     runner_promoted_in_trade;
+   datetime runner_promotion_time;
+   int      trail_send_policy;    // ENUM_TRAIL_SEND_POLICY cast to int
+   datetime last_broker_trailing_time;
 };
 
 //+------------------------------------------------------------------+

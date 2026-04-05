@@ -255,6 +255,89 @@ ENUM_TRADING_SESSION GetCurrentTradingSession()
 }
 
 //+------------------------------------------------------------------+
+//| Helper: check if action is buy                                   |
+//+------------------------------------------------------------------+
+bool IsBuyAction(const string action)
+{
+   return (action == "BUY" || action == "buy");
+}
+
+//+------------------------------------------------------------------+
+//| Helper: long-extension gate                                      |
+//+------------------------------------------------------------------+
+bool ShouldBlockLongExtensionCore(const bool is_buy_signal,
+                                  double planned_entry_price,
+                                  double &pct_rise_72h,
+                                  double &entry_reference,
+                                  double &price_72h_ago)
+{
+   pct_rise_72h = 0.0;
+   entry_reference = 0.0;
+   price_72h_ago = 0.0;
+
+   if(!InpLongExtensionFilter || !is_buy_signal)
+      return false;
+
+   // Step 1: Compute 72h price change from H4 bars (18 bars = 72h)
+   double h4_close_18 = iClose(_Symbol, PERIOD_H4, 18);
+   if(h4_close_18 <= 0.0)
+      return false;
+
+   entry_reference = planned_entry_price;
+   if(entry_reference <= 0.0)
+      entry_reference = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   if(entry_reference <= 0.0)
+      return false;
+
+   price_72h_ago = h4_close_18;
+   pct_rise_72h = (entry_reference - h4_close_18) / h4_close_18 * 100.0;
+
+   // Must exceed threshold to even consider blocking
+   if(pct_rise_72h < InpLongExtensionPct)
+      return false;
+
+   // Step 2: Weekly EMA(20) slope gate — only block when weekly trend is FALLING
+   // When weekly EMA is rising, the 72h rise is healthy trend continuation → ALLOW
+   // When weekly EMA is falling, the 72h rise is a counter-trend bounce → BLOCK
+   // Structural property: weekly EMA was rising 100% of 2024-2025 → zero bull-year blocks
+   int h_wema = iMA(_Symbol, PERIOD_W1, 20, 0, MODE_EMA, PRICE_CLOSE);
+   if(h_wema == INVALID_HANDLE)
+      return false;  // Can't check → don't block
+
+   double wema[];
+   ArraySetAsSeries(wema, true);
+   if(CopyBuffer(h_wema, 0, 0, 3, wema) < 3)
+   {
+      IndicatorRelease(h_wema);
+      return false;
+   }
+   IndicatorRelease(h_wema);
+
+   bool weekly_ema_rising = (wema[0] > wema[2]);  // Current vs 2 weeks ago
+
+   if(weekly_ema_rising)
+      return false;  // Weekly trend supports the long → ALLOW
+
+   // 72h rise exceeded threshold AND weekly trend is falling → BLOCK
+   Print("[MomentumExhaustion] Weekly EMA20 falling + 72h rise ",
+         DoubleToString(pct_rise_72h, 2), "% > ", DoubleToString(InpLongExtensionPct, 1),
+         "% → counter-trend bounce detected");
+   return true;
+}
+
+bool ShouldBlockLongExtension(const EntrySignal &signal,
+                              double &pct_rise_72h,
+                              double &entry_reference,
+                              double &price_72h_ago)
+{
+   return ShouldBlockLongExtensionCore(IsBuyAction(signal.action),
+                                       signal.entryPrice,
+                                       pct_rise_72h,
+                                       entry_reference,
+                                       price_72h_ago);
+}
+
+//+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit()
@@ -1231,18 +1314,38 @@ void OnTick()
          if(g_signalOrchestrator.CheckPendingConfirmation())
          {
             // Revalidate against current conditions
-            if(g_signalOrchestrator.RevalidatePending())
-            {
-               SPendingSignal pending = g_signalOrchestrator.GetPendingSignal();
+	            if(g_signalOrchestrator.RevalidatePending())
+	            {
+	               SPendingSignal pending = g_signalOrchestrator.GetPendingSignal();
 
-               // Phase 5: Confirmed Entry Quality Filter
-               if(!PassConfirmedEntryQualityFilter(pending))
-               {
-                  // Weak confirmed long — skip execution
-                  g_signalOrchestrator.ClearPendingSignal();
-               }
-               else
-               {
+	               double pct_rise_72h = 0.0;
+	               double entry_reference = 0.0;
+	               double price_72h_ago = 0.0;
+	               if(ShouldBlockLongExtensionCore(pending.signal_type == SIGNAL_LONG,
+	                                              SymbolInfoDouble(_Symbol, SYMBOL_ASK),
+	                                              pct_rise_72h,
+	                                              entry_reference,
+	                                              price_72h_ago))
+	               {
+	                  Print("[ExtensionFilter] Confirmed LONG blocked: ",
+	                        pending.pattern_name,
+	                        " | rise72h=",
+	                        DoubleToString(pct_rise_72h, 2), "%",
+	                        " >= threshold ",
+	                        DoubleToString(InpLongExtensionPct, 2), "%",
+	                        " | entryRef=", DoubleToString(entry_reference, _Digits),
+	                        " | H1_72bars_ago=",
+	                        DoubleToString(price_72h_ago, _Digits));
+	                  g_signalOrchestrator.ClearPendingSignal();
+	               }
+	               // Phase 5: Confirmed Entry Quality Filter
+	               else if(!PassConfirmedEntryQualityFilter(pending))
+	               {
+	                  // Weak confirmed long — skip execution
+	                  g_signalOrchestrator.ClearPendingSignal();
+	               }
+	               else
+	               {
 
                // DYNAMIC BARBELL: shift capital allocation by regime.
                // Trending/Normal: confirmed at full risk (compounding engine runs free)
@@ -1399,23 +1502,23 @@ void OnTick()
 
             if(signal.valid)
             {
-               // Long extension filter: block longs when gold already rose >X% in 72h
-               if(InpLongExtensionFilter &&
-                  (signal.action == "BUY" || signal.action == "buy"))
+               double pct_rise_72h = 0.0;
+               double entry_reference = 0.0;
+               double price_72h_ago = 0.0;
+               if(ShouldBlockLongExtension(signal,
+                                           pct_rise_72h,
+                                           entry_reference,
+                                           price_72h_ago))
                {
-                  double bid_ext = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-                  double price_72h = iClose(_Symbol, PERIOD_H1, 72);
-                  if(price_72h > 0)
-                  {
-                     double pct_rise = (bid_ext - price_72h) / price_72h * 100.0;
-                     if(pct_rise > InpLongExtensionPct)
-                     {
-                        Print("[ExtensionFilter] LONG blocked: +",
-                              DoubleToString(pct_rise, 2), "% rise in 72h > ",
-                              DoubleToString(InpLongExtensionPct, 1), "% threshold");
-                        signal.valid = false;
-                     }
-                  }
+                  Print("[ExtensionFilter] LONG blocked: ", signal.comment,
+                        " | rise72h=",
+                        DoubleToString(pct_rise_72h, 2), "%",
+                        " >= threshold ",
+                        DoubleToString(InpLongExtensionPct, 2), "%",
+                        " | entryRef=", DoubleToString(entry_reference, _Digits),
+                        " | H1_72bars_ago=",
+                        DoubleToString(price_72h_ago, _Digits));
+                  signal.valid = false;
                }
             }
 

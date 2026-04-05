@@ -173,6 +173,27 @@ enum ENUM_TRAILING_STRATEGY
 };
 
 //+------------------------------------------------------------------+
+//| Runner Exit Mode Enumeration                                     |
+//+------------------------------------------------------------------+
+enum ENUM_RUNNER_EXIT_MODE
+{
+   RUNNER_EXIT_STANDARD = 0,      // Default management path
+   RUNNER_EXIT_ENTRY_LOCKED = 1,  // Runner mode assigned at entry
+   RUNNER_EXIT_PROMOTED = 2       // Runner mode promoted after trade proves itself
+};
+
+//+------------------------------------------------------------------+
+//| Broker Trail Send Policy Enumeration                             |
+//+------------------------------------------------------------------+
+enum ENUM_TRAIL_SEND_POLICY
+{
+   TRAIL_SEND_EVERY_UPDATE = 0,   // Push every internal trail update to broker
+   TRAIL_SEND_LOCK_STEPS = 1,     // Push only at lock-step milestones
+   TRAIL_SEND_BAR_CLOSE = 2,      // Reserved: only push on bar-close cadence
+   TRAIL_SEND_RUNNER_POLICY = 3   // Runner-aware cadence
+};
+
+//+------------------------------------------------------------------+
 //| Macro Mode Enumeration (for DXY/VIX availability tracking)       |
 //+------------------------------------------------------------------+
 enum ENUM_MACRO_MODE

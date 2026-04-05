@@ -41,7 +41,7 @@
 //| Constants for state persistence                                   |
 //+------------------------------------------------------------------+
 #define STATE_FILE_SIGNATURE  0x554C5452   // "ULTR"
-#define STATE_FILE_VERSION    3
+#define STATE_FILE_VERSION    4
 #define STATE_FILE_NAME       "UltimateTrader_State.bin"
 
 //+------------------------------------------------------------------+
@@ -217,6 +217,11 @@ private:
       pp.tp0_closed       = pos.tp0_closed;
       pp.tp0_lots         = pos.tp0_lots;
       pp.tp0_profit       = pos.tp0_profit;
+      pp.runner_exit_mode = (int)pos.runner_exit_mode;
+      pp.runner_promoted_in_trade = pos.runner_promoted_in_trade;
+      pp.runner_promotion_time = pos.runner_promotion_time;
+      pp.trail_send_policy = (int)pos.trail_send_policy;
+      pp.last_broker_trailing_time = pos.last_broker_trailing_time;
 
       return pp;
    }
@@ -252,6 +257,14 @@ private:
       pos.tp0_closed       = pp.tp0_closed;
       pos.tp0_lots         = pp.tp0_lots;
       pos.tp0_profit       = pp.tp0_profit;
+      pos.runner_exit_mode = (ENUM_RUNNER_EXIT_MODE)pp.runner_exit_mode;
+      pos.runner_promoted_in_trade = pp.runner_promoted_in_trade;
+      pos.runner_promotion_time = pp.runner_promotion_time;
+      pos.trail_send_policy = (ENUM_TRAIL_SEND_POLICY)pp.trail_send_policy;
+      pos.last_broker_trailing_time = pp.last_broker_trailing_time;
+      pos.last_entry_locked_chandelier_mult = pos.exit_chandelier_mult;
+      pos.last_live_chandelier_mult = pos.exit_chandelier_mult;
+      pos.last_effective_chandelier_mult = pos.exit_chandelier_mult;
 
       // Derive stage_label from stage enum
       switch(pos.stage)
@@ -316,6 +329,408 @@ private:
       if(pos.direction == SIGNAL_LONG)
          return (stop_loss - pos.entry_price) / risk_dist;
       return (pos.entry_price - stop_loss) / risk_dist;
+   }
+
+   double CalculateOpenProfitR(const SPosition &pos, double market_price = 0.0)
+   {
+      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
+      if(risk_dist <= 0.0)
+         return 0.0;
+
+      double price = (market_price > 0.0) ? market_price : GetCurrentMarketPrice(pos);
+      if(price <= 0.0)
+         return 0.0;
+
+      if(pos.direction == SIGNAL_LONG)
+         return (price - pos.entry_price) / risk_dist;
+      return (pos.entry_price - price) / risk_dist;
+   }
+
+   bool IsRunnerAllowlistedPattern(const SPosition &pos)
+   {
+      if(pos.pattern_name == "")
+         return false;
+
+      if(pos.direction == SIGNAL_LONG)
+      {
+         if(StringFind(pos.pattern_name, "Bullish Pin Bar") >= 0)
+            return true;
+         if(StringFind(pos.pattern_name, "Bullish Engulfing") >= 0)
+            return true;
+         if(StringFind(pos.pattern_name, "Bullish MA Cross") >= 0)
+            return true;
+      }
+      else if(pos.direction == SIGNAL_SHORT)
+      {
+         if(StringFind(pos.pattern_name, "Bearish Pin Bar") >= 0)
+            return true;
+      }
+
+      return false;
+   }
+
+   bool IsBullishPinBarPattern(const SPosition &pos) const
+   {
+      return StringFind(pos.pattern_name, "Bullish Pin Bar") >= 0;
+   }
+
+   bool IsBullishEngulfingPattern(const SPosition &pos) const
+   {
+      return StringFind(pos.pattern_name, "Bullish Engulfing") >= 0;
+   }
+
+   bool IsBullishMACrossPattern(const SPosition &pos) const
+   {
+      return StringFind(pos.pattern_name, "Bullish MA Cross") >= 0;
+   }
+
+   bool IsBearishPinBarPattern(const SPosition &pos) const
+   {
+      return StringFind(pos.pattern_name, "Bearish Pin Bar") >= 0;
+   }
+
+   bool HasTrendingEntryContext(const SPosition &pos) const
+   {
+      return pos.entry_regime == REGIME_TRENDING;
+   }
+
+   bool IsRunnerShortContextEligible(const SPosition &pos) const
+   {
+      return pos.entry_session != SESSION_NEWYORK;
+   }
+
+   int GetRunnerQualificationScore(const SPosition &pos) const
+   {
+      if(pos.engine_confluence > 0)
+         return pos.engine_confluence;
+
+      switch(pos.setup_quality)
+      {
+         case SETUP_A_PLUS: return 90;
+         case SETUP_A:      return 80;
+         case SETUP_B_PLUS: return 65;
+         case SETUP_B:      return 50;
+         default:           return 0;
+      }
+   }
+
+   ENUM_SETUP_QUALITY GetRunnerEntryMinQuality(const SPosition &pos) const
+   {
+      if(IsBullishEngulfingPattern(pos) || IsBearishPinBarPattern(pos))
+         return SETUP_A_PLUS;
+      if(IsBullishMACrossPattern(pos))
+         return SETUP_A;
+      if(IsBullishPinBarPattern(pos))
+         return SETUP_A_PLUS;
+      return InpRunnerMinQuality;
+   }
+
+   int GetRunnerEntryMinScore(const SPosition &pos) const
+   {
+      if(IsBullishEngulfingPattern(pos) || IsBearishPinBarPattern(pos))
+         return MathMax(InpRunnerMinConfluence, InpRunnerNormalMinConfluence);
+      if(IsBullishMACrossPattern(pos))
+         return InpRunnerMinConfluence;
+      if(IsBullishPinBarPattern(pos))
+         return MathMax(InpRunnerNormalMinConfluence, 90);
+      return InpRunnerMinConfluence;
+   }
+
+   ENUM_SETUP_QUALITY GetRunnerPromotionMinQuality(const SPosition &pos) const
+   {
+      if(IsBullishPinBarPattern(pos))
+         return SETUP_A_PLUS;
+      return GetRunnerEntryMinQuality(pos);
+   }
+
+   int GetRunnerPromotionMinScore(const SPosition &pos) const
+   {
+      if(IsBullishPinBarPattern(pos))
+         return MathMax(InpRunnerNormalMinConfluence, 90);
+      return GetRunnerEntryMinScore(pos);
+   }
+
+   double GetRunnerPromotionMinProfitR(const SPosition &pos) const
+   {
+      if(IsBullishPinBarPattern(pos))
+         return MathMax(InpRunnerPromoteAtR, 1.5);
+      if(IsBullishEngulfingPattern(pos) || IsBearishPinBarPattern(pos))
+         return MathMax(InpRunnerPromoteAtR, 1.25);
+      if(IsBullishMACrossPattern(pos))
+         return MathMax(InpRunnerPromoteAtR, 1.25);
+      return InpRunnerPromoteAtR;
+   }
+
+   double GetRunnerPromotionMaxMAE_R(const SPosition &pos) const
+   {
+      if(IsBullishPinBarPattern(pos))
+         return MathMin(InpRunnerPromoteMaxMAE_R, 0.30);
+      if(IsBullishEngulfingPattern(pos) || IsBullishMACrossPattern(pos) || IsBearishPinBarPattern(pos))
+         return MathMin(InpRunnerPromoteMaxMAE_R, 0.35);
+      return InpRunnerPromoteMaxMAE_R;
+   }
+
+   ENUM_TRAIL_SEND_POLICY GetBaseTrailSendPolicy() const
+   {
+      return InpBatchedTrailing ? TRAIL_SEND_LOCK_STEPS : TRAIL_SEND_EVERY_UPDATE;
+   }
+
+   bool IsRunnerEntryEligible(const SPosition &pos)
+   {
+      if(!InpEnableRunnerExitMode)
+         return false;
+      if(!IsRunnerAllowlistedPattern(pos))
+         return false;
+      if(!HasTrendingEntryContext(pos))
+         return false;
+      if(IsBullishPinBarPattern(pos))
+         return false;
+      if(IsBearishPinBarPattern(pos) && !IsRunnerShortContextEligible(pos))
+         return false;
+      if(pos.setup_quality < GetRunnerEntryMinQuality(pos))
+         return false;
+      int qualification_score = GetRunnerQualificationScore(pos);
+      if(qualification_score < GetRunnerEntryMinScore(pos))
+         return false;
+      return true;
+   }
+
+   bool IsRunnerPromotionEligible(const SPosition &pos, double profit_r)
+   {
+      if(!InpEnableRunnerExitMode || !InpRunnerAllowPromotion)
+         return false;
+      if(!IsRunnerAllowlistedPattern(pos))
+         return false;
+      if(!HasTrendingEntryContext(pos))
+         return false;
+      if(IsBearishPinBarPattern(pos) && !IsRunnerShortContextEligible(pos))
+         return false;
+      if(pos.setup_quality < GetRunnerPromotionMinQuality(pos))
+         return false;
+      if(GetRunnerQualificationScore(pos) < GetRunnerPromotionMinScore(pos))
+         return false;
+      if(pos.remaining_lots <= 0.0 || pos.tp2_closed)
+         return false;
+      if(profit_r < GetRunnerPromotionMinProfitR(pos))
+         return false;
+
+      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
+      double mae_r = (risk_dist > 0.0) ? pos.mae / risk_dist : 999.0;
+      if(mae_r > GetRunnerPromotionMaxMAE_R(pos))
+         return false;
+
+      return true;
+   }
+
+   void InitializeRunnerExitMode(SPosition &pos)
+   {
+      pos.runner_exit_mode = RUNNER_EXIT_STANDARD;
+      pos.runner_promoted_in_trade = false;
+      pos.runner_promotion_time = 0;
+      pos.trail_send_policy = GetBaseTrailSendPolicy();
+      pos.last_trail_gate_reason = "";
+      pos.last_entry_locked_chandelier_mult = (pos.exit_chandelier_mult > 0.0) ?
+                                              pos.exit_chandelier_mult : InpTrailChandelierMult;
+      pos.last_live_chandelier_mult = pos.last_entry_locked_chandelier_mult;
+      pos.last_effective_chandelier_mult = pos.last_entry_locked_chandelier_mult;
+
+      if(IsRunnerEntryEligible(pos))
+      {
+         pos.runner_exit_mode = RUNNER_EXIT_ENTRY_LOCKED;
+         pos.trail_send_policy = TRAIL_SEND_RUNNER_POLICY;
+         pos.last_trail_gate_reason = "ENTRY_RUNNER_MODE";
+      }
+   }
+
+   void PromoteRunnerExitMode(SPosition &pos, double profit_r)
+   {
+      pos.runner_exit_mode = RUNNER_EXIT_PROMOTED;
+      pos.runner_promoted_in_trade = true;
+      pos.runner_promotion_time = TimeCurrent();
+      pos.trail_send_policy = TRAIL_SEND_RUNNER_POLICY;
+      pos.last_trail_gate_reason = "RUNNER_PROMOTED";
+
+      if(m_trade_logger != NULL)
+      {
+         m_trade_logger.LogTradeLifecycleEvent(pos,
+                                               "RUNNER_PROMOTED",
+                                               pos.pattern_name,
+                                               GetCurrentMarketPrice(pos),
+                                               0.0,
+                                               0.0,
+                                               pos.stop_loss,
+                                               pos.stop_loss,
+                                               StringFormat("profit_r=%.2f | mae=%.2f | score=%d | raw_confluence=%d",
+                                                            profit_r, pos.mae,
+                                                            GetRunnerQualificationScore(pos),
+                                                            pos.engine_confluence),
+                                               pos.runner_promotion_time,
+                                               true);
+      }
+   }
+
+   void MaybePromoteRunnerExitMode(SPosition &pos)
+   {
+      if(pos.runner_exit_mode != RUNNER_EXIT_STANDARD)
+         return;
+
+      double market_price = GetCurrentMarketPrice(pos);
+      double profit_r = CalculateOpenProfitR(pos, market_price);
+      if(!IsRunnerPromotionEligible(pos, profit_r))
+         return;
+
+      PromoteRunnerExitMode(pos, profit_r);
+      SaveOnStateChange();
+   }
+
+   double GetBrokerLockedR(const SPosition &pos)
+   {
+      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
+      if(risk_dist <= 0.0)
+         return 0.0;
+
+      double broker_sl = pos.original_sl;
+      if(PositionSelectByTicket(pos.ticket))
+         broker_sl = PositionGetDouble(POSITION_SL);
+
+      if(pos.direction == SIGNAL_LONG)
+         return (broker_sl - pos.entry_price) / risk_dist;
+      return (pos.entry_price - broker_sl) / risk_dist;
+   }
+
+   bool EvaluateBatchedTrailPolicy(const SPosition &pos,
+                                   double normalized_sl,
+                                   string &gate_reason)
+   {
+      double current_locked_r = CalculateLockedR(pos, normalized_sl);
+      double broker_r = GetBrokerLockedR(pos);
+
+      if(current_locked_r >= 0.0 && broker_r < 0.0)
+      {
+         gate_reason = "BATCHED_BE_LOCK";
+         return true;
+      }
+      if(current_locked_r >= 1.0 && broker_r < 1.0)
+      {
+         gate_reason = "BATCHED_1R_LOCK";
+         return true;
+      }
+      if(current_locked_r >= 2.0 && broker_r < 2.0)
+      {
+         gate_reason = "BATCHED_2R_LOCK";
+         return true;
+      }
+      if(current_locked_r >= 3.0 && broker_r < 2.5)
+      {
+         gate_reason = "BATCHED_3R_PLUS_LOCK";
+         return true;
+      }
+
+      gate_reason = "BATCHED_WAIT";
+      return false;
+   }
+
+   bool EvaluateRunnerTrailPolicy(const SPosition &pos,
+                                  double normalized_sl,
+                                  string &gate_reason)
+   {
+      double current_locked_r = CalculateLockedR(pos, normalized_sl);
+      double broker_r = GetBrokerLockedR(pos);
+      double improvement_r = current_locked_r - broker_r;
+
+      if(improvement_r <= 0.01)
+      {
+         gate_reason = "RUNNER_NO_IMPROVEMENT";
+         return false;
+      }
+
+      if(current_locked_r >= 0.0 && broker_r < 0.0)
+      {
+         gate_reason = "RUNNER_BE_LOCK";
+         return true;
+      }
+
+      int h1_seconds = PeriodSeconds(PERIOD_H1);
+      if(h1_seconds <= 0)
+         h1_seconds = 3600;
+
+      bool cooldown_elapsed = (pos.last_broker_trailing_time == 0);
+      if(!cooldown_elapsed)
+      {
+         int cooldown_seconds = MathMax(0, InpRunnerBrokerTrailCooldownBars) * h1_seconds;
+         cooldown_elapsed = (cooldown_seconds <= 0) ||
+                            ((TimeCurrent() - pos.last_broker_trailing_time) >= cooldown_seconds);
+      }
+
+      double step_threshold = (current_locked_r < 2.0) ?
+                              InpRunnerTrailLockStepR1 : InpRunnerTrailLockStepR2;
+      if(improvement_r >= step_threshold)
+      {
+         if(cooldown_elapsed)
+         {
+            gate_reason = (current_locked_r < 2.0) ? "RUNNER_LOCK_STEP_R1" : "RUNNER_LOCK_STEP_R2";
+            return true;
+         }
+
+         gate_reason = "RUNNER_COOLDOWN";
+         return false;
+      }
+
+      bool h1_elapsed = (pos.last_broker_trailing_time == 0) ||
+                        ((TimeCurrent() - pos.last_broker_trailing_time) >= h1_seconds);
+      if(h1_elapsed && improvement_r >= InpRunnerTrailBarCloseMinStepR)
+      {
+         gate_reason = "RUNNER_H1_CADENCE";
+         return true;
+      }
+
+      gate_reason = "RUNNER_WAIT_STEP";
+      return false;
+   }
+
+   bool ShouldSendBrokerTrail(const SPosition &pos,
+                              double normalized_sl,
+                              string &gate_reason)
+   {
+      if(InpDisableBrokerTrailing)
+      {
+         gate_reason = "BROKER_TRAILING_DISABLED";
+         return false;
+      }
+
+      switch(pos.trail_send_policy)
+      {
+         case TRAIL_SEND_EVERY_UPDATE:
+            gate_reason = "EVERY_UPDATE";
+            return true;
+
+         case TRAIL_SEND_LOCK_STEPS:
+            return EvaluateBatchedTrailPolicy(pos, normalized_sl, gate_reason);
+
+         case TRAIL_SEND_BAR_CLOSE:
+         {
+            int h1_seconds = PeriodSeconds(PERIOD_H1);
+            if(h1_seconds <= 0)
+               h1_seconds = 3600;
+            bool elapsed = (pos.last_broker_trailing_time == 0) ||
+                           ((TimeCurrent() - pos.last_broker_trailing_time) >= h1_seconds);
+            gate_reason = elapsed ? "BAR_CLOSE_CADENCE" : "BAR_CLOSE_WAIT";
+            return elapsed;
+         }
+
+         case TRAIL_SEND_RUNNER_POLICY:
+            return EvaluateRunnerTrailPolicy(pos, normalized_sl, gate_reason);
+      }
+
+      gate_reason = "UNKNOWN_TRAIL_POLICY";
+      return false;
+   }
+
+   bool ShouldPreserveEntryLockedChandelierFloor(const SPosition &pos) const
+   {
+      return InpRunnerUseEntryLockedChandFloor &&
+             pos.runner_exit_mode != RUNNER_EXIT_STANDARD &&
+             pos.last_entry_locked_chandelier_mult > 0.0;
    }
 
    bool GetLatestExitDeal(ulong position_ticket,
@@ -582,10 +997,31 @@ public:
    //+------------------------------------------------------------------+
    void AddPosition(SPosition &position)
    {
+      InitializeRunnerExitMode(position);
+
       ArrayResize(m_positions, m_position_count + 1);
       m_positions[m_position_count] = position;
       m_position_count++;
       LogPrint("Position added: Ticket ", position.ticket, " | Total: ", m_position_count);
+
+      if(m_trade_logger != NULL && position.runner_exit_mode == RUNNER_EXIT_ENTRY_LOCKED)
+      {
+         m_trade_logger.LogTradeLifecycleEvent(position,
+                                               "RUNNER_MODE_ASSIGNED",
+                                               position.pattern_name,
+                                               position.entry_price,
+                                               0.0,
+                                               0.0,
+                                               position.stop_loss,
+                                               position.stop_loss,
+                                               StringFormat("mode=%s | score=%d | raw_confluence=%d | regime=%d",
+                                                            EnumToString(position.runner_exit_mode),
+                                                            GetRunnerQualificationScore(position),
+                                                            position.engine_confluence,
+                                                            position.entry_regime),
+                                               position.open_time,
+                                               true);
+      }
 
       // PBC multi-cycle: notify trade opened (match both first-cycle and re-entry labels)
       if(m_pbc_engine != NULL &&
@@ -1692,6 +2128,8 @@ public:
             }
          }
 
+         MaybePromoteRunnerExitMode(m_positions[i]);
+
          // Apply trailing stop plugins
          ApplyTrailingPlugins(m_positions[i]);
 
@@ -1853,13 +2291,22 @@ private:
          m_smoothed_chand_mult = live_chand_mult;
       }
 
+      if(pos.last_entry_locked_chandelier_mult <= 0.0)
+         pos.last_entry_locked_chandelier_mult = (pos.exit_chandelier_mult > 0.0) ?
+                                                pos.exit_chandelier_mult : InpTrailChandelierMult;
+      double effective_chand_mult = live_chand_mult;
+      if(ShouldPreserveEntryLockedChandelierFloor(pos))
+         effective_chand_mult = MathMax(effective_chand_mult, pos.last_entry_locked_chandelier_mult);
+      pos.last_live_chandelier_mult = live_chand_mult;
+      pos.last_effective_chandelier_mult = effective_chand_mult;
+
       // Confirmed wider trailing A/B tested (1.2x): -$1,127 profit, DD +1.18%.
       // Chandelier settings are optimal for ALL positions. Wider trail lets reversals eat more.
       for(int t = 0; t < m_trailing_count; t++)
       {
          CChandelierTrailing *chandelier = dynamic_cast<CChandelierTrailing*>(m_trailing_plugins[t]);
          if(chandelier != NULL)
-            chandelier.SetMultiplier(live_chand_mult);
+            chandelier.SetMultiplier(effective_chand_mult);
       }
 
       for(int t = 0; t < m_trailing_count; t++)
@@ -1966,135 +2413,79 @@ private:
                   }
                }
 
-               // --- BROKER SL MODIFICATION ---
-               // InpDisableBrokerTrailing = true → REVERT to pre-fix behavior (no broker modify)
-               // InpBatchedTrailing = true → only send at key R-multiple levels
-               // InpBatchedTrailing = false → send every update (aggressive, chokes winners)
-
-               if(InpDisableBrokerTrailing)
+               // Broker SL modification now flows through a per-trade send policy.
+               string gate_reason = "";
+               bool should_send = ShouldSendBrokerTrail(pos, normalized_sl, gate_reason);
+               bool gate_changed = (pos.last_trail_gate_reason != gate_reason);
+               if(gate_changed)
                {
-                  // Pre-fix behavior: internal tracking only, broker keeps original SL
-                  // Winners run free, but reversals hit original SL (wider loss)
+                  pos.last_trail_gate_reason = gate_reason;
+                  state_changed = true;
                }
-               else
-               {
-                  bool should_send = false;
 
-                  if(!InpBatchedTrailing)
+               if(should_send)
+               {
+                  CTrade trail_trade;
+                  trail_trade.SetExpertMagicNumber(m_magic_number);
+
+                  double current_tp = 0;
+                  if(PositionSelectByTicket(pos.ticket))
+                     current_tp = PositionGetDouble(POSITION_TP);
+
+                  if(trail_trade.PositionModify(pos.ticket, normalized_sl, current_tp))
                   {
-                     // Aggressive mode: send every update to broker
-                     should_send = true;
+                     pos.trailing_broker_updates++;
+                     pos.last_broker_trailing_time = TimeCurrent();
+                     LogPrint("Trailing SL SENT to broker: ticket ", pos.ticket,
+                              " | SL -> ", DoubleToString(normalized_sl, 2),
+                              " (", update.reason, ") | gate=", gate_reason,
+                              " | mode=", EnumToString(pos.runner_exit_mode));
+                     if(m_trade_logger != NULL)
+                     {
+                        m_trade_logger.LogTrailingEvent(pos,
+                                                        "TRAIL_BROKER_OK",
+                                                        gate_reason,
+                                                        GetCurrentMarketPrice(pos),
+                                                        old_sl,
+                                                        normalized_sl,
+                                                        update.reason,
+                                                        TimeCurrent(),
+                                                        true);
+                     }
+                     state_changed = true;
                   }
                   else
                   {
-                     // BATCHED MODE: only send at key levels
-                     double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
-                     if(risk_dist <= 0) risk_dist = 1.0;
-
-                     double current_profit_r = 0;
-                     if(pos.direction == SIGNAL_LONG)
-                        current_profit_r = (normalized_sl - pos.entry_price) / risk_dist;
-                     else
-                        current_profit_r = (pos.entry_price - normalized_sl) / risk_dist;
-
-                     // Determine what R-level the broker SL is currently at
-                     double broker_sl = pos.original_sl;  // Assume broker has original
-                     if(PositionSelectByTicket(pos.ticket))
-                        broker_sl = PositionGetDouble(POSITION_SL);
-
-                     double broker_r = 0;
-                     if(pos.direction == SIGNAL_LONG)
-                        broker_r = (broker_sl - pos.entry_price) / risk_dist;
-                     else
-                        broker_r = (pos.entry_price - broker_sl) / risk_dist;
-
-                     // Send to broker at these key levels:
-                     // Level 1: Breakeven (SL >= entry, ~0R)
-                     // Level 2: 1R locked (SL at entry + 1R)
-                     // Level 3: 2R locked (SL at entry + 2R)
-                     // Level 4: Every additional 1R after that
-
-                     if(current_profit_r >= 0 && broker_r < -0.1)
+                     pos.trailing_broker_failures++;
+                     LogPrint("WARNING: Trailing SL modify FAILED: ticket ", pos.ticket,
+                              " | Error: ", trail_trade.ResultComment(),
+                              " | gate=", gate_reason);
+                     if(m_trade_logger != NULL)
                      {
-                        // SL has crossed breakeven but broker still below entry
-                        should_send = true;
-                        LogPrint("BATCHED TRAIL [BREAKEVEN]: ticket ", pos.ticket,
-                                 " | broker_r=", DoubleToString(broker_r, 2),
-                                 " -> ", DoubleToString(current_profit_r, 2));
+                        m_trade_logger.LogTrailingEvent(pos,
+                                                        "TRAIL_BROKER_FAIL",
+                                                        gate_reason,
+                                                        GetCurrentMarketPrice(pos),
+                                                        old_sl,
+                                                        normalized_sl,
+                                                        trail_trade.ResultComment(),
+                                                        TimeCurrent(),
+                                                        true);
                      }
-                     else if(current_profit_r >= 1.0 && broker_r < 0.5)
-                     {
-                        // 1R profit locked but broker SL below 0.5R
-                        should_send = true;
-                        LogPrint("BATCHED TRAIL [1R LOCK]: ticket ", pos.ticket,
-                                 " | broker_r=", DoubleToString(broker_r, 2),
-                                 " -> ", DoubleToString(current_profit_r, 2));
-                     }
-                     else if(current_profit_r >= 2.0 && broker_r < 1.5)
-                     {
-                        // 2R profit locked
-                        should_send = true;
-                        LogPrint("BATCHED TRAIL [2R LOCK]: ticket ", pos.ticket,
-                                 " | broker_r=", DoubleToString(broker_r, 2),
-                                 " -> ", DoubleToString(current_profit_r, 2));
-                     }
-                     else if(current_profit_r >= 3.0 && broker_r < 2.5)
-                     {
-                        // 3R+ — lock every additional R
-                        should_send = true;
-                        LogPrint("BATCHED TRAIL [3R+ LOCK]: ticket ", pos.ticket,
-                                 " | broker_r=", DoubleToString(broker_r, 2),
-                                 " -> ", DoubleToString(current_profit_r, 2));
-                     }
+                     state_changed = true;
                   }
-
-                  if(should_send)
-                  {
-                     CTrade trail_trade;
-                     trail_trade.SetExpertMagicNumber(m_magic_number);
-
-                     double current_tp = 0;
-                     if(PositionSelectByTicket(pos.ticket))
-                        current_tp = PositionGetDouble(POSITION_TP);
-
-                     if(trail_trade.PositionModify(pos.ticket, normalized_sl, current_tp))
-                     {
-                        pos.trailing_broker_updates++;
-                        LogPrint("Trailing SL SENT to broker: ticket ", pos.ticket,
-                                 " | SL -> ", DoubleToString(normalized_sl, 2),
-                                 " (", update.reason, ")");
-                        if(m_trade_logger != NULL)
-                        {
-                           m_trade_logger.LogTrailingEvent(pos,
-                                                           "TRAIL_BROKER_OK",
-                                                           update.reason,
-                                                           GetCurrentMarketPrice(pos),
-                                                           old_sl,
-                                                           normalized_sl,
-                                                           "",
-                                                           TimeCurrent(),
-                                                           true);
-                        }
-                     }
-                     else
-                     {
-                        pos.trailing_broker_failures++;
-                        LogPrint("WARNING: Trailing SL modify FAILED: ticket ", pos.ticket,
-                                 " | Error: ", trail_trade.ResultComment());
-                        if(m_trade_logger != NULL)
-                        {
-                           m_trade_logger.LogTrailingEvent(pos,
-                                                           "TRAIL_BROKER_FAIL",
-                                                           update.reason,
-                                                           GetCurrentMarketPrice(pos),
-                                                           old_sl,
-                                                           normalized_sl,
-                                                           trail_trade.ResultComment(),
-                                                           TimeCurrent(),
-                                                           true);
-                        }
-                     }
-                  }
+               }
+               else if(gate_changed && m_trade_logger != NULL)
+               {
+                  m_trade_logger.LogTrailingEvent(pos,
+                                                  "TRAIL_BROKER_SKIP",
+                                                  gate_reason,
+                                                  current_market_price,
+                                                  old_sl,
+                                                  normalized_sl,
+                                                  update.reason,
+                                                  trail_time,
+                                                  true);
                }
             }
          }

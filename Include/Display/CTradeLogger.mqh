@@ -251,7 +251,16 @@ private:
                 FormatOptionalTime(pos.breakeven_time),
                 FormatOptionalTime(pos.exit_request_time),
                 SanitizeCSV(pos.exit_request_reason),
-                DoubleToString(pos.exit_request_price, digits));
+                DoubleToString(pos.exit_request_price, digits),
+                EnumToString(pos.runner_exit_mode),
+                BoolToYesNo(pos.runner_promoted_in_trade),
+                FormatOptionalTime(pos.runner_promotion_time),
+                EnumToString(pos.trail_send_policy),
+                SanitizeCSV(pos.last_trail_gate_reason),
+                DoubleToString(pos.last_effective_chandelier_mult, 2),
+                DoubleToString(pos.last_live_chandelier_mult, 2),
+                DoubleToString(pos.last_entry_locked_chandelier_mult, 2),
+                FormatOptionalTime(pos.last_broker_trailing_time));
 
       if(flush_now)
          FileFlush(m_event_csv_handle);
@@ -376,6 +385,9 @@ public:
          AddCsvField(csv_header, "Reached10R"); AddCsvField(csv_header, "PeakR_BeforeBE"); AddCsvField(csv_header, "BE_Before_TP1");
          AddCsvField(csv_header, "TP0_Closed"); AddCsvField(csv_header, "TP0_Lots"); AddCsvField(csv_header, "EarlyExit");
          AddCsvField(csv_header, "EarlyExitReason"); AddCsvField(csv_header, "LossAvoided_R"); AddCsvField(csv_header, "LossAvoided_Money");
+         AddCsvField(csv_header, "RunnerExitMode"); AddCsvField(csv_header, "RunnerPromotedInTrade"); AddCsvField(csv_header, "RunnerPromotionTime");
+         AddCsvField(csv_header, "TrailSendPolicy"); AddCsvField(csv_header, "LastTrailGateReason"); AddCsvField(csv_header, "EffectiveChandelierMult");
+         AddCsvField(csv_header, "LiveChandelierMult"); AddCsvField(csv_header, "EntryLockedChandelierMult"); AddCsvField(csv_header, "LastBrokerTrailTime");
          WriteCsvFields(m_csv_handle, csv_header, false);
          LogPrint("CTradeLogger: CSV file created: ", m_csv_filename);
       }
@@ -403,7 +415,10 @@ public:
                    "AtBreakeven", "TP0Closed", "TP1Closed", "TP2Closed",
                    "PartialCloseCount", "TrailInternalUpdates", "TrailBrokerUpdates", "TrailBrokerFailures",
                    "MaxLockedR", "Regime", "Session", "EngineName", "EngineMode", "DayType",
-                   "BETime", "ExitRequestTime", "ExitRequestReason", "ExitRequestPrice");
+                   "BETime", "ExitRequestTime", "ExitRequestReason", "ExitRequestPrice",
+                   "RunnerExitMode", "RunnerPromotedInTrade", "RunnerPromotionTime",
+                   "TrailSendPolicy", "LastTrailGateReason", "EffectiveChandelierMult",
+                   "LiveChandelierMult", "EntryLockedChandelierMult", "LastBrokerTrailTime");
          LogPrint("CTradeLogger: Event file created: ", m_event_csv_filename);
       }
       else
@@ -627,6 +642,15 @@ public:
       AddCsvField(entry_fields, SanitizeCSV(pos.early_exit_reason));
       AddCsvField(entry_fields, DoubleToString(pos.loss_avoided_r, 2));
       AddCsvField(entry_fields, DoubleToString(pos.loss_avoided_money, 2));
+      AddCsvField(entry_fields, EnumToString(pos.runner_exit_mode));
+      AddCsvField(entry_fields, BoolToYesNo(pos.runner_promoted_in_trade));
+      AddCsvField(entry_fields, FormatOptionalTime(pos.runner_promotion_time));
+      AddCsvField(entry_fields, EnumToString(pos.trail_send_policy));
+      AddCsvField(entry_fields, SanitizeCSV(pos.last_trail_gate_reason));
+      AddCsvField(entry_fields, DoubleToString(pos.last_effective_chandelier_mult, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.last_live_chandelier_mult, 2));
+      AddCsvField(entry_fields, DoubleToString(pos.last_entry_locked_chandelier_mult, 2));
+      AddCsvField(entry_fields, FormatOptionalTime(pos.last_broker_trailing_time));
       WriteCsvFields(m_csv_handle, entry_fields, true);
 
       LogTradeLifecycleEvent(pos,
@@ -818,6 +842,15 @@ public:
       AddCsvField(exit_fields, SanitizeCSV(pos.early_exit_reason));
       AddCsvField(exit_fields, DoubleToString(pos.loss_avoided_r, 2));
       AddCsvField(exit_fields, DoubleToString(pos.loss_avoided_money, 2));
+      AddCsvField(exit_fields, EnumToString(pos.runner_exit_mode));
+      AddCsvField(exit_fields, BoolToYesNo(pos.runner_promoted_in_trade));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.runner_promotion_time));
+      AddCsvField(exit_fields, EnumToString(pos.trail_send_policy));
+      AddCsvField(exit_fields, SanitizeCSV(pos.last_trail_gate_reason));
+      AddCsvField(exit_fields, DoubleToString(pos.last_effective_chandelier_mult, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.last_live_chandelier_mult, 2));
+      AddCsvField(exit_fields, DoubleToString(pos.last_entry_locked_chandelier_mult, 2));
+      AddCsvField(exit_fields, FormatOptionalTime(pos.last_broker_trailing_time));
       WriteCsvFields(m_csv_handle, exit_fields, true);
 
       LogTradeLifecycleEvent(pos,
