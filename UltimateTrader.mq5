@@ -1563,6 +1563,22 @@ void OnTick()
                      }
                   }
 
+                  // Wednesday risk reduction: only negative day at -4.1R/198 trades
+                  // Pure sizing — same trades, reduced capital on Wednesdays
+                  if(InpEnableWednesdayReduction && signal.riskPercent > 0)
+                  {
+                     MqlDateTime dow_dt2;
+                     TimeToStruct(TimeCurrent(), dow_dt2);
+                     if(dow_dt2.day_of_week == 3)  // Wednesday
+                     {
+                        double pre_wed = signal.riskPercent;
+                        signal.riskPercent *= InpWednesdayRiskMult;
+                        Print("[WednesdayRisk] Risk: ", DoubleToString(pre_wed, 2),
+                              "% -> ", DoubleToString(signal.riskPercent, 2),
+                              "% (x", DoubleToString(InpWednesdayRiskMult, 2), ")");
+                     }
+                  }
+
                   // Sprint 2: Entry sanity — reject if SL too close to spread
                   bool entry_rejected = false;
                   if(InpMinSLToSpreadRatio > 0)

@@ -31,7 +31,9 @@ input double InpMaxMarginUsage = 80.0;       // Max margin usage %
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
 input bool   InpStructureBasedExit = false; // Structure exit: require H1 EMA50 break before CHOPPY close (no-op in testing)
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
-input bool   InpEnableQualityTrendBoost = false; // Quality-trend boost: $0 net across 4 years tested. Not worth complexity.
+input bool   InpEnableWednesdayReduction = false; // Wednesday 0.85x: -$101 net across 4 years. Not worth it.
+input double InpWednesdayRiskMult = 0.85;        // Wednesday risk multiplier (0.85 = 15% reduction)
+input bool   InpEnableQualityTrendBoost = false;  // Quality-trend boost: $0 net across 4 years tested. Not worth complexity.
 input bool   InpEnableUniversalStall = false;    // Universal stall FAILED: -$3,519 across 4 years. Stalled trades recover more than analysis predicted.
 input int    InpStallHours = 8;                  // Hours without TP0 before stall close
 input bool   InpEnableATRVelocity = true;  // ATR velocity as RISK MULTIPLIER (not quality point — avoids butterfly effect)
