@@ -14,7 +14,6 @@ input group "══════ SIGNAL SOURCE ══════"
 input ENUM_SIGNAL_SOURCE InpSignalSource = SIGNAL_SOURCE_PATTERN; // Signal source mode
 input string InpSignalFile = "";                                    // CSV signal file path (for FILE/BOTH mode)
 input double InpSignalTimeTolerance = 400;                         // Signal time tolerance (seconds)
-input double InpSignalErrorMargin = 0.75;                          // Signal entry price error margin
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
@@ -27,7 +26,6 @@ input double InpMaxTotalExposure = 5.0;      // Max total portfolio exposure %
 input double InpDailyLossLimit = 3.0;        // Daily loss limit % (halt trading)
 input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier
 input int    InpMaxPositions = 5;            // Max concurrent positions
-input double InpMaxMarginUsage = 80.0;       // Max margin usage %
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
 input bool   InpStructureBasedExit = false; // Structure exit: require H1 EMA50 break before CHOPPY close (no-op in testing)
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
@@ -82,7 +80,6 @@ input int    InpATRPeriod = 14;              // ATR period
 input group "══════ STOP LOSS & ATR ══════"
 input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
 input double InpMinSLPoints = 800.0;         // Minimum SL distance (points)
-input double InpScoringRRTarget = 2.5;       // R:R for scoring
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
 input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
 input double InpMinRoomToObstacle = 2.0;     // Min room to structural obstacle (R-multiples)
@@ -90,13 +87,11 @@ input int    InpRSIPeriod = 14;              // RSI period
 
 //--- Group 8: TRAILING STOP
 input group "══════ TRAILING STOP ══════"
-input double InpATRMultiplierTrail = 1.3;    // ATR multiplier for trailing
 input double InpMinTrailMovement = 50.0;     // Min trail movement (points)
 input double InpTP1Distance = 1.3;           // TP1 distance (x risk)
 input double InpTP2Distance = 1.8;           // TP2 distance (x risk)
 input double InpTP1Volume = 40.0;            // TP1 40% of remaining — A/B tested
 input double InpTP2Volume = 30.0;            // TP2 30% of remaining — ~36% runner
-input double InpBreakevenOffset = 50.0;      // Breakeven offset (points)
 
 //--- Group 9: VOLATILITY BREAKOUT
 input group "══════ VOLATILITY BREAKOUT ══════"
@@ -109,12 +104,7 @@ input double InpBOADXMin = 25.0;             // Min ADX for breakout (wired: was
 input double InpBOEntryBuffer = 50.0;        // Entry buffer (points) (wired: was hardcoded as 50.0)
 input double InpBOPullbackATRFrac = 0.5;     // Pullback ATR fraction
 input int    InpBOCooldownBars = 4;          // Cooldown bars
-input double InpBOTp1Distance = 1.8;         // TP1 distance (x risk)
-input double InpBOTp2Distance = 2.4;         // TP2 distance (x risk)
-input int    InpBOChandelierATR = 20;        // Chandelier ATR period
-input double InpBOChandelierMult = 2.3;      // Chandelier multiplier
 input int    InpBOChandelierLookback = 15;   // Chandelier lookback
-input double InpBODailyLossStop = 0.8;       // Breakout daily loss stop %
 
 //--- Group 10: SMC ORDER BLOCKS
 input group "══════ SMC ORDER BLOCKS ══════"
@@ -129,7 +119,6 @@ input int    InpSMCLiqMinTouches = 2;        // Liquidity min touches
 input int    InpSMCZoneMaxAge = 200;         // Zone max age (bars)
 input bool   InpSMCUseHTFConfluence = false; // Use HTF confluence (wired: was hardcoded as false)
 input int    InpSMCMinConfluence = 55;       // Min confluence score
-input bool   InpSMCBlockCounterSMC = true;   // Block counter-SMC trades
 
 //--- Group 11: MOMENTUM FILTER
 input group "══════ MOMENTUM FILTER ══════"
@@ -137,7 +126,6 @@ input bool   InpEnableMomentum = false;      // Enable momentum filter (disabled
 
 //--- Group 12: TRAILING STOP OPTIMIZER
 input group "══════ TRAILING STOP OPTIMIZER ══════"
-input bool   InpEnableTrailOptimizer = true;         // Enable trailing optimizer
 input ENUM_TRAILING_STRATEGY InpTrailStrategy = TRAIL_CHANDELIER; // Trailing strategy
 input double InpTrailATRMult = 1.35;                 // Trail ATR multiplier
 input int    InpTrailSwingLookback = 7;              // Swing lookback
@@ -158,7 +146,6 @@ input double InpHighVolTP1Mult = 2.5;        // High vol TP1 multiplier
 input double InpHighVolTP2Mult = 2.5;        // High vol TP2 multiplier
 input double InpStrongTrendTPBoost = 1.3;    // Strong trend TP boost
 input double InpWeakTrendTPCut = 0.55;       // Weak trend TP reduction
-input bool   InpUseStructureTargets = false; // Use structure-based targets
 
 //--- Group 14: VOLATILITY REGIME RISK
 input group "══════ VOLATILITY REGIME RISK ══════"
@@ -206,7 +193,6 @@ input bool   InpEnableBBMeanReversion = false;// BB MR DISABLED: -1.1R/10 trades
 input bool   InpEnableRangeBox = true;       // Enable Range Box
 input bool   InpEnableFalseBreakout = true;  // Enable False Breakout Fade (baseline)
 input bool   InpEnableSupportBounce = false; // Enable Support Bounce (disabled pending validation)
-input bool   InpEnableCrashBreakout = true;  // Enable Crash Breakout
 
 //--- Group 18: PATTERN SCORES (backtested 2023-2025)
 input group "══════ PATTERN SCORE ADJUSTMENTS ══════"
@@ -220,14 +206,6 @@ input bool   InpRubberBandAPlusOnly = true;   // Rubber Band Short: require A/A+
 input bool   InpBullMACrossBlockNY = true;   // Bullish MA Cross: block New York session (+3.6R saved)
 input bool   InpLongExtensionFilter = true;  // Momentum exhaustion: block longs rising >0.5%/72h when weekly EMA20 falling
 input double InpLongExtensionPct = 0.5;      // 72h rise threshold (only fires when weekly trend is falling)
-input bool   InpBlockCountertrendRubberBandShort = false; // Deprecated no-op: reverted after mismatch between audit label and runtime gate
-input double InpCountertrendShortMin24hRisePct = 0.6;    // Deprecated no-op
-input double InpCountertrendShortMin72hRisePct = 1.5;    // Deprecated no-op
-input double InpCountertrendShortMaxADX = 30.0;          // Deprecated no-op
-input bool   InpCountertrendShortAsiaExempt = true;      // Deprecated no-op
-input bool   InpPrior24hContinuationLongFilter = false; // Deprecated no-op: reverted after worsening live-equivalent results
-input double InpPrior24hContinuationMinPct = 0.0; // Deprecated no-op
-input int    InpPrior24hContinuationH4Bars = 6; // Deprecated no-op
 input int    InpScoreBearPinBar = 15;        // Bearish Pin Bar score (wired: was hardcoded as 15)
 input int    InpScoreBearMACross = 18;       // Bearish MA Cross score (wired: was hardcoded as 18)
 input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score
@@ -238,7 +216,6 @@ input int    InpScoreSupportBounce = 35;     // Support Bounce score
 input group "══════ MARKET REGIME FILTERS ══════"
 input bool   InpEnableConfidenceScoring = true; // Enable confidence scoring
 input int    InpMinPatternConfidence = 40;      // Min pattern confidence
-input bool   InpUseDynamicStopLoss = true;      // Use dynamic SL
 input bool   InpUseDaily200EMA = true;          // Use D1 200 EMA filter
 
 //--- Group 20: SESSION FILTERS
@@ -267,32 +244,14 @@ input int    InpPointsBSetup = 7;            // Points for B setup (7 = same as 
 input group "══════ EXECUTION ══════"
 input int    InpMagicNumber = 999999;        // Magic number
 input int    InpSlippage = 10;               // Slippage (points)
-input int    InpSlippageWarnThreshold = 5;   // Slippage warning threshold
 input bool   InpEnableAlerts = true;         // Enable alerts
 input bool   InpEnablePush = false;          // Enable push notifications
 input bool   InpEnableEmail = false;         // Enable email notifications
 input bool   InpEnableLogging = true;        // Enable trade logging
 
-//--- Group 24: SYSTEM INFRASTRUCTURE (from AICoder V1)
-input group "══════ SYSTEM INFRASTRUCTURE ══════"
-input bool   InpUsePluginSystem = true;      // Enable plugin system
-input bool   InpUseTimeoutDetection = true;  // Enable timeout detection
-input bool   InpUseHealthMonitoring = true;  // Enable health monitoring
-input bool   InpUseHealthBasedRisk = true;   // Enable health-based risk
-input bool   InpDebugMode = false;           // Debug mode
-
-//--- Group 25: LOGGING & ERROR RECOVERY (from AICoder V1)
-input group "══════ LOGGING & RECOVERY ══════"
-input bool   InpLogToFile = true;                              // Log to file
-input ENUM_LOG_LEVEL InpConsoleLogLevel = LOG_LEVEL_SIGNAL;    // Console log level
-input ENUM_LOG_LEVEL InpFileLogLevel = LOG_LEVEL_DEBUG;        // File log level
-input int    InpMaxRetries = 3;                                // Max error retries
-input int    InpRetryDelay = 1000;                             // Retry delay (ms)
-
 //--- Group 26: EXECUTION REALISM (Phase 3.2)
 input group "══════ EXECUTION REALISM ══════"
 input double InpMaxSpreadPoints = 50;                          // Max spread (points) - reject if exceeded
-input bool   InpAvoidHighImpactNews = false;                   // Avoid high impact news (placeholder)
 input double InpMaxSlippagePoints = 10;                        // Max acceptable slippage (points)
 
 //--- Group 27: LIVE SAFEGUARDS (Phase 3.3)
@@ -306,19 +265,6 @@ input bool   InpDisableAutoKill = true;                        // Disable auto-k
 input double InpAutoKillPFThreshold = 1.1;                     // Min PF to stay enabled
 input int    InpAutoKillMinTrades = 20;                        // Min trades before auto-kill
 input double InpAutoKillEarlyPF = 0.8;                         // Early kill PF threshold (after 10 trades)
-
-//--- Group 29: STRATEGY WEIGHTS (Phase 3.6 - future)
-input group "══════ STRATEGY WEIGHTS ══════"
-input double InpWeightEngulfing = 0.80;                        // Engulfing weight (reduced: PF 1.16, TP0-dependent)
-input double InpWeightPinBar = 1.0;                            // Pin Bar weight
-input double InpWeightLiqSweep = 1.0;                          // Liquidity Sweep weight
-input double InpWeightMACross = 1.0;                           // MA Cross weight
-input double InpWeightBBMeanRev = 1.0;                         // BB Mean Reversion weight
-input double InpWeightRangeBox = 0.0;                          // Range Box weight (disabled: too restrictive for gold H1, overlaps BB MR)
-input double InpWeightVolBreakout = 1.0;                       // Volatility Breakout weight
-input double InpWeightCrashBreakout = 1.0;                     // Crash Breakout weight
-input double InpWeightDisplacement = 0.5;                      // Displacement weight (0.5 for testing phase)
-input double InpWeightSessionBreakout = 0.5;                   // Session Breakout weight (0.5 for testing phase)
 
 //--- Group 30: NEW ENTRY PLUGINS (Phase 3.4)
 input group "══════ NEW ENTRY PLUGINS ══════"
@@ -362,21 +308,11 @@ input bool   InpExpCompressionBO = false;                      // TEST 7: Compre
 input double InpInstCandleMult = 1.8;                          // Inst. candle body (x ATR) (lowered from 2.5: 2.5 produced 0 trades in 2yr)
 input int    InpCompressionMinBars = 8;                        // Min squeeze bars (raised from 5: only long squeezes win)
 
-//--- Group 35: MODE PERFORMANCE TRACKING (Phase 5 Profitability)
-input group "══════ MODE PERFORMANCE ══════"
-input int    InpModeKillMinTrades = 15;                        // Min trades before mode auto-kill
-input double InpModeKillPFThreshold = 0.9;                     // Mode kill PF threshold
-
 //--- Group 36: EXECUTION INTELLIGENCE (Phase 3 + v3.1)
 input group "══════ EXECUTION INTELLIGENCE ══════"
 input bool   InpEnableSessionQualityGate = true;               // Auto-reduce risk in bad sessions
 input double InpExecQualityBlockThresh = 0.25;                 // Block entries below this quality (tightened from 0.3)
 input double InpExecQualityReduceThresh = 0.50;                // Halve risk below this quality
-
-//--- Group 37: CAPITAL ALLOCATION (Phase 4)
-input group "══════ CAPITAL ALLOCATION ══════"
-input bool   InpEnableDynamicWeights = false;                   // Enable rolling weight adjustment
-input int    InpWeightRecalcInterval = 10;                      // Recalculate weights every N trades
 
 //--- Group 37a: PULLBACK CONTINUATION ENGINE
 input group "══════ PULLBACK CONTINUATION ENGINE ══════"
@@ -501,7 +437,6 @@ input group "══════ RUNNER EXIT MODE ══════"
 input bool               InpEnableRunnerExitMode = false;         // Runner mode OFF: -$391 in isolation test (v8). Trail system untouchable.
 input ENUM_SETUP_QUALITY InpRunnerMinQuality = SETUP_A;           // Minimum setup quality for runner mode
 input int                InpRunnerMinConfluence = 75;             // Minimum confluence to qualify at entry
-input bool               InpRunnerAllowNormalRegime = false;      // Keep off: off-trend runner treatment widened losses in GoldHistory validation
 input int                InpRunnerNormalMinConfluence = 85;       // Reserved for future revalidation if NORMAL runner mode returns
 input bool               InpRunnerUseEntryLockedChandFloor = true;// Preserve the entry-stamped Chandelier width for runner-managed trades
 input bool               InpRunnerAllowPromotion = true;          // Promote proven strong trades after entry
