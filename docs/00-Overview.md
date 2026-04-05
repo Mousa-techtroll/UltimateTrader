@@ -1,17 +1,19 @@
 # UltimateTrader EA -- System Overview
 
-> **UPDATED 2026-03-25.** Current optimized performance:
-> - 2024-2026: $10,777 / PF 1.56 / DD 3.40% / Sharpe 4.85
-> - 2023-2024 (OOS): $828 / PF 1.13 / Sharpe 1.08
-> - The 8-step risk pipeline is inactive (fallback tick-value sizing). See `03-Risk-Model.md`.
-> - 5 strategies disabled via A/B testing. See `STRATEGY_REFERENCE.md` for active catalog.
+> **UPDATED 2026-04-05.** Production performance across 7 years (2019--2025):
+> - 806 trades, $10,779 total PnL, 118.0R, 0.146 R/trade
+> - PF 1.58, DD 3.38%, Sharpe 4.91 (2024--2026 window)
+> - All non-bull years positive except 2019 (-2.4R)
+> - 10 active strategies, 11 disabled strategies
+> - 17 A/B tests completed, 6 filters shipped, exit system proven untouchable
 
 ## What It Is
 
 UltimateTrader is a professional XAUUSD (Gold) H1 Expert Advisor for MetaTrader 5.
 It runs fully automated on the one-hour chart, detecting high-probability setups via
-Smart Money Concepts (SMC), session-based timing, and structural expansion patterns,
-then sizing and managing trades through fallback tick-value risk calculation.
+Smart Money Concepts (SMC), candlestick pattern recognition, session-based timing, and
+structural expansion patterns. Position sizing uses fallback tick-value risk calculation
+with quality-tier and regime-based adjustments.
 
 The system merges **Stack17 trading intelligence** -- the signal detection, market
 regime analysis, and pattern recognition layer that decides *what* and *when* to
@@ -21,20 +23,88 @@ safely and reliably.
 
 ---
 
+## Transformation Journey
+
+The system underwent a systematic optimization campaign from its original state to the
+current production configuration. The transformation was driven by forensic trade
+analysis, per-strategy performance decomposition, and 17 controlled A/B tests.
+
+| Metric | Original (v1) | Current (v3) | Delta |
+|---|---|---|---|
+| Total trades (7yr) | 1,831 | 806 | -56% |
+| Total PnL ($) | $7,102 | $10,779 | +52% |
+| Total PnL (R) | 52.9R | 118.0R | +123% |
+| Avg R per trade | 0.029 | 0.146 | +403% |
+| Bad years (2020--2023) | -$1,197 / -27.8R | Positive / +21.0R | Flipped |
+
+**Core insight:** The original system had high trade volume but low selectivity. Over
+half the trades were net-negative on average. Removing losing strategies and applying
+targeted session/quality filters cut trade count by 56% while increasing profit by 52%.
+Every removed trade was net-negative on average.
+
+### The 10 Shipped Changes
+
+These changes were validated through controlled A/B testing and adopted into production:
+
+| # | Change | Impact | Test # |
+|---|---|---|---|
+| 1 | Bearish Engulfing disabled | +25.9R recovered (worst strategy) | Strategy analysis |
+| 2 | S6 Failed Break Short disabled | +8.9R recovered | Strategy analysis |
+| 3 | Silver Bullet disabled | +2.1R recovered | Strategy analysis |
+| 4 | Bearish Pin Bar Asia-only gate | +11.7R saved (non-Asia loses) | Session analysis |
+| 5 | Rubber Band A/A+ quality gate | +4.0R saved (B+ loses) | Quality analysis |
+| 6 | Bullish MA Cross NY block | +3.6R saved (NY session loses) | Session analysis |
+| 7 | Momentum exhaustion filter | +15.4R saved (counter-trend bounce block) | Momentum filter design |
+| 8 | CI(10) regime scoring | +$233 net, PF +0.02 in edge period | A/B Test 26 |
+| 9 | S3/S6 range structure framework | +$158 in edge period (replaces RangeBox + FBF) | A/B Test 28 |
+| 10 | Confirmation candle (1-bar delayed entry) | Core quality gate for trend patterns | Baseline |
+
+### Failed Changes (reverted after testing)
+
+| Category | Times Tested | Result |
+|---|---|---|
+| Trail widening | 1x | -$1,127 |
+| Trail tightening (BE) | 1x | PF 1.27 to 1.06 |
+| Smart runner exit | 2x | -73%, -76% profit |
+| Runner-aware cadence | 1x | -$391 |
+| Reward-room filter | 1x | 95% rejection rate |
+| CQF entry filter | 3x | Always killed profit |
+| **Any exit modification** | **5x total** | **Always net negative** |
+
+---
+
 ## Key Metrics at a Glance
 
 | Metric | Value |
 |---|---|
 | Source files (`.mq5` + `.mqh`) | 105 |
 | Input parameters | ~280 |
-| Input groups | 43 |
-| Entry engines | 3 (Liquidity, Session, Expansion) |
-| Engine detection modes | 12 (11 active, SFP disabled) |
-| Legacy entry plugins | 13 (3 active, 7 disabled/zero-weight, rest specialized) |
-| Trailing stop strategies | 7 (ATR, Swing, Parabolic SAR, Chandelier, Stepped, Hybrid, Smart) |
+| Input groups | 47 |
+| Active strategies | 10 (5 core + 5 supporting) |
+| Disabled strategies | 11 |
+| Trailing stop strategy | Chandelier Exit 3.0x ATR (locked) |
 | Exit plugins | 5 (Regime-Aware, Daily Loss Halt, Weekend Close, Max Age, Standard) |
-| Risk pipeline steps | 8 |
-| Unit test suites | 5 |
+| Active filters | 7 (CI scoring, Asia gate, A/A+ gate, NY block, momentum, confirmation, Friday) |
+| A/B tests completed | 17 |
+| Backtest period | 2019--2025 (7 years) |
+
+---
+
+## Year-by-Year Performance
+
+| Year | Trades | Win Rate | PnL ($) | PnL (R) | Avg R |
+|---|---|---|---|---|---|
+| 2019 | 122 | 35.2% | -$279 | -2.4R | -0.020 |
+| 2020 | 161 | 41.0% | -$34 | +3.8R | +0.024 |
+| 2021 | 180 | 43.3% | +$127 | +7.4R | +0.041 |
+| 2022 | 200 | 42.0% | +$501 | +7.0R | +0.035 |
+| 2023 | 166 | 36.7% | +$665 | +2.8R | +0.017 |
+| 2024 | 182 | 43.4% | +$1,322 | +12.0R | +0.066 |
+| 2025 | 172 | 52.9% | +$6,111 | +60.3R | +0.351 |
+
+2020--2023 are all positive in R-terms. Only 2019 remains slightly negative at -2.4R.
+The system is architecturally optimized for trending, high-volatility gold. 2025
+delivered that environment (daily ATR 52.0 vs 33.2 in 2024, +56%).
 
 ---
 
@@ -44,69 +114,125 @@ The system processes data through a strict pipeline. Each layer feeds the next, 
 no layer can bypass the chain.
 
 ```
-Market Analysis (7 components)
+Market Analysis (regime, trend, SMC, sessions)
        |
-  Day-Type Router
+  Day-Type Router (Volatile / Trend / Range / Default)
        |
-  Shock Volatility Gate
+  Shock Volatility Gate (bar range > 2.0x ATR blocks entry)
        |
-  Session Execution Quality Gate
+  Entry Strategies (10 active: pattern plugins + engines)
        |
-  Entry Engines (Liquidity / Session / Expansion)
-    + Legacy Plugins (Engulfing, BB MR, Crash BO)
-       |
-  Signal Validation (regime, trend, SMC filters)
+  Entry Filters
+    - CI(10) scoring (+/-1 quality point)
+    - Momentum exhaustion filter (block counter-trend longs)
+    - Session gates (Asia-only for bear pin, NY block for MA cross)
+    - Quality gates (A/A+ only for rubber band)
+    - Confirmation candle (1-bar delayed entry)
+    - Friday block (no new entries)
        |
   Quality Scoring & Setup Tier (A+ / A / B+ / B)
        |
-  Risk Pipeline (quality-tier sizing, vol-regime adjust,
-     short protection, consecutive-loss scaling,
-     health-based adjust, spread gate, margin check,
-     max-exposure cap)
+  Risk Sizing (quality-tier base, regime scaling,
+     session multipliers, consecutive-loss protection,
+     spread gate, margin check)
        |
   Broker Execution (spread check, slippage limit, retry)
        |
-  Position Management (TP0 partial, TP1/TP2 partials, TP0-gated breakeven,
-     early invalidation, trailing)
+  Position Management
+    - TP0 at 0.70R (15%)
+    - TP1 at 1.3R (40%)
+    - TP2 at 1.8R (30%)
+    - Breakeven at 0.8R MFE
+    - Chandelier Exit 3.0x ATR trailing
+    - Weekend close, Max age 72h
+    - Regime-aware exit (CHOPPY closes trend positions)
        |
-  Telemetry Export (53-column CSV trade log, JSON engine snapshots, mode performance)
+  Telemetry Export (CSV trade log, JSON engine snapshots)
 ```
+
+---
+
+## Active Strategy Summary
+
+| Strategy | Trades | PnL (R) | Avg R | Role |
+|---|---|---|---|---|
+| Bullish Engulfing (Confirmed) | 274 | +42.2R | +0.154 | Core -- best overall |
+| Bullish Pin Bar (Confirmed) | 227 | +23.8R | +0.105 | Bull-dependent |
+| Bearish Pin Bar (Asia only) | 94 | +22.8R | +0.243 | Best per-trade, Asia-gated |
+| Bullish MA Cross (Confirmed, no NY) | 49 | +15.5R | +0.317 | Highest avg R, Asia+London |
+| Rubber Band Short (Death Cross, A/A+) | 104 | +12.2R | +0.117 | Bear-market specialist |
+| S3 Range Edge Fade | 6 | small | -- | Validated range box sweep |
+| S6 Failed Break Long | 6 | small | -- | Spike-and-snap reversal |
+| IC Breakout | 4 | small | -- | Institutional candle breakout |
+| Pullback Continuation | 38 | -0.5R | -- | Marginal |
+| BB Mean Reversion Short | 10 | -1.1R | -- | Marginal |
+
+See `02-Strategies.md` for detailed per-strategy documentation.
+
+---
+
+## Disabled Strategy Summary
+
+| Strategy | Reason for Disabling |
+|---|---|
+| Bearish Engulfing | -25.9R across 6 years, worst strategy overall |
+| S6 Failed Break Short | -8.9R net negative in every subset |
+| Silver Bullet | -2.1R, always losing |
+| Range Box | Replaced by S3 Range Edge Fade |
+| False Breakout Fade | Replaced by S6 Failed Break |
+| Bearish MA Cross | Score 0, dead input, never fires |
+| London Breakout | 0% win rate in backtest |
+| NY Continuation | 0% win rate in backtest |
+| London Close Reversal | 27% WR, -$229 in 2yr backtest |
+| Panic Momentum | Hardcoded OFF (PF 0.47) |
+| Compression BO | PF 0.52 in 2024--2026, inconsistent |
+
+---
+
+## Trailing and Exit System (Untouchable)
+
+The exit system has been tested 5 times across multiple approaches. Every modification
+degraded performance. It is locked at the current configuration:
+
+- **Chandelier Exit:** 3.0x ATR on H1 with aggressive broker SL updates
+- **Partial close schedule:** TP0 at 0.70R (15%), TP1 at 1.3R (40%), TP2 at 1.8R (30%)
+- **Breakeven:** Triggered at 0.8R MFE with 50-point offset
+- **Weekend close:** All positions closed Friday at configurable hour
+- **Max age:** 72 hours maximum position duration
+- **Regime-aware exit:** CHOPPY regime closes open trend positions
+
+The runner portion of trades (the final ~36% after all partials) loses -$1,553 in
+aggregate. This is the insurance premium for capturing $12,000+ in trailing exits.
+Cutting the runner costs approximately $8,000 in total profit.
 
 ---
 
 ## Performance Profile
 
-UltimateTrader is designed around an **asymmetric win/loss model**:
+UltimateTrader operates on an **asymmetric win/loss model**:
 
-- **Observed win rate:** 48--51% (position vs deal level over 11.5-month backtest)
+- **Win rate:** 35--53% depending on year and strategy
 - **Target reward-to-risk:** 2:1 to 3:1
-- **TP0 Early Partial:**
-  - TP0 at 0.5R -- close 25% of the position (captures quick edge, gates breakeven)
-- **Partial close schedule:**
-  - TP1 at 1.3R -- close 50% of the position
-  - TP2 at 1.8R -- close 40% of the remaining position
-  - Runner rides with trailing stop
-- **TP0-gated breakeven:** Breakeven is only activated after TP0 has been captured. This prevents premature BE moves from choking trades that haven't yet proven directional intent.
-- **Batched trailing stop protection** at key R-multiple levels:
-  - Breakeven move at 0.8R (with 50-point offset), gated by TP0
-  - Trailing tightens through 1R, 2R, 3R+
-  - Broker SL modification is **batched** -- only sent at these key levels, not on every tick, to reduce broker modification failures
-- **Early Invalidation:** Within the first 3 bars, positions are closed if MFE_R <= 0.20 AND MAE_R >= 0.40 AND TP0 has not been captured. Safety: never triggers after TP0/TP1/TP2/trailing.
+- **76% SL rate** is the cost of the compounding engine, not a defect
+- **The edge is asymmetric capital allocation, not signal quality:**
+  confirmed patterns at PF 1.01 with full risk + confirmed patterns at PF 1.08
+  with reduced risk create the barbell
 
-**Backtest Performance (11.5 months, Mar 2025 -- Mar 2026):**
+### Quality Tier Performance
 
-| Metric | Value |
-|---|---|
-| Positions | 168 |
-| MT5 deals (incl. TP0 partials) | 253 |
-| MT5 Net profit | ~$1,545 |
-| Profit Factor | ~1.37--1.43 |
-| Win Rate | 48--51% |
-| Max Drawdown | ~$800 (8%) |
-| Primary alpha | FVG Mitigation (101 trades) |
-| Engulfing | 55 trades (TP0-dependent) |
-| Session Engine | 8 trades (newly active) |
-| Expansion Engine | 4 trades (conditional sniper) |
+| Tier | Trades | WR% | PnL (R) | Avg R |
+|---|---|---|---|---|
+| A+ | 705 | 43.4% | +63.2R | +0.090 |
+| A | 331 | 42.3% | +28.8R | +0.087 |
+| B+ | 147 | 38.1% | -1.4R | -0.010 |
+
+### Session Performance
+
+| Session | 2019--2023 (R) | 2024--2025 (R) | Total (R) |
+|---|---|---|---|
+| ASIA | +16.6 | +24.6 | +41.2 |
+| LONDON | -6.6 | +18.4 | +11.8 |
+| NEW YORK | +8.3 | +29.2 | +37.5 |
 
 ---
 
@@ -114,42 +240,38 @@ UltimateTrader is designed around an **asymmetric win/loss model**:
 
 | Session | GMT Hours | Behavior |
 |---|---|---|
-| Asia | 00:00 -- 07:00 | **Active.** Asian Range Build (data collection). Engines evaluate setups. |
-| London open skip | 08:00 -- 11:00 | **Skipped for legacy plugins.** High-chop zone; no new legacy entries. Session Engine bypasses skip zones (London BO targets this window). |
-| London body | 11:00 -- 13:00 | Active. London Breakout signals evaluated post-skip. |
-| NY open skip | 14:00 -- 16:00 | **Skipped for legacy plugins.** Second chop zone; no new legacy entries. Session Engine bypasses skip zones (Silver Bullet 15--16 GMT, NY Continuation 13--14 GMT). |
-| NY body + London close | 13:00 -- 17:00 | Active. NY Continuation, Silver Bullet, London Close Reversal. |
-| Late session | 17:00+ | Active. Engines continue; lower volume. |
+| Asia | 00:00 -- 07:00 | Active. Primary window for bearish pin bars. |
+| London | 08:00 -- 13:00 | Active. Reduced risk (0.50x multiplier). |
+| New York | 13:00 -- 17:00 | Active. Slight risk reduction (0.90x). MA Cross blocked. |
+| Late session | 17:00+ | Active. Lower volume. |
 
-The skip zones are configurable (`InpSkipStartHour`/`InpSkipEndHour` and
-`InpSkipStartHour2`/`InpSkipEndHour2`).
+Skip zones are disabled in production (start and end hours both set to 11).
 
 ---
 
-## Key Features
+## Risk Management
 
-- **3 entry engines** with 12 internal detection modes (11 active, SFP disabled) and priority-cascade signal selection
-- **Day-type routing** (Volatile > Trend > Range > Default) drives engine activation matrix
-- **Smart Money Concepts analysis**: Order Blocks, Fair Value Gaps, Break of Structure / Change of Character
-- **ATR-derived thresholds** for all distances (SL, TP, buffers) -- adapts to gold's volatility
-- **Shock volatility detection**: blocks entries on extreme intra-bar spikes (bar range > 2.0x ATR)
-- **Entry sanity gate**: rejects trades where SL < 3x spread
-- **Session risk controls**: per-session risk multipliers (London 0.50x, NY 0.90x, Asia 1.00x)
-- **TP0 early partial**: captures 25% at 0.5R, gates breakeven activation
-- **Early invalidation**: closes non-performing trades within 3 bars (MFE_R <= 0.20 AND MAE_R >= 0.40, TP0 not captured)
-- **Per-mode auto-kill**: each engine mode tracks its own profit factor; modes with PF < 0.9 after 15 trades are automatically disabled
-- **Per-plugin auto-kill**: legacy plugins are disabled if PF < 1.1 after 20 trades (with early kill at PF < 0.8 after 10 trades)
-- **Session execution quality gate**: measures historical fill quality per session; blocks entries when quality drops below 0.25, halves risk below 0.50
-- **Mode performance persistence**: binary state file with CRC32 checksum saves and restores mode performance stats across EA restarts
-- **Position state persistence**: open positions with stage, MAE/MFE, and engine metadata survive terminal restarts
-- **Telemetry export**: 53-column CSV trade log (includes RowType, Runner_PnL, TP0_PnL, Total_PnL, WouldBeFlatWithoutTP0, R-milestones, EarlyExit fields), JSON engine performance snapshots, mode-level performance CSV
-- **Batched trailing SL**: broker stop-loss modification only at key R-multiple levels (breakeven, TP1, TP2) to minimize modification failures
-- **7 trailing strategies**: configurable per-setup (ATR, Swing, Chandelier, Parabolic SAR, Stepped, Hybrid, Smart)
-- **5 exit plugins**: regime-aware exit (closes in CHOPPY), daily loss halt, weekend close, max age, standard TP
-- **Macro bias integration**: DXY and VIX data influence directional bias scoring
-- **Crash detection**: "Bear Hunter" module detects Death Cross + Rubber Band for panic momentum short entries
-- **Health monitoring**: system health status (Excellent through Critical) adjusts risk sizing in real time
-- **Emergency kill switch**: single input parameter halts all trading instantly
+| Parameter | Value |
+|---|---|
+| A+ setup risk | 0.8% |
+| A setup risk | 0.8% |
+| B+ setup risk | 0.6% |
+| B setup risk | 0.5% |
+| Max risk per trade | 1.2% |
+| Max concurrent positions | 5 |
+| Daily loss limit | 3.0% |
+| Short risk multiplier | 0.5x |
+| London risk multiplier | 0.50x |
+| NY risk multiplier | 0.90x |
+
+**Regime risk scaling (A/B tested):**
+
+| Regime | Risk Multiplier |
+|---|---|
+| TRENDING | 1.25x |
+| NORMAL | 1.00x |
+| CHOPPY | 0.60x |
+| VOLATILE | 0.75x |
 
 ---
 
@@ -158,7 +280,7 @@ The skip zones are configurable (`InpSkipStartHour`/`InpSkipEndHour` and
 ```
 UltimateTrader/
   UltimateTrader.mq5              -- Main EA file (OnInit, OnTick, OnDeinit)
-  UltimateTrader_Inputs.mqh       -- All ~280 input parameters in 43 groups
+  UltimateTrader_Inputs.mqh       -- All ~280 input parameters in 47 groups
 
   Include/
     Common/         (4 files)     -- Enums, Structs, Utils, TradeUtils
@@ -173,55 +295,56 @@ UltimateTrader/
     Infrastructure/ (11 files)    -- Logger, error handler, health monitor,
                                      concurrency, recovery, smart pointers, timeouts
     MarketAnalysis/ (23 files)    -- IMarketContext, CMarketContext, 7 analysis
-                                     components, indicator wrappers (Series, Trend,
-                                     Oscillators, Volumes, Bill Williams, Custom)
-    PluginSystem/   (11 files)    -- Base classes (CTradeStrategy, CEntryStrategy,
-                                     CExitStrategy, CRiskStrategy, CTrailingStrategy),
-                                     plugin manager/mediator/registry/validator,
-                                     IMarketContext interface
+                                     components, indicator wrappers
+    PluginSystem/   (11 files)    -- Base classes, plugin manager/mediator/registry
     RiskPlugins/    (2 files)     -- ATR-based risk, quality-tier risk
     TrailingPlugins/(7 files)     -- ATR, Swing, Chandelier, Parabolic SAR,
                                      Stepped, Hybrid, Smart
-    Validation/     (4 files)     -- Signal validator, setup evaluator, market filters,
-                                     adaptive price validator
+    Validation/     (4 files)     -- Signal validator, setup evaluator, market filters
 
-  Tests/            (5 files)     -- Regime classification, risk pipeline,
-                                     quality scoring, partial close state machine,
-                                     position persistence
+  Tests/            (5 files)     -- Regime, risk, quality, partial close, persistence
   docs/                           -- Documentation
+  claude/                         -- Analysis artifacts and improvement plans
 ```
+
+---
+
+## Core Truths (Proven by 17 A/B Tests)
+
+1. The edge is asymmetric capital allocation, not signal quality.
+2. Confirmation candle IS the quality gate -- it cannot be out-filtered.
+3. Trailing is at Goldilocks optimum -- both tighter and wider degrade profit.
+4. Runner losses are insurance premium for tail captures -- cutting them costs $8K.
+5. 76% SL rate is the cost of the compounding engine, not a bug.
+6. Exit modifications are always net negative. The exit system is untouchable.
+7. The system thrives in trending, high-volatility gold and needs filters to reduce
+   damage in non-ideal conditions.
 
 ---
 
 ## Quick Start: 6 Steps to Deploy
 
 ### Step 1: Install MetaTrader 5
-Download and install MT5 from your broker. Ensure XAUUSD (Gold) is available in the
-Market Watch panel.
+Download and install MT5 from your broker. Ensure XAUUSD (Gold) is available.
 
 ### Step 2: Copy EA Files
 Copy the entire `UltimateTrader/` directory into your MT5 data folder:
 ```
 <MT5 Data Folder>/MQL5/Experts/UltimateTrader/
 ```
-The `Include/` subfolder must maintain its structure.
 
 ### Step 3: Compile
-Open `UltimateTrader.mq5` in MetaEditor. Press F7 to compile. Resolve any missing
-include paths (MetaEditor should find them automatically since they use relative paths).
+Open `UltimateTrader.mq5` in MetaEditor. Press F7 to compile.
 
 ### Step 4: Attach to Chart
-Open an XAUUSD H1 chart. Drag UltimateTrader from the Navigator panel onto the chart.
-Ensure "Allow Algo Trading" is enabled in MT5 settings and in the EA properties dialog.
+Open an XAUUSD H1 chart. Drag UltimateTrader onto the chart. Enable "Allow Algo Trading."
 
 ### Step 5: Configure Inputs
 The defaults are production-tuned for XAUUSD H1. Key inputs to review:
-- **Risk Management** (Group 2): `InpRiskAPlusSetup` through `InpRiskBSetup` -- adjust for your account size
-- **Session Filters** (Group 20): verify skip hours match your broker's GMT offset
-- **Execution** (Group 23): set `InpMagicNumber` to a unique value if running multiple EAs
+- **Risk Management** (Group 2): risk percentages per quality tier
+- **Execution** (Group 23): set `InpMagicNumber` to a unique value
 - **Emergency** (Group 27): `InpEmergencyDisable` = false to allow trading
 
 ### Step 6: Backtest First
-Run the Strategy Tester on XAUUSD H1, tick-based mode.
-Review the CSV trade log in `MQL5/Files/` for detailed per-trade analytics.
-Only deploy to a live account after validating results match expectations.
+Run the Strategy Tester on XAUUSD H1, tick-based mode. Review results before
+deploying to a live account.

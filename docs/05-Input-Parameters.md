@@ -1,46 +1,48 @@
 # Complete Input Parameter Reference
 
-> UltimateTrader EA | Definitive Reference
-
-> **UPDATED 2026-03-25.** Key parameter changes from original defaults:
+> UltimateTrader EA -- Production Reference (2026-04-05)
 >
-> | Parameter | Original | Current | Reason |
-> |-----------|----------|---------|--------|
-> | `InpRiskAPlusSetup` | 1.0% | **0.8%** | A+ had PF 1.00 at 1.0% (equalized) |
-> | `InpDisableAutoKill` | false | **true** | Auto-kill broke via name mismatch |
-> | `InpBatchedTrailing` | true | **false** | Batched caused stale broker SL |
-> | `InpTP0Distance` | 0.5 | **0.7** | A/B tested +$685 |
-> | `InpTP0Volume` | 25% | **15%** | Smaller partial, bigger runner |
-> | `InpTP1Volume` | 50% | **40%** | Optimized |
-> | `InpTP2Volume` | 40% | **30%** | ~36% runner |
-> | `InpEnablePinBar` | false | **true** | Bearish PF 1.48 carries 2023 |
-> | `InpEnableMACross` | false | **true** | Bullish PF 2.15 (bearish OFF in code) |
-> | `InpEnableFalseBreakout` | false | **true** | Enabled for ranging regime |
-> | `InpTradeLondon` | false | **true** | Enabled (0.5x risk) |
-> | `InpLiqEngineFVGMitigation` | true | **false** | PF 0.61, biggest DD contributor |
-> | `InpExpCompressionBO` | true | **false** | Inconsistent PF across years |
-> | `InpSkipStartHour` | 8 | **11** | Skip zones disabled |
-> | `InpSkipStartHour2` | 13 | **11** | Skip zones disabled |
-> | `InpSkipEndHour2` | 16 | **11** | Skip zones disabled |
+> Source of truth: `UltimateTrader_Inputs.mqh`
 >
-> Also: Bearish MA Cross and Panic Momentum disabled via hardcoded `if(false && ...)` in code.
+> This document covers all ~300 input parameters across 47 groups. Parameters marked
+> with [CHANGED] were modified during the v1-v11 optimization cycle or subsequent A/B
+> testing. Parameters marked [DEPRECATED] are dead code retained for input file
+> compatibility.
 
 ---
 
-## Overview
+## Optimization History Summary
 
-UltimateTrader exposes approximately 280 input parameters organized into 43 groups. Parameters are declared across multiple files:
+The following parameters were changed from their original defaults during 22 A/B tests
+(v1 through v11) and a subsequent 7-test AGRE v2 cycle:
 
-| File | Parameters | Purpose |
-|---|---|---|
-| `UltimateTrader_Inputs.mqh` | ~280 | Main parameter file, all 43 groups |
-| `Include/RiskPlugins/CQualityTierRiskStrategy.mqh` | 2 | Consecutive loss thresholds |
-| `Include/ExitPlugins/CRegimeAwareExit.mqh` | 1 | Macro opposition threshold |
-| `Include/ExitPlugins/CWeekendCloseExit.mqh` | 3 | Weekend close details |
-| `Include/ExitPlugins/CDailyLossHaltExit.mqh` | 1 | Daily loss halt toggle |
-| `Include/ExitPlugins/CMaxAgeExit.mqh` | 1 | Aged position close mode |
-
-**Convention:** All inputs use the `Inp` prefix. Enum-typed inputs use the types defined in `Include/Common/Enums.mqh`.
+| Parameter | Original | Current | Test / Reason |
+|---|---|---|---|
+| `InpRiskAPlusSetup` | 1.0% | **0.8%** | Test 4: A+ had PF 1.00 at 1.0%, equalized to match A tier |
+| `InpRiskASetup` | 1.3% | **0.8%** | Risk reduction for proven baseline |
+| `InpRiskBPlusSetup` | 1.1% | **0.6%** | Risk reduction |
+| `InpRiskBSetup` | 0.9% | **0.5%** | Risk reduction |
+| `InpMaxRiskPerTrade` | 1.6% | **1.2%** | Hard cap tightened |
+| `InpDisableAutoKill` | false | **true** | Name mismatch bug caused false kills |
+| `InpBatchedTrailing` | true | **false** | Batched caused stale broker SL on reversals |
+| `InpTP0Distance` | 0.5 | **0.70** | A/B tested: +$685 vs baseline |
+| `InpTP0Volume` | 25% | **15%** | Smaller partial, bigger runner |
+| `InpTP1Volume` | 50% | **40%** | Optimized partial close |
+| `InpTP2Volume` | 40% | **30%** | ~36% runner preserved |
+| `InpEnablePinBar` | false | **true** | Bearish PF 1.48 carries 2023 |
+| `InpEnableMACross` | false | **true** | Bullish PF 2.15 (bearish OFF in code) |
+| `InpEnableFalseBreakout` | false | **true** | Enabled for ranging regime (now replaced by S3/S6) |
+| `InpTradeLondon` | false | **true** | Enabled with 0.5x risk |
+| `InpLiqEngineFVGMitigation` | true | **false** | Test 8: PF 0.61, biggest DD contributor |
+| `InpExpCompressionBO` | true | **false** | Test 7: PF 0.52 in 2024-26, inconsistent |
+| `InpSkipStartHour` | 8 | **11** | Skip zones disabled (start=end=11) |
+| `InpSkipStartHour2` | 13 | **11** | Skip zones disabled |
+| `InpSkipEndHour2` | 16 | **11** | Skip zones disabled |
+| `InpEnableCIScoring` | N/A | **true** | Test 26 (AGRE v2): +$197 in losing period, +0.28 Sharpe |
+| `InpEnableS3S6` | N/A | **true** | Test 28 (AGRE v2): +$158 in edge period, PF 1.29 |
+| `InpEnableAntiStall` | N/A | **true** | Part of S3/S6 framework |
+| `InpEnableS6Short` | N/A | **false** | -8.9R across 6 years |
+| `InpPointsBSetup` | 5 | **7** | Same as A tier, filters B/B+ (proven in $6,140 baseline) |
 
 ---
 
@@ -48,51 +50,58 @@ UltimateTrader exposes approximately 280 input parameters organized into 43 grou
 
 Controls where trade signals originate.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpSignalSource` | `ENUM_SIGNAL_SOURCE` | `SIGNAL_SOURCE_PATTERN` | Signal source mode: PATTERN (self-generated), FILE (CSV), or BOTH | Determines whether the EA uses its own pattern detection, external signals from a CSV file, or both simultaneously. FILE mode requires a valid CSV path. |
-| `InpSignalFile` | `string` | `""` | CSV signal file path | Only used when source is FILE or BOTH. The file must contain columns for symbol, action, entry price, SL, TP, and timestamp. |
-| `InpSignalTimeTolerance` | `double` | `400` | Signal time tolerance in seconds | Maximum age of a CSV signal before it is considered stale and rejected. Higher values accept older signals. |
-| `InpSignalErrorMargin` | `double` | `0.75` | Signal entry price error margin | Maximum acceptable deviation between the CSV signal's entry price and the current market price. Prevents entering at prices far from the original signal. |
+| `InpSignalSource` | `ENUM_SIGNAL_SOURCE` | `SIGNAL_SOURCE_PATTERN` | Active | Signal source mode: PATTERN (self-generated), FILE (CSV), or BOTH |
+| `InpSignalFile` | `string` | `""` | Active | CSV signal file path (only used in FILE/BOTH mode) |
+| `InpSignalTimeTolerance` | `double` | `400` | Active | Maximum age of a CSV signal in seconds before rejection |
+| `InpSignalErrorMargin` | `double` | `0.75` | Active | Maximum acceptable price deviation from CSV signal entry price |
 
 ---
 
 ## Group 2: Risk Management
 
-Core risk limits and portfolio constraints.
+Core risk limits and portfolio constraints. This is the most heavily optimized group.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpRiskAPlusSetup` | `double` | `1.0` | Risk % for A+ quality setups | Base position size for the highest-quality signals. Reducing this makes all A+ trades smaller. |
-| `InpRiskASetup` | `double` | `0.8` | Risk % for A quality setups | Base position size for good signals. |
-| `InpRiskBPlusSetup` | `double` | `0.6` | Risk % for B+ quality setups | Base position size for acceptable signals. |
-| `InpRiskBSetup` | `double` | `0.5` | Risk % for B quality setups | Base position size for marginal signals. |
-| `InpMaxRiskPerTrade` | `double` | `1.2` | Maximum risk % per trade (hard cap) | Absolute ceiling. No trade can risk more than this regardless of quality score. The Step 8 hard cap in the risk pipeline. |
-| `InpMaxTotalExposure` | `double` | `5.0` | Maximum total portfolio exposure % | Sum of all open position risk. New trades rejected if adding them would exceed this. |
-| `InpDailyLossLimit` | `double` | `3.0` | Daily loss limit % | When cumulative daily losses exceed this, all positions are closed and trading is halted until the next day. |
-| `InpMaxLotMultiplier` | `double` | `10.0` | Maximum lot size multiplier | Caps lot size at N times the broker's minimum lot. Prevents outsized positions from rounding errors. |
-| `InpMaxPositions` | `int` | `5` | Maximum concurrent positions | Hard limit on how many trades can be open simultaneously. |
-| `InpMaxMarginUsage` | `double` | `80.0` | Maximum margin usage % | New trades rejected if required margin exceeds this percentage of free margin. |
-| `InpAutoCloseOnChoppy` | `bool` | `true` | Auto-close in CHOPPY regime | When enabled, trend-following positions are closed when the regime classifier detects CHOPPY conditions. Mean reversion trades are exempt. |
-| `InpMaxPositionAgeHours` | `int` | `72` | Maximum position age in hours | Positions open longer than this are closed by the MaxAge exit plugin. |
-| `InpCloseBeforeWeekend` | `bool` | `true` | Close positions before weekend | All positions closed on Friday at the configured hour to avoid weekend gap risk. |
-| `InpWeekendCloseHour` | `int` | `20` | Weekend close hour (server time) | The hour on Friday at which weekend closure is triggered. |
-| `InpMaxTradesPerDay` | `int` | `5` | Maximum trades per day | Once this many trades have been opened today, no new entries are allowed. Resets at midnight. |
+| `InpRiskAPlusSetup` | `double` | `0.8` | Active [CHANGED] | Risk % for A+ setups. Reduced from 1.0% (A+ had PF 1.00, oversized vs A at PF 1.46) |
+| `InpRiskASetup` | `double` | `0.8` | Active [CHANGED] | Risk % for A setups. Reduced from 1.3% |
+| `InpRiskBPlusSetup` | `double` | `0.6` | Active [CHANGED] | Risk % for B+ setups. Reduced from 1.1% |
+| `InpRiskBSetup` | `double` | `0.5` | Active [CHANGED] | Risk % for B setups. Reduced from 0.9% |
+| `InpMaxRiskPerTrade` | `double` | `1.2` | Active [CHANGED] | Hard cap on risk per trade. Reduced from 1.6% |
+| `InpMaxTotalExposure` | `double` | `5.0` | Active | Maximum total portfolio exposure % |
+| `InpDailyLossLimit` | `double` | `3.0` | Active | Daily loss limit %. Trading halted when exceeded |
+| `InpMaxLotMultiplier` | `double` | `10.0` | Active | Maximum lot size as multiple of broker minimum |
+| `InpMaxPositions` | `int` | `5` | Active | Maximum concurrent positions |
+| `InpMaxMarginUsage` | `double` | `80.0` | Active | Maximum margin usage % |
+| `InpAutoCloseOnChoppy` | `bool` | `true` | Active | Auto-close trend positions in CHOPPY regime |
+| `InpStructureBasedExit` | `bool` | `false` | Disabled | Require H1 EMA50 break before CHOPPY close. Test 25: no-op (correlated conditions) |
+| `InpEnableCIScoring` | `bool` | `true` | Active [CHANGED] | CI(10) regime scoring: +/-1 quality point based on CI vs pattern type. Test 26: PASS |
+| `InpEnableThrashCooldown` | `bool` | `true` | Active (no-op) | Block entries after >2 regime changes in 4h. Test 27: never fires (H4 hysteresis prevents thrashing) |
+| `InpEnableBreakoutProbation` | `bool` | `false` | Disabled | 2-bar H1 probation for breakouts. Test 29: no-op (breakout plugins mostly disabled) |
+| `InpEnableS3S6` | `bool` | `true` | Active [CHANGED] | S3/S6 range edge fade + failed-break reversal. Replaces RangeBox + FalseBreakout. Test 28: PASS |
+| `InpEnableS6Short` | `bool` | `false` | Disabled | S6 short side. -8.9R across 6 years |
+| `InpEnableAntiStall` | `bool` | `true` | Active [CHANGED] | Reduce stalling S3/S6 trades at 5/8 M15 bars |
+| `InpMaxPositionAgeHours` | `int` | `72` | Active | Maximum position age before forced close |
+| `InpCloseBeforeWeekend` | `bool` | `true` | Active | Close all positions before weekend |
+| `InpWeekendCloseHour` | `int` | `20` | Active | Friday close hour (server time) |
+| `InpMaxTradesPerDay` | `int` | `5` | Active | Maximum trades per day |
 
 ---
 
 ## Group 3: Short Protection
 
-Reduces risk on short positions to account for gold's structural bullish bias.
+Reduces risk on short positions for gold's structural bullish bias.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpShortRiskMultiplier` | `double` | `0.5` | Standard short risk multiplier | Applied to all short trades that are not mean reversion or exempt patterns. 0.5 means shorts get 50% of the long risk. |
-| `InpBullMRShortAdxCap` | `double` | `25.0` | Bull market MR short max ADX | Mean reversion shorts in bull markets are only allowed below this ADX threshold. |
-| `InpBullMRShortMacroMax` | `int` | `-2` | Bull market MR short max macro score | MR shorts above D1 200 EMA require macro score at or below this value. |
-| `InpShortTrendMinADX` | `double` | `22.0` | Short trend minimum ADX | Minimum ADX for trend-following shorts to be considered valid. |
-| `InpShortTrendMaxADX` | `double` | `50.0` | Short trend maximum ADX | Maximum ADX for trend-following shorts. Above this, volatility is considered too extreme. |
-| `InpShortMRMacroMax` | `int` | `-2` | MR short max macro score | Mean reversion shorts are only allowed when macro score is at or below this value. |
+| `InpShortRiskMultiplier` | `double` | `0.5` | Active | Standard short risk multiplier. Shorts get 50% of long risk |
+| `InpBullMRShortAdxCap` | `double` | `25.0` | Active | Bull market MR short max ADX |
+| `InpBullMRShortMacroMax` | `int` | `-2` | Active | Bull market MR short max macro score |
+| `InpShortTrendMinADX` | `double` | `22.0` | Active | Short trend minimum ADX |
+| `InpShortTrendMaxADX` | `double` | `50.0` | Active | Short trend maximum ADX |
+| `InpShortMRMacroMax` | `int` | `-2` | Active | MR short max macro score |
 
 ---
 
@@ -100,205 +109,208 @@ Reduces risk on short positions to account for gold's structural bullish bias.
 
 Reduces risk after losing streaks.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableLossScaling` | `bool` | `true` | Enable consecutive loss scaling | When disabled, losing streaks have no effect on position size. |
-| `InpLossLevel1Reduction` | `double` | `0.75` | Level 1 reduction multiplier (2-3 losses) | Risk is multiplied by this value after 2-3 consecutive losses. |
-| `InpLossLevel2Reduction` | `double` | `0.50` | Level 2 reduction multiplier (4+ losses) | Risk is multiplied by this value after 4 or more consecutive losses. |
+| `InpEnableLossScaling` | `bool` | `true` | Active | Enable consecutive loss scaling |
+| `InpLossLevel1Reduction` | `double` | `0.75` | Active | Level 1 reduction multiplier (2-3 consecutive losses) |
+| `InpLossLevel2Reduction` | `double` | `0.50` | Active | Level 2 reduction multiplier (4+ consecutive losses) |
 
 *Declared in `CQualityTierRiskStrategy.mqh`:*
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpLossLevel1Threshold` | `int` | `2` | Consecutive losses to trigger Level 1 | Number of consecutive losses before the Level 1 multiplier activates. |
-| `InpLossLevel2Threshold` | `int` | `4` | Consecutive losses to trigger Level 2 | Number of consecutive losses before the Level 2 multiplier activates. |
+| `InpLossLevel1Threshold` | `int` | `2` | Active | Consecutive losses to trigger Level 1 |
+| `InpLossLevel2Threshold` | `int` | `4` | Active | Consecutive losses to trigger Level 2 |
 
 ---
 
 ## Group 5: Trend Detection
 
-Controls the multi-timeframe trend detection system.
+Multi-timeframe trend detection system.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpMAFastPeriod` | `int` | `10` | Fast moving average period | Used for trend direction. Shorter = more responsive, noisier. |
-| `InpMASlowPeriod` | `int` | `21` | Slow moving average period | Used for trend direction. Longer = smoother, more lag. |
-| `InpSwingLookback` | `int` | `20` | Swing high/low lookback bars | Number of bars to scan for swing pivots. Affects trend structure detection. |
-| `InpUseH4AsPrimary` | `bool` | `true` | Use H4 as primary trend timeframe | When true, H4 trend is the primary filter; when false, D1 is used. Affects signal validation in CSignalValidator. |
+| `InpMAFastPeriod` | `int` | `10` | Active | Fast moving average period |
+| `InpMASlowPeriod` | `int` | `21` | Active | Slow moving average period |
+| `InpSwingLookback` | `int` | `20` | Active | Swing high/low lookback bars |
+| `InpUseH4AsPrimary` | `bool` | `true` | Active | Use H4 as primary trend timeframe (vs D1) |
 
 ---
 
 ## Group 6: Regime Classification
 
-Controls the ADX/ATR-based regime classifier.
+ADX/ATR-based regime classifier.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpADXPeriod` | `int` | `14` | ADX indicator period | Standard ADX calculation period. |
-| `InpADXTrending` | `double` | `20.0` | ADX trending threshold | ADX above this = TRENDING regime. Higher values require stronger trends. |
-| `InpADXRanging` | `double` | `15.0` | ADX ranging threshold | ADX below this = RANGING regime. |
-| `InpATRPeriod` | `int` | `14` | ATR indicator period | Used for stop loss calculation and volatility regime classification. |
+| `InpADXPeriod` | `int` | `14` | Active | ADX indicator period |
+| `InpADXTrending` | `double` | `20.0` | Active | ADX above this = TRENDING regime |
+| `InpADXRanging` | `double` | `15.0` | Active | ADX below this = RANGING regime |
+| `InpATRPeriod` | `int` | `14` | Active | ATR indicator period |
 
 ---
 
-## Group 7: Stop Loss & ATR
+## Group 7: Stop Loss and ATR
 
 Stop loss calculation and minimum R:R requirements.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpATRMultiplierSL` | `double` | `3.0` | ATR multiplier for stop loss | SL distance = ATR x this multiplier. Higher values give wider stops. |
-| `InpMinSLPoints` | `double` | `800.0` | Minimum SL distance in points | Floor on SL distance. Prevents stops that are too tight for the instrument. |
-| `InpScoringRRTarget` | `double` | `2.5` | Target R:R for quality scoring | Used in signal evaluation, not in actual TP placement. |
-| `InpMinRRRatio` | `double` | `1.3` | Minimum R:R ratio | Signals with R:R below this are rejected entirely. |
-| `InpRSIPeriod` | `int` | `14` | RSI period | Standard RSI calculation period. Used for quality scoring (+3 pts at extremes) and validation filters. |
+| `InpATRMultiplierSL` | `double` | `3.0` | Active | ATR multiplier for stop loss distance |
+| `InpMinSLPoints` | `double` | `800.0` | Active | Minimum SL distance in points (floor) |
+| `InpScoringRRTarget` | `double` | `2.5` | Active | Target R:R for quality scoring (not actual TP) |
+| `InpMinRRRatio` | `double` | `1.3` | Active | Minimum R:R ratio. Signals below this are rejected |
+| `InpEnableRewardRoom` | `bool` | `false` | Disabled | Reject if nearest structural obstacle < min R. Test 24c: 95% rejection rate |
+| `InpMinRoomToObstacle` | `double` | `2.0` | Disabled | Minimum room to obstacle in R-multiples |
+| `InpRSIPeriod` | `int` | `14` | Active | RSI calculation period |
 
 ---
 
 ## Group 8: Trailing Stop
 
-Basic trailing stop and partial close configuration.
+Basic trailing stop and partial close configuration. Overridden by regime exit
+profiles (Group 44) when `InpEnableRegimeExit=true`.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpATRMultiplierTrail` | `double` | `1.3` | ATR multiplier for trailing | Used by ATR-based trailing strategies. |
-| `InpMinTrailMovement` | `double` | `50.0` | Minimum trail movement in points | SL is only modified if the new value differs from the current by at least this amount. Reduces unnecessary broker modifications. |
-| `InpTP1Distance` | `double` | `1.3` | TP1 distance as R-multiple | First take profit at 1.3x the risk distance. |
-| `InpTP2Distance` | `double` | `1.8` | TP2 distance as R-multiple | Second take profit at 1.8x the risk distance. |
-| `InpTP1Volume` | `double` | `50.0` | TP1 close volume % | Percentage of the position closed at TP1. |
-| `InpTP2Volume` | `double` | `40.0` | TP2 close volume % | Percentage of the original position closed at TP2. |
-| `InpBreakevenOffset` | `double` | `50.0` | Breakeven offset in points | When breakeven triggers, SL is placed this many points past entry (to lock in a small profit). |
+| `InpATRMultiplierTrail` | `double` | `1.3` | Active | ATR multiplier for trailing strategies |
+| `InpMinTrailMovement` | `double` | `50.0` | Active | Minimum trail movement in points before broker SL update |
+| `InpTP1Distance` | `double` | `1.3` | Active | TP1 distance as R-multiple (overridden by regime profiles) |
+| `InpTP2Distance` | `double` | `1.8` | Active | TP2 distance as R-multiple (overridden by regime profiles) |
+| `InpTP1Volume` | `double` | `40.0` | Active [CHANGED] | TP1 close volume %. Reduced from 50% |
+| `InpTP2Volume` | `double` | `30.0` | Active [CHANGED] | TP2 close volume %. Reduced from 40%. ~36% runner |
+| `InpBreakevenOffset` | `double` | `50.0` | Active | Breakeven offset in points past entry |
 
 ---
 
 ## Group 9: Volatility Breakout
 
-Configuration for the volatility breakout entry strategy (Donchian + Keltner Channel).
+Donchian + Keltner Channel breakout strategy.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableVolBreakout` | `bool` | `true` | Enable volatility breakout | Master toggle for the VolatilityBreakout entry plugin. |
-| `InpBODonchianPeriod` | `int` | `14` | Donchian channel period | Lookback for Donchian high/low breakout levels. |
-| `InpBOKeltnerEMAPeriod` | `int` | `20` | Keltner channel EMA period | EMA period for Keltner channel centerline. |
-| `InpBOKeltnerATRPeriod` | `int` | `20` | Keltner channel ATR period | ATR period for Keltner channel width. |
-| `InpBOKeltnerMult` | `double` | `1.5` | Keltner channel multiplier | Width of Keltner bands. Higher = wider bands, fewer but higher-conviction breakouts. |
-| `InpBOADXMin` | `double` | `26.0` | Minimum ADX for breakout | Breakout signals rejected below this ADX. Ensures momentum supports the breakout. |
-| `InpBOEntryBuffer` | `double` | `15.0` | Entry buffer in points | Distance past the breakout level to place the entry. Reduces false breakout entries. |
-| `InpBOPullbackATRFrac` | `double` | `0.5` | Pullback ATR fraction | Allows re-entry on pullbacks within this fraction of ATR from the breakout level. |
-| `InpBOCooldownBars` | `int` | `4` | Cooldown bars between signals | Minimum bars between consecutive breakout signals. Prevents rapid-fire entries. |
-| `InpBOTp1Distance` | `double` | `1.8` | Breakout TP1 distance (R-multiple) | Breakout-specific TP1 (wider than default because breakouts tend to run). |
-| `InpBOTp2Distance` | `double` | `2.4` | Breakout TP2 distance (R-multiple) | Breakout-specific TP2. |
-| `InpBOChandelierATR` | `int` | `20` | Breakout Chandelier ATR period | ATR period for the breakout-specific trailing strategy. |
-| `InpBOChandelierMult` | `double` | `2.3` | Breakout Chandelier multiplier | Multiplier for breakout trailing. Tighter than the default 3.0 because breakout momentum is stronger. |
-| `InpBOChandelierLookback` | `int` | `15` | Breakout Chandelier lookback | Bars for highest-high/lowest-low in breakout trailing. |
-| `InpBODailyLossStop` | `double` | `0.8` | Breakout daily loss stop % | Breakout-specific daily loss limit. Tighter than the global limit because breakout strategies can lose quickly in false breakout conditions. |
+| `InpEnableVolBreakout` | `bool` | `true` | Active | Enable volatility breakout plugin |
+| `InpBODonchianPeriod` | `int` | `14` | Active | Donchian channel lookback period |
+| `InpBOKeltnerEMAPeriod` | `int` | `20` | Active | Keltner channel EMA period |
+| `InpBOKeltnerATRPeriod` | `int` | `20` | Active | Keltner channel ATR period |
+| `InpBOKeltnerMult` | `double` | `1.5` | Active | Keltner channel width multiplier |
+| `InpBOADXMin` | `double` | `26.0` | Active | Minimum ADX for breakout entry |
+| `InpBOEntryBuffer` | `double` | `15.0` | Active | Entry buffer past breakout level in points |
+| `InpBOPullbackATRFrac` | `double` | `0.5` | Active | Pullback re-entry ATR fraction |
+| `InpBOCooldownBars` | `int` | `4` | Active | Minimum bars between breakout signals |
+| `InpBOTp1Distance` | `double` | `1.8` | Active | Breakout-specific TP1 (R-multiple) |
+| `InpBOTp2Distance` | `double` | `2.4` | Active | Breakout-specific TP2 (R-multiple) |
+| `InpBOChandelierATR` | `int` | `20` | Active | Breakout Chandelier ATR period |
+| `InpBOChandelierMult` | `double` | `2.3` | Active | Breakout Chandelier multiplier |
+| `InpBOChandelierLookback` | `int` | `15` | Active | Breakout Chandelier lookback bars |
+| `InpBODailyLossStop` | `double` | `0.8` | Active | Breakout-specific daily loss stop % |
 
 ---
 
 ## Group 10: SMC Order Blocks
 
-Smart Money Concepts order block analysis.
+Smart Money Concepts analysis for confluence scoring and directional filtering.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableSMC` | `bool` | `true` | Enable SMC analysis | Master toggle for order block, FVG, and BOS/CHoCH detection. |
-| `InpSMCOBLookback` | `int` | `50` | Order block lookback bars | How far back to scan for order blocks. Larger = more zones found but more stale data. |
-| `InpSMCOBBodyPct` | `double` | `0.5` | OB body percentage | Minimum body-to-range ratio for a candle to qualify as an order block. |
-| `InpSMCOBImpulseMult` | `double` | `1.5` | OB impulse multiplier | The move away from the OB must be at least this multiple of the OB candle's range. |
-| `InpSMCFVGMinPoints` | `int` | `50` | FVG minimum gap in points | Minimum gap size for Fair Value Gap detection. Smaller gaps are ignored. |
-| `InpSMCBOSLookback` | `int` | `20` | Break of Structure lookback | Bars to scan for BOS/CHoCH events. |
-| `InpSMCLiqTolerance` | `double` | `30.0` | Liquidity tolerance in points | Price must come within this distance of a liquidity level to count as a sweep. |
-| `InpSMCLiqMinTouches` | `int` | `2` | Liquidity minimum touches | A price level needs at least this many touches to qualify as a liquidity zone. |
-| `InpSMCZoneMaxAge` | `int` | `200` | Zone max age in bars | Order blocks and FVGs older than this are discarded. |
-| `InpSMCUseHTFConfluence` | `bool` | `true` | Use higher timeframe confluence | Adds H4/D1 SMC levels to the confluence scoring. |
-| `InpSMCMinConfluence` | `int` | `55` | Minimum SMC confluence score | Minimum combined score (0-100) for an SMC-based entry to be valid. |
-| `InpSMCBlockCounterSMC` | `bool` | `true` | Block counter-SMC trades | When enabled, trades opposing the dominant SMC structure (e.g., buying into a bearish OB) are rejected. |
+| `InpEnableSMC` | `bool` | `true` | Active | Enable SMC analysis (order blocks, FVG, BOS/CHoCH) |
+| `InpSMCOBLookback` | `int` | `50` | Active | Order block lookback bars |
+| `InpSMCOBBodyPct` | `double` | `0.5` | Active | OB minimum body-to-range ratio |
+| `InpSMCOBImpulseMult` | `double` | `1.5` | Active | OB impulse move multiplier |
+| `InpSMCFVGMinPoints` | `int` | `50` | Active | FVG minimum gap size in points |
+| `InpSMCBOSLookback` | `int` | `20` | Active | Break of Structure lookback bars |
+| `InpSMCLiqTolerance` | `double` | `30.0` | Active | Liquidity sweep tolerance in points |
+| `InpSMCLiqMinTouches` | `int` | `2` | Active | Minimum touches for liquidity zone |
+| `InpSMCZoneMaxAge` | `int` | `200` | Active | Zone max age in bars (note: first 20 zones exempt from recycling) |
+| `InpSMCUseHTFConfluence` | `bool` | `true` | Active | Include H4/D1 SMC levels in confluence scoring |
+| `InpSMCMinConfluence` | `int` | `55` | Active | Minimum SMC confluence score (0-100) |
+| `InpSMCBlockCounterSMC` | `bool` | `true` | Active | Block trades opposing dominant SMC structure |
 
 ---
 
 ## Group 11: Momentum Filter
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableMomentum` | `bool` | `false` | Enable momentum filter | Adds a multi-factor momentum gate to signal validation. Disabled by default; was found to filter too aggressively. |
+| `InpEnableMomentum` | `bool` | `false` | Disabled | Multi-factor momentum gate. Found to filter too aggressively |
 
 ---
 
 ## Group 12: Trailing Stop Optimizer
 
-Advanced trailing stop configuration.
+Advanced trailing stop configuration. Only the selected strategy is active in production.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableTrailOptimizer` | `bool` | `true` | Enable trailing stop optimizer | Master toggle for the trailing system. |
-| `InpTrailStrategy` | `ENUM_TRAILING_STRATEGY` | `TRAIL_CHANDELIER` | Trailing strategy selection | Choose from: ATR, Swing, Parabolic, Chandelier (default), Stepped, Hybrid, Smart. |
-| `InpTrailATRMult` | `double` | `1.35` | ATR trailing multiplier | Used by ATR and Hybrid trailing strategies. |
-| `InpTrailSwingLookback` | `int` | `7` | Swing trailing lookback | Bars to scan for swing pivots in Swing trailing. |
-| `InpTrailChandelierMult` | `double` | `3.0` | Chandelier multiplier | ATR multiplier for Chandelier trailing. Higher = wider trail. |
-| `InpTrailStepSize` | `double` | `0.5` | Stepped trailing step size | R-multiple step size for Stepped trailing. |
-| `InpTrailMinProfit` | `int` | `60` | Minimum profit to start trailing (points) | Trailing does not begin until the trade is at least this many points in profit. |
-| `InpTrailBETrigger` | `double` | `0.8` | Breakeven trigger (R-multiples) | Move SL to breakeven when profit reaches this fraction of the risk distance. |
-| `InpTrailBEOffset` | `double` | `50.0` | Breakeven offset in points | SL is placed this many points past entry when breakeven triggers. |
+| `InpEnableTrailOptimizer` | `bool` | `true` | Active | Enable trailing stop system |
+| `InpTrailStrategy` | `ENUM_TRAILING_STRATEGY` | `TRAIL_CHANDELIER` | Active | Trailing strategy: Chandelier is the sole active method in production |
+| `InpTrailATRMult` | `double` | `1.35` | Active | ATR trailing multiplier (used by ATR and Hybrid strategies) |
+| `InpTrailSwingLookback` | `int` | `7` | Active | Swing trailing lookback bars |
+| `InpTrailChandelierMult` | `double` | `3.0` | Active | Chandelier baseline multiplier (overridden per regime by exit profiles) |
+| `InpTrailStepSize` | `double` | `0.5` | Active | Stepped trailing step size in R-multiples |
+| `InpTrailMinProfit` | `int` | `60` | Active | Minimum profit in points before trailing begins |
+| `InpTrailBETrigger` | `double` | `0.8` | Active | Breakeven trigger in R-multiples (overridden by regime exit profiles) |
+| `InpTrailBEOffset` | `double` | `50.0` | Active | Breakeven SL offset past entry in points |
 
 ---
 
 ## Group 13: Adaptive Take Profit
 
-Dynamic TP calculation based on volatility, trend, and regime.
+Dynamic TP calculation based on volatility regime and trend strength.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableAdaptiveTP` | `bool` | `true` | Enable adaptive TP system | When disabled, static TP1/TP2 from Group 8 are used. |
-| `InpLowVolTP1Mult` | `double` | `1.5` | Low volatility TP1 multiplier | TP1 R-multiple in low-volatility environments. |
-| `InpLowVolTP2Mult` | `double` | `2.5` | Low volatility TP2 multiplier | TP2 R-multiple in low-volatility environments. |
-| `InpNormalVolTP1Mult` | `double` | `2.0` | Normal volatility TP1 multiplier | TP1 R-multiple in normal conditions. |
-| `InpNormalVolTP2Mult` | `double` | `3.5` | Normal volatility TP2 multiplier | TP2 R-multiple in normal conditions. |
-| `InpHighVolTP1Mult` | `double` | `2.5` | High volatility TP1 multiplier | TP1 R-multiple in high volatility. |
-| `InpHighVolTP2Mult` | `double` | `2.5` | High volatility TP2 multiplier | TP2 R-multiple in high volatility. Lower than normal because high-vol moves reverse faster. |
-| `InpStrongTrendTPBoost` | `double` | `1.3` | Strong trend TP boost | TPs are multiplied by this when ADX > 35. Lets strong trends run further. |
-| `InpWeakTrendTPCut` | `double` | `0.55` | Weak trend TP reduction | TPs are multiplied by this when ADX < 20. Takes profit quickly in weak trends. |
-| `InpUseStructureTargets` | `bool` | `false` | Use structure-based targets | Blends S/R level targets with calculated TPs. Disabled by default. |
+| `InpEnableAdaptiveTP` | `bool` | `true` | Active | Enable adaptive TP system |
+| `InpLowVolTP1Mult` | `double` | `1.5` | Active | Low volatility TP1 multiplier |
+| `InpLowVolTP2Mult` | `double` | `2.5` | Active | Low volatility TP2 multiplier |
+| `InpNormalVolTP1Mult` | `double` | `2.0` | Active | Normal volatility TP1 multiplier |
+| `InpNormalVolTP2Mult` | `double` | `3.5` | Active | Normal volatility TP2 multiplier |
+| `InpHighVolTP1Mult` | `double` | `2.5` | Active | High volatility TP1 multiplier |
+| `InpHighVolTP2Mult` | `double` | `2.5` | Active | High volatility TP2 multiplier (lower than normal: high-vol reversals) |
+| `InpStrongTrendTPBoost` | `double` | `1.3` | Active | TP boost when ADX > 35 |
+| `InpWeakTrendTPCut` | `double` | `0.55` | Active | TP reduction when ADX < 20 |
+| `InpUseStructureTargets` | `bool` | `false` | Disabled | Blend S/R level targets with calculated TPs |
 
 ---
 
 ## Group 14: Volatility Regime Risk
 
-Controls the 5-tier volatility regime classification and risk adjustment.
+5-tier volatility classification and risk/SL adjustment.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableVolRegime` | `bool` | `true` | Enable volatility regime adjustment | Master toggle for Step 3 of the risk pipeline. |
-| `InpVolVeryLowThresh` | `double` | `0.5` | Very low volatility threshold | ATR ratio below this = VOL_VERY_LOW. |
-| `InpVolLowThresh` | `double` | `0.7` | Low volatility threshold | ATR ratio below this = VOL_LOW. |
-| `InpVolNormalThresh` | `double` | `1.0` | Normal volatility threshold | ATR ratio below this = VOL_NORMAL. |
-| `InpVolHighThresh` | `double` | `1.3` | High volatility threshold | ATR ratio below this = VOL_HIGH. Above = VOL_EXTREME. |
-| `InpVolVeryLowRisk` | `double` | `1.0` | VOL_VERY_LOW risk multiplier | Risk adjustment for very low volatility. |
-| `InpVolLowRisk` | `double` | `0.92` | VOL_LOW risk multiplier | Risk adjustment for low volatility. |
-| `InpVolNormalRisk` | `double` | `1.0` | VOL_NORMAL risk multiplier | No adjustment for normal volatility. |
-| `InpVolHighRisk` | `double` | `0.85` | VOL_HIGH risk multiplier | Risk reduced by 15% in high volatility. |
-| `InpVolExtremeRisk` | `double` | `0.65` | VOL_EXTREME risk multiplier | Risk reduced by 35% in extreme volatility. |
-| `InpEnableVolSLAdjust` | `bool` | `true` | Enable volatility SL adjustment | When enabled, SL distance is tightened in high/extreme volatility. |
-| `InpVolHighSLMult` | `double` | `0.85` | High vol SL multiplier | ATR multiplier for SL is reduced by this factor in high volatility. |
-| `InpVolExtremeSLMult` | `double` | `0.70` | Extreme vol SL multiplier | ATR multiplier for SL is reduced by this factor in extreme volatility. |
+| `InpEnableVolRegime` | `bool` | `true` | Active | Enable volatility regime risk adjustment |
+| `InpVolVeryLowThresh` | `double` | `0.5` | Active | ATR ratio threshold: below = VOL_VERY_LOW |
+| `InpVolLowThresh` | `double` | `0.7` | Active | ATR ratio threshold: below = VOL_LOW |
+| `InpVolNormalThresh` | `double` | `1.0` | Active | ATR ratio threshold: below = VOL_NORMAL |
+| `InpVolHighThresh` | `double` | `1.3` | Active | ATR ratio threshold: below = VOL_HIGH, above = VOL_EXTREME |
+| `InpVolVeryLowRisk` | `double` | `1.0` | Active | VOL_VERY_LOW risk multiplier |
+| `InpVolLowRisk` | `double` | `0.92` | Active | VOL_LOW risk multiplier |
+| `InpVolNormalRisk` | `double` | `1.0` | Active | VOL_NORMAL risk multiplier |
+| `InpVolHighRisk` | `double` | `0.85` | Active | VOL_HIGH risk multiplier (-15%) |
+| `InpVolExtremeRisk` | `double` | `0.65` | Active | VOL_EXTREME risk multiplier (-35%) |
+| `InpEnableVolSLAdjust` | `bool` | `true` | Active | Enable volatility SL distance adjustment |
+| `InpVolHighSLMult` | `double` | `0.85` | Active | High vol SL tightening multiplier |
+| `InpVolExtremeSLMult` | `double` | `0.70` | Active | Extreme vol SL tightening multiplier |
 
 ---
 
 ## Group 15: Crash Detector (Bear Hunter)
 
-Configuration for bearish breakout detection during crash conditions.
+Bearish breakout detection during crash conditions.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableCrashDetector` | `bool` | `true` | Enable crash detector | Master toggle for the crash/bear hunter subsystem. |
-| `InpCrashATRMult` | `double` | `1.1` | Crash ATR multiplier | Multiplied by ATR to determine the crash breakout distance. |
-| `InpCrashRSICeiling` | `double` | `45.0` | RSI ceiling for crash conditions | RSI must be below this for crash conditions to be valid. |
-| `InpCrashRSIFloor` | `double` | `25.0` | RSI floor for crash conditions | RSI below this indicates extreme oversold; crash entries may be filtered. |
-| `InpCrashMaxSpread` | `int` | `40` | Maximum spread in points for crash entry | Entries rejected if spread exceeds this during crash conditions. |
-| `InpCrashBufferPoints` | `int` | `15` | Entry buffer in points | Distance past the crash breakout level for entry placement. |
-| `InpCrashStartHour` | `int` | `13` | Crash detection start hour (GMT) | Crash detector is only active during this window. |
-| `InpCrashEndHour` | `int` | `17` | Crash detection end hour (GMT) | End of the crash detection window. |
-| `InpCrashDonchianPeriod` | `int` | `24` | Donchian period for crash levels | Lookback for low-of-lows breakout detection. |
-| `InpCrashSLATRMult` | `double` | `2.5` | Crash SL ATR multiplier | Stop loss distance for crash breakout trades. Wider than default because crash moves are volatile. |
+| `InpEnableCrashDetector` | `bool` | `true` | Active | Enable crash detector subsystem |
+| `InpCrashATRMult` | `double` | `1.1` | Active | Crash breakout distance ATR multiplier |
+| `InpCrashRSICeiling` | `double` | `45.0` | Active | RSI must be below this for crash conditions |
+| `InpCrashRSIFloor` | `double` | `25.0` | Active | RSI floor for extreme oversold filter |
+| `InpCrashMaxSpread` | `int` | `40` | Active | Maximum spread in points for crash entries |
+| `InpCrashBufferPoints` | `int` | `15` | Active | Entry buffer past crash breakout level |
+| `InpCrashStartHour` | `int` | `13` | Active | Crash detection window start (GMT) |
+| `InpCrashEndHour` | `int` | `17` | Active | Crash detection window end (GMT) |
+| `InpCrashDonchianPeriod` | `int` | `24` | Active | Donchian period for crash level detection |
+| `InpCrashSLATRMult` | `double` | `2.5` | Active | Crash trade SL ATR multiplier (wider for volatility) |
 
 ---
 
@@ -306,61 +318,75 @@ Configuration for bearish breakout detection during crash conditions.
 
 External macro data for gold correlation analysis.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpDXYSymbol` | `string` | `"USDX"` | DXY symbol name | Broker's symbol name for the US Dollar Index. Used for inverse correlation with gold. |
-| `InpVIXSymbol` | `string` | `"VIX"` | VIX symbol name | Broker's symbol name for the VIX. Used for risk sentiment analysis. |
-| `InpVIXElevated` | `double` | `20.0` | VIX elevated threshold | VIX above this = elevated fear/risk. Affects macro score. |
-| `InpVIXLow` | `double` | `15.0` | VIX low threshold | VIX below this = low fear. Affects macro score. |
+| `InpDXYSymbol` | `string` | `"USDX"` | Active | Broker symbol name for US Dollar Index |
+| `InpVIXSymbol` | `string` | `"VIX"` | Active | Broker symbol name for VIX |
+| `InpVIXElevated` | `double` | `20.0` | Active | VIX elevated fear threshold |
+| `InpVIXLow` | `double` | `15.0` | Active | VIX low fear threshold |
 
 ---
 
 ## Group 17: Pattern Enable/Disable
 
-Master toggles for each entry pattern.
+Master toggles for each legacy entry pattern.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableEngulfing` | `bool` | `true` | Enable Engulfing pattern | Bullish/bearish engulfing candle entries. |
-| `InpEnablePinBar` | `bool` | `false` | Enable Pin Bar pattern | **Disabled:** 23% win rate, -$603 cumulative. Worst-performing strategy. |
-| `InpEnableLiquiditySweep` | `bool` | `false` | Enable Liquidity Sweep | **Disabled:** replaced by Liquidity Engine SFP/FVG modes. |
-| `InpEnableMACross` | `bool` | `false` | Enable MA Cross | **Disabled:** Average R = -0.9, pure drag on performance. |
-| `InpEnableBBMeanReversion` | `bool` | `true` | Enable BB Mean Reversion | Bollinger Band mean reversion entries. |
-| `InpEnableRangeBox` | `bool` | `true` | Enable Range Box | Range-bound trading entries. |
-| `InpEnableFalseBreakout` | `bool` | `false` | Enable False Breakout Fade | Fade breakouts that fail. Disabled pending validation. |
-| `InpEnableSupportBounce` | `bool` | `false` | Enable Support Bounce | S/R bounce entries. Disabled pending validation. |
-| `InpEnableCrashBreakout` | `bool` | `true` | Enable Crash Breakout | Bear hunter crash breakout entries. |
+| `InpEnableEngulfing` | `bool` | `true` | Active | Engulfing pattern (bearish direction disabled via separate toggle) |
+| `InpEnablePinBar` | `bool` | `true` | Active [CHANGED] | Pin Bar pattern. Changed from false. Bearish PF 1.48 carries 2023 |
+| `InpEnableLiquiditySweep` | `bool` | `false` | Disabled | Replaced by Liquidity Engine SFP mode |
+| `InpEnableMACross` | `bool` | `true` | Active [CHANGED] | MA Cross. Changed from false. Bullish PF 2.15 (bearish OFF in code) |
+| `InpEnableBBMeanReversion` | `bool` | `true` | Active | Bollinger Band mean reversion |
+| `InpEnableRangeBox` | `bool` | `true` | Superseded | Input is true but plugin is not registered when S3/S6 is active |
+| `InpEnableFalseBreakout` | `bool` | `true` | Superseded [CHANGED] | Changed from false. Plugin not registered when S3/S6 is active |
+| `InpEnableSupportBounce` | `bool` | `false` | Disabled | Pending validation |
+| `InpEnableCrashBreakout` | `bool` | `true` | Active | Bear hunter crash breakout |
 
 ---
 
 ## Group 18: Pattern Score Adjustments
 
-Backtested confidence scores (0-100) per pattern and direction. Used in signal validation confidence filtering.
+Backtested confidence scores (0-100) per pattern/direction. Used in signal validation.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpScoreBullEngulfing` | `int` | `92` | Bullish Engulfing confidence | High confidence reflects strong backtest performance. |
-| `InpScoreBullPinBar` | `int` | `88` | Bullish Pin Bar confidence | Decent confidence but pattern is disabled. |
-| `InpScoreBullMACross` | `int` | `82` | Bullish MA Cross confidence | Pattern is disabled. |
-| `InpScoreBearEngulfing` | `int` | `42` | Bearish Engulfing confidence | Lower confidence for bearish direction (gold's bull bias). |
-| `InpScoreBearPinBar` | `int` | `15` | Bearish Pin Bar confidence | Very low --- confirms why Pin Bar is disabled. |
-| `InpScoreBearMACross` | `int` | `18` | Bearish MA Cross confidence | Very low --- confirms why MA Cross is disabled. |
-| `InpScoreBullLiqSweep` | `int` | `65` | Bullish Liquidity Sweep confidence | Moderate confidence. |
-| `InpScoreBearLiqSweep` | `int` | `38` | Bearish Liquidity Sweep confidence | Below average for bearish direction. |
-| `InpScoreSupportBounce` | `int` | `35` | Support Bounce confidence | Below threshold, pattern disabled pending validation. |
+| `InpScoreBullEngulfing` | `int` | `92` | Active | Bullish Engulfing confidence |
+| `InpScoreBullPinBar` | `int` | `88` | Active | Bullish Pin Bar confidence |
+| `InpScoreBullMACross` | `int` | `82` | Active | Bullish MA Cross confidence |
+| `InpScoreBearEngulfing` | `int` | `0` | Dead input | Dead input. Use `InpEnableBearishEngulfing` instead |
+| `InpEnableBearishEngulfing` | `bool` | `false` | Disabled | Bearish Engulfing: -25.9R/6yrs, worst strategy |
+| `InpBearPinBarAsiaOnly` | `bool` | `true` | Active | Restrict bearish Pin Bar to Asia session only (+11.7R saved) |
+| `InpRubberBandAPlusOnly` | `bool` | `true` | Active | Rubber Band Short requires A/A+ quality (+4.0R saved) |
+| `InpBullMACrossBlockNY` | `bool` | `true` | Active | Block bullish MA Cross in New York session (+3.6R saved) |
+| `InpLongExtensionFilter` | `bool` | `true` | Active | Block longs rising >0.5%/72h when weekly EMA20 falling |
+| `InpLongExtensionPct` | `double` | `0.5` | Active | 72h rise threshold for extension filter |
+| `InpBlockCountertrendRubberBandShort` | `bool` | `false` | Deprecated | Reverted after label/runtime mismatch |
+| `InpCountertrendShortMin24hRisePct` | `double` | `0.6` | Deprecated | No-op |
+| `InpCountertrendShortMin72hRisePct` | `double` | `1.5` | Deprecated | No-op |
+| `InpCountertrendShortMaxADX` | `double` | `30.0` | Deprecated | No-op |
+| `InpCountertrendShortAsiaExempt` | `bool` | `true` | Deprecated | No-op |
+| `InpPrior24hContinuationLongFilter` | `bool` | `false` | Deprecated | Reverted after worsening results |
+| `InpPrior24hContinuationMinPct` | `double` | `0.0` | Deprecated | No-op |
+| `InpPrior24hContinuationH4Bars` | `int` | `6` | Deprecated | No-op |
+| `InpScoreBearPinBar` | `int` | `60` | Active | Bearish Pin Bar score (raised from 15) |
+| `InpScoreBearMACross` | `int` | `55` | Active | Bearish MA Cross score (raised from 18) |
+| `InpScoreBullLiqSweep` | `int` | `65` | Active | Bullish Liquidity Sweep score |
+| `InpScoreBearLiqSweep` | `int` | `65` | Active | Bearish Liquidity Sweep score (raised from 38) |
+| `InpScoreSupportBounce` | `int` | `35` | Active | Support Bounce score (below confidence threshold) |
 
 ---
 
 ## Group 19: Market Regime Filters
 
-Signal validation filters based on market regime.
+Signal validation filters based on regime classification.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableConfidenceScoring` | `bool` | `true` | Enable confidence scoring | Uses pattern scores (Group 18) to filter low-confidence signals. |
-| `InpMinPatternConfidence` | `int` | `40` | Minimum pattern confidence | Signals with confidence below this are rejected. |
-| `InpUseDynamicStopLoss` | `bool` | `true` | Use dynamic SL | SL is calculated dynamically from ATR rather than fixed distance. |
-| `InpUseDaily200EMA` | `bool` | `true` | Use D1 200 EMA filter | Counter-trend trades against the D1 200 EMA are rejected or heavily filtered. Core directional bias filter. |
+| `InpEnableConfidenceScoring` | `bool` | `true` | Active | Use pattern scores from Group 18 to filter low-confidence signals |
+| `InpMinPatternConfidence` | `int` | `40` | Active | Minimum pattern confidence score for acceptance |
+| `InpUseDynamicStopLoss` | `bool` | `true` | Active | Calculate SL from ATR rather than fixed distance |
+| `InpUseDaily200EMA` | `bool` | `true` | Active | D1 200 EMA directional bias filter. Core directional filter |
 
 ---
 
@@ -368,15 +394,15 @@ Signal validation filters based on market regime.
 
 Time-based trading windows and skip zones.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpTradeLondon` | `bool` | `true` | Trade during London session | Enable/disable London session entries. |
-| `InpTradeNY` | `bool` | `true` | Trade during New York session | Enable/disable NY session entries. |
-| `InpTradeAsia` | `bool` | `true` | Trade during Asia session | Enable/disable Asia session entries. |
-| `InpSkipStartHour` | `int` | `8` | Skip zone 1 start (GMT) | London open chop avoidance window start. |
-| `InpSkipEndHour` | `int` | `11` | Skip zone 1 end (GMT) | London open chop avoidance window end. |
-| `InpSkipStartHour2` | `int` | `14` | Skip zone 2 start (GMT) | NY open chop avoidance window start. |
-| `InpSkipEndHour2` | `int` | `16` | Skip zone 2 end (GMT) | NY open chop avoidance window end. |
+| `InpTradeLondon` | `bool` | `true` | Active [CHANGED] | London session entries enabled (with 0.5x risk from Group 42) |
+| `InpTradeNY` | `bool` | `true` | Active | New York session entries |
+| `InpTradeAsia` | `bool` | `true` | Active | Asia session entries |
+| `InpSkipStartHour` | `int` | `11` | Active [CHANGED] | Skip zone 1 start (GMT). Set to 11 = disabled (start equals end) |
+| `InpSkipEndHour` | `int` | `11` | Active | Skip zone 1 end (GMT) |
+| `InpSkipStartHour2` | `int` | `11` | Active [CHANGED] | Skip zone 2 start (GMT). Set to 11 = disabled |
+| `InpSkipEndHour2` | `int` | `11` | Active [CHANGED] | Skip zone 2 end (GMT). Set to 11 = disabled |
 
 ---
 
@@ -384,10 +410,10 @@ Time-based trading windows and skip zones.
 
 Controls the confirmation candle requirement before trade entry.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableConfirmation` | `bool` | `true` | Enable confirmation candle | When enabled, signals are held pending and only executed when the next candle confirms the direction. |
-| `InpConfirmationStrictness` | `double` | `0.995` | Confirmation strictness | How closely the confirmation candle must match the expected direction. 1.0 = exact match required. |
+| `InpEnableConfirmation` | `bool` | `true` | Active | Hold signals pending until next candle confirms direction |
+| `InpConfirmationStrictness` | `double` | `0.995` | Active | How closely the confirmation candle must match expected direction |
 
 ---
 
@@ -395,28 +421,28 @@ Controls the confirmation candle requirement before trade entry.
 
 Point thresholds for quality tier assignment.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpPointsAPlusSetup` | `int` | `8` | Points required for A+ tier | Lowering this makes it easier to achieve the highest risk allocation. |
-| `InpPointsASetup` | `int` | `7` | Points required for A tier | |
-| `InpPointsBPlusSetup` | `int` | `6` | Points required for B+ tier | |
-| `InpPointsBSetup` | `int` | `5` | Points required for B tier | Signals below this score are rejected entirely. |
+| `InpPointsAPlusSetup` | `int` | `8` | Active | Points required for A+ tier |
+| `InpPointsASetup` | `int` | `7` | Active | Points required for A tier |
+| `InpPointsBPlusSetup` | `int` | `6` | Active | Points required for B+ tier |
+| `InpPointsBSetup` | `int` | `7` | Active [CHANGED] | Points required for B tier. Raised from 5 to 7 (same as A). Effectively filters out B/B+ tiers, proven in $6,140 baseline |
 
 ---
 
 ## Group 23: Execution
 
-Trade execution settings and notification preferences.
+Trade execution settings and notifications.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpMagicNumber` | `int` | `999999` | Magic number | Unique identifier for this EA's trades. Must not conflict with other EAs on the same account. |
-| `InpSlippage` | `int` | `10` | Maximum allowed slippage in points | Orders are placed with this slippage tolerance. |
-| `InpSlippageWarnThreshold` | `int` | `5` | Slippage warning threshold | Slippage above this generates a warning in the log. |
-| `InpEnableAlerts` | `bool` | `true` | Enable alert popups | MT5 alert dialogs on trade events. |
-| `InpEnablePush` | `bool` | `false` | Enable push notifications | Mobile push notifications on trade events. |
-| `InpEnableEmail` | `bool` | `false` | Enable email notifications | Email notifications on trade events. |
-| `InpEnableLogging` | `bool` | `true` | Enable trade logging | CSV trade log output. |
+| `InpMagicNumber` | `int` | `999999` | Active | Unique EA identifier for this EA's trades |
+| `InpSlippage` | `int` | `10` | Active | Maximum allowed slippage in points |
+| `InpSlippageWarnThreshold` | `int` | `5` | Active | Slippage above this generates a log warning |
+| `InpEnableAlerts` | `bool` | `true` | Active | MT5 alert dialogs on trade events |
+| `InpEnablePush` | `bool` | `false` | Active | Mobile push notifications |
+| `InpEnableEmail` | `bool` | `false` | Active | Email notifications |
+| `InpEnableLogging` | `bool` | `true` | Active | CSV trade log output |
 
 ---
 
@@ -424,27 +450,27 @@ Trade execution settings and notification preferences.
 
 Core system components from the plugin framework.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpUsePluginSystem` | `bool` | `true` | Enable plugin system | Master toggle for the plugin architecture. Disabling reverts to monolithic behavior. |
-| `InpUseTimeoutDetection` | `bool` | `true` | Enable timeout detection | Detects hanging operations and resets them. |
-| `InpUseHealthMonitoring` | `bool` | `true` | Enable health monitoring | Tracks system health and feeds into risk pipeline Step 5. |
-| `InpUseHealthBasedRisk` | `bool` | `true` | Enable health-based risk adjustment | When system health degrades, risk is automatically reduced. |
-| `InpDebugMode` | `bool` | `false` | Debug mode | Enables verbose debug output. Significant performance impact; use only during development. |
+| `InpUsePluginSystem` | `bool` | `true` | Active | Master toggle for plugin architecture |
+| `InpUseTimeoutDetection` | `bool` | `true` | Active | Detect and reset hanging operations |
+| `InpUseHealthMonitoring` | `bool` | `true` | Active | Track system health for risk adjustment |
+| `InpUseHealthBasedRisk` | `bool` | `true` | Active | Reduce risk when system health degrades |
+| `InpDebugMode` | `bool` | `false` | Active | Verbose debug output (significant performance impact) |
 
 ---
 
-## Group 25: Logging & Recovery
+## Group 25: Logging and Recovery
 
-Logging verbosity and error recovery settings.
+Logging verbosity and error recovery.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpLogToFile` | `bool` | `true` | Log to file | Enables file-based logging in addition to console output. |
-| `InpConsoleLogLevel` | `ENUM_LOG_LEVEL` | `LOG_LEVEL_SIGNAL` | Console log level | Verbosity of Expert tab output. SIGNAL shows signal-related events. |
-| `InpFileLogLevel` | `ENUM_LOG_LEVEL` | `LOG_LEVEL_DEBUG` | File log level | Verbosity of file output. DEBUG captures everything. |
-| `InpMaxRetries` | `int` | `3` | Maximum error retries | Number of retry attempts for failed trade operations. |
-| `InpRetryDelay` | `int` | `1000` | Retry delay in milliseconds | Wait time between retry attempts. |
+| `InpLogToFile` | `bool` | `true` | Active | Enable file-based logging |
+| `InpConsoleLogLevel` | `ENUM_LOG_LEVEL` | `LOG_LEVEL_SIGNAL` | Active | Console (Expert tab) verbosity |
+| `InpFileLogLevel` | `ENUM_LOG_LEVEL` | `LOG_LEVEL_DEBUG` | Active | File output verbosity |
+| `InpMaxRetries` | `int` | `3` | Active | Maximum retry attempts for failed trade operations |
+| `InpRetryDelay` | `int` | `1000` | Active | Retry delay in milliseconds |
 
 ---
 
@@ -452,11 +478,11 @@ Logging verbosity and error recovery settings.
 
 Broker-facing safeguards for live trading.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpMaxSpreadPoints` | `double` | `50` | Maximum spread in points | Entries are rejected if the current spread exceeds this. Prevents trading during illiquid conditions. |
-| `InpAvoidHighImpactNews` | `bool` | `false` | Avoid high impact news | Placeholder for future news calendar integration. Currently non-functional. |
-| `InpMaxSlippagePoints` | `double` | `10` | Maximum acceptable slippage in points | Execution is logged as poor quality if slippage exceeds this. Feeds into session quality scoring. |
+| `InpMaxSpreadPoints` | `double` | `50` | Active | Maximum spread in points. Entries rejected above this |
+| `InpAvoidHighImpactNews` | `bool` | `false` | Placeholder | Future news calendar integration. Non-functional |
+| `InpMaxSlippagePoints` | `double` | `10` | Active | Slippage above this logged as poor quality. Feeds session quality scoring |
 
 ---
 
@@ -464,10 +490,10 @@ Broker-facing safeguards for live trading.
 
 Emergency controls for live trading.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEmergencyDisable` | `bool` | `false` | Emergency kill switch | When set to true, the EA immediately stops all trading. Existing positions are not closed but no new activity occurs. |
-| `InpMaxConsecutiveErrors` | `int` | `5` | Maximum consecutive errors before halt | If this many consecutive trade operations fail, trading is halted until manual intervention. |
+| `InpEmergencyDisable` | `bool` | `false` | Active | Kill switch. Stops all trading immediately. Existing positions not closed |
+| `InpMaxConsecutiveErrors` | `int` | `5` | Active | Consecutive trade operation failures before halt |
 
 ---
 
@@ -475,12 +501,12 @@ Emergency controls for live trading.
 
 Automatic strategy disabling based on forward performance.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpDisableAutoKill` | `bool` | `false` | Disable auto-kill feature | When true, no strategies are auto-disabled regardless of performance. Set to true only during initial testing. |
-| `InpAutoKillPFThreshold` | `double` | `1.1` | Minimum PF to stay enabled | Strategies with PF below this after minimum trades are disabled. |
-| `InpAutoKillMinTrades` | `int` | `20` | Minimum trades before standard auto-kill | Strategies are not evaluated for the standard kill until they have this many trades. |
-| `InpAutoKillEarlyPF` | `double` | `0.8` | Early kill PF threshold | Strategies with PF below this after just 10 trades are disabled immediately. |
+| `InpDisableAutoKill` | `bool` | `true` | Active [CHANGED] | Auto-kill disabled. Was broken via name mismatch in $6,140 baseline. Fix exists but kept OFF to preserve proven behavior |
+| `InpAutoKillPFThreshold` | `double` | `1.1` | Inactive | Minimum PF to stay enabled (not applied when auto-kill OFF) |
+| `InpAutoKillMinTrades` | `int` | `20` | Inactive | Minimum trades before standard auto-kill evaluation |
+| `InpAutoKillEarlyPF` | `double` | `0.8` | Inactive | Early kill PF threshold after 10 trades |
 
 ---
 
@@ -488,99 +514,101 @@ Automatic strategy disabling based on forward performance.
 
 Per-strategy weight multipliers for signal prioritization.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpWeightEngulfing` | `double` | `0.80` | Engulfing strategy weight | Reduced from 1.0 to 0.80 due to TP0 dependency. Values < 1.0 reduce the strategy's effective signal strength. |
-| `InpWeightPinBar` | `double` | `1.0` | Pin Bar strategy weight | Full weight, but the strategy is disabled in Group 17. |
-| `InpWeightLiqSweep` | `double` | `1.0` | Liquidity Sweep strategy weight | |
-| `InpWeightMACross` | `double` | `1.0` | MA Cross strategy weight | Full weight, but the strategy is disabled in Group 17. |
-| `InpWeightBBMeanRev` | `double` | `1.0` | BB Mean Reversion strategy weight | |
-| `InpWeightRangeBox` | `double` | `0.0` | Range Box strategy weight | **Zero weight:** Range Box overlaps with BB Mean Reversion and was found too restrictive for gold H1. |
-| `InpWeightVolBreakout` | `double` | `1.0` | Volatility Breakout strategy weight | |
-| `InpWeightCrashBreakout` | `double` | `1.0` | Crash Breakout strategy weight | |
-| `InpWeightDisplacement` | `double` | `0.5` | Displacement strategy weight | **Half weight:** Still in testing phase. |
-| `InpWeightSessionBreakout` | `double` | `0.5` | Session Breakout strategy weight | **Half weight:** Still in testing phase. |
+| `InpWeightEngulfing` | `double` | `0.80` | Active | Engulfing weight (reduced: PF 1.16, TP0-dependent) |
+| `InpWeightPinBar` | `double` | `1.0` | Active | Pin Bar weight |
+| `InpWeightLiqSweep` | `double` | `1.0` | Active | Liquidity Sweep weight (plugin disabled) |
+| `InpWeightMACross` | `double` | `1.0` | Active | MA Cross weight |
+| `InpWeightBBMeanRev` | `double` | `1.0` | Active | BB Mean Reversion weight |
+| `InpWeightRangeBox` | `double` | `0.0` | Disabled | Zero weight. Range Box too restrictive for gold H1, overlaps BB MR |
+| `InpWeightVolBreakout` | `double` | `1.0` | Active | Volatility Breakout weight |
+| `InpWeightCrashBreakout` | `double` | `1.0` | Active | Crash Breakout weight |
+| `InpWeightDisplacement` | `double` | `0.5` | Active | Displacement weight (testing phase, half weight) |
+| `InpWeightSessionBreakout` | `double` | `0.5` | Active | Session Breakout weight (testing phase, half weight) |
 
 ---
 
 ## Group 30: New Entry Plugins
 
-Configuration for standalone entry strategies.
+Standalone entry strategies added in Phase 3.4.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableDisplacementEntry` | `bool` | `true` | Enable Displacement Entry | Sweep + displacement candle pattern. Requires a liquidity sweep followed by a strong displacement candle. |
-| `InpEnableSessionBreakout` | `bool` | `true` | Enable Session Breakout Entry | Asian range breakout during London/NY open. |
-| `InpDisplacementATRMult` | `double` | `1.8` | Displacement candle min body (x ATR) | Minimum body size for the displacement candle. Higher = only the strongest displacement moves qualify. |
-| `InpAsianRangeStartHour` | `int` | `0` | Asian range start hour (GMT) | Beginning of the Asian range calculation window. |
-| `InpAsianRangeEndHour` | `int` | `7` | Asian range end hour (GMT) | End of the Asian range calculation window. |
-| `InpLondonOpenHour` | `int` | `8` | London open hour (GMT) | When the London session breakout window begins. |
-| `InpNYOpenHour` | `int` | `13` | NY open hour (GMT) | When the NY session breakout window begins. |
+| `InpEnableDisplacementEntry` | `bool` | `true` | Active | Sweep + displacement candle pattern |
+| `InpEnableSessionBreakout` | `bool` | `true` | Active | Asian range breakout during London/NY open. Disabled when Session Engine is active |
+| `InpDisplacementATRMult` | `double` | `1.8` | Active | Displacement candle minimum body (x ATR). Raised from 1.5 |
+| `InpAsianRangeStartHour` | `int` | `0` | Active | Asian range start hour (GMT) |
+| `InpAsianRangeEndHour` | `int` | `7` | Active | Asian range end hour (GMT) |
+| `InpLondonOpenHour` | `int` | `8` | Active | London open hour (GMT) |
+| `InpNYOpenHour` | `int` | `13` | Active | NY open hour (GMT) |
 
 ---
 
 ## Group 31: Engine Framework
 
-Day-type routing system for adaptive strategy selection.
+Day-type routing for adaptive strategy selection.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableDayRouter` | `bool` | `true` | Enable day-type routing | When enabled, the day is classified (Trend, Range, Volatile, Data) and strategy priorities are adjusted accordingly. |
-| `InpDayRouterADXThresh` | `int` | `20` | ADX threshold for trend day classification | ADX above this = trend day. Below = range/volatile day. |
+| `InpEnableDayRouter` | `bool` | `true` | Active | Day classification (Trend, Range, Volatile, Data) adjusts strategy priorities |
+| `InpDayRouterADXThresh` | `int` | `20` | Active | ADX threshold for trend day classification |
 
 ---
 
 ## Group 32: Liquidity Engine
 
-Configuration for the Smart Money Liquidity engine.
+Smart Money Liquidity engine (3 detection modes).
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableLiquidityEngine` | `bool` | `true` | Enable Liquidity Engine | Master toggle for all liquidity-based entry modes. |
-| `InpLiqEngineOBRetest` | `bool` | `true` | Order Block Retest mode | Price retests a previous order block zone. |
-| `InpLiqEngineFVGMitigation` | `bool` | `true` | FVG Mitigation mode | Price fills a Fair Value Gap and bounces. |
-| `InpLiqEngineSFP` | `bool` | `false` | Swing Failure Pattern mode | **Disabled:** 0% WR over 5.5 months of testing. Price sweeps a swing high/low but fails to hold and reverses. |
-| `InpUseDivergenceFilter` | `bool` | `false` | RSI divergence boost (SFP only) | Adds RSI divergence as a confirmation for SFP entries. |
+| `InpEnableLiquidityEngine` | `bool` | `true` | Active | Master toggle for all liquidity-based entry modes |
+| `InpLiqEngineOBRetest` | `bool` | `true` | Active | Order Block Retest mode |
+| `InpLiqEngineFVGMitigation` | `bool` | `false` | Disabled [CHANGED] | FVG Mitigation mode. Test 8: PF 0.61 in 2024-26, consistent loser |
+| `InpLiqEngineSFP` | `bool` | `false` | Disabled | Swing Failure Pattern mode. 0% WR in 5.5-month backtest |
+| `InpUseDivergenceFilter` | `bool` | `false` | Disabled | RSI divergence boost (SFP only) |
 
 ---
 
 ## Group 33: Session Engine
 
-ICT-inspired session-specific trading strategies.
+ICT-inspired session-specific trading strategies (5 modes).
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableSessionEngine` | `bool` | `true` | Enable Session Engine | Master toggle for session-based entry modes. |
-| `InpSessionSilverBullet` | `bool` | `true` | Silver Bullet mode | ICT Silver Bullet: FVG entry during a specific time window. |
-| `InpSessionLondonClose` | `bool` | `true` | London Close Reversal mode | Reversal entries at London close when price has extended significantly. |
-| `InpLondonCloseExtMult` | `double` | `1.5` | London Close min extension (x ATR) | Price must have moved at least this multiple of ATR during London for a reversal to qualify. |
-| `InpSilverBulletStartGMT` | `int` | `15` | Silver Bullet start hour (GMT) | Beginning of the Silver Bullet time window. |
-| `InpSilverBulletEndGMT` | `int` | `16` | Silver Bullet end hour (GMT) | End of the Silver Bullet time window. |
+| `InpEnableSessionEngine` | `bool` | `true` | Active | Master toggle for session engine |
+| `InpSessionLondonBO` | `bool` | `false` | Disabled | London Breakout mode. 0% WR in backtest |
+| `InpSessionNYCont` | `bool` | `false` | Disabled | NY Continuation mode. 0% WR in backtest |
+| `InpSessionSilverBullet` | `bool` | `false` | Disabled | Silver Bullet. -2.1R across 6 years |
+| `InpSessionLondonClose` | `bool` | `false` | Disabled | London Close Reversal. 27% WR, -$229 in 2-year backtest |
+| `InpLondonCloseExtMult` | `double` | `1.5` | Disabled | LC reversal minimum extension (x ATR) |
+| `InpSilverBulletStartGMT` | `int` | `15` | Disabled | Silver Bullet start hour (GMT) |
+| `InpSilverBulletEndGMT` | `int` | `16` | Disabled | Silver Bullet end hour (GMT) |
 
 ---
 
 ## Group 34: Expansion Engine
 
-Momentum and compression breakout strategies.
+Momentum and compression breakout strategies (3 modes).
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableExpansionEngine` | `bool` | `true` | Enable Expansion Engine | Master toggle for expansion-based entry modes. |
-| `InpExpInstitutionalCandle` | `bool` | `true` | Institutional Candle Breakout mode | Large candle breakout entries indicating institutional participation. |
-| `InpExpCompressionBO` | `bool` | `true` | Compression Breakout mode | Breakout from tight consolidation (squeeze). |
-| `InpInstCandleMult` | `double` | `2.5` | Institutional candle body (x ATR) | Minimum body size for a candle to be classified as institutional. Higher = fewer but higher-conviction entries. |
-| `InpCompressionMinBars` | `int` | `8` | Minimum compression bars | Minimum number of narrow-range bars before a compression breakout qualifies. |
+| `InpEnableExpansionEngine` | `bool` | `true` | Active | Master toggle for expansion engine |
+| `InpExpInstitutionalCandle` | `bool` | `true` | Active | Institutional Candle Breakout mode |
+| `InpExpCompressionBO` | `bool` | `false` | Disabled [CHANGED] | Compression Breakout. Test 7: PF 1.48 in 2023, PF 0.52 in 2024-26 |
+| `InpInstCandleMult` | `double` | `1.8` | Active | Institutional candle body (x ATR). Lowered from 2.5 (2.5 produced 0 trades) |
+| `InpCompressionMinBars` | `int` | `8` | Active | Minimum squeeze bars. Raised from 5 |
 
 ---
 
 ## Group 35: Mode Performance Tracking
 
-Per-mode auto-kill configuration for engine sub-strategies.
+Per-mode auto-kill for engine sub-strategies.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpModeKillMinTrades` | `int` | `15` | Minimum trades before mode auto-kill | Each engine mode (OB Retest, FVG, SFP, etc.) must have this many trades before its PF is evaluated. |
-| `InpModeKillPFThreshold` | `double` | `0.9` | Mode kill PF threshold | Modes with PF below this after minimum trades are disabled. Lower than the strategy-level threshold (1.1) because modes have smaller sample sizes. |
+| `InpModeKillMinTrades` | `int` | `15` | Active | Minimum trades before mode PF evaluation |
+| `InpModeKillPFThreshold` | `double` | `0.9` | Active | Mode kill PF threshold (lower than plugin-level 1.1 due to smaller samples) |
 
 ---
 
@@ -588,11 +616,11 @@ Per-mode auto-kill configuration for engine sub-strategies.
 
 Session quality gate for execution conditions.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableSessionQualityGate` | `bool` | `true` | Enable session quality gate | Automatically reduces risk or blocks entries during poor execution conditions. |
-| `InpExecQualityBlockThresh` | `double` | `0.25` | Block entries below this quality | Execution quality score below this = no new trades. Range: 0.0-1.0. |
-| `InpExecQualityReduceThresh` | `double` | `0.50` | Halve risk below this quality | Execution quality between block and this threshold = risk cut by 50%. |
+| `InpEnableSessionQualityGate` | `bool` | `true` | Active | Auto-reduce risk or block entries during poor execution conditions |
+| `InpExecQualityBlockThresh` | `double` | `0.25` | Active | Block entries below this quality (tightened from 0.3) |
+| `InpExecQualityReduceThresh` | `double` | `0.50` | Active | Halve risk below this quality |
 
 ---
 
@@ -600,60 +628,82 @@ Session quality gate for execution conditions.
 
 Dynamic weight adjustment based on rolling performance.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableDynamicWeights` | `bool` | `false` | Enable rolling weight adjustment | When enabled, strategy weights are recalculated periodically based on recent performance. Disabled by default to prevent overfitting. |
-| `InpWeightRecalcInterval` | `int` | `10` | Recalculate weights every N trades | How often the dynamic weight recalculation runs. |
+| `InpEnableDynamicWeights` | `bool` | `false` | Disabled | Rolling weight recalculation. Disabled to prevent overfitting |
+| `InpWeightRecalcInterval` | `int` | `10` | Disabled | Recalculation interval in trades |
+
+---
+
+## Group 37a: Pullback Continuation Engine
+
+Trend pullback re-entry strategy. Fills gaps in 2024-style fragmented trends.
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpEnablePullbackCont` | `bool` | `true` | Active | Enable Pullback Continuation Engine |
+| `InpPBCLookbackBars` | `int` | `20` | Active | Lookback for swing extreme |
+| `InpPBCMinPullbackBars` | `int` | `2` | Active | Minimum pullback duration (bars) |
+| `InpPBCMaxPullbackBars` | `int` | `10` | Active | Maximum pullback duration (bars) |
+| `InpPBCMinPullbackATR` | `double` | `0.6` | Active | Minimum pullback depth (x ATR) |
+| `InpPBCMaxPullbackATR` | `double` | `1.8` | Active | Maximum pullback depth (x ATR) |
+| `InpPBCSignalBodyATR` | `double` | `0.20` | Active | Signal candle minimum body (x ATR). A/B tested: 0.20 beats 0.35 (+$613, PF+0.05) |
+| `InpPBCStopBufferATR` | `double` | `0.20` | Active | SL buffer beyond pullback extreme (x ATR) |
+| `InpPBCMinADX` | `double` | `18.0` | Active | Minimum ADX for trend confirmation |
+| `InpPBCBlockChoppy` | `bool` | `true` | Active | Block entries in CHOPPY regime |
+| `InpPBCEnableMultiCycle` | `bool` | `false` | Disabled | Multi-cycle re-entry. Tested: signals generate but lose orchestrator ranking |
+| `InpPBCCycleCooldownBars` | `int` | `4` | Disabled | Cooldown between cycles (reduced from 6) |
+| `InpPBCMaxCyclesPerTrend` | `int` | `3` | Disabled | Maximum cycles per trend (increased from 2) |
+| `InpPBCRearmMinPullbackATR` | `double` | `0.3` | Disabled | Minimum fresh pullback for re-arm (x ATR) |
+| `InpPBCRearmMinBars` | `int` | `2` | Disabled | Minimum bars forming fresh pullback |
+| `InpPBCTrendResetBars` | `int` | `48` | Disabled | Bars without activity to reset cycle count (48h) |
 
 ---
 
 ## Group 38: Shock Protection
 
-Intra-bar volatility override (circuit breaker).
+Intra-bar volatility circuit breaker.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableShockDetection` | `bool` | `true` | Enable shock volatility override | When enabled, entries are blocked during shock volatility events (e.g., flash crashes, news spikes). |
-| `InpShockBarRangeThresh` | `double` | `2.0` | Bar range / ATR ratio for shock detection | Current H1 bar range must be less than ATR x this value for entries to proceed. Above = shock. |
+| `InpEnableShockDetection` | `bool` | `true` | Active | Block entries during extreme intra-bar volatility spikes |
+| `InpShockBarRangeThresh` | `double` | `2.0` | Active | Bar range / ATR ratio threshold for shock detection |
 
 ---
 
 ## Group 39: Trailing SL Mode
 
-Controls how trailing stop updates are communicated to the broker.
+Controls how trailing stop updates reach the broker.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpBatchedTrailing` | `bool` | `true` | Batched trailing mode | **true (default):** Broker SL only modified at key R-levels (Breakeven, 1R, 2R, 3R+). Internal tracking runs every tick. **false:** Every trailing update sent to broker immediately. |
-| `InpDisableBrokerTrailing` | `bool` | `false` | Disable broker SL modification | **true:** Broker SL never modified after entry. Internal tracking still runs. Pre-fix revert mode. **false (default):** Broker SL is modified per the batched/aggressive setting. |
+| `InpBatchedTrailing` | `bool` | `false` | Active [CHANGED] | Changed from true. Batched mode only updated broker SL at R-levels, causing stale SL on reversals. False = every trailing update sent to broker |
+| `InpDisableBrokerTrailing` | `bool` | `false` | Active | Disable all broker SL modification. Pre-fix revert mode |
 
 ---
 
 ## Group 40: TP0 Early Partial
 
-Early partial take-profit for quick edge capture and breakeven gating.
+Early partial take-profit for quick edge capture. Gates breakeven activation.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableTP0` | `bool` | `true` | Enable TP0 early partial | When enabled, 25% of the position is closed at 0.5R. Also gates breakeven activation. |
-| `InpTP0Distance` | `double` | `0.5` | TP0 distance as R-multiple | Distance from entry at which the TP0 partial close triggers. |
-| `InpTP0Volume` | `double` | `25.0` | TP0 close volume % | Percentage of the position closed at TP0. |
-| `InpTP0GateBreakeven` | `bool` | `true` | TP0 gates breakeven | When true, breakeven is only activated after TP0 has been captured. Prevents premature BE moves on trades lacking directional intent. |
+| `InpEnableTP0` | `bool` | `true` | Active | Enable TP0 early partial close |
+| `InpTP0Distance` | `double` | `0.70` | Active [CHANGED] | TP0 distance in R-multiples. Changed from 0.5. A/B tested: +$685 vs baseline |
+| `InpTP0Volume` | `double` | `15.0` | Active [CHANGED] | TP0 close volume %. Changed from 25%. Smaller partial preserves bigger runner |
 
 ---
 
 ## Group 41: Early Invalidation
 
-Post-entry safety mechanism for closing non-performing trades early.
+Post-entry safety mechanism for non-performing trades.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableEarlyInvalidation` | `bool` | `true` | Enable early invalidation | When enabled, positions that fail to perform within the first N bars are closed early. |
-| `InpEarlyInvalidMaxBars` | `int` | `3` | Maximum bars for early check | Early invalidation is only evaluated within this many bars of entry. |
-| `InpEarlyInvalidMinMFE` | `double` | `0.20` | MFE_R threshold | Trade must have MFE_R at or below this value (barely moved favorably). |
-| `InpEarlyInvalidMinMAE` | `double` | `0.40` | MAE_R threshold | Trade must have MAE_R at or above this value (moved significantly toward stop). |
-
-**Safety:** Never triggers after TP0, TP1, TP2, or trailing stage. Only fires during `STAGE_INITIAL`.
+| `InpEnableEarlyInvalidation` | `bool` | `false` | Disabled | Early exit for weak trades. DISABLED: -26.90R net destroyer in backtest |
+| `InpEarlyInvalidationBars` | `int` | `3` | Disabled | Check within first N bars after entry |
+| `InpEarlyInvalidationMaxMFE_R` | `double` | `0.20` | Disabled | Max MFE_R to qualify as weak |
+| `InpEarlyInvalidationMinMAE_R` | `double` | `0.40` | Disabled | Min MAE_R to qualify (moved significantly against) |
 
 ---
 
@@ -661,53 +711,173 @@ Post-entry safety mechanism for closing non-performing trades early.
 
 Per-session risk multipliers based on observed session-level performance.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpSessionRiskLondon` | `double` | `0.50` | London session risk multiplier | Risk is multiplied by this value for trades entered during London session. |
-| `InpSessionRiskNY` | `double` | `0.90` | NY session risk multiplier | Risk is multiplied by this value for trades entered during NY session. |
-| `InpSessionRiskAsia` | `double` | `1.00` | Asia session risk multiplier | No adjustment for Asia session. |
+| `InpEnableSessionRiskAdjust` | `bool` | `true` | Active | Enable session-based risk multipliers |
+| `InpLondonRiskMultiplier` | `double` | `0.50` | Active | London session risk multiplier (31% WR, half risk) |
+| `InpNewYorkRiskMultiplier` | `double` | `0.90` | Active | NY session risk multiplier (52% WR, slight reduction) |
 
 ---
 
 ## Group 43: Entry Sanity
 
-Pre-execution sanity checks to reject trades with unfavorable execution conditions.
+Pre-execution sanity checks.
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpMinSLSpreadMult` | `double` | `3.0` | Minimum SL/spread ratio | Entries are rejected if stop loss distance is less than this multiple of the current spread. Prevents trades where spread consumes a significant portion of risk. |
+| `InpMinSLToSpreadRatio` | `double` | `3.0` | Active | Reject if SL distance < Nx spread. Prevents spread-consumed trades |
+
+---
+
+## Group 44: Regime Exit Profiles
+
+Per-regime TP/BE/trailing profiles stamped at entry time. Chandelier multiplier adapts
+dynamically to live regime; all other values are locked at entry.
+
+### TRENDING Profile (let winners run)
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpEnableRegimeExit` | `bool` | `true` | Active | Enable regime exit profile system |
+| `InpRegExitTrendBE` | `double` | `1.2` | Active | BE trigger in R-multiples (later than normal) |
+| `InpRegExitTrendChand` | `double` | `3.5` | Active | Chandelier multiplier (wider, let trends run) |
+| `InpRegExitTrendTP0Dist` | `double` | `0.7` | Active | TP0 distance (R) |
+| `InpRegExitTrendTP0Vol` | `double` | `10.0` | Active | TP0 volume % (small, preserve position) |
+| `InpRegExitTrendTP1Dist` | `double` | `1.5` | Active | TP1 distance (R) |
+| `InpRegExitTrendTP1Vol` | `double` | `35.0` | Active | TP1 volume % |
+| `InpRegExitTrendTP2Dist` | `double` | `2.2` | Active | TP2 distance (R) |
+| `InpRegExitTrendTP2Vol` | `double` | `25.0` | Active | TP2 volume % |
+
+### NORMAL Profile (standard behavior)
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpRegExitNormalBE` | `double` | `1.0` | Active | BE trigger (R) |
+| `InpRegExitNormalChand` | `double` | `3.0` | Active | Chandelier multiplier (baseline) |
+| `InpRegExitNormalTP0Dist` | `double` | `0.7` | Active | TP0 distance (R) |
+| `InpRegExitNormalTP0Vol` | `double` | `15.0` | Active | TP0 volume % |
+| `InpRegExitNormalTP1Dist` | `double` | `1.3` | Active | TP1 distance (R) |
+| `InpRegExitNormalTP1Vol` | `double` | `40.0` | Active | TP1 volume % |
+| `InpRegExitNormalTP2Dist` | `double` | `1.8` | Active | TP2 distance (R) |
+| `InpRegExitNormalTP2Vol` | `double` | `30.0` | Active | TP2 volume % |
+
+### CHOPPY Profile (take profit fast, protect capital)
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpRegExitChoppyBE` | `double` | `0.7` | Active | BE trigger (R) (earlier than normal) |
+| `InpRegExitChoppyChand` | `double` | `2.5` | Active | Chandelier multiplier (tighter protection) |
+| `InpRegExitChoppyTP0Dist` | `double` | `0.5` | Active | TP0 distance (R) |
+| `InpRegExitChoppyTP0Vol` | `double` | `20.0` | Active | TP0 volume % (larger partial) |
+| `InpRegExitChoppyTP1Dist` | `double` | `1.0` | Active | TP1 distance (R) |
+| `InpRegExitChoppyTP1Vol` | `double` | `40.0` | Active | TP1 volume % |
+| `InpRegExitChoppyTP2Dist` | `double` | `1.4` | Active | TP2 distance (R) |
+| `InpRegExitChoppyTP2Vol` | `double` | `35.0` | Active | TP2 volume % |
+
+### VOLATILE Profile (moderate protection)
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpRegExitVolBE` | `double` | `0.8` | Active | BE trigger (R) |
+| `InpRegExitVolChand` | `double` | `3.0` | Active | Chandelier multiplier |
+| `InpRegExitVolTP0Dist` | `double` | `0.6` | Active | TP0 distance (R) |
+| `InpRegExitVolTP0Vol` | `double` | `20.0` | Active | TP0 volume % |
+| `InpRegExitVolTP1Dist` | `double` | `1.3` | Active | TP1 distance (R) |
+| `InpRegExitVolTP1Vol` | `double` | `40.0` | Active | TP1 volume % |
+| `InpRegExitVolTP2Dist` | `double` | `1.8` | Active | TP2 distance (R) |
+| `InpRegExitVolTP2Vol` | `double` | `30.0` | Active | TP2 volume % |
+
+---
+
+## Group 37b: Regime Risk Scaling
+
+Risk multipliers by market regime classification.
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpEnableRegimeRisk` | `bool` | `true` | Active | Enable regime-based risk scaling |
+| `InpRegimeRiskTrending` | `double` | `1.25` | Active | TRENDING: push size (+25%). A/B tested |
+| `InpRegimeRiskNormal` | `double` | `1.00` | Active | NORMAL: standard |
+| `InpRegimeRiskChoppy` | `double` | `0.60` | Active | CHOPPY: protect capital (-40%). A/B tested |
+| `InpRegimeRiskVolatile` | `double` | `0.75` | Active | VOLATILE: reduce (-25%). A/B tested |
+
+---
+
+## Group 45: Confirmed Entry Quality Filter
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpEnableConfirmedQualityFilter` | `bool` | `false` | Disabled | CQF tested in 3 variants. All hurt profit. Confirmation candle IS the quality gate |
+
+---
+
+## Group 46: Smart Runner Exit
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpEnableSmartRunnerExit` | `bool` | `false` | Disabled | Tested 2 variants, both -$8K. Runner losses are the cost of tail captures |
+| `InpRunnerVolDecayThreshold` | `double` | `0.50` | Disabled | ATR ratio threshold for volatility decay exit |
+| `InpRunnerWeakCandleCount` | `int` | `3` | Disabled | Require all 3 weak candles for momentum fade |
+| `InpRunnerWeakCandleRatio` | `double` | `0.30` | Disabled | Weak candle threshold |
+| `InpRunnerRegimeKill` | `bool` | `true` | Disabled | Exit runner on CHOPPY/VOLATILE regime |
+| `InpConfirmedMinBodyATR` | `double` | `0.25` | Disabled | CQF-2: min confirmation body (x ATR) |
+| `InpConfirmedMinClosePos` | `double` | `0.60` | Disabled | CQF-2: min close position in candle range |
+| `InpConfirmedRequireStructureReclaim` | `bool` | `false` | Disabled | CQF-2: structure reclaim (too strict, killed $5K profit) |
+| `InpConfirmedMinScore` | `int` | `2` | Disabled | Minimum rules passed (of 3) |
+| `InpConfirmedStricterInChop` | `bool` | `true` | Disabled | Require score=3 in CHOPPY/VOLATILE |
+
+---
+
+## Group 47: Runner Exit Mode
+
+| Parameter | Type | Default | Status | Description |
+|---|---|---|---|---|
+| `InpEnableRunnerExitMode` | `bool` | `false` | Disabled | Runner mode: -$391 in isolation test. Trail system is at Goldilocks optimum |
+| `InpRunnerMinQuality` | `ENUM_SETUP_QUALITY` | `SETUP_A` | Disabled | Minimum setup quality for runner mode |
+| `InpRunnerMinConfluence` | `int` | `75` | Disabled | Minimum confluence at entry |
+| `InpRunnerAllowNormalRegime` | `bool` | `false` | Disabled | Off-trend runner treatment widened losses |
+| `InpRunnerNormalMinConfluence` | `int` | `85` | Disabled | Reserved for future revalidation |
+| `InpRunnerUseEntryLockedChandFloor` | `bool` | `true` | Disabled | Preserve entry-stamped Chandelier width |
+| `InpRunnerAllowPromotion` | `bool` | `true` | Disabled | Promote strong trades after entry |
+| `InpRunnerPromoteAtR` | `double` | `1.25` | Disabled | Base proof threshold for relaxed management |
+| `InpRunnerPromoteMaxMAE_R` | `double` | `0.35` | Disabled | Base MAE cap |
+| `InpRunnerTrailLockStepR1` | `double` | `0.50` | Disabled | Broker trail step below 2R locked profit |
+| `InpRunnerTrailLockStepR2` | `double` | `0.75` | Disabled | Broker trail step at 2R+ locked profit |
+| `InpRunnerTrailBarCloseMinStepR` | `double` | `0.25` | Disabled | Minimum locked-R improvement for H1 cadence sends |
+| `InpRunnerBrokerTrailCooldownBars` | `int` | `1` | Disabled | Minimum H1 bars between runner broker trail sends |
 
 ---
 
 ## Supplementary Inputs (Declared in Plugin Files)
 
-These inputs are declared in individual plugin header files rather than the central input file.
+These inputs are declared in individual plugin header files rather than the central
+input file.
 
 ### From `CRegimeAwareExit.mqh`
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpMacroOppositionThreshold` | `int` | `3` | Macro score threshold for force close | If macro score opposes the trade by this amount or more, the position is closed. |
+| `InpMacroOppositionThreshold` | `int` | `3` | Active | Macro score threshold for force close |
 
 ### From `CWeekendCloseExit.mqh`
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableWeekendClose` | `bool` | `true` | Enable weekend close exit plugin | Separate toggle from `InpCloseBeforeWeekend` in Group 2; both must be true. |
-| `InpWeekendCloseMinute` | `int` | `0` | Minute to close on Friday (0-59) | Fine-grained control over the exact close time within the hour. |
-| `InpWeekendGMTOffset` | `int` | `0` | GMT offset of broker server | Adjusts the Friday close time calculation for brokers not on GMT. |
+| `InpEnableWeekendClose` | `bool` | `true` | Active | Weekend close exit plugin toggle |
+| `InpWeekendCloseMinute` | `int` | `0` | Active | Minute within the close hour (0-59) |
+| `InpWeekendGMTOffset` | `int` | `0` | Active | GMT offset of broker server |
 
 ### From `CDailyLossHaltExit.mqh`
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnableDailyLossHalt` | `bool` | `true` | Enable daily loss halt exit | Must be true for the daily loss limit (Group 2) to trigger position closures. |
+| `InpEnableDailyLossHalt` | `bool` | `true` | Active | Daily loss halt plugin toggle |
 
 ### From `CMaxAgeExit.mqh`
 
-| Parameter | Type | Default | Description | Impact |
+| Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpCloseAgedOnlyIfLosing` | `bool` | `false` | Only close aged positions if in loss | When true, profitable positions are allowed to run past the max age. When false, all positions past the age limit are closed regardless of P&L. |
+| `InpCloseAgedOnlyIfLosing` | `bool` | `false` | Active | Only close aged positions if currently in loss |
 
 ---
 
@@ -721,10 +891,14 @@ Some features have two toggles that both must be enabled:
 
 ### Parameters That Override Others
 
-- `InpMaxRiskPerTrade` (1.2%) overrides any combination of quality tier + adjustments that would exceed it.
-- `InpEmergencyDisable` (Group 27) overrides all other settings and stops the EA immediately.
-- `InpDisableBrokerTrailing` (Group 39) makes `InpBatchedTrailing` irrelevant.
-- `InpDisableAutoKill` (Group 28) makes all auto-kill thresholds irrelevant.
+| Override | Effect |
+|---|---|
+| `InpMaxRiskPerTrade` (1.2%) | Caps any combination of quality tier + adjustments |
+| `InpEmergencyDisable` (Group 27) | Overrides all settings, stops EA immediately |
+| `InpDisableBrokerTrailing` (Group 39) | Makes `InpBatchedTrailing` irrelevant |
+| `InpDisableAutoKill` (Group 28) | Makes all auto-kill thresholds irrelevant |
+| `InpEnableS3S6` (Group 2) | Prevents registration of RangeBox and FalseBreakout plugins |
+| Regime exit profiles (Group 44) | Override static TP/BE values from Groups 8 and 40 |
 
 ### Dangerous Parameter Changes
 
@@ -732,9 +906,10 @@ Changing these in live trading requires caution:
 
 | Parameter | Risk |
 |---|---|
-| `InpMaxRiskPerTrade` | Increasing above 1.5% significantly increases drawdown risk. |
-| `InpMaxPositions` | Increasing above 5 can lead to correlated losses in the same instrument. |
-| `InpDailyLossLimit` | Increasing above 3% removes the daily circuit breaker protection. |
-| `InpMagicNumber` | Changing this orphans all existing positions from the EA's tracking. |
-| `InpDisableAutoKill` | Disabling allows losing strategies to continue trading indefinitely. |
-| `InpEmergencyDisable` | Setting to true stops all activity; ensure this is intentional. |
+| `InpMaxRiskPerTrade` | Increasing above 1.5% significantly increases drawdown risk |
+| `InpMaxPositions` | Increasing above 5 can produce correlated losses in same instrument |
+| `InpDailyLossLimit` | Increasing above 3% removes the daily circuit breaker |
+| `InpMagicNumber` | Changing this orphans all existing positions from EA tracking |
+| `InpDisableAutoKill` | Enabling may cause false kills due to name mismatch (now fixed but untested in production) |
+| `InpEmergencyDisable` | Setting to true stops all activity; ensure intentional |
+| `InpBatchedTrailing` | Setting to true reverts to batched mode which caused stale SL bug |
