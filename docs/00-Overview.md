@@ -1,11 +1,12 @@
 # UltimateTrader EA -- System Overview
 
-> **UPDATED 2026-04-05.** Production performance across 7 years (2019--2025):
-> - 806 trades, $10,779 total PnL, 118.0R, 0.146 R/trade
+> **LOCKED v14 (2026-04-05).** Production performance across 7 years (2019--2025):
+> - 758 trades, $11,135 total PnL, 120.8R, 0.159 R/trade
 > - PF 1.58, DD 3.38%, Sharpe 4.91 (2024--2026 window)
 > - All non-bull years positive except 2019 (-2.4R)
-> - 10 active strategies, 11 disabled strategies
-> - 17 A/B tests completed, 6 filters shipped, exit system proven untouchable
+> - 7 active strategies (+1 negligible), 13 disabled strategies
+> - 23 experiments tested, 12 shipped, 11 rejected
+> - Exit system proven untouchable across 6 failed modification attempts
 
 ## What It Is
 
@@ -29,20 +30,20 @@ The system underwent a systematic optimization campaign from its original state 
 current production configuration. The transformation was driven by forensic trade
 analysis, per-strategy performance decomposition, and 17 controlled A/B tests.
 
-| Metric | Original (v1) | Current (v3) | Delta |
+| Metric | Original (v1) | Current (v14) | Delta |
 |---|---|---|---|
-| Total trades (7yr) | 1,831 | 806 | -56% |
-| Total PnL ($) | $7,102 | $10,779 | +52% |
-| Total PnL (R) | 52.9R | 118.0R | +123% |
-| Avg R per trade | 0.029 | 0.146 | +403% |
+| Total trades (7yr) | 1,831 | 758 | -59% |
+| Total PnL ($) | $7,102 | $11,135 | +57% |
+| Total PnL (R) | 52.9R | 120.8R | +128% |
+| Avg R per trade | 0.029 | 0.159 | +5.5x |
 | Bad years (2020--2023) | -$1,197 / -27.8R | Positive / +21.0R | Flipped |
 
 **Core insight:** The original system had high trade volume but low selectivity. Over
 half the trades were net-negative on average. Removing losing strategies and applying
-targeted session/quality filters cut trade count by 56% while increasing profit by 52%.
+targeted session/quality filters cut trade count by 59% while increasing profit by 57%.
 Every removed trade was net-negative on average.
 
-### The 10 Shipped Changes
+### The 12 Shipped Changes
 
 These changes were validated through controlled A/B testing and adopted into production:
 
@@ -51,25 +52,50 @@ These changes were validated through controlled A/B testing and adopted into pro
 | 1 | Bearish Engulfing disabled | +25.9R recovered (worst strategy) | Strategy analysis |
 | 2 | S6 Failed Break Short disabled | +8.9R recovered | Strategy analysis |
 | 3 | Silver Bullet disabled | +2.1R recovered | Strategy analysis |
-| 4 | Bearish Pin Bar Asia-only gate | +11.7R saved (non-Asia loses) | Session analysis |
-| 5 | Rubber Band A/A+ quality gate | +4.0R saved (B+ loses) | Quality analysis |
-| 6 | Bullish MA Cross NY block | +3.6R saved (NY session loses) | Session analysis |
-| 7 | Momentum exhaustion filter | +15.4R saved (counter-trend bounce block) | Momentum filter design |
-| 8 | CI(10) regime scoring | +$233 net, PF +0.02 in edge period | A/B Test 26 |
-| 9 | S3/S6 range structure framework | +$158 in edge period (replaces RangeBox + FBF) | A/B Test 28 |
-| 10 | Confirmation candle (1-bar delayed entry) | Core quality gate for trend patterns | Baseline |
+| 4 | BB Mean Reversion Short disabled | +1.1R recovered (-1.1R/10 trades, never positive) | Strategy analysis |
+| 5 | Pullback Continuation disabled | +0.5R recovered (-0.5R/38 trades, no edge) | Strategy analysis |
+| 6 | Bearish Pin Bar Asia-only gate | +11.7R saved (non-Asia loses) | Session analysis |
+| 7 | Rubber Band A/A+ quality gate | +4.0R saved (B+ loses) | Quality analysis |
+| 8 | Bullish MA Cross NY block | +3.6R saved (NY session loses) | Session analysis |
+| 9 | Momentum exhaustion filter | +15.4R saved (counter-trend bounce block) | Momentum filter design |
+| 10 | CI(10) regime scoring | +$233 net, PF +0.02 in edge period | A/B Test 26 |
+| 11 | S3/S6 range structure framework | +$158 in edge period (replaces RangeBox + FBF) | A/B Test 28 |
+| 12 | ATR velocity risk multiplier | +$159 (1.15x risk when H1 ATR accelerates >15%) | A/B Test |
 
-### Failed Changes (reverted after testing)
+**Confirmation candle** (1-bar delayed entry) is the foundational quality gate for
+trend patterns, present from baseline. Three separate CQF filter attempts to improve
+upon it all degraded profit.
 
-| Category | Times Tested | Result |
+### The 11 Rejected Changes
+
+| # | Category | Result |
 |---|---|---|
-| Trail widening | 1x | -$1,127 |
-| Trail tightening (BE) | 1x | PF 1.27 to 1.06 |
-| Smart runner exit | 2x | -73%, -76% profit |
-| Runner-aware cadence | 1x | -$391 |
-| Reward-room filter | 1x | 95% rejection rate |
-| CQF entry filter | 3x | Always killed profit |
-| **Any exit modification** | **5x total** | **Always net negative** |
+| 1 | Trail widening | -$1,127 |
+| 2 | Trail tightening (BE) | PF 1.27 to 1.06 |
+| 3 | Smart runner exit (2 variants) | -73%, -76% profit |
+| 4 | Runner-aware cadence | -$391 |
+| 5 | Universal stall detector | -$3,519 across 4 years |
+| 6 | ATR velocity as quality point | Butterfly effect, killed 80 trades |
+| 7 | Quality-trend sizing boost | $0 net, not worth complexity |
+| 8 | Reward-room filter | 95% rejection rate |
+| 9 | CQF entry filter (3 variants) | Always killed profit |
+| 10 | Structure-based exit | No-op (correlated conditions) |
+| 11 | Various no-ops (thrash cooldown, breakout probation) | No effect |
+
+**Exit modifications: 6 failures, 0 successes.** The exit system is untouchable.
+
+### Key Lessons Learned
+
+**Retrospective analysis vs live backtest divergence:** The universal stall detector
+showed +40.7R in retrospective analysis but -$3,519 in live backtest. Stalled trades
+recover more often than static analysis predicts. Retrospective estimates should be
+treated as upper bounds, not forecasts.
+
+**Butterfly effect in quality scoring:** Any change to quality points changes signal
+selection order, cascading into completely different trade sequences. The ATR velocity
+feature was first tested as a quality point and killed 80 trades via this butterfly
+effect. Reimplemented as a pure risk multiplier (no signal selection change), it
+produced +$159 cleanly. Sizing changes must use risk multipliers, not quality points.
 
 ---
 
@@ -80,12 +106,12 @@ These changes were validated through controlled A/B testing and adopted into pro
 | Source files (`.mq5` + `.mqh`) | 105 |
 | Input parameters | ~280 |
 | Input groups | 47 |
-| Active strategies | 10 (5 core + 5 supporting) |
-| Disabled strategies | 11 |
+| Active strategies | 7 (+1 negligible: IC Breakout, 4 trades) |
+| Disabled strategies | 13 |
 | Trailing stop strategy | Chandelier Exit 3.0x ATR (locked) |
 | Exit plugins | 5 (Regime-Aware, Daily Loss Halt, Weekend Close, Max Age, Standard) |
 | Active filters | 7 (CI scoring, Asia gate, A/A+ gate, NY block, momentum, confirmation, Friday) |
-| A/B tests completed | 17 |
+| Experiments tested | 23 (12 shipped, 11 rejected) |
 | Backtest period | 2019--2025 (7 years) |
 
 ---
@@ -120,7 +146,7 @@ Market Analysis (regime, trend, SMC, sessions)
        |
   Shock Volatility Gate (bar range > 2.0x ATR blocks entry)
        |
-  Entry Strategies (10 active: pattern plugins + engines)
+  Entry Strategies (7 active + 1 negligible)
        |
   Entry Filters
     - CI(10) scoring (+/-1 quality point)
@@ -133,6 +159,7 @@ Market Analysis (regime, trend, SMC, sessions)
   Quality Scoring & Setup Tier (A+ / A / B+ / B)
        |
   Risk Sizing (quality-tier base, regime scaling,
+     ATR velocity multiplier (1.15x when ATR accelerating),
      session multipliers, consecutive-loss protection,
      spread gate, margin check)
        |
@@ -163,9 +190,10 @@ Market Analysis (regime, trend, SMC, sessions)
 | Rubber Band Short (Death Cross, A/A+) | 104 | +12.2R | +0.117 | Bear-market specialist |
 | S3 Range Edge Fade | 6 | small | -- | Validated range box sweep |
 | S6 Failed Break Long | 6 | small | -- | Spike-and-snap reversal |
-| IC Breakout | 4 | small | -- | Institutional candle breakout |
-| Pullback Continuation | 38 | -0.5R | -- | Marginal |
-| BB Mean Reversion Short | 10 | -1.1R | -- | Marginal |
+| IC Breakout | 4 | small | -- | Institutional candle breakout (negligible) |
+
+Zero net-negative strategies remain in the active set. BB Mean Reversion Short and
+Pullback Continuation were the last two marginal strategies, disabled in v14.
 
 See `02-Strategies.md` for detailed per-strategy documentation.
 
@@ -178,6 +206,8 @@ See `02-Strategies.md` for detailed per-strategy documentation.
 | Bearish Engulfing | -25.9R across 6 years, worst strategy overall |
 | S6 Failed Break Short | -8.9R net negative in every subset |
 | Silver Bullet | -2.1R, always losing |
+| BB Mean Reversion Short | -1.1R/10 trades, never positive in any period |
+| Pullback Continuation | -0.5R/38 trades, no edge after full dataset analysis |
 | Range Box | Replaced by S3 Range Edge Fade |
 | False Breakout Fade | Replaced by S6 Failed Break |
 | Bearish MA Cross | Score 0, dead input, never fires |
@@ -191,7 +221,7 @@ See `02-Strategies.md` for detailed per-strategy documentation.
 
 ## Trailing and Exit System (Untouchable)
 
-The exit system has been tested 5 times across multiple approaches. Every modification
+The exit system has been tested 6 times across multiple approaches. Every modification
 degraded performance. It is locked at the current configuration:
 
 - **Chandelier Exit:** 3.0x ATR on H1 with aggressive broker SL updates
@@ -309,16 +339,19 @@ UltimateTrader/
 
 ---
 
-## Core Truths (Proven by 17 A/B Tests)
+## Core Truths (Proven by 23 Experiments)
 
 1. The edge is asymmetric capital allocation, not signal quality.
 2. Confirmation candle IS the quality gate -- it cannot be out-filtered.
 3. Trailing is at Goldilocks optimum -- both tighter and wider degrade profit.
 4. Runner losses are insurance premium for tail captures -- cutting them costs $8K.
 5. 76% SL rate is the cost of the compounding engine, not a bug.
-6. Exit modifications are always net negative. The exit system is untouchable.
+6. Exit modifications are always net negative. The exit system is untouchable (6 failures, 0 successes).
 7. The system thrives in trending, high-volatility gold and needs filters to reduce
    damage in non-ideal conditions.
+8. Retrospective analysis overestimates improvement. Always validate with live backtests.
+9. Quality point changes cause butterfly effects. Use risk multipliers for sizing changes.
+10. 23 tested, 12 shipped, 11 rejected. The rejection rate (48%) is evidence of discipline.
 
 ---
 

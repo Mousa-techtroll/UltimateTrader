@@ -1,20 +1,20 @@
 # Risk Model
 
-> UltimateTrader EA | Production Reference | Updated 2026-04-05
+> UltimateTrader EA | LOCKED v14 Production Reference | 2026-04-05
 
 ---
 
 ## Overview
 
-UltimateTrader uses a multiplier-chain risk model. Each signal starts with a base risk percentage determined by its quality tier, then passes through a sequence of conditional multipliers that can only reduce the final risk. No step in the chain inflates risk above the base. The pipeline terminates at a hard cap of 1.2% per trade.
+UltimateTrader uses a multiplier-chain risk model. Each signal starts with a base risk percentage determined by its quality tier, then passes through a sequence of conditional multipliers. Most steps can only reduce the final risk, with two exceptions: the regime risk scaler (up to 1.25x in trending) and the ATR velocity multiplier (up to 1.15x when ATR is accelerating). The pipeline terminates at a hard cap of 1.2% per trade.
 
 The system profits from asymmetric payoff at a 42% win rate. Rare +4R to +8R runners generate the majority of returns. The risk model is designed to preserve capital during losing streaks and choppy conditions while deploying full size when conditions favor tail captures.
 
-**Production metrics (7 years, 2019-2025):** 806 trades, $10,779, 118.0R, 0.146 R/trade, PF 1.58, DD 3.38%, Sharpe 4.91.
+**Production metrics (7 years, 2019-2025):** 758 trades, $11,135, 120.8R, 0.159 R/trade, PF 1.58, DD 3.38%, Sharpe 4.91.
 
 ### Barbell Allocation Philosophy
 
-The risk model implements a barbell capital allocation strategy, proven across 17 A/B tests:
+The risk model implements a barbell capital allocation strategy, proven across 23 experiments:
 
 - **Confirmed longs** (confirmation candle required): PF 1.01 at full risk. These are the compounding engine -- high-volume, moderate edge, capturing trending gold moves.
 - **Immediate shorts** (no confirmation): PF 1.08 at reduced risk (0.5x short multiplier). These are the stabilizer -- lower volume, consistent edge, providing short-side diversification.
@@ -49,6 +49,7 @@ Base Risk (quality tier)
     x Volatility Regime Adjustment
     x Short Protection
     x Regime Risk Scaler
+    x ATR Velocity Multiplier
     x Session Risk Multiplier
     x Health-Based Adjustment
     x Session Execution Quality Gate
@@ -167,9 +168,37 @@ A separate regime-based multiplier that scales position size based on the H4 ADX
 | Choppy | 0.60x | Protect capital in directionless markets |
 | Volatile | 0.75x | Reduce exposure during unpredictable conditions |
 
-This is the only multiplier in the chain that can increase effective risk above the base tier (up to 1.25x in trending). The hard cap at Step 8 still enforces the 1.2% ceiling.
+This is one of two multipliers in the chain that can increase effective risk above the base tier (up to 1.25x in trending). The hard cap at Step 9 still enforces the 1.2% ceiling.
 
 **Toggle:** `InpEnableRegimeRisk` (Group 37b, default `true`). A/B tested and adopted.
+
+---
+
+## Step 5b: ATR Velocity Multiplier
+
+When H1 ATR is accelerating beyond the threshold, trend-aligned trades receive a risk boost.
+
+| Condition | Multiplier | Rationale |
+|---|---|---|
+| ATR velocity > 15% (5-bar rate of change) | 1.15x | Deploy more capital when volatility is expanding in trend direction |
+| ATR velocity <= 15% | 1.00x | Standard sizing |
+
+The ATR velocity is computed via `GetATRVelocity()` in `CMarketContext`, which uses
+direct True Range computation from OHLC data rather than a shared `iATR()` handle.
+The direct computation was adopted after discovering that the shared `iATR()` handle
+corrupted data for other ATR-dependent components.
+
+**Critical design note:** This feature was first tested as a quality point (+1 when
+ATR accelerating). The quality point implementation caused a butterfly effect --
+changing signal quality scores changed which trades were selected as A+ vs A,
+cascading into completely different trade sequences. In 2025 alone, 80 trades were
+killed by this cascade. The risk multiplier implementation avoids this entirely by
+leaving signal selection unchanged and only modifying position size.
+
+**Impact:** +$159 across 4 test years. Marginal but positive, with zero butterfly
+effect on trade selection.
+
+**Toggle:** `InpEnableATRVelocity` (Group 2, default `true`).
 
 ---
 
@@ -204,7 +233,7 @@ Health is determined by indicator handle validity, execution success rate, order
 
 ---
 
-## Step 8: Session Execution Quality Gate
+## Step 8: Session Execution Quality Gate (was Step 8 pre-v14, now Step 9 in chain)
 
 A real-time microstructure check that prevents trades during adverse execution conditions.
 
@@ -228,7 +257,7 @@ A real-time microstructure check that prevents trades during adverse execution c
 
 ---
 
-## Step 9: Hard Cap
+## Step 10: Hard Cap
 
 Absolute ceiling regardless of all prior calculations.
 
@@ -285,32 +314,36 @@ Step 5: Regime risk scaler
   TRENDING: 1.25x
   Risk: 0.68% x 1.25 = 0.85%
 
+Step 5b: ATR velocity multiplier
+  ATR acceleration 18% > 15% threshold: 1.15x
+  Risk: 0.85% x 1.15 = 0.978%
+
 Step 6: Session risk
   Asia: 1.00x
-  Risk: 0.85%
+  Risk: 0.978%
 
 Step 7: Health adjustment
   Excellent: 1.00x
-  Risk: 0.85%
+  Risk: 0.978%
 
 Step 8: Execution quality gate
   Score 0.68 > 0.50: no reduction
-  Risk: 0.85%
+  Risk: 0.978%
 
-Step 9: Hard cap
-  0.85% < 1.2% cap: no capping
-  0.85% > 0.1% floor: no floor
-  Final risk: 0.85%
+Step 10: Hard cap
+  0.978% < 1.2% cap: no capping
+  0.978% > 0.1% floor: no floor
+  Final risk: 0.978%
 ```
 
 ### Lot Calculation
 
 ```
-Risk amount:    $10,000 x 0.85% = $85.00
+Risk amount:    $10,000 x 0.978% = $97.80
 Stop distance:  1000 points
 Tick value:     ~$0.01/point (XAUUSD, 1 lot)
-Lots:           $85.00 / (1000 x $0.01) = 0.085
-Normalized:     0.09 lots (broker step)
+Lots:           $97.80 / (1000 x $0.01) = 0.098
+Normalized:     0.10 lots (broker step)
 ```
 
 ### Worst-Case Stacking
@@ -400,6 +433,8 @@ The following risk systems are present in code but disabled in production. Each 
 | Mode RecordModeResult | DISABLED | N/A (code-level) | Engine mode kill was dead code in baseline. Same pattern as auto-kill. |
 | Batched trailing | OFF | `InpBatchedTrailing = false` | Only updates broker SL at R-levels. Between levels, reversals hit stale broker SL, giving back 1-2R per trade. |
 | Reward-room filter | OFF | `InpEnableRewardRoom = false` | Rejected 95% of all trades. Gold's structural density (H4 swings every $20-40, round $50 levels, PDH/PDL, SMC zones) means obstacles always exist within 2.0R. |
+| Universal stall detector | OFF | `InpEnableUniversalStall = false` | -$3,519 across 4 years. Retrospective analysis predicted +40.7R but live backtest showed stalled trades recover more than predicted. Code present but disabled. |
+| Quality-trend boost | OFF | `InpEnableQualityTrendBoost = false` | $0 net impact across 4 years. A+ setups in TRENDING regime get 1.35x risk. Not worth added complexity for zero benefit. Code present but disabled. |
 
 ---
 
@@ -412,31 +447,34 @@ Signal Detected
 [Pre-filters] Shock / D1 200 EMA / Spread Sanity / Momentum Exhaustion
      |
      v
-[Step 1] Quality Tier     ->  Base risk (0.5% - 0.8%)
+[Step 1]  Quality Tier      ->  Base risk (0.5% - 0.8%)
      |
      v
-[Step 2] Loss Scaling     ->  x 0.50 - 1.00
+[Step 2]  Loss Scaling      ->  x 0.50 - 1.00
      |
      v
-[Step 3] Vol Regime        ->  x 0.65 - 1.00
+[Step 3]  Vol Regime         ->  x 0.65 - 1.00
      |
      v
-[Step 4] Short Protection  ->  x 0.50 - 1.00
+[Step 4]  Short Protection   ->  x 0.50 - 1.00
      |
      v
-[Step 5] Regime Risk       ->  x 0.60 - 1.25
+[Step 5]  Regime Risk        ->  x 0.60 - 1.25
      |
      v
-[Step 6] Session Risk      ->  x 0.50 - 1.00
+[Step 5b] ATR Velocity       ->  x 1.00 - 1.15  (trend trades only)
      |
      v
-[Step 7] Health Adjust     ->  x 0.30 - 1.00
+[Step 6]  Session Risk       ->  x 0.50 - 1.00
      |
      v
-[Step 8] Exec Quality      ->  Block / 0.50x / Pass
+[Step 7]  Health Adjust      ->  x 0.30 - 1.00
      |
      v
-[Step 9] Hard Cap          ->  max 1.2%, min 0.1%
+[Step 8]  Exec Quality       ->  Block / 0.50x / Pass
+     |
+     v
+[Step 10] Hard Cap           ->  max 1.2%, min 0.1%
      |
      v
 Lot Calculation -> Broker Normalization -> Trade Execution

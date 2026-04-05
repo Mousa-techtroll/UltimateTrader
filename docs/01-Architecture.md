@@ -1,9 +1,10 @@
 # System Architecture
 
-> UltimateTrader EA -- Production Reference (2026-04-05)
+> UltimateTrader EA -- LOCKED v14 Production Reference (2026-04-05)
 >
-> This document describes the production architecture as deployed. It reflects all
-> changes through A/B test 29 and the AGRE v2 optimization cycle.
+> This document describes the final production architecture. It reflects all
+> changes through 23 experiments, including the AGRE v2 cycle and subsequent
+> ATR velocity, strategy disables, and universal stall testing.
 
 ---
 
@@ -35,7 +36,7 @@ The EA is organized into 14 source folders plus the root entry point.
 | `Execution` | 3 | Broker interface: order placement, modification, spread/slippage gates, retry logic |
 | `ExitPlugins` | 5 | Exit decision plugins: regime-aware, daily loss halt, weekend close, max age, standard |
 | `Infrastructure` | 11 | Logging, error handling, health monitoring, concurrency, recovery, memory safety |
-| `MarketAnalysis` | 24 | 7 core Stack17 components + CRangeBoxDetector + IMarketContext interface + indicator wrappers |
+| `MarketAnalysis` | 24 | 7 core Stack17 components + CRangeBoxDetector + IMarketContext interface + GetATRVelocity() + indicator wrappers |
 | `PluginSystem` | 11 | Abstract base classes, plugin manager/mediator/registry/validator, IMarketContext bridge |
 | `RiskPlugins` | 2 | Position sizing strategies (quality-tier and ATR-based) |
 | `TrailingPlugins` | 7 | Trailing stop implementations: ATR, Swing, Chandelier, Parabolic SAR, Stepped, Hybrid, Smart |
@@ -185,6 +186,8 @@ OnTick()
   |     |           +-- Risk sizing (fallback tick-value method)
   |     |           +-- Vol regime risk multiplier
   |     |           +-- Short protection multiplier (0.5x)
+  |     |           +-- Regime risk scaling (Trending 1.25x, etc.)
+  |     |           +-- ATR velocity risk multiplier (1.15x when ATR accel >15%)
   |     |           +-- Consecutive loss scaling
   |     |           +-- Adaptive TP calculation
   |     |           +-- Min R:R check (1.3)
@@ -256,14 +259,14 @@ CTradeStrategy                    (base for all plugins)
     |       +-- CSessionEngine        (5 modes: Asian[ON], London BO[OFF], NY Cont[OFF],
     |       |                          Silver Bullet[OFF], LC Reversal[OFF])
     |       +-- CExpansionEngine      (3 modes: Panic Mom[OFF], IC BO[ON], Compression BO[OFF])
-    |       +-- CPullbackContinuationEngine  (trend pullback re-entry)
+    |       +-- CPullbackContinuationEngine  (DISABLED: -0.5R/38 trades, no edge)
     |       +-- CRangeEdgeFade        (S3: range edge fade — active when S3/S6 enabled)
     |       +-- CFailedBreakReversal  (S6: failed-break reversal — active when S3/S6 enabled)
     |       +-- CEngulfingEntry       (bearish engulfing disabled)
     |       +-- CPinBarEntry          (bearish asia-only, bullish active)
     |       +-- CLiquiditySweepEntry  (disabled: replaced by engine SFP)
     |       +-- CMACrossEntry         (bearish OFF in code, bullish blocks NY)
-    |       +-- CBBMeanReversionEntry (active)
+    |       +-- CBBMeanReversionEntry (DISABLED: -1.1R/10 trades, never positive)
     |       +-- CRangeBoxEntry        (disabled: replaced by S3/S6)
     |       +-- CFalseBreakoutFadeEntry (disabled: replaced by S3/S6)
     |       +-- CVolatilityBreakoutEntry (active)
@@ -353,6 +356,38 @@ quality tier (A+/A/B+/B) and consequently the risk allocation.
 
 ---
 
+## ATR Velocity Risk Multiplier
+
+Added after the AGRE v2 cycle. When H1 ATR is accelerating, trend trades receive a
+1.15x risk multiplier (larger position size).
+
+**Implementation details:**
+
+| Parameter | Value | Input |
+|---|---|---|
+| Toggle | `InpEnableATRVelocity = true` | Group 2 |
+| Acceleration threshold | 15.0% (5-bar rate of change) | `InpATRVelocityBoostPct` |
+| Risk multiplier | 1.15x | `InpATRVelocityRiskMult` |
+
+**Position in the execution chain:** The ATR velocity multiplier is applied in the
+main EA execution path after regime risk scaling and before breakout probation. It
+multiplies the risk percentage for trend-aligned trades when ATR acceleration exceeds
+the threshold.
+
+**Critical design decision:** This was first tested as a quality point (+1 when ATR
+accelerating). The quality point change caused a butterfly effect -- altering which
+signals scored A+ vs A changed the entire selection order, killing 80 trades in 2025
+and wiping out the benefit. Reimplemented as a pure risk multiplier, the feature added
++$159 cleanly with zero trade selection changes.
+
+**Bug fix:** The original `GetATRVelocity()` implementation used `iATR()` to create a
+shared indicator handle. This handle was also used by other ATR-dependent components
+(regime classifier, volatility manager), and sharing it caused data corruption. The
+fix replaced `iATR()` with direct True Range computation from OHLC data, eliminating
+the shared handle entirely.
+
+---
+
 ## IMarketContext: The 7 Internal Components
 
 `CMarketContext` implements `IMarketContext` by delegating to 7 specialized analysis
@@ -383,6 +418,11 @@ components. Each is created in the constructor and updated once per new H1 bar.
 **Volatility:** `GetVolatilityRegime()`, `GetVolatilityRiskMultiplier()`, `GetVolatilitySLMultiplier()`
 
 **Health:** `GetSystemHealth()`, `GetHealthRiskAdjustment()`
+
+**ATR Velocity:** `GetATRVelocity()` -- computes H1 ATR acceleration via direct True Range
+calculation (5-bar rate of change). Returns percentage acceleration. Uses manual TR
+computation to avoid sharing iATR indicator handles, which caused a corruption bug
+where the shared handle interfered with other ATR-dependent components.
 
 **Price Action:** `GetSwingHigh()`, `GetSwingLow()`, `GetCurrentRSI()`
 
@@ -418,10 +458,11 @@ Position sizing follows a multi-step pipeline. The quality-tier strategy's full
 2. **Short protection:** multiply by 0.5 for non-exempt short trades
 3. **Session risk:** London 0.5x, NY 0.9x, Asia 1.0x
 4. **Regime risk scaling:** Trending 1.25x, Normal 1.0x, Choppy 0.6x, Volatile 0.75x
-5. **Volatility regime multiplier:** Very Low 1.0x through Extreme 0.65x
-6. **Consecutive loss scaling:** Level 1 (2-3 losses) 0.75x, Level 2 (4+) 0.5x
-7. **Session quality factor:** 0.5x if execution quality < 0.50
-8. **Hard cap:** 1.2% maximum risk per trade
+5. **ATR velocity multiplier:** 1.15x when H1 ATR accelerates >15% (trend trades only)
+6. **Volatility regime multiplier:** Very Low 1.0x through Extreme 0.65x
+7. **Consecutive loss scaling:** Level 1 (2-3 losses) 0.75x, Level 2 (4+) 0.5x
+8. **Session quality factor:** 0.5x if execution quality < 0.50
+9. **Hard cap:** 1.2% maximum risk per trade
 
 ---
 
@@ -475,6 +516,11 @@ These behaviors differ from what a naive reading of the code might suggest:
 | Friday entries | BLOCKED | 38.7% WR, -1.35R in backtest |
 | Early invalidation | DISABLED | Net -26.9R destroyer in backtest |
 | S6 short side | DISABLED | -8.9R across 6 years |
+| BB Mean Reversion Short | DISABLED | -1.1R/10 trades, never positive in any period |
+| Pullback Continuation | DISABLED | -0.5R/38 trades, no edge |
+| Quality-trend boost | DISABLED (code present) | $0 net across 4 years, not worth complexity |
+| Universal stall detector | DISABLED (code present) | -$3,519 across 4 years. Stalled trades recover more than analysis predicted |
+| ATR velocity risk mult | ACTIVE | 1.15x risk when H1 ATR accelerates >15% (5-bar rate of change). Direct TR computation, no shared indicator handle |
 
 ---
 

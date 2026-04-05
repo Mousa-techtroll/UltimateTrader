@@ -1,14 +1,14 @@
 # Position Management & Exit System
 
-> UltimateTrader EA | Production Reference | Updated 2026-04-05
+> UltimateTrader EA | LOCKED v14 Production Reference | 2026-04-05
 
 ---
 
 ## CRITICAL: DO NOT MODIFY THE EXIT SYSTEM
 
-The exit system is at a verified Goldilocks optimum. Five separate attempts to improve exit behavior have all failed, most catastrophically. The partial close cascade, trailing strategy, breakeven logic, and runner management represent a local maximum that cannot be improved by incremental adjustment.
+The exit system is at a verified Goldilocks optimum. Six separate attempts to improve exit behavior have all failed, most catastrophically. The partial close cascade, trailing strategy, breakeven logic, and runner management represent a local maximum that cannot be improved by incremental adjustment.
 
-### 5 Failed Exit Modification Tests
+### 6 Failed Exit Modification Tests
 
 | # | Test | Change | Result | Mechanism of Failure |
 |---|---|---|---|---|
@@ -17,10 +17,11 @@ The exit system is at a verified Goldilocks optimum. Five separate attempts to i
 | 3 | Wider Chandelier trailing | Chandelier multiplier increased by +0.5 (confirmed longs only, 1.2x wider) | **-$1,127, DD +1.18%** | Wider trailing lets reversals eat more profit before the stop triggers. Trades that would have exited at +2R now exit at +1R or worse. The extra room does not produce proportionally larger winners. |
 | 4 | Phased breakeven | Progressive BE: move SL to -0.5R at TP0, then to entry at TP1, instead of fixed 0.8R trigger | **PF 1.27 -> 1.06** | Phased BE clips runners by moving the stop too aggressively after TP0. Faster turnover (+trades) but each trade captures less. Net effect: the system degrades to a mediocre scalper. |
 | 5 | Runner-mode trailing cadence | H1-bar-close cadence for broker SL sends on runner-qualified trades; entry-locked Chandelier floor | **-$391 in isolation test** | The cadence delay between bar-close checks lets reversals eat profit between checks. The entry-locked floor prevented normal Chandelier tightening during regime transitions. Net: mild negative. |
+| 6 | Universal stall detector | Close all trades that have been open 8+ hours without hitting TP0 | **-$3,519 across 4 years** | Retrospective analysis predicted +40.7R improvement but the live backtest showed the opposite. Stalled trades eventually recover at a higher rate than static analysis predicts because regime changes, trailing adjustments, and partial closes interact dynamically. This is the clearest example of retrospective analysis overestimating improvement. |
 
 **Additional failed trailing parameter tests:** Chandelier multiplier -0.5 (tighter) also degraded performance. Both tighter and wider Chandelier settings are worse than the current 3.0x/3.5x/2.5x/3.0x regime profile. BE trigger at 1.0R (from 0.8R) also tested and rejected.
 
-**Conclusion:** The exit system has been tested from every angle -- tighter trailing, wider trailing, smarter runner exits (2 variants), progressive breakeven, and runner-specific cadence. All 5 tests degraded profitability. The current configuration is the only known profitable combination.
+**Conclusion:** The exit system has been tested from every angle -- tighter trailing, wider trailing, smarter runner exits (2 variants), progressive breakeven, runner-specific cadence, and universal stall detection. All 6 tests degraded profitability. The current configuration is the only known profitable combination.
 
 Any proposed exit modification MUST be A/B tested against the production baseline before adoption.
 
@@ -32,7 +33,7 @@ Once a trade is opened, the position management system takes ownership. It manag
 
 The system profits from asymmetric payoff: 42% win rate with a 1.65 payoff ratio (avg winner 1.00R, avg loser -0.61R). The runner pool is the core profit engine -- it carries -87.7R of drag across 1,182 trades but funds $12,000+ in trailing exits. TP0 contributes 66.6R across 623 trades, acting as essential glue that keeps the system profitable while runners build.
 
-**Production metrics:** 806 trades, $10,779, 118.0R, 0.146 R/trade across 7 years.
+**Production metrics:** 758 trades, $11,135, 120.8R, 0.159 R/trade across 7 years.
 
 **Source files:**
 
@@ -443,3 +444,4 @@ These leakage points have been investigated and tested. In every case, the propo
 | Phased Breakeven | `InpEnablePhasedBE = false` (removed) | PF 1.27 -> 1.06 | Clips runners via aggressive SL advancement post-TP0. |
 | Early Invalidation | `InpEnableEarlyInvalidation = false` | -26.90R | Cuts losers that could recover, destroying asymmetric profile. |
 | Batched Trailing | `InpBatchedTrailing = false` | -$742, stale SL | Between R-level checkpoints, reversals hit stale broker SL. |
+| Universal Stall | `InpEnableUniversalStall = false` | -$3,519 | Stalled trades recover. Retrospective +40.7R estimate was wrong. |

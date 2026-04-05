@@ -1,20 +1,21 @@
 # Complete Input Parameter Reference
 
-> UltimateTrader EA -- Production Reference (2026-04-05)
+> UltimateTrader EA -- LOCKED v14 Production Reference (2026-04-05)
 >
 > Source of truth: `UltimateTrader_Inputs.mqh`
 >
-> This document covers all ~300 input parameters across 47 groups. Parameters marked
-> with [CHANGED] were modified during the v1-v11 optimization cycle or subsequent A/B
-> testing. Parameters marked [DEPRECATED] are dead code retained for input file
+> This document covers all ~280 input parameters across 47 groups. Parameters marked
+> with [CHANGED] were modified during the 23-experiment optimization campaign (v1
+> through v14). Parameters marked [DEPRECATED] are dead code retained for input file
 > compatibility.
 
 ---
 
 ## Optimization History Summary
 
-The following parameters were changed from their original defaults during 22 A/B tests
-(v1 through v11) and a subsequent 7-test AGRE v2 cycle:
+The following parameters were changed from their original defaults during 23 experiments
+(v1 through v14), including the AGRE v2 cycle and subsequent ATR velocity and strategy
+disable rounds:
 
 | Parameter | Original | Current | Test / Reason |
 |---|---|---|---|
@@ -43,6 +44,14 @@ The following parameters were changed from their original defaults during 22 A/B
 | `InpEnableAntiStall` | N/A | **true** | Part of S3/S6 framework |
 | `InpEnableS6Short` | N/A | **false** | -8.9R across 6 years |
 | `InpPointsBSetup` | 5 | **7** | Same as A tier, filters B/B+ (proven in $6,140 baseline) |
+| `InpEnableBBMeanReversion` | true | **false** | v14: -1.1R/10 trades, never positive |
+| `InpEnablePullbackCont` | true | **false** | v14: -0.5R/38 trades, no edge |
+| `InpEnableATRVelocity` | N/A | **true** | v14: +$159, 1.15x risk when ATR accelerating >15% |
+| `InpATRVelocityBoostPct` | N/A | **15.0** | ATR acceleration threshold (5-bar rate of change) |
+| `InpATRVelocityRiskMult` | N/A | **1.15** | Risk multiplier for accelerating ATR |
+| `InpEnableQualityTrendBoost` | N/A | **false** | Tested: $0 net impact, not worth complexity |
+| `InpEnableUniversalStall` | N/A | **false** | Tested: -$3,519, stalled trades recover |
+| `InpStallHours` | N/A | **8** | Stall threshold (disabled, but parameter present) |
 
 ---
 
@@ -78,6 +87,12 @@ Core risk limits and portfolio constraints. This is the most heavily optimized g
 | `InpAutoCloseOnChoppy` | `bool` | `true` | Active | Auto-close trend positions in CHOPPY regime |
 | `InpStructureBasedExit` | `bool` | `false` | Disabled | Require H1 EMA50 break before CHOPPY close. Test 25: no-op (correlated conditions) |
 | `InpEnableCIScoring` | `bool` | `true` | Active [CHANGED] | CI(10) regime scoring: +/-1 quality point based on CI vs pattern type. Test 26: PASS |
+| `InpEnableQualityTrendBoost` | `bool` | `false` | Disabled [CHANGED] | Quality-trend boost: A+ setups in TRENDING get 1.35x risk. $0 net impact, not worth complexity |
+| `InpEnableUniversalStall` | `bool` | `false` | Disabled [CHANGED] | Universal stall detector: close at InpStallHours without TP0. -$3,519 across 4 years |
+| `InpStallHours` | `int` | `8` | Disabled | Hours without TP0 before stall close (only used when universal stall enabled) |
+| `InpEnableATRVelocity` | `bool` | `true` | Active [CHANGED] | ATR velocity risk multiplier: 1.15x risk when H1 ATR accelerating >15% |
+| `InpATRVelocityBoostPct` | `double` | `15.0` | Active [CHANGED] | ATR acceleration threshold (5-bar rate of change percentage) |
+| `InpATRVelocityRiskMult` | `double` | `1.15` | Active [CHANGED] | Risk multiplier applied when ATR velocity exceeds threshold |
 | `InpEnableThrashCooldown` | `bool` | `true` | Active (no-op) | Block entries after >2 regime changes in 4h. Test 27: never fires (H4 hysteresis prevents thrashing) |
 | `InpEnableBreakoutProbation` | `bool` | `false` | Disabled | 2-bar H1 probation for breakouts. Test 29: no-op (breakout plugins mostly disabled) |
 | `InpEnableS3S6` | `bool` | `true` | Active [CHANGED] | S3/S6 range edge fade + failed-break reversal. Replaces RangeBox + FalseBreakout. Test 28: PASS |
@@ -337,7 +352,7 @@ Master toggles for each legacy entry pattern.
 | `InpEnablePinBar` | `bool` | `true` | Active [CHANGED] | Pin Bar pattern. Changed from false. Bearish PF 1.48 carries 2023 |
 | `InpEnableLiquiditySweep` | `bool` | `false` | Disabled | Replaced by Liquidity Engine SFP mode |
 | `InpEnableMACross` | `bool` | `true` | Active [CHANGED] | MA Cross. Changed from false. Bullish PF 2.15 (bearish OFF in code) |
-| `InpEnableBBMeanReversion` | `bool` | `true` | Active | Bollinger Band mean reversion |
+| `InpEnableBBMeanReversion` | `bool` | `false` | Disabled [CHANGED] | BB MR DISABLED: -1.1R/10 trades, never positive in any period |
 | `InpEnableRangeBox` | `bool` | `true` | Superseded | Input is true but plugin is not registered when S3/S6 is active |
 | `InpEnableFalseBreakout` | `bool` | `true` | Superseded [CHANGED] | Changed from false. Plugin not registered when S3/S6 is active |
 | `InpEnableSupportBounce` | `bool` | `false` | Disabled | Pending validation |
@@ -641,7 +656,7 @@ Trend pullback re-entry strategy. Fills gaps in 2024-style fragmented trends.
 
 | Parameter | Type | Default | Status | Description |
 |---|---|---|---|---|
-| `InpEnablePullbackCont` | `bool` | `true` | Active | Enable Pullback Continuation Engine |
+| `InpEnablePullbackCont` | `bool` | `false` | Disabled [CHANGED] | Pullback Cont DISABLED: -0.5R/38 trades, no edge |
 | `InpPBCLookbackBars` | `int` | `20` | Active | Lookback for swing extreme |
 | `InpPBCMinPullbackBars` | `int` | `2` | Active | Minimum pullback duration (bars) |
 | `InpPBCMaxPullbackBars` | `int` | `10` | Active | Maximum pullback duration (bars) |

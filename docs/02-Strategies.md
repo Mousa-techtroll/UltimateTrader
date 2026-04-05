@@ -1,7 +1,8 @@
 # Entry Strategies & Filter Architecture
 
-> **UPDATED 2026-04-05.** Production state: 10 active strategies, 11 disabled, 7 active
-> filters. 806 trades across 7 years (2019--2025), $10,779 total PnL, 118.0R.
+> **LOCKED v14 (2026-04-05).** Production state: 7 active strategies (+1 negligible),
+> 13 disabled, 7 active filters. 758 trades across 7 years (2019--2025), $11,135
+> total PnL, 120.8R, 0.159 R/trade. Zero net-negative strategies remain in the active set.
 > All performance numbers from normalized backtest on full 2019--2025 dataset.
 
 This document is the definitive reference for all entry strategies, entry filters, and
@@ -300,71 +301,12 @@ institutional-sized moves qualify.
 
 ---
 
-### Strategy 9: Pullback Continuation
+### Note: Strategies 9 and 10 Removed in v14
 
-**Role:** Marginal contributor. Captures trend pullback re-entries.
-
-| Metric | Value |
-|---|---|
-| Trades | 38 |
-| PnL (R) | -0.5R |
-| Avg R/trade | -0.013 |
-| Status | Active, marginal |
-
-**What it detects:** An established trend with a pullback of 0.6--1.8x ATR depth,
-followed by a signal candle showing trend resumption. Targets re-entry into a trend
-after a healthy retracement.
-
-**Entry conditions:**
-1. ADX > 18 (trend present)
-2. Swing extreme within lookback period
-3. Pullback depth between 0.6--1.8x ATR
-4. Pullback duration 2--10 bars
-5. Signal candle body >= 0.20x ATR
-6. Not in CHOPPY regime
-
-**Filters applied:**
-- CHOPPY regime block
-- CI(10) scoring
-- Friday entry block
-
-**Why it works:** The strategy captures the middle portion of trend legs where pullback
-entries are optimal. Performance is currently marginal (-0.5R net) but the strategy
-contributes to diversification. Multi-cycle re-entry is disabled after testing showed
-later cycles lose to orchestrator ranking.
-
----
-
-### Strategy 10: BB Mean Reversion Short
-
-**Role:** Marginal. Mean reversion in ranging conditions.
-
-| Metric | Value |
-|---|---|
-| Trades | 10 |
-| PnL (R) | -1.1R |
-| Avg R/trade | -0.111 |
-| Status | Active, monitored |
-
-**What it detects:** Price touches or exceeds the upper Bollinger Band in ranging or
-choppy market conditions, then shows rejection candle. Targets mean reversion back
-to the BB midline.
-
-**Entry conditions:**
-1. Price at or above upper Bollinger Band (20, 2.0)
-2. Market regime is RANGING or CHOPPY
-3. Rejection candle confirmed
-4. ADX < 25 (not trending)
-
-**Filters applied:**
-- Regime filter (RANGING/CHOPPY only)
-- CI(10) scoring
-- Friday entry block
-
-**Why it works:** In ranging markets, the Bollinger Band extremes act as dynamic
-support/resistance. The strategy is currently net negative (-1.1R across 10 trades)
-but with a small sample size. It remains active for portfolio diversification in
-choppy conditions where other strategies are reduced or blocked.
+BB Mean Reversion Short (-1.1R/10 trades, never positive in any period) and Pullback
+Continuation (-0.5R/38 trades, no edge) were the last two marginal strategies in the
+active set. Both were disabled in v14 to achieve zero net-negative strategies. They
+are documented in the Disabled Strategies section below.
 
 ---
 
@@ -478,6 +420,25 @@ risk/reward window.
 
 ## Part 3: Disabled Strategies
 
+### BB Mean Reversion Short -- DISABLED (v14)
+
+**Input:** `InpEnableBBMeanReversion = false`
+**Reason:** -1.1R across 10 trades, never positive in any test period. Bollinger Band
+mean reversion shorts on gold H1 lack sufficient edge. The strategy was the last
+remaining net-negative entry type when measured across the full dataset.
+
+---
+
+### Pullback Continuation -- DISABLED (v14)
+
+**Input:** `InpEnablePullbackCont = false`
+**Reason:** -0.5R across 38 trades, no edge. The pullback re-entry concept is sound
+but the implementation never found consistent profit across multiple years. Multi-cycle
+re-entry was also tested and failed (later cycles lose orchestrator ranking to
+first-cycle entries).
+
+---
+
 ### Bearish Engulfing -- DISABLED
 
 **Input:** `InpEnableBearishEngulfing = false`
@@ -589,12 +550,67 @@ Net -$240 in the edge period.
 | Early Invalidation | `InpEnableEarlyInvalidation = false` | -26.90R net destroyer in backtest |
 | Smart Runner Exit | `InpEnableSmartRunnerExit = false` | Tested 2 variants, both -$8K |
 | Auto-kill gate | `InpDisableAutoKill = true` | Name mismatch bug made it kill profitable strategies |
+| Universal stall detector | `InpEnableUniversalStall = false` | -$3,519 across 4 years (analysis predicted +40.7R) |
+| Quality-trend boost | `InpEnableQualityTrendBoost = false` | $0 net impact, not worth complexity |
+
+---
+
+## Part 8: Failed Experiment Log
+
+23 experiments were tested across the full optimization campaign. 12 were shipped,
+11 were rejected. The following summarizes all failed experiments by category.
+
+### Exit Failures (6 total)
+
+| # | Experiment | Result | Failure Mechanism |
+|---|---|---|---|
+| 1 | Smart Runner Exit v1 | -76% profit (-$8,282) | Cuts tail captures |
+| 2 | Smart Runner Exit v2 | -73% profit (-$7,975) | Same: softer thresholds still clip runners |
+| 3 | Wider Chandelier trailing | -$1,127, DD +1.18% | Extra room does not produce proportionally larger winners |
+| 4 | Phased breakeven | PF 1.27 to 1.06 | Aggressive SL advancement post-TP0 clips runners |
+| 5 | Runner-mode trailing cadence | -$391 | H1 cadence too slow; entry-locked floor too rigid |
+| 6 | Universal stall detector | -$3,519 across 4 years | Stalled trades recover more than retrospective analysis predicted. Analysis showed +40.7R but live test showed the opposite |
+
+### Entry/Filter Failures (9 total, including tests that were no-ops)
+
+| # | Experiment | Result | Failure Mechanism |
+|---|---|---|---|
+| 1 | ATR velocity as quality point | Killed 80 trades in 2025 | Butterfly effect: quality point change cascaded into different trade selection order |
+| 2 | Quality-trend sizing (A+ 1.35x in TRENDING) | $0 net | Not worth complexity |
+| 3 | H4 Engulfing | -38.8R, all years negative | Pattern does not work on H4 timeframe for gold |
+| 4 | Regime transition filter | 51% stop rate, extreme variance | Too unstable |
+| 5 | London Open Retest | -594R, 76% stop rate | Catastrophic failure |
+| 6 | Session Range Edge Fade | -121R, 79% overlap with S3 | Redundant with S3, worse performance |
+| 7 | FVG Gap Close | -232R | Permanently killed |
+| 8 | Post-SL Re-Entry | +1.5R marginal, 67% double-stop rate | Risk/reward unfavorable |
+| 9 | Reward-room filter | 95% rejection rate | Gold's structural density makes obstacles ubiquitous within 2.0R |
+
+### No-Op Tests (tested, found to have zero effect)
+
+| Experiment | Reason for No Effect |
+|---|---|
+| Structure-based exit (Test 25) | EMA(50) break and CHOPPY regime are correlated; gate is always true when needed |
+| Thrash cooldown (Test 27) | H4 ADX with 2-bar confirmation prevents >2 changes in 4h mathematically |
+| Breakout probation (Test 29) | Breakout plugins already disabled; probation targets a solved problem |
+
+### Key Insight: Retrospective vs Live Divergence
+
+The universal stall detector is the clearest example of retrospective analysis
+divergence. A static analysis of stalled trades (open 8+ hours without hitting TP0)
+predicted +40.7R improvement if those trades were closed early. The live backtest
+showed -$3,519 instead. The reason: stalled trades eventually recover at a higher
+rate than the static analysis could predict because the analysis treated each trade
+in isolation, while the live system has regime changes, trailing stop adjustments,
+and partial closes that interact dynamically.
+
+This is a general warning: retrospective trade-level analysis systematically
+overestimates improvement because it assumes no second-order effects.
 
 ---
 
 ## Part 4: Exit and Position Management
 
-The exit system is locked and proven untouchable after 5 failed modification attempts.
+The exit system is locked and proven untouchable after 6 failed modification attempts.
 
 ### Partial Close Schedule
 
