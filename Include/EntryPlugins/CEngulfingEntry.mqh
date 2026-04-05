@@ -189,7 +189,7 @@ public:
                   signal.stopLoss = sl;
                   signal.takeProfit1 = tp;
                   signal.patternType = PATTERN_ENGULFING;
-                  signal.qualityScore = 92;
+                  signal.qualityScore = InpScoreBullEngulfing;
                   signal.riskReward = m_rr_target;
                   signal.comment = "Bullish Engulfing";
                   signal.source = SIGNAL_SOURCE_PATTERN;
@@ -240,7 +240,7 @@ public:
                   signal.stopLoss = sl;
                   signal.takeProfit1 = tp;
                   signal.patternType = PATTERN_ENGULFING;
-                  signal.qualityScore = 42;
+                  signal.qualityScore = InpScoreBearEngulfing;
                   signal.riskReward = m_rr_target;
                   signal.comment = "Bearish Engulfing";
                   signal.source = SIGNAL_SOURCE_PATTERN;

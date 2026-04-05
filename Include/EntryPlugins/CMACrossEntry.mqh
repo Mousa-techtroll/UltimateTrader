@@ -195,7 +195,7 @@ public:
             signal.stopLoss = sl;
             signal.takeProfit1 = tp;
             signal.patternType = PATTERN_MA_CROSS_ANOMALY;
-            signal.qualityScore = 82;
+            signal.qualityScore = InpScoreBullMACross;
             signal.riskReward = m_rr_target;
             signal.comment = "Bullish MA Cross";
             signal.source = SIGNAL_SOURCE_PATTERN;
@@ -234,7 +234,7 @@ public:
             signal.stopLoss = sl;
             signal.takeProfit1 = tp;
             signal.patternType = PATTERN_MA_CROSS_ANOMALY;
-            signal.qualityScore = 18;
+            signal.qualityScore = InpScoreBearMACross;
             signal.riskReward = m_rr_target;
             signal.comment = "Bearish MA Cross";
             signal.source = SIGNAL_SOURCE_PATTERN;

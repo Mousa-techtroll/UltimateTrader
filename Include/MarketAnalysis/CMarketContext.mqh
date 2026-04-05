@@ -46,6 +46,14 @@ private:
    double                    m_vix_low;
    bool                      m_enable_smc;
    int                       m_smc_ob_lookback;
+   double                    m_smc_ob_body_pct;
+   double                    m_smc_ob_impulse_mult;
+   int                       m_smc_fvg_min_points;
+   int                       m_smc_bos_lookback;
+   double                    m_smc_liq_tolerance;
+   int                       m_smc_liq_min_touches;
+   int                       m_smc_zone_max_age;
+   bool                      m_smc_use_htf_confluence;
    int                       m_smc_min_confluence;
    bool                      m_enable_crash_detector;
    bool                      m_enable_vol_regime;
@@ -85,7 +93,15 @@ public:
                   int smc_min_confluence      = 2,
                   bool enable_crash_detector  = true,
                   bool enable_vol_regime      = true,
-                  bool enable_momentum        = true)
+                  bool enable_momentum        = true,
+                  double smc_ob_body_pct      = 0.5,
+                  double smc_ob_impulse_mult  = 1.5,
+                  int smc_fvg_min_points      = 50,
+                  int smc_bos_lookback        = 20,
+                  double smc_liq_tolerance    = 30.0,
+                  int smc_liq_min_touches     = 2,
+                  int smc_zone_max_age        = 200,
+                  bool smc_use_htf_confluence = true)
    {
       m_adx_period         = adx_period;
       m_atr_period         = atr_period;
@@ -101,6 +117,14 @@ public:
       m_vix_low            = vix_low;
       m_enable_smc         = enable_smc;
       m_smc_ob_lookback    = smc_ob_lookback;
+      m_smc_ob_body_pct    = smc_ob_body_pct;
+      m_smc_ob_impulse_mult = smc_ob_impulse_mult;
+      m_smc_fvg_min_points = smc_fvg_min_points;
+      m_smc_bos_lookback   = smc_bos_lookback;
+      m_smc_liq_tolerance  = smc_liq_tolerance;
+      m_smc_liq_min_touches = smc_liq_min_touches;
+      m_smc_zone_max_age   = smc_zone_max_age;
+      m_smc_use_htf_confluence = smc_use_htf_confluence;
       m_smc_min_confluence = smc_min_confluence;
       m_enable_crash_detector = enable_crash_detector;
       m_enable_vol_regime  = enable_vol_regime;
@@ -180,7 +204,9 @@ public:
       {
          m_smc_order_blocks = new CSMCOrderBlocks();
          if(m_smc_order_blocks != NULL)
-            m_smc_order_blocks.Configure(m_smc_ob_lookback, 0.5, 1.5, 50, 20, 60, 2, 200, false);
+            m_smc_order_blocks.Configure(m_smc_ob_lookback, m_smc_ob_body_pct, m_smc_ob_impulse_mult,
+               m_smc_fvg_min_points, m_smc_bos_lookback, m_smc_liq_tolerance,
+               m_smc_liq_min_touches, m_smc_zone_max_age, m_smc_use_htf_confluence);
          if(m_smc_order_blocks == NULL || !m_smc_order_blocks.Init())
          {
             LogPrint("CMarketContext: Failed to initialize CSMCOrderBlocks");

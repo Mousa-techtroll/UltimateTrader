@@ -167,7 +167,7 @@ public:
                         signal.stopLoss = sl;
                         signal.takeProfit1 = tp;
                         signal.patternType = PATTERN_LIQUIDITY_SWEEP;
-                        signal.qualityScore = 65;
+                        signal.qualityScore = InpScoreBullLiqSweep;
                         signal.riskReward = m_rr_target;
                         signal.comment = "Bullish Liquidity Sweep";
                         signal.source = SIGNAL_SOURCE_PATTERN;
@@ -226,7 +226,7 @@ public:
                         signal.stopLoss = sl;
                         signal.takeProfit1 = tp;
                         signal.patternType = PATTERN_LIQUIDITY_SWEEP;
-                        signal.qualityScore = 38;
+                        signal.qualityScore = InpScoreBearLiqSweep;
                         signal.riskReward = m_rr_target;
                         signal.comment = "Bearish Liquidity Sweep";
                         signal.source = SIGNAL_SOURCE_PATTERN;

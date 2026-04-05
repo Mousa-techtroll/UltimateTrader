@@ -38,6 +38,13 @@ private:
    double            m_extension_atr_mult;    // ATR multiplier for Rubber Band extension (2.0)
    double            m_rubber_band_sl_atr;    // SL ATR multiplier (1.5)
    double            m_rubber_band_min_adx;   // Min ADX for Rubber Band (25.0)
+   double            m_rsi_ceiling;           // RSI ceiling (future use)
+   double            m_rsi_floor;             // RSI floor (future use)
+   int               m_max_spread;            // Max spread points (future use)
+   int               m_buffer_points;         // Buffer points (future use)
+   int               m_start_hour;            // Start hour GMT (future use)
+   int               m_end_hour;              // End hour GMT (future use)
+   int               m_donchian_period;       // Donchian period (future use)
 
 public:
    //+------------------------------------------------------------------+
@@ -46,12 +53,26 @@ public:
    CCrashBreakoutEntry(IMarketContext *context = NULL,
                        double extension_atr_mult = 2.0,
                        double sl_atr_mult = 1.5,
-                       double min_adx = 25.0)
+                       double min_adx = 25.0,
+                       double rsi_ceiling = 45.0,
+                       double rsi_floor = 25.0,
+                       int max_spread = 40,
+                       int buffer_points = 15,
+                       int start_hour = 13,
+                       int end_hour = 17,
+                       int donchian_period = 24)
    {
       m_context = context;
       m_extension_atr_mult = extension_atr_mult;
       m_rubber_band_sl_atr = sl_atr_mult;
       m_rubber_band_min_adx = min_adx;
+      m_rsi_ceiling = rsi_ceiling;
+      m_rsi_floor = rsi_floor;
+      m_max_spread = max_spread;
+      m_buffer_points = buffer_points;
+      m_start_hour = start_hour;
+      m_end_hour = end_hour;
+      m_donchian_period = donchian_period;
 
       m_bear_regime_active = false;
 

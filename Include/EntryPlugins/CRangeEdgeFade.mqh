@@ -25,6 +25,7 @@ private:
    int                 m_handle_atr_h1;
    int                 m_handle_atr_m15;
 
+   int                 m_rsi_period;       // RSI period (default 14)
    double              m_rsi_oversold;     // 32
    double              m_rsi_overbought;   // 68
 
@@ -59,11 +60,13 @@ public:
       m_handle_rsi_m15 = INVALID_HANDLE;
       m_handle_atr_h1 = INVALID_HANDLE;
       m_handle_atr_m15 = INVALID_HANDLE;
+      m_rsi_period = 14;
       m_rsi_oversold = 32.0;
       m_rsi_overbought = 68.0;
    }
 
    void SetRangeBox(CRangeBoxDetector *rb) { m_range_box = rb; }
+   void SetRSIPeriod(int period) { m_rsi_period = period; }
 
    virtual string GetName()        override { return "RangeEdgeFade"; }
    virtual string GetVersion()     override { return "1.00"; }
@@ -72,7 +75,7 @@ public:
 
    virtual bool Initialize() override
    {
-      m_handle_rsi_m15 = iRSI(_Symbol, PERIOD_M15, 14, PRICE_CLOSE);
+      m_handle_rsi_m15 = iRSI(_Symbol, PERIOD_M15, m_rsi_period, PRICE_CLOSE);
       m_handle_atr_h1 = iATR(_Symbol, PERIOD_H1, 14);
       m_handle_atr_m15 = iATR(_Symbol, PERIOD_M15, 14);
 

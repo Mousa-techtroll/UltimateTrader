@@ -366,7 +366,11 @@ int OnInit()
       InpEnableSMC, InpSMCOBLookback, InpSMCMinConfluence,
       InpEnableCrashDetector,
       InpEnableVolRegime,
-      InpEnableMomentum
+      InpEnableMomentum,
+      InpSMCOBBodyPct, InpSMCOBImpulseMult,
+      InpSMCFVGMinPoints, InpSMCBOSLookback,
+      InpSMCLiqTolerance, InpSMCLiqMinTouches,
+      InpSMCZoneMaxAge, InpSMCUseHTFConfluence
    );
 
    if(!g_marketContext.Init())
@@ -395,7 +399,9 @@ int OnInit()
    //================================================================
    g_signalValidator = new CSignalValidator(
       g_marketContext, InpUseH4AsPrimary, InpUseDaily200EMA,
-      75.0, 25.0, InpShortTrendMinADX, 3
+      75.0, 25.0, InpShortTrendMinADX, 3,
+      InpBullMRShortAdxCap, InpBullMRShortMacroMax,
+      InpShortTrendMaxADX, InpShortMRMacroMax
    );
    if(g_signalValidator == NULL)
    {
@@ -457,6 +463,7 @@ int OnInit()
 
       // S3: Range Edge Fade
       g_rangeEdgeFade = new CRangeEdgeFade(g_rangeBoxDetector);
+      g_rangeEdgeFade.SetRSIPeriod(InpRSIPeriod);
       RegisterEntryPlugin(g_rangeEdgeFade, true);
 
       // Disable replaced plugins
@@ -474,11 +481,18 @@ int OnInit()
    RegisterEntryPlugin(g_supportBounceEntry, InpEnableSupportBounce);
 
    // Volatility Breakout
-   g_volBreakoutEntry  = new CVolatilityBreakoutEntry();
+   g_volBreakoutEntry  = new CVolatilityBreakoutEntry(NULL,
+      InpBODonchianPeriod, InpBOKeltnerEMAPeriod, InpBOKeltnerATRPeriod,
+      InpBOKeltnerMult, InpBOADXMin, InpBOEntryBuffer, InpBOPullbackATRFrac,
+      InpBOCooldownBars);
    RegisterEntryPlugin(g_volBreakoutEntry, InpEnableVolBreakout);
 
    // Crash Breakout (Bear Hunter)
-   g_crashEntry        = new CCrashBreakoutEntry();
+   g_crashEntry        = new CCrashBreakoutEntry(NULL,
+      InpCrashATRMult, InpCrashSLATRMult, 25.0,
+      InpCrashRSICeiling, InpCrashRSIFloor,
+      InpCrashMaxSpread, InpCrashBufferPoints,
+      InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod);
    RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector);
 
    // File-based signals (if enabled)
@@ -508,6 +522,7 @@ int OnInit()
    if(InpEnableLiquidityEngine)
    {
       g_liquidityEngine = new CLiquidityEngine(GetPointer(g_marketContext), InpDisplacementATRMult, 45.0, InpMinSLPoints);  // Sprint 4G: pass EA-wide min SL
+      g_liquidityEngine.SetRSIPeriod(InpRSIPeriod);
       g_liquidityEngine.ConfigureModes(true, InpLiqEngineOBRetest, InpLiqEngineFVGMitigation, InpLiqEngineSFP, InpUseDivergenceFilter);
       RegisterEntryPlugin(g_liquidityEngine, true);
    }

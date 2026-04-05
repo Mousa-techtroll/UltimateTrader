@@ -30,6 +30,12 @@ private:
    double               m_validation_strong_adx;
    int                  m_validation_macro_strong;
 
+   // Short protection parameters (Group 3)
+   double               m_bull_mr_short_adx_cap;    // InpBullMRShortAdxCap
+   int                  m_bull_mr_short_macro_max;   // InpBullMRShortMacroMax
+   double               m_short_trend_max_adx;       // InpShortTrendMaxADX
+   int                  m_short_mr_macro_max;         // InpShortMRMacroMax
+
    // SMC Configuration
    bool                 m_smc_enabled;
    int                  m_smc_min_confluence;
@@ -40,7 +46,9 @@ public:
    //| Constructor                                                       |
    //+------------------------------------------------------------------+
    CSignalValidator(IMarketContext* context, bool use_h4, bool use_200ema,
-                    double rsi_ob, double rsi_os, double strong_adx, int macro_strong)
+                    double rsi_ob, double rsi_os, double strong_adx, int macro_strong,
+                    double bull_mr_short_adx_cap = 25.0, int bull_mr_short_macro_max = -2,
+                    double short_trend_max_adx = 50.0, int short_mr_macro_max = -2)
    {
       m_context = context;
       m_use_h4_primary = use_h4;
@@ -49,6 +57,10 @@ public:
       m_rsi_oversold = rsi_os;
       m_validation_strong_adx = strong_adx;
       m_validation_macro_strong = macro_strong;
+      m_bull_mr_short_adx_cap = bull_mr_short_adx_cap;
+      m_bull_mr_short_macro_max = bull_mr_short_macro_max;
+      m_short_trend_max_adx = short_trend_max_adx;
+      m_short_mr_macro_max = short_mr_macro_max;
 
       // SMC defaults (disabled until configured)
       m_smc_enabled = false;
@@ -342,9 +354,9 @@ public:
             {
                if(signal == SIGNAL_SHORT)
                {
-                  double ct_adx_cap = MathMin(m_validation_strong_adx - 5.0, 32.0);
+                  double ct_adx_cap = m_bull_mr_short_adx_cap;
                   bool macro_bearish = (macro_score <= -1);
-                  bool macro_strong_bear = (macro_score <= -m_validation_macro_strong);
+                  bool macro_strong_bear = (macro_score <= m_bull_mr_short_macro_max);
                   bool allow_short = false;
 
                   if(pattern_type == PATTERN_VOLATILITY_BREAKOUT && h4 == TREND_BEARISH && current_adx >= 26.0)
@@ -356,6 +368,11 @@ public:
                   if(current_adx > m_validation_strong_adx)
                   {
                      LogPrint("REJECT: Bull Trend too strong (ADX ", DoubleToString(current_adx, 1), ") to short.");
+                     return false;
+                  }
+                  if(!IsMeanReversionPattern(pattern_type) && current_adx > m_short_trend_max_adx)
+                  {
+                     LogPrint("REJECT: Trend short ADX exceeds max (", DoubleToString(current_adx, 1), " > ", m_short_trend_max_adx, ")");
                      return false;
                   }
 
@@ -468,9 +485,9 @@ public:
                   }
                   else if(IsMeanReversionPattern(pattern_type))
                   {
-                     if(current_adx <= m_validation_strong_adx && macro_score <= 0)
+                     if(current_adx <= m_bull_mr_short_adx_cap && macro_score <= m_short_mr_macro_max)
                      {
-                        LogPrint(">>> ALLOW: MR short below 200 EMA (macro<=0, ADX within cap)");
+                        LogPrint(">>> ALLOW: MR short below 200 EMA (macro<=", m_short_mr_macro_max, ", ADX within cap)");
                         allow_short = true;
                      }
                   }

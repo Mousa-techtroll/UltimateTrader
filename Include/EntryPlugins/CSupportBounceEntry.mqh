@@ -182,7 +182,7 @@ public:
          signal.stopLoss = sl;
          signal.takeProfit1 = tp;
          signal.patternType = PATTERN_SR_BOUNCE;
-         signal.qualityScore = 35;
+         signal.qualityScore = InpScoreSupportBounce;
          signal.riskReward = m_rr_target;
          signal.comment = "Support Bounce";
          signal.source = SIGNAL_SOURCE_PATTERN;
@@ -210,7 +210,7 @@ public:
          signal.stopLoss = sl;
          signal.takeProfit1 = tp;
          signal.patternType = PATTERN_SR_BOUNCE;
-         signal.qualityScore = 35;
+         signal.qualityScore = InpScoreSupportBounce;
          signal.riskReward = m_rr_target;
          signal.comment = "Resistance Bounce";
          signal.source = SIGNAL_SOURCE_PATTERN;

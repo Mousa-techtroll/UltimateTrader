@@ -57,6 +57,7 @@ private:
    int    m_max_disp_bars;          // Max bars to search for sweep before displacement
    double m_min_sl_points;          // Minimum SL distance in points
    int    m_atr_period;             // ATR indicator period
+   int    m_rsi_period;             // RSI indicator period
    ENUM_TIMEFRAMES m_timeframe;     // Operating timeframe
 
    // Bug 4 fix: FVG cooldown to prevent over-triggering
@@ -99,6 +100,7 @@ public:
       m_max_disp_bars        = 3;
       m_min_sl_points        = min_sl;
       m_atr_period           = 14;
+      m_rsi_period           = 14;
       m_timeframe            = PERIOD_H1;
       m_last_fvg_signal_time = 0;
       m_fvg_cooldown_bars    = 8;  // Min 8 bars between FVG signals (raised from 5: still 44% of trades)
@@ -147,6 +149,7 @@ public:
    void SetContext(IMarketContext *ctx)  { m_context = ctx; }
    // Sprint 4G: Allow EA-wide min SL to override engine default
    void SetMinSLPoints(double pts) { m_min_sl_points = pts; }
+   void SetRSIPeriod(int period) { m_rsi_period = period; }
    void SetDayType(ENUM_DAY_TYPE dt)
    {
       ENUM_DAY_TYPE old = m_day_type;
@@ -167,7 +170,7 @@ public:
          return false;
       }
 
-      m_handle_rsi = iRSI(_Symbol, m_timeframe, 14, PRICE_CLOSE);
+      m_handle_rsi = iRSI(_Symbol, m_timeframe, m_rsi_period, PRICE_CLOSE);
       if(m_handle_rsi == INVALID_HANDLE)
       {
          m_lastError = "CLiquidityEngine: Failed to create RSI handle";

@@ -70,6 +70,9 @@ private:
    //+------------------------------------------------------------------+
    double ApplyLossScaling(double risk)
    {
+      if(!InpEnableLossScaling)
+         return risk;
+
       if(m_consecutive_losses >= InpLossLevel2Threshold)
       {
          double scaled = risk * InpLossLevel2Reduction;

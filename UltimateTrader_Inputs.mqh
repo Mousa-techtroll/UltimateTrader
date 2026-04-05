@@ -52,11 +52,11 @@ input int    InpMaxTradesPerDay = 5;         // Max trades per day
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"
 input double InpShortRiskMultiplier = 0.5;   // Short risk multiplier
-input double InpBullMRShortAdxCap = 25.0;    // Bull MR short max ADX
-input int    InpBullMRShortMacroMax = -2;    // Bull MR short max macro score
+input double InpBullMRShortAdxCap = 17.0;    // Bull MR short max ADX (wired: was computed as MathMin(22-5,32)=17)
+input int    InpBullMRShortMacroMax = -3;    // Bull MR short max macro score (wired: was -m_validation_macro_strong=-3)
 input double InpShortTrendMinADX = 22.0;     // Short trend min ADX
 input double InpShortTrendMaxADX = 50.0;     // Short trend max ADX
-input int    InpShortMRMacroMax = -2;        // MR short max macro score
+input int    InpShortMRMacroMax = 0;         // MR short max macro score (wired: was hardcoded as 0)
 
 //--- Group 4: CONSECUTIVE LOSS PROTECTION
 input group "══════ CONSECUTIVE LOSS PROTECTION ══════"
@@ -101,12 +101,12 @@ input double InpBreakevenOffset = 50.0;      // Breakeven offset (points)
 //--- Group 9: VOLATILITY BREAKOUT
 input group "══════ VOLATILITY BREAKOUT ══════"
 input bool   InpEnableVolBreakout = true;    // Enable volatility breakout
-input int    InpBODonchianPeriod = 14;       // Donchian period
+input int    InpBODonchianPeriod = 20;       // Donchian period (wired: was hardcoded as 20)
 input int    InpBOKeltnerEMAPeriod = 20;     // Keltner EMA period
 input int    InpBOKeltnerATRPeriod = 20;     // Keltner ATR period
 input double InpBOKeltnerMult = 1.5;         // Keltner multiplier
-input double InpBOADXMin = 26.0;             // Min ADX for breakout
-input double InpBOEntryBuffer = 15.0;        // Entry buffer (points)
+input double InpBOADXMin = 25.0;             // Min ADX for breakout (wired: was hardcoded as 25.0)
+input double InpBOEntryBuffer = 50.0;        // Entry buffer (points) (wired: was hardcoded as 50.0)
 input double InpBOPullbackATRFrac = 0.5;     // Pullback ATR fraction
 input int    InpBOCooldownBars = 4;          // Cooldown bars
 input double InpBOTp1Distance = 1.8;         // TP1 distance (x risk)
@@ -124,10 +124,10 @@ input double InpSMCOBBodyPct = 0.5;          // OB body percentage
 input double InpSMCOBImpulseMult = 1.5;      // OB impulse multiplier
 input int    InpSMCFVGMinPoints = 50;        // FVG minimum points
 input int    InpSMCBOSLookback = 20;         // BOS lookback
-input double InpSMCLiqTolerance = 30.0;      // Liquidity tolerance
+input double InpSMCLiqTolerance = 60.0;      // Liquidity tolerance (wired: was hardcoded as 60)
 input int    InpSMCLiqMinTouches = 2;        // Liquidity min touches
 input int    InpSMCZoneMaxAge = 200;         // Zone max age (bars)
-input bool   InpSMCUseHTFConfluence = true;  // Use HTF confluence
+input bool   InpSMCUseHTFConfluence = false; // Use HTF confluence (wired: was hardcoded as false)
 input int    InpSMCMinConfluence = 55;       // Min confluence score
 input bool   InpSMCBlockCounterSMC = true;   // Block counter-SMC trades
 
@@ -179,7 +179,7 @@ input double InpVolExtremeSLMult = 0.70;     // Extreme vol SL multiplier
 //--- Group 15: CRASH DETECTOR
 input group "══════ CRASH DETECTOR (BEAR HUNTER) ══════"
 input bool   InpEnableCrashDetector = true;  // Enable crash detector
-input double InpCrashATRMult = 1.1;          // Crash ATR multiplier
+input double InpCrashATRMult = 2.0;          // Crash ATR multiplier (wired: was hardcoded as 2.0)
 input double InpCrashRSICeiling = 45.0;      // RSI ceiling
 input double InpCrashRSIFloor = 25.0;        // RSI floor
 input int    InpCrashMaxSpread = 40;         // Max spread (points)
@@ -187,7 +187,7 @@ input int    InpCrashBufferPoints = 15;      // Buffer points
 input int    InpCrashStartHour = 13;         // Start hour (GMT)
 input int    InpCrashEndHour = 17;           // End hour (GMT)
 input int    InpCrashDonchianPeriod = 24;    // Donchian period
-input double InpCrashSLATRMult = 2.5;        // SL ATR multiplier
+input double InpCrashSLATRMult = 1.5;        // SL ATR multiplier (wired: was hardcoded as 1.5)
 
 //--- Group 16: MACRO BIAS
 input group "══════ MACRO BIAS (DXY/VIX) ══════"
@@ -213,7 +213,7 @@ input group "══════ PATTERN SCORE ADJUSTMENTS ══════"
 input int    InpScoreBullEngulfing = 92;     // Bullish Engulfing score
 input int    InpScoreBullPinBar = 88;        // Bullish Pin Bar score
 input int    InpScoreBullMACross = 82;       // Bullish MA Cross score
-input int    InpScoreBearEngulfing = 0;      // Bearish Engulfing score (dead input — use InpEnableBearishEngulfing instead)
+input int    InpScoreBearEngulfing = 42;     // Bearish Engulfing score (wired: was hardcoded as 42)
 input bool   InpEnableBearishEngulfing = false; // Bearish Engulfing DISABLED: -25.9R/6yrs, worst strategy
 input bool   InpBearPinBarAsiaOnly = true;     // Bearish Pin Bar: Asia session only (+11.7R saved)
 input bool   InpRubberBandAPlusOnly = true;   // Rubber Band Short: require A/A+ quality (+4.0R saved)
@@ -228,10 +228,10 @@ input bool   InpCountertrendShortAsiaExempt = true;      // Deprecated no-op
 input bool   InpPrior24hContinuationLongFilter = false; // Deprecated no-op: reverted after worsening live-equivalent results
 input double InpPrior24hContinuationMinPct = 0.0; // Deprecated no-op
 input int    InpPrior24hContinuationH4Bars = 6; // Deprecated no-op
-input int    InpScoreBearPinBar = 60;        // Bearish Pin Bar score (raised from 15)
-input int    InpScoreBearMACross = 55;       // Bearish MA Cross score (raised from 18)
+input int    InpScoreBearPinBar = 15;        // Bearish Pin Bar score (wired: was hardcoded as 15)
+input int    InpScoreBearMACross = 18;       // Bearish MA Cross score (wired: was hardcoded as 18)
 input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score
-input int    InpScoreBearLiqSweep = 65;      // Bearish Liquidity Sweep score (raised from 38: enable shorts)
+input int    InpScoreBearLiqSweep = 38;      // Bearish Liquidity Sweep score (wired: was hardcoded as 38)
 input int    InpScoreSupportBounce = 35;     // Support Bounce score
 
 //--- Group 19: MARKET REGIME FILTERS
