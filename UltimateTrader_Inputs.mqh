@@ -41,7 +41,7 @@ input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend
 input bool   InpEnableWednesdayReduction = false; // Wednesday 0.85x: -$101 net across 4 years. Not worth it.
 input double InpWednesdayRiskMult = 0.85;        // Wednesday risk multiplier (0.85 = 15% reduction)
 input bool   InpEnableQualityTrendBoost = false;  // Quality-trend boost: $0 net across 4 years tested. Not worth complexity.
-input bool   InpEnableUniversalStall = false;    // Universal stall FAILED: -$3,519 across 4 years. Stalled trades recover more than analysis predicted.
+input bool   InpEnableUniversalStall = false;    // CONFIRMED DEAD x2: -$4,189 even with exit fixes. Gold consolidates 8-12h before continuing.
 input int    InpStallHours = 8;                  // Hours without TP0 before stall close
 input bool   InpEnableATRVelocity = true;  // ATR velocity as RISK MULTIPLIER (not quality point — avoids butterfly effect)
 input double InpATRVelocityBoostPct = 15.0; // ATR acceleration threshold (%)
@@ -145,7 +145,7 @@ input group "══════ TRAILING STOP OPTIMIZER ══════"
 input ENUM_TRAILING_STRATEGY InpTrailStrategy = TRAIL_CHANDELIER; // Trailing strategy
 input double InpTrailATRMult = 1.35;                 // Trail ATR multiplier
 input int    InpTrailSwingLookback = 7;              // Swing lookback
-input double InpTrailChandelierMult = 3.0;           // Chandelier multiplier (baseline)
+input double InpTrailChandelierMult = 3.0;           // Chandelier fallback — regime exit profiles override per-regime (see Group 40)
 input double InpTrailStepSize = 0.5;                 // Step size
 input int    InpTrailMinProfit = 60;                 // Min profit (points)
 input double InpTrailBETrigger = 0.8;                // Breakeven trigger (overridden by regime exit profiles)
