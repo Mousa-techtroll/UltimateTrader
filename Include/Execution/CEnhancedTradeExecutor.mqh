@@ -193,9 +193,10 @@ private:
       if(isXAUUSD)
       {
          // Gold spreads are session-dependent: wider in Asia, tighter in London/NY
-         MqlDateTime dt;
-         TimeToStruct(TimeCurrent(), dt);
-         bool isAsiaSession = (dt.hour >= 0 && dt.hour < 8);
+         // Sprint 5B: GMT-aware session detection
+         int gmt_hour = (g_sessionEngine != NULL) ?
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
+         bool isAsiaSession = (gmt_hour >= 0 && gmt_hour < 8);
          if(isAsiaSession)
          {
             spreadWarningThreshold = 70.0;
@@ -1993,8 +1994,9 @@ public:
    {
       // Component 1: Historical session quality (existing logic)
       MqlDateTime dt;
-      TimeToStruct(TimeCurrent(), dt);
-      int hour = dt.hour;
+      // Sprint 5B: GMT-aware execution metrics
+      int hour = (g_sessionEngine != NULL) ?
+         g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
 
       double avg_slippage = 0;
       int exec_count = 0;

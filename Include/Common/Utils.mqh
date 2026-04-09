@@ -107,41 +107,51 @@ bool IsHourInRange(int hour, int start_hour, int end_hour)
 
 
 //+------------------------------------------------------------------+
-//| Session Helpers (Vantage Markets GMT+2/3)                        |
+//| Session Helpers — Sprint 5B: GMT-aware (pass broker offset)      |
+//| Pass gmt_offset from g_sessionEngine.GetGMTOffset() at call site |
 //+------------------------------------------------------------------+
-bool IsAsiaSession()
+bool IsAsiaSession(int gmt_offset = 0)
 {
    MqlDateTime dt;
    TimeToStruct(TimeCurrent(), dt);
-   // Asia (Tokyo): 01:00 - 11:00 Server
-   return IsHourInRange(dt.hour, 1, 11);
+   int hour = dt.hour - gmt_offset;
+   if(hour < 0) hour += 24;
+   if(hour >= 24) hour -= 24;
+   // Asia (Tokyo): 23:00 - 08:00 GMT
+   return (hour >= 23 || hour < 8);
 }
 
-bool IsLondonSession()
+bool IsLondonSession(int gmt_offset = 0)
 {
    MqlDateTime dt;
    TimeToStruct(TimeCurrent(), dt);
-   // London: 10:00 - 19:00 Server
-   return IsHourInRange(dt.hour, 10, 19);
+   int hour = dt.hour - gmt_offset;
+   if(hour < 0) hour += 24;
+   if(hour >= 24) hour -= 24;
+   // London: 08:00 - 16:00 GMT
+   return IsHourInRange(hour, 8, 16);
 }
 
-bool IsNewYorkSession()
+bool IsNewYorkSession(int gmt_offset = 0)
 {
    MqlDateTime dt;
    TimeToStruct(TimeCurrent(), dt);
-   // New York: 15:00 - 00:00 Server (Midnight)
-   return IsHourInRange(dt.hour, 15, 24);
+   int hour = dt.hour - gmt_offset;
+   if(hour < 0) hour += 24;
+   if(hour >= 24) hour -= 24;
+   // New York: 13:00 - 21:00 GMT
+   return IsHourInRange(hour, 13, 21);
 }
 
 //+------------------------------------------------------------------+
 //| Check if current time is within allowed trading sessions         |
 //+------------------------------------------------------------------+
-bool IsSessionAllowed(bool trade_asia, bool trade_london, bool trade_ny)
+bool IsSessionAllowed(bool trade_asia, bool trade_london, bool trade_ny, int gmt_offset = 0)
 {
-   // Check strictly if the enabled session is currently active
-   if(trade_asia && IsAsiaSession()) return true;
-   if(trade_london && IsLondonSession()) return true;
-   if(trade_ny && IsNewYorkSession()) return true;
+   // Sprint 5B: GMT-aware session gate
+   if(trade_asia && IsAsiaSession(gmt_offset)) return true;
+   if(trade_london && IsLondonSession(gmt_offset)) return true;
+   if(trade_ny && IsNewYorkSession(gmt_offset)) return true;
 
    return false;
 }

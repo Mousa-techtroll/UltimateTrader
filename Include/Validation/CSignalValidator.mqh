@@ -388,7 +388,7 @@ public:
                         LogPrint(">>> ALLOW: MR short with bearish macro/H4 + low ADX against 200 EMA");
                         allow_short = true;
                      }
-                     else if(IsAsiaSession() && is_extreme_overbought)
+                     else if(IsAsiaSession(g_sessionEngine != NULL ? g_sessionEngine.GetGMTOffset() : 0) && is_extreme_overbought)
                      {
                         LogPrint(">>> ALLOW: Asia MR short with RSI extreme and low ADX");
                         allow_short = true;
@@ -407,7 +407,7 @@ public:
                         LogPrint(">>> ALLOW: Short allowed (RSI Extreme ", DoubleToString(current_rsi, 1), ")");
                         allow_short = true;
                      }
-                     else if(IsAsiaSession() && current_adx <= ct_adx_cap && macro_score <= 1)
+                     else if(IsAsiaSession(g_sessionEngine != NULL ? g_sessionEngine.GetGMTOffset() : 0) && current_adx <= ct_adx_cap && macro_score <= 1)
                      {
                         LogPrint(">>> ALLOW: Short allowed (Asia Session exception with low ADX)");
                         allow_short = true;
@@ -459,7 +459,7 @@ public:
                      {
                         LogPrint(">>> ALLOW: Long allowed against 200 EMA (H4 Bullish/RSI Oversold/MR + macro)");
                      }
-                     else if(IsAsiaSession())
+                     else if(IsAsiaSession(g_sessionEngine != NULL ? g_sessionEngine.GetGMTOffset() : 0))
                      {
                         LogPrint(">>> ALLOW: Long allowed (Asia Session exception)");
                      }

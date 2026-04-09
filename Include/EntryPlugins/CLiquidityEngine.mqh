@@ -1164,9 +1164,9 @@ private:
 
       //--- Get session and regime for forensic logging
       ENUM_REGIME_TYPE sfp_regime = (m_context != NULL) ? m_context.GetCurrentRegime() : REGIME_UNKNOWN;
-      MqlDateTime sfp_dt;
-      TimeToStruct(TimeCurrent(), sfp_dt);
-      int sfp_gmt_hour = sfp_dt.hour;
+      // Sprint 5B: GMT-aware SFP session logging
+      int sfp_gmt_hour = (g_sessionEngine != NULL) ?
+         g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
       string sfp_session = (sfp_gmt_hour < 8) ? "ASIA" : (sfp_gmt_hour < 16) ? "LONDON" : "NY";
 
       //--- Volume gate: bar[1] must have at least average volume

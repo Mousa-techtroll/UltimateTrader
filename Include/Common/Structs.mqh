@@ -292,6 +292,10 @@ struct PersistedPosition
    datetime runner_promotion_time;
    int      trail_send_policy;    // ENUM_TRAIL_SEND_POLICY cast to int
    datetime last_broker_trailing_time;
+
+   // Sprint 5E: preserve original SL for R-calculations after restart
+   double   original_sl;
+   double   original_tp1;
 };
 
 //+------------------------------------------------------------------+
@@ -494,6 +498,9 @@ struct SPendingSignal
    ENUM_ENGINE_MODE     engine_mode;
    ENUM_DAY_TYPE        day_type;
    int                  engine_confluence;
+
+   // Sprint 5D: multi-bar confirmation window
+   int                  pending_bar_count;    // Bars since signal stored as pending
 };
 
 //+------------------------------------------------------------------+

@@ -196,13 +196,27 @@ public:
       // =============================================================
       // BEARISH PIN BAR: Long upper wick, short lower wick
       // Close should be in lower 30% of candle range
-      // Asia-only gate: non-Asia loses -11.7R across 234 trades (London/NY institutional flow kills it)
+      // Profile gate: disabled for USDJPY (-7.2R across 3 years)
+      // Asia-only gate (gold): non-Asia loses -11.7R
       // =============================================================
-      if(InpBearPinBarAsiaOnly)
+      if(!g_profileEnableBearishPinBar)
+         return signal;  // Bearish Pin Bar disabled by profile
+
+      if(g_profileBearPinBarAsiaOnly)
       {
-         MqlDateTime dt_bpb;
-         TimeToStruct(TimeCurrent(), dt_bpb);
-         if(dt_bpb.hour >= 8)  // Not Asia (Asia = 0-8 server time)
+         // Sprint 5B: GMT-aware Asia gate (legacy — superseded by NY block)
+         int gmt_hour = (g_sessionEngine != NULL) ?
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
+         if(gmt_hour >= 8 && gmt_hour < 23)  // Not Asia (Asia = 23:00-08:00 GMT)
+            return signal;
+      }
+
+      // NY block: with GMT fix, London is positive (+4.4R) but NY is negative (-1.9R)
+      if(InpBearPinBarBlockNY)
+      {
+         int gmt_hour_ny = (g_sessionEngine != NULL) ?
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : 13;
+         if(gmt_hour_ny >= 13)  // NY = 13:00+ GMT
             return signal;
       }
 

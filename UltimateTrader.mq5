@@ -20,6 +20,9 @@
 // Input Parameters (must be before plugins that reference input variables)
 #include "UltimateTrader_Inputs.mqh"
 
+// Symbol Profile globals (must be after inputs, before plugins)
+#include "Include/Common/SymbolProfile.mqh"
+
 // Infrastructure (from AICoder V1)
 #include "Include/Infrastructure/Logger.mqh"
 #include "Include/Infrastructure/CErrorHandler.mqh"
@@ -178,6 +181,121 @@ bool IsBreakoutPattern(ENUM_PATTERN_TYPE pt)
            pt == PATTERN_INSTITUTIONAL_CANDLE);
 }
 
+// Auto-scaling: adjust point-based distances for non-gold symbols
+// Gold reference price ~2000. Scale factor = symbol_price / 2000.
+// Silver at $30 → scale = 0.015, so 800pt min SL becomes 12pt ($0.12)
+double g_pointScale = 1.0;
+double g_scaledMinSLPoints;
+double g_scaledMinTrailMovement;
+double g_scaledTrailMinProfit;
+double g_scaledTrailBEOffset;
+double g_scaledBOEntryBuffer;
+
+void ComputePointScale()
+{
+   g_pointScale = 1.0;
+   if(InpAutoScalePoints)
+   {
+      double price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      if(price > 0)
+      {
+         double gold_ref = 2000.0;
+         g_pointScale = price / gold_ref;
+         if(g_pointScale < 0.001) g_pointScale = 0.001;  // Floor
+         if(g_pointScale > 10.0)  g_pointScale = 10.0;   // Cap
+      }
+   }
+
+   g_scaledMinSLPoints      = InpMinSLPoints * g_pointScale;
+   g_scaledMinTrailMovement = InpMinTrailMovement * g_pointScale;
+   g_scaledTrailMinProfit   = InpTrailMinProfit * g_pointScale;
+   g_scaledTrailBEOffset    = InpTrailBEOffset * g_pointScale;
+   g_scaledBOEntryBuffer    = InpBOEntryBuffer * g_pointScale;
+
+   Print("[AutoScale] Symbol: ", _Symbol, " | Price: ", SymbolInfoDouble(_Symbol, SYMBOL_BID),
+         " | Scale: ", DoubleToString(g_pointScale, 4),
+         " | MinSL: ", DoubleToString(g_scaledMinSLPoints, 1), "pts",
+         " | TrailMove: ", DoubleToString(g_scaledMinTrailMovement, 1), "pts",
+         " | BEOffset: ", DoubleToString(g_scaledTrailBEOffset, 1), "pts");
+}
+
+// Symbol Profile functions (globals declared in Include/Common/SymbolProfile.mqh)
+ENUM_SYMBOL_PROFILE DetectSymbolProfile()
+{
+   if(InpSymbolProfile != SYMBOL_PROFILE_AUTO)
+      return InpSymbolProfile;
+
+   string sym = _Symbol;
+   if(StringFind(sym, "XAU") >= 0 || StringFind(sym, "GOLD") >= 0)
+      return SYMBOL_PROFILE_XAUUSD;
+   if(StringFind(sym, "USDJPY") >= 0)
+      return SYMBOL_PROFILE_USDJPY;
+   if(StringFind(sym, "GBPJPY") >= 0)
+      return SYMBOL_PROFILE_GBPJPY;
+
+   // Unknown symbol — use gold defaults (safest)
+   return SYMBOL_PROFILE_XAUUSD;
+}
+
+void ApplySymbolProfile()
+{
+   ENUM_SYMBOL_PROFILE profile = DetectSymbolProfile();
+
+   // Start with input defaults (gold-optimized)
+   g_profileBearPinBarAsiaOnly  = InpBearPinBarAsiaOnly;
+   g_profileBullMACrossBlockNY  = InpBullMACrossBlockNY;
+   g_profileRubberBandAPlusOnly = InpRubberBandAPlusOnly;
+   g_profileLongExtensionFilter = InpLongExtensionFilter;
+   g_profileEnableCIScoring     = InpEnableCIScoring;
+   g_profileEnableBearishEngulfing = InpEnableBearishEngulfing;
+   g_profileEnableS6Short       = InpEnableS6Short;
+   g_profileShortRiskMultiplier = g_profileShortRiskMultiplier;
+
+   switch(profile)
+   {
+      case SYMBOL_PROFILE_XAUUSD:
+         // Gold — all input values are already gold-optimized
+         Print("[SymbolProfile] XAUUSD — using gold-optimized settings");
+         break;
+
+      case SYMBOL_PROFILE_USDJPY:
+         // USDJPY: clean trends, deep liquidity, strong sessions
+         // Data-driven from 3-year backtest (2023-2025, 587 trades):
+         // Bearish Engulfing +4.3R, S6 +1.7R, Bull Engulf +5.3R → KEEP
+         // Rubber Band -9.3R, Bearish Pin Bar -7.2R → DISABLE
+         g_profileBearPinBarAsiaOnly  = false;  // Not gold-specific Asia demand
+         g_profileBullMACrossBlockNY  = false;  // NY is active for JPY
+         g_profileRubberBandAPlusOnly = false;  // N/A — Rubber Band fully disabled
+         g_profileLongExtensionFilter = false;  // Weekly EMA filter is gold-calibrated
+         g_profileEnableCIScoring     = false;  // CI thresholds are gold-calibrated
+         g_profileEnableBearishEngulfing = true; // +4.3R across 3 years on JPY
+         g_profileEnableS6Short       = true;   // +1.7R — JPY has clean short reversals
+         g_profileEnableCrashBreakout = false;  // Rubber Band -9.3R on JPY — DISABLED
+         g_profileEnableBearishPinBar = false;  // Bearish Pin Bar -7.2R on JPY — DISABLED
+         g_profileShortRiskMultiplier = 0.75;   // Less aggressive short reduction than gold's 0.5x
+         Print("[SymbolProfile] USDJPY — Rubber Band + Bearish Pin Bar disabled (data-driven)");
+         break;
+
+      case SYMBOL_PROFILE_GBPJPY:
+         // GBPJPY: high volatility, strong trends, similar to gold profile
+         // Partially keep filters, wider risk tolerance
+         g_profileBearPinBarAsiaOnly  = false;  // GBP doesn't have gold's Asia dynamics
+         g_profileBullMACrossBlockNY  = false;  // NY is active for GBP/JPY
+         g_profileRubberBandAPlusOnly = false;  // Re-enable
+         g_profileLongExtensionFilter = false;  // Gold-calibrated
+         g_profileEnableCIScoring     = false;  // Gold-calibrated
+         g_profileEnableBearishEngulfing = true; // Re-enable
+         g_profileEnableS6Short       = true;   // Re-enable
+         g_profileShortRiskMultiplier = 0.70;   // GBP is volatile — keep some short protection
+         Print("[SymbolProfile] GBPJPY — gold filters disabled, wider short tolerance");
+         break;
+
+      default:
+         Print("[SymbolProfile] Unknown — using gold defaults");
+         break;
+   }
+}
+
 // Exit Plugins
 CRegimeAwareExit       *g_regimeExit         = NULL;
 CDailyLossHaltExit     *g_dailyLossExit      = NULL;
@@ -246,9 +364,9 @@ void RegisterEntryPlugin(CEntryStrategy *plugin, bool enabled)
 //+------------------------------------------------------------------+
 ENUM_TRADING_SESSION GetCurrentTradingSession()
 {
-   MqlDateTime dt;
-   TimeToStruct(TimeCurrent(), dt);
-   int hour = dt.hour;
+   // Sprint 5B: GMT-aware session classification
+   int hour = (g_sessionEngine != NULL) ?
+      g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
    if(hour >= 0 && hour < 8) return SESSION_ASIA;
    if(hour >= 8 && hour < 13) return SESSION_LONDON;
    return SESSION_NEWYORK;
@@ -275,7 +393,7 @@ bool ShouldBlockLongExtensionCore(const bool is_buy_signal,
    entry_reference = 0.0;
    price_72h_ago = 0.0;
 
-   if(!InpLongExtensionFilter || !is_buy_signal)
+   if(!g_profileLongExtensionFilter || !is_buy_signal)
       return false;
 
    // Step 1: Compute 72h price change from H4 bars (18 bars = 72h)
@@ -345,6 +463,8 @@ int OnInit()
    g_isBacktesting = (bool)MQLInfoInteger(MQL_TESTER);
    g_lastBarTime = iTime(_Symbol, PERIOD_H1, 1);  // Previous bar so first bar triggers isNewBar
    g_breakoutProbation.Reset();
+   ComputePointScale();
+   ApplySymbolProfile();
 
    Print("==========================================================");
    Print("  UltimateTrader EA v1.0 - Initializing");
@@ -414,7 +534,8 @@ int OnInit()
    g_setupEvaluator  = new CSetupEvaluator(
       g_marketContext,
       InpRiskAPlusSetup, InpRiskASetup, InpRiskBPlusSetup, InpRiskBSetup,
-      InpPointsAPlusSetup, InpPointsASetup, InpPointsBPlusSetup, InpPointsBSetup,
+      InpPointsAPlusSetup, InpPointsASetup, InpPointsBPlusSetup,
+      (InpPointsBSetupOverride > 0 ? InpPointsBSetupOverride : InpPointsBSetup),
       75.0, 25.0  // RSI overbought/oversold thresholds
    );
    if(g_setupEvaluator == NULL)
@@ -431,9 +552,9 @@ int OnInit()
    g_entryPluginCount = 0;
 
    // Trend-Following patterns
-   g_engulfingEntry    = new CEngulfingEntry(NULL, InpATRPeriod, InpATRMultiplierSL, InpMinSLPoints);
-   g_pinBarEntry       = new CPinBarEntry(NULL, InpATRPeriod, InpMinSLPoints);
-   g_liqSweepEntry     = new CLiquiditySweepEntry(NULL, InpMinSLPoints);
+   g_engulfingEntry    = new CEngulfingEntry(NULL, InpATRPeriod, InpATRMultiplierSL, g_scaledMinSLPoints);
+   g_pinBarEntry       = new CPinBarEntry(NULL, InpATRPeriod, g_scaledMinSLPoints);
+   g_liqSweepEntry     = new CLiquiditySweepEntry(NULL, g_scaledMinSLPoints);
    g_maCrossEntry      = new CMACrossEntry(NULL, InpMAFastPeriod, InpMASlowPeriod, InpATRPeriod, InpATRMultiplierSL);
 
    RegisterEntryPlugin(g_engulfingEntry,  InpEnableEngulfing);
@@ -483,7 +604,7 @@ int OnInit()
    // Volatility Breakout
    g_volBreakoutEntry  = new CVolatilityBreakoutEntry(NULL,
       InpBODonchianPeriod, InpBOKeltnerEMAPeriod, InpBOKeltnerATRPeriod,
-      InpBOKeltnerMult, InpBOADXMin, InpBOEntryBuffer, InpBOPullbackATRFrac,
+      InpBOKeltnerMult, InpBOADXMin, g_scaledBOEntryBuffer, InpBOPullbackATRFrac,
       InpBOCooldownBars);
    RegisterEntryPlugin(g_volBreakoutEntry, InpEnableVolBreakout);
 
@@ -493,13 +614,19 @@ int OnInit()
       InpCrashRSICeiling, InpCrashRSIFloor,
       InpCrashMaxSpread, InpCrashBufferPoints,
       InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod);
-   RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector);
+   RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout);
 
    // File-based signals (if enabled)
+   // In BOTH mode: file signals run INDEPENDENTLY (not through orchestrator)
+   // so both file and pattern signals can execute on the same bar.
+   // In FILE-only mode: registered as plugin (no pattern competition).
    if(InpSignalSource == SIGNAL_SOURCE_FILE || InpSignalSource == SIGNAL_SOURCE_BOTH)
    {
-      g_fileEntry = new CFileEntry(NULL, InpSignalFile, (int)InpSignalTimeTolerance);
-      RegisterEntryPlugin(g_fileEntry, true);
+      g_fileEntry = new CFileEntry(NULL, InpSignalFile, (int)InpSignalTimeTolerance, InpFileCheckInterval);
+      if(InpSignalSource == SIGNAL_SOURCE_FILE)
+         RegisterEntryPlugin(g_fileEntry, true);  // FILE only — runs through orchestrator
+      else
+         g_fileEntry.Initialize();  // BOTH — initialized but NOT registered, runs separately
    }
 
    // Phase 3.4: New entry plugins
@@ -521,7 +648,7 @@ int OnInit()
    // Liquidity Engine
    if(InpEnableLiquidityEngine)
    {
-      g_liquidityEngine = new CLiquidityEngine(GetPointer(g_marketContext), InpDisplacementATRMult, 45.0, InpMinSLPoints);  // Sprint 4G: pass EA-wide min SL
+      g_liquidityEngine = new CLiquidityEngine(GetPointer(g_marketContext), InpDisplacementATRMult, 45.0, g_scaledMinSLPoints);  // Sprint 4G: pass EA-wide min SL
       g_liquidityEngine.SetRSIPeriod(InpRSIPeriod);
       g_liquidityEngine.ConfigureModes(true, InpLiqEngineOBRetest, InpLiqEngineFVGMitigation, InpLiqEngineSFP, InpUseDivergenceFilter);
       RegisterEntryPlugin(g_liquidityEngine, true);
@@ -534,7 +661,7 @@ int OnInit()
          InpAsianRangeStartHour, InpAsianRangeEndHour,
          InpLondonOpenHour, InpNYOpenHour,
          InpSilverBulletStartGMT, InpSilverBulletEndGMT);
-      g_sessionEngine.SetMinSLPoints(InpMinSLPoints);  // Sprint 4G: pass EA-wide min SL
+      g_sessionEngine.SetMinSLPoints(g_scaledMinSLPoints);  // Sprint 4G: pass EA-wide min SL
       g_sessionEngine.ConfigureModes(InpSessionLondonBO, InpSessionNYCont, InpSessionSilverBullet, InpSessionLondonClose, InpLondonCloseExtMult);
       RegisterEntryPlugin(g_sessionEngine, true);
    }
@@ -542,7 +669,7 @@ int OnInit()
    // Expansion Engine
    if(InpEnableExpansionEngine)
    {
-      g_expansionEngine = new CExpansionEngine(GetPointer(g_marketContext), InpInstCandleMult, InpCompressionMinBars, InpMinSLPoints);  // Sprint 4G: pass EA-wide min SL
+      g_expansionEngine = new CExpansionEngine(GetPointer(g_marketContext), InpInstCandleMult, InpCompressionMinBars, g_scaledMinSLPoints);  // Sprint 4G: pass EA-wide min SL
       g_expansionEngine.ConfigureModes(true, InpExpInstitutionalCandle, InpExpCompressionBO, InpInstCandleMult, InpCompressionMinBars);
       RegisterEntryPlugin(g_expansionEngine, true);
    }
@@ -556,7 +683,7 @@ int OnInit()
          InpPBCMinPullbackATR, InpPBCMaxPullbackATR,
          InpPBCSignalBodyATR, InpPBCStopBufferATR, 0.05,
          InpPBCMinADX, 20.0,
-         true, true, InpPBCBlockChoppy, InpMinSLPoints);
+         true, true, InpPBCBlockChoppy, g_scaledMinSLPoints);
       RegisterEntryPlugin(g_pullbackEngine, true);
       g_pullbackEngine.ConfigureMultiCycle(
          InpPBCEnableMultiCycle, InpPBCCycleCooldownBars,
@@ -589,8 +716,8 @@ int OnInit()
    //================================================================
    g_trailingPluginCount = 0;
 
-   g_atrTrailing        = new CATRTrailing(NULL, InpATRPeriod, InpTrailATRMult, InpTrailMinProfit, InpMinTrailMovement);
-   g_chandelierTrailing = new CChandelierTrailing(NULL, InpATRPeriod, InpTrailChandelierMult, InpBOChandelierLookback, InpTrailMinProfit, InpMinTrailMovement);
+   g_atrTrailing        = new CATRTrailing(NULL, InpATRPeriod, InpTrailATRMult, g_scaledTrailMinProfit, g_scaledMinTrailMovement);
+   g_chandelierTrailing = new CChandelierTrailing(NULL, InpATRPeriod, InpTrailChandelierMult, InpBOChandelierLookback, g_scaledTrailMinProfit, g_scaledMinTrailMovement);
    g_swingTrailing      = new CSwingTrailing(NULL, InpTrailSwingLookback);
    g_sarTrailing        = new CParabolicSARTrailing();
    g_steppedTrailing    = new CSteppedTrailing(NULL, InpATRPeriod, InpTrailStepSize);
@@ -704,7 +831,7 @@ int OnInit()
    // CSignalOrchestrator: new constructor with full params
    g_signalOrchestrator = new CSignalOrchestrator(
       g_marketContext, g_signalValidator, g_setupEvaluator,
-      InpEnableConfirmation, InpShortRiskMultiplier,
+      InpEnableConfirmation, g_profileShortRiskMultiplier,
       InpConfirmationStrictness,
       InpTradeAsia, InpTradeLondon, InpTradeNY,
       InpSkipStartHour, InpSkipEndHour,
@@ -738,7 +865,7 @@ int OnInit()
       InpMagicNumber,
       InpEnableAlerts, InpEnablePush, InpEnableEmail,
       InpRiskAPlusSetup, InpRiskASetup, InpRiskBPlusSetup, InpRiskBSetup,
-      InpShortRiskMultiplier
+      g_profileShortRiskMultiplier
    );
    g_tradeOrchestrator.SetTradeLogger(g_tradeLogger);
 
@@ -875,7 +1002,7 @@ int OnInit()
          "% | Cap=", InpMaxRiskPerTrade, "% | Daily Limit=", InpDailyLossLimit, "%");
    Print("  Positions: Max=", InpMaxPositions,
          " | Trades/Day=", InpMaxTradesPerDay,
-         " | Short Mult=", InpShortRiskMultiplier);
+         " | Short Mult=", g_profileShortRiskMultiplier);
    Print("  Weekend Close: ", InpCloseBeforeWeekend ? "ON" : "OFF",
          " | Max Age: ", InpMaxPositionAgeHours, "h",
          " | Choppy Close: ", InpAutoCloseOnChoppy ? "ON" : "OFF");
@@ -1326,10 +1453,16 @@ void OnTick()
       //--- 2. Check pending confirmation signal (handled by CSignalOrchestrator)
       if(InpEnableConfirmation && g_signalOrchestrator.HasPendingSignal())
       {
+         // Sprint 5D: increment bar counter for multi-bar window
+         g_signalOrchestrator.IncrementPendingBarCount();
+
          if(g_signalOrchestrator.CheckPendingConfirmation())
          {
-            // Revalidate against current conditions
-	            if(g_signalOrchestrator.RevalidatePending())
+            // Sprint 5D: soft or full revalidation
+            bool revalid = InpSoftRevalidation ?
+               g_signalOrchestrator.SoftRevalidatePending() :
+               g_signalOrchestrator.RevalidatePending();
+	            if(revalid)
 	            {
 	               SPendingSignal pending = g_signalOrchestrator.GetPendingSignal();
 
@@ -1442,10 +1575,72 @@ void OnTick()
                {
                   g_riskMonitor.RecordExecutionError();
                }
+               // Sprint 5D: clear after execution attempt (success or error)
+               g_signalOrchestrator.ClearPendingSignal();
             }
                } // end else (quality filter passed)
          }
-         g_signalOrchestrator.ClearPendingSignal();
+         else
+         {
+            // Sprint 5D: confirmation failed this bar — check multi-bar window
+            SPendingSignal pend_check = g_signalOrchestrator.GetPendingSignal();
+            if(pend_check.pending_bar_count >= InpConfirmationWindowBars)
+            {
+               Print("[ConfirmWindow] Exhausted ", pend_check.pending_bar_count,
+                     "/", InpConfirmationWindowBars, " bars — clearing");
+               g_signalOrchestrator.ClearPendingSignal();
+            }
+            else
+            {
+               Print("[ConfirmWindow] Bar ", pend_check.pending_bar_count,
+                     "/", InpConfirmationWindowBars, " — retrying next bar");
+            }
+         }
+      }
+
+      //--- 2b. Independent file signal check (BOTH mode — runs separately from orchestrator)
+      if(InpSignalSource == SIGNAL_SOURCE_BOTH && g_fileEntry != NULL &&
+         !g_riskMonitor.IsTradingHalted() && g_riskMonitor.CanTrade() &&
+         g_posCoordinator.GetPositionCount() < InpMaxPositions)
+      {
+         EntrySignal fileSignal = g_fileEntry.CheckForEntrySignal();
+         if(fileSignal.valid)
+         {
+            // Apply file signal risk if not specified in CSV
+            if(fileSignal.riskPercent <= 0)
+               fileSignal.riskPercent = InpFileSignalRiskPct;
+
+            fileSignal.audit_origin = "FILE_INDEPENDENT";
+
+            Print("[FileSignal] Independent execution: ", fileSignal.comment,
+                  " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
+                  " | Quality=", EnumToString(fileSignal.setupQuality),
+                  " | Risk=", DoubleToString(fileSignal.riskPercent, 2), "%");
+
+            SPosition filePos = g_tradeOrchestrator.ExecuteSignal(fileSignal);
+            if(filePos.ticket > 0)
+            {
+               filePos.stage = STAGE_INITIAL;
+               filePos.original_lots = filePos.lot_size;
+               filePos.remaining_lots = filePos.lot_size;
+               filePos.stage_label = "INITIAL";
+               filePos.original_sl = filePos.stop_loss;
+               filePos.original_tp1 = filePos.tp1;
+               filePos.signal_id = fileSignal.signal_id;
+               filePos.engine_name = "FileSignal";
+               filePos.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+               filePos.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
+               filePos.entry_regime = (int)g_marketContext.GetCurrentRegime();
+               filePos.confirmation_used = false;
+
+               g_posCoordinator.AddPosition(filePos);
+               g_riskMonitor.IncrementTradesToday();
+               g_riskMonitor.RecordExecutionSuccess();
+
+               Print("[FileSignal] Executed: ticket=", filePos.ticket,
+                     " | Pattern signals will ALSO fire independently this bar");
+            }
+         }
       }
 
       //--- 3. Check for new signals (if not halted)
@@ -1551,27 +1746,33 @@ void OnTick()
                   signal.session_risk_multiplier = 1.0;
                   signal.regime_risk_multiplier = 1.0;
 
-                  // Sprint 2: Session risk adjustment
+                  // Sprint 2 + 5B: Session risk adjustment (GMT-aware)
                   if(InpEnableSessionRiskAdjust)
                   {
-                     int session_hour = 0;
-                     MqlDateTime sdt;
-                     TimeToStruct(TimeCurrent(), sdt);
-                     session_hour = sdt.hour;
+                     int gmt_hour = (g_sessionEngine != NULL) ?
+                        g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
 
                      double session_mult = 1.0;
-                     if(session_hour >= 8 && session_hour < 16)
+                     string session_name = "ASIA";
+                     if(gmt_hour >= 8 && gmt_hour < 13)
+                     {
                         session_mult = InpLondonRiskMultiplier;
-                     else if(session_hour >= 16 || session_hour < 0)
+                        session_name = "LONDON";
+                     }
+                     else if(gmt_hour >= 13 && gmt_hour < 21)
+                     {
                         session_mult = InpNewYorkRiskMultiplier;
-                     // Asia (0-8) stays at 1.0
+                        session_name = "NY";
+                     }
+                     // Asia (21-8 GMT) stays at 1.0
 
                      if(session_mult < 1.0 && signal.riskPercent > 0)
                      {
                         double orig_risk = signal.riskPercent;
                         signal.riskPercent *= session_mult;
                         signal.session_risk_multiplier = session_mult;
-                        Print("[SessionRisk] ", (session_hour>=8&&session_hour<16)?"LONDON":"NY",
+                        Print("[SessionRisk] ", session_name,
+                              " (GMT ", gmt_hour, ":00)"
                               " | Risk: ", DoubleToString(orig_risk, 2),
                               "% -> ", DoubleToString(signal.riskPercent, 2),
                               "% (x", DoubleToString(session_mult, 2), ")");

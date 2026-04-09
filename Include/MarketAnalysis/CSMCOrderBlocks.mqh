@@ -37,6 +37,7 @@ struct SSMCZone
    int                  touch_count;    // Times price touched zone
    double               strength;       // Zone strength (0-100)
    ENUM_TIMEFRAMES      timeframe;      // Timeframe zone was detected on
+   datetime             last_touch_time;// Sprint 5C: last touch time (prevents double-counting)
 };
 
 //+------------------------------------------------------------------+
@@ -310,9 +311,12 @@ public:
       result.supports_short = false;
 
       // Check if price is in any bullish OB
+      // Sprint 5C: strength gate when decay enabled
+      double min_str = InpEnableSMCZoneDecay ? (double)InpSMCZoneMinStrength : 0.0;
       for(int i = 0; i < m_bullish_ob_count; i++)
       {
          if(m_bullish_obs[i].is_valid &&
+            m_bullish_obs[i].strength >= min_str &&
             current_price >= m_bullish_obs[i].bottom &&
             current_price <= m_bullish_obs[i].top)
          {
@@ -326,6 +330,7 @@ public:
       for(int i = 0; i < m_bearish_ob_count; i++)
       {
          if(m_bearish_obs[i].is_valid &&
+            m_bearish_obs[i].strength >= min_str &&
             current_price >= m_bearish_obs[i].bottom &&
             current_price <= m_bearish_obs[i].top)
          {
@@ -341,10 +346,11 @@ public:
       if(!result.in_bearish_ob)
          result.nearest_bearish_ob = FindNearestZoneAbove(current_price, true);
 
-      // Check FVGs
+      // Check FVGs (Sprint 5C: strength gate)
       for(int i = 0; i < m_bullish_fvg_count; i++)
       {
          if(m_bullish_fvgs[i].is_valid &&
+            m_bullish_fvgs[i].strength >= min_str &&
             current_price >= m_bullish_fvgs[i].bottom &&
             current_price <= m_bullish_fvgs[i].top)
          {
@@ -357,6 +363,7 @@ public:
       for(int i = 0; i < m_bearish_fvg_count; i++)
       {
          if(m_bearish_fvgs[i].is_valid &&
+            m_bearish_fvgs[i].strength >= min_str &&
             current_price >= m_bearish_fvgs[i].bottom &&
             current_price <= m_bearish_fvgs[i].top)
          {
@@ -1117,12 +1124,24 @@ private:
    {
       double current_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
-      // Check bullish OBs - invalidate if price closes below
+      double close = iClose(_Symbol, PERIOD_H1, 0);
+      datetime now = TimeCurrent();
+
+      // Check bullish OBs - touch tracking + mitigation
       for(int i = 0; i < m_bullish_ob_count; i++)
       {
          if(m_bullish_obs[i].is_valid)
          {
-            double close = iClose(_Symbol, PERIOD_H1, 0);
+            // Sprint 5C: Touch detection — price inside zone but zone holds
+            if(InpEnableSMCZoneDecay &&
+               close >= m_bullish_obs[i].bottom && close <= m_bullish_obs[i].top &&
+               (now - m_bullish_obs[i].last_touch_time) > 4 * 3600)  // Min 4 bars between touches
+            {
+               m_bullish_obs[i].touch_count++;
+               m_bullish_obs[i].last_touch_time = now;
+               m_bullish_obs[i].strength = MathMin(100, m_bullish_obs[i].strength + InpSMCTouchStrengthBoost);
+            }
+            // Mitigation: price closed below zone
             if(close < m_bullish_obs[i].bottom)
             {
                m_bullish_obs[i].is_valid = false;
@@ -1131,12 +1150,19 @@ private:
          }
       }
 
-      // Check bearish OBs - invalidate if price closes above
+      // Check bearish OBs - touch tracking + mitigation
       for(int i = 0; i < m_bearish_ob_count; i++)
       {
          if(m_bearish_obs[i].is_valid)
          {
-            double close = iClose(_Symbol, PERIOD_H1, 0);
+            if(InpEnableSMCZoneDecay &&
+               close >= m_bearish_obs[i].bottom && close <= m_bearish_obs[i].top &&
+               (now - m_bearish_obs[i].last_touch_time) > 4 * 3600)
+            {
+               m_bearish_obs[i].touch_count++;
+               m_bearish_obs[i].last_touch_time = now;
+               m_bearish_obs[i].strength = MathMin(100, m_bearish_obs[i].strength + InpSMCTouchStrengthBoost);
+            }
             if(close > m_bearish_obs[i].top)
             {
                m_bearish_obs[i].is_valid = false;
@@ -1145,20 +1171,38 @@ private:
          }
       }
 
-      // Mark FVGs as mitigated when price fills them
+      // Mark FVGs as mitigated when price fills them (+ touch tracking)
       for(int i = 0; i < m_bullish_fvg_count; i++)
       {
-         if(m_bullish_fvgs[i].is_valid && current_price <= m_bullish_fvgs[i].bottom)
+         if(m_bullish_fvgs[i].is_valid)
          {
-            m_bullish_fvgs[i].is_valid = false;
+            if(InpEnableSMCZoneDecay &&
+               current_price >= m_bullish_fvgs[i].bottom && current_price <= m_bullish_fvgs[i].top &&
+               (now - m_bullish_fvgs[i].last_touch_time) > 4 * 3600)
+            {
+               m_bullish_fvgs[i].touch_count++;
+               m_bullish_fvgs[i].last_touch_time = now;
+               m_bullish_fvgs[i].strength = MathMin(100, m_bullish_fvgs[i].strength + InpSMCTouchStrengthBoost);
+            }
+            if(current_price <= m_bullish_fvgs[i].bottom)
+               m_bullish_fvgs[i].is_valid = false;
          }
       }
 
       for(int i = 0; i < m_bearish_fvg_count; i++)
       {
-         if(m_bearish_fvgs[i].is_valid && current_price >= m_bearish_fvgs[i].top)
+         if(m_bearish_fvgs[i].is_valid)
          {
-            m_bearish_fvgs[i].is_valid = false;
+            if(InpEnableSMCZoneDecay &&
+               current_price >= m_bearish_fvgs[i].bottom && current_price <= m_bearish_fvgs[i].top &&
+               (now - m_bearish_fvgs[i].last_touch_time) > 4 * 3600)
+            {
+               m_bearish_fvgs[i].touch_count++;
+               m_bearish_fvgs[i].last_touch_time = now;
+               m_bearish_fvgs[i].strength = MathMin(100, m_bearish_fvgs[i].strength + InpSMCTouchStrengthBoost);
+            }
+            if(current_price >= m_bearish_fvgs[i].top)
+               m_bearish_fvgs[i].is_valid = false;
          }
       }
    }
@@ -1168,9 +1212,45 @@ private:
    //+------------------------------------------------------------------+
    void RemoveExpiredZones()
    {
-      // PROVEN: No age-based expiration. Zone expiration tested and rejected:
-      // Test B showed -$597 profit, DD tripled from 4.6% to 12.6%.
-      // Zones are invalidated by price (mitigation) only.
+      // Sprint 5C: Graduated strength decay (replaces hard age-based expiry that failed in Test B).
+      // Zones decay gradually; touched/respected zones regain strength. Only truly dead zones recycle.
+      if(!InpEnableSMCZoneDecay) return;  // Off = exact baseline behavior
+
+      DecayAndRecycleZones(m_bullish_obs, m_bullish_ob_count, true);
+      DecayAndRecycleZones(m_bearish_obs, m_bearish_ob_count, true);
+      DecayAndRecycleZones(m_bullish_fvgs, m_bullish_fvg_count, false);
+      DecayAndRecycleZones(m_bearish_fvgs, m_bearish_fvg_count, false);
+   }
+
+   void DecayAndRecycleZones(SSMCZone &zones[], int &count, bool is_ob)
+   {
+      datetime now = TimeCurrent();
+      double base_strength = is_ob ? 70.0 : 50.0;
+
+      for(int i = 0; i < count; i++)
+      {
+         if(!zones[i].is_valid) continue;
+
+         int age_bars = (int)((now - zones[i].formed_time) / 3600);  // H1 bars
+
+         // Grace period: first 50 bars no decay
+         if(age_bars > 50)
+         {
+            double touch_bonus = zones[i].touch_count * InpSMCTouchStrengthBoost;
+            double decay = (age_bars - 50) * InpSMCZoneDecayRate;
+            zones[i].strength = MathMax(0, base_strength + touch_bonus - decay);
+         }
+
+         // Recycle truly dead zones: old + untouched + weak
+         if(age_bars >= InpSMCZoneRecycleAge &&
+            zones[i].touch_count == 0 &&
+            zones[i].strength < (double)InpSMCZoneMinStrength)
+         {
+            zones[i].is_valid = false;
+            LogPrint("SMC: Zone RECYCLED (age=", age_bars, " bars, strength=",
+                     DoubleToString(zones[i].strength, 1), ", touches=0)");
+         }
+      }
    }
 
    // REVERT: No zone recycling. The $6,140 baseline had slots that filled up permanently.
@@ -1181,6 +1261,9 @@ private:
    {
       if(m_bullish_ob_count < 20)
          return m_bullish_ob_count;
+      // Sprint 5C: reuse invalid slots only when decay enabled
+      if(InpEnableSMCZoneDecay)
+         return FindWeakestInvalidSlot(m_bullish_obs, m_bullish_ob_count);
       return -1;
    }
 
@@ -1188,6 +1271,8 @@ private:
    {
       if(m_bearish_ob_count < 20)
          return m_bearish_ob_count;
+      if(InpEnableSMCZoneDecay)
+         return FindWeakestInvalidSlot(m_bearish_obs, m_bearish_ob_count);
       return -1;
    }
 
@@ -1195,6 +1280,8 @@ private:
    {
       if(m_bullish_fvg_count < 20)
          return m_bullish_fvg_count;
+      if(InpEnableSMCZoneDecay)
+         return FindWeakestInvalidSlot(m_bullish_fvgs, m_bullish_fvg_count);
       return -1;
    }
 
@@ -1202,7 +1289,25 @@ private:
    {
       if(m_bearish_fvg_count < 20)
          return m_bearish_fvg_count;
+      if(InpEnableSMCZoneDecay)
+         return FindWeakestInvalidSlot(m_bearish_fvgs, m_bearish_fvg_count);
       return -1;
+   }
+
+   // Sprint 5C: Find weakest already-invalid slot for reuse (never evicts valid zones)
+   int FindWeakestInvalidSlot(SSMCZone &zones[], int count)
+   {
+      int best_slot = -1;
+      double weakest = 999;
+      for(int i = 0; i < count; i++)
+      {
+         if(!zones[i].is_valid && zones[i].strength < weakest)
+         {
+            weakest = zones[i].strength;
+            best_slot = i;
+         }
+      }
+      return best_slot;
    }
 
    //+------------------------------------------------------------------+
@@ -1222,6 +1327,7 @@ private:
       m_bullish_obs[slot].touch_count = 0;
       m_bullish_obs[slot].strength = 70;
       m_bullish_obs[slot].timeframe = PERIOD_H1;
+      m_bullish_obs[slot].last_touch_time = 0;
 
       if(slot == m_bullish_ob_count)
          m_bullish_ob_count++;
@@ -1244,6 +1350,7 @@ private:
       m_bearish_obs[slot].touch_count = 0;
       m_bearish_obs[slot].strength = 70;
       m_bearish_obs[slot].timeframe = PERIOD_H1;
+      m_bearish_obs[slot].last_touch_time = 0;
 
       if(slot == m_bearish_ob_count)
          m_bearish_ob_count++;
@@ -1266,6 +1373,7 @@ private:
       m_bullish_fvgs[slot].touch_count = 0;
       m_bullish_fvgs[slot].strength = 50;
       m_bullish_fvgs[slot].timeframe = PERIOD_H1;
+      m_bullish_fvgs[slot].last_touch_time = 0;
 
       if(slot == m_bullish_fvg_count)
          m_bullish_fvg_count++;
@@ -1288,6 +1396,7 @@ private:
       m_bearish_fvgs[slot].touch_count = 0;
       m_bearish_fvgs[slot].strength = 50;
       m_bearish_fvgs[slot].timeframe = PERIOD_H1;
+      m_bearish_fvgs[slot].last_touch_time = 0;
 
       if(slot == m_bearish_fvg_count)
          m_bearish_fvg_count++;

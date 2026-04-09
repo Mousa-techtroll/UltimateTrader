@@ -230,7 +230,7 @@ public:
 
       // Factor 5: Choppiness Index regime confirmation (±1 point)
       // CI < 40 = strong trend (directionally efficient), CI > 60 = choppy (random)
-      if(InpEnableCIScoring && m_context != NULL)
+      if(g_profileEnableCIScoring && m_context != NULL)
       {
          double ci = m_context.GetChoppinessIndex();
          bool is_mr = (StringFind(pattern, "BB Mean") >= 0 ||

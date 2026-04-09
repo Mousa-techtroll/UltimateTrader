@@ -9,11 +9,20 @@
 //+------------------------------------------------------------------+
 #property strict
 
+//--- Group 0: SYMBOL PROFILE
+input group "══════ SYMBOL PROFILE ══════"
+input ENUM_SYMBOL_PROFILE InpSymbolProfile = SYMBOL_PROFILE_XAUUSD; // Symbol profile (overrides filters/params for the selected instrument)
+
 //--- Group 1: SIGNAL SOURCE
 input group "══════ SIGNAL SOURCE ══════"
-input ENUM_SIGNAL_SOURCE InpSignalSource = SIGNAL_SOURCE_PATTERN; // Signal source mode
-input string InpSignalFile = "";                                    // CSV signal file path (for FILE/BOTH mode)
-input double InpSignalTimeTolerance = 400;                         // Signal time tolerance (seconds)
+input ENUM_SIGNAL_SOURCE InpSignalSource = SIGNAL_SOURCE_BOTH;     // Signal source: PATTERN=engine only, FILE=CSV only, BOTH=engine+CSV
+input string InpSignalFile = "telegram_signals.csv";               // CSV signal file path (in MQL5/Files/)
+input double InpSignalTimeTolerance = 400;                         // Signal execution window (seconds) — signal expires after this
+input int    InpFileCheckInterval = 60;                            // File re-read interval (seconds) — how often EA checks for new signals
+input ENUM_SETUP_QUALITY InpFileSignalQuality = SETUP_A;           // File signal quality tier (A+=highest priority, B=lowest)
+input double InpFileSignalRiskPct = 0.8;                           // File signal default risk % (when CSV has 0 or missing)
+input bool   InpFileSignalSkipRegime = true;                       // File signals bypass regime filter (execute in any market state)
+input bool   InpFileSignalSkipConfirmation = true;                 // File signals skip confirmation candle (execute immediately)
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
@@ -27,7 +36,7 @@ input double InpDailyLossLimit = 3.0;        // Daily loss limit % (halt trading
 input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier
 input int    InpMaxPositions = 5;            // Max concurrent positions
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
-input bool   InpStructureBasedExit = false; // Structure exit: require H1 EMA50 break before CHOPPY close (no-op in testing)
+input bool   InpStructureBasedExit = false; // CONFIRMED IRRELEVANT: CHOPPY regime never occurs on gold (0/815 trades). Gate has nothing to gate.
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
 input bool   InpEnableWednesdayReduction = false; // Wednesday 0.85x: -$101 net across 4 years. Not worth it.
 input double InpWednesdayRiskMult = 0.85;        // Wednesday risk multiplier (0.85 = 15% reduction)
@@ -46,6 +55,7 @@ input int    InpMaxPositionAgeHours = 72;    // Max position age (hours)
 input bool   InpCloseBeforeWeekend = true;   // Close positions before weekend
 input int    InpWeekendCloseHour = 20;       // Weekend close hour (server time)
 input int    InpMaxTradesPerDay = 5;         // Max trades per day
+input int    InpBrokerGMTOffset = 2;         // Broker GMT offset (winter) — backtester fallback when TimeGMT() unreliable
 
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"
@@ -79,7 +89,8 @@ input int    InpATRPeriod = 14;              // ATR period
 //--- Group 7: STOP LOSS & ATR
 input group "══════ STOP LOSS & ATR ══════"
 input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
-input double InpMinSLPoints = 800.0;         // Minimum SL distance (points)
+input double InpMinSLPoints = 800.0;         // Minimum SL distance (points) — auto-scaled for non-gold symbols
+input bool   InpAutoScalePoints = true;      // Auto-scale all point distances by symbol price (gold=reference)
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
 input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
 input double InpMinRoomToObstacle = 2.0;     // Min room to structural obstacle (R-multiples)
@@ -117,6 +128,11 @@ input int    InpSMCBOSLookback = 20;         // BOS lookback
 input double InpSMCLiqTolerance = 60.0;      // Liquidity tolerance (wired: was hardcoded as 60)
 input int    InpSMCLiqMinTouches = 2;        // Liquidity min touches
 input int    InpSMCZoneMaxAge = 200;         // Zone max age (bars)
+input bool   InpEnableSMCZoneDecay = false;  // Sprint 5C: graduated zone strength decay (A/B toggle)
+input double InpSMCZoneDecayRate = 0.25;     // Strength decay per bar after grace period
+input int    InpSMCZoneMinStrength = 20;     // Min strength for zone to participate in scoring
+input int    InpSMCZoneRecycleAge = 400;     // Bars before dead zones can be recycled for new ones
+input double InpSMCTouchStrengthBoost = 10.0;// Strength boost when zone is touched/respected
 input bool   InpSMCUseHTFConfluence = false; // Use HTF confluence (wired: was hardcoded as false)
 input int    InpSMCMinConfluence = 55;       // Min confluence score
 
@@ -150,6 +166,7 @@ input double InpWeakTrendTPCut = 0.55;       // Weak trend TP reduction
 //--- Group 14: VOLATILITY REGIME RISK
 input group "══════ VOLATILITY REGIME RISK ══════"
 input bool   InpEnableVolRegime = true;      // Enable vol regime adjustment
+input bool   InpVolRegimeYieldsToRegimeRisk = true; // Skip vol-regime when regime-risk scaler active (prevents double-reduction)
 input double InpVolVeryLowThresh = 0.5;      // Very low threshold
 input double InpVolLowThresh = 0.7;          // Low threshold
 input double InpVolNormalThresh = 1.0;       // Normal threshold
@@ -200,10 +217,11 @@ input int    InpScoreBullEngulfing = 92;     // Bullish Engulfing score
 input int    InpScoreBullPinBar = 88;        // Bullish Pin Bar score
 input int    InpScoreBullMACross = 82;       // Bullish MA Cross score
 input int    InpScoreBearEngulfing = 42;     // Bearish Engulfing score (wired: was hardcoded as 42)
-input bool   InpEnableBearishEngulfing = false; // Bearish Engulfing DISABLED: -25.9R/6yrs, worst strategy
-input bool   InpBearPinBarAsiaOnly = true;     // Bearish Pin Bar: Asia session only (+11.7R saved)
-input bool   InpRubberBandAPlusOnly = true;   // Rubber Band Short: require A/A+ quality (+4.0R saved)
-input bool   InpBullMACrossBlockNY = true;   // Bullish MA Cross: block New York session (+3.6R saved)
+input bool   InpEnableBearishEngulfing = false; // CONFIRMED DEAD: -35.3R/660 trades. Loses in ALL conditions. Even with exit fixes, 37% WR both up and down gold.
+input bool   InpBearPinBarAsiaOnly = false;    // CHANGED: GMT fix made London positive (+4.4R). Now using NY-block instead.
+input bool   InpBearPinBarBlockNY = true;     // NEW: Block Bearish Pin Bar in NY only (-1.9R). Asia+London both positive with GMT fix.
+input bool   InpRubberBandAPlusOnly = true;   // CONFIRMED: B+ still -3.3R/19 trades with GMT fix
+input bool   InpBullMACrossBlockNY = true;    // CONFIRMED: NY still -1.9R/60 trades with GMT fix
 input bool   InpLongExtensionFilter = true;  // Momentum exhaustion: block longs rising >0.5%/72h when weekly EMA20 falling
 input double InpLongExtensionPct = 0.5;      // 72h rise threshold (only fires when weekly trend is falling)
 input int    InpScoreBearPinBar = 15;        // Bearish Pin Bar score (wired: was hardcoded as 15)
@@ -231,7 +249,9 @@ input int    InpSkipEndHour2 = 11;           // Skip zone 2 end (GMT) — set to
 //--- Group 21: CONFIRMATION
 input group "══════ CONFIRMATION CANDLE ══════"
 input bool   InpEnableConfirmation = true;   // Enable confirmation candle
-input double InpConfirmationStrictness = 0.50;  // Confirmation strictness: fraction of pattern range as tolerance (0=exact, 1=full range allowed)
+input double InpConfirmationStrictness = 0.90;  // Confirmation strictness: fraction of pattern range as tolerance (0=exact, 1=full range allowed)
+input bool   InpSoftRevalidation = false;    // Sprint 5D: soft revalidation (critical-only: ATR collapse/extreme ADX instead of full re-run)
+input int    InpConfirmationWindowBars = 1;  // Sprint 5D: confirmation window (H1 bars, 1=current behavior, 2-3=retry)
 
 //--- Group 22: SETUP QUALITY THRESHOLDS
 input group "══════ SETUP QUALITY THRESHOLDS ══════"
@@ -239,6 +259,7 @@ input int    InpPointsAPlusSetup = 8;        // Points for A+ setup
 input int    InpPointsASetup = 7;            // Points for A setup
 input int    InpPointsBPlusSetup = 6;        // Points for B+ setup
 input int    InpPointsBSetup = 7;            // Points for B setup (7 = same as A, filters B/B+ — proven in $6,140 baseline)
+input int    InpPointsBSetupOverride = -1;  // Sprint 5D: override B threshold (-1=use InpPointsBSetup, 5-6=admit lower tiers)
 
 //--- Group 23: EXECUTION
 input group "══════ EXECUTION ══════"

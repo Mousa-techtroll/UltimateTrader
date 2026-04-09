@@ -97,6 +97,11 @@ private:
    {
       if(m_context == NULL) return risk;
 
+      // Sprint 5A: Skip when CRegimeRiskScaler handles volatility adjustment
+      // (prevents double-reduction: 0.75 * 0.85 = 0.6375x instead of intended ~0.75x)
+      if(InpVolRegimeYieldsToRegimeRisk && InpEnableRegimeRisk)
+         return risk;
+
       double vol_mult = m_context.GetVolatilityRiskMultiplier();
       if(vol_mult <= 0) vol_mult = 1.0;
 
@@ -320,6 +325,8 @@ public:
       risk_pct = ApplyVolatilityAdjustment(risk_pct);
       if(risk_pct != pre_vol)
          risk_log += " | Vol=" + DoubleToString(risk_pct, 2) + "%";
+      else if(InpVolRegimeYieldsToRegimeRisk && InpEnableRegimeRisk)
+         risk_log += " | Vol=SKIPPED(RegimeRisk)";
 
       // === Step 4: Short protection ===
       double pre_short = risk_pct;

@@ -46,10 +46,11 @@ private:
 
    int GetAuditSessionValue()
    {
-      MqlDateTime dt;
-      TimeToStruct(TimeCurrent(), dt);
-      if(dt.hour >= 0 && dt.hour < 8) return SESSION_ASIA;
-      if(dt.hour >= 8 && dt.hour < 13) return SESSION_LONDON;
+      // Sprint 5B: GMT-aware audit session
+      int gmt_hour = (g_sessionEngine != NULL) ?
+         g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
+      if(gmt_hour >= 0 && gmt_hour < 8) return SESSION_ASIA;
+      if(gmt_hour >= 8 && gmt_hour < 13) return SESSION_LONDON;
       return SESSION_NEWYORK;
    }
 
@@ -463,7 +464,8 @@ public:
       bool in_skip_zone = false;
       if(!isBearRegime)
       {
-         if(!IsSessionAllowed(m_trade_asia, m_trade_london, m_trade_ny))
+         if(!IsSessionAllowed(m_trade_asia, m_trade_london, m_trade_ny,
+                              g_sessionEngine != NULL ? g_sessionEngine.GetGMTOffset() : 0))
          {
             LogPrint("Outside allowed trading session");
             return result;
@@ -689,7 +691,7 @@ public:
          }
 
          // Rubber Band A/A+ gate: reject B+ quality (B+ loses -4.0R across 22 trades)
-         if(InpRubberBandAPlusOnly && quality == SETUP_B_PLUS &&
+         if(g_profileRubberBandAPlusOnly && quality == SETUP_B_PLUS &&
             StringFind(signal.comment, "Rubber Band") >= 0)
          {
             LogPrint(">>> Rubber Band REJECTED: B+ quality (A/A+ required)");
@@ -927,6 +929,46 @@ public:
       return validated;
    }
 
+   //+------------------------------------------------------------------+
+   //| Sprint 5D: Soft revalidation — only block on critical conditions  |
+   //| (replaces full re-run that causes double-jeopardy invalidation)   |
+   //+------------------------------------------------------------------+
+   //+------------------------------------------------------------------+
+   //| Sprint 5D: Increment pending bar counter                         |
+   //+------------------------------------------------------------------+
+   void IncrementPendingBarCount()
+   {
+      if(m_has_pending)
+         m_pending_signal.pending_bar_count++;
+   }
+
+   bool SoftRevalidatePending()
+   {
+      if(!m_has_pending || m_context == NULL) return false;
+
+      double current_atr = m_context.GetATRCurrent();
+      double current_adx = m_context.GetADXValue();
+
+      // Only block on truly dangerous conditions
+      if(current_atr < 1.0)
+      {
+         LogPrint(">>> SoftRevalidate REJECT: ATR collapsed to ", DoubleToString(current_atr, 2));
+         m_has_pending = false;
+         return false;
+      }
+
+      if(current_adx > 50.0)
+      {
+         LogPrint(">>> SoftRevalidate REJECT: Extreme ADX ", DoubleToString(current_adx, 1));
+         m_has_pending = false;
+         return false;
+      }
+
+      LogPrint(">>> SoftRevalidate PASS: ATR=", DoubleToString(current_atr, 2),
+               " ADX=", DoubleToString(current_adx, 1));
+      return true;
+   }
+
 private:
    //+------------------------------------------------------------------+
    //| Store signal as pending (waiting for confirmation candle)          |
@@ -968,6 +1010,7 @@ private:
          m_pending_signal.engine_mode    = signal.engine_mode;
          m_pending_signal.day_type       = signal.day_type;
          m_pending_signal.engine_confluence = signal.engine_confluence;
+         m_pending_signal.pending_bar_count = 0;  // Sprint 5D: init bar counter
 
          m_has_pending = true;
 

@@ -173,7 +173,7 @@ public:
       }
 
       // --- Check for SHORT reversal (spike above a level, reclaim) ---
-      if(!InpEnableS6Short) return signal;  // Short side disabled by config
+      if(!g_profileEnableS6Short) return signal;  // Short side disabled by profile
 
       for(int la = 0; la < n_above; la++)
       {

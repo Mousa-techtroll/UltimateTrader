@@ -223,6 +223,10 @@ private:
       pp.trail_send_policy = (int)pos.trail_send_policy;
       pp.last_broker_trailing_time = pos.last_broker_trailing_time;
 
+      // Sprint 5E: persist original SL/TP1 for R-calculations after restart
+      pp.original_sl  = pos.original_sl;
+      pp.original_tp1 = pos.original_tp1;
+
       return pp;
    }
 
@@ -265,6 +269,11 @@ private:
       pos.last_entry_locked_chandelier_mult = pos.exit_chandelier_mult;
       pos.last_live_chandelier_mult = pos.exit_chandelier_mult;
       pos.last_effective_chandelier_mult = pos.exit_chandelier_mult;
+
+      // Sprint 5E: restore original SL/TP1 for R-calculations
+      // Fallback: if old state file has 0 (field didn't exist), use current broker SL
+      pos.original_sl  = (pp.original_sl != 0) ? pp.original_sl : pos.stop_loss;
+      pos.original_tp1 = (pp.original_tp1 != 0) ? pp.original_tp1 : pos.tp1;
 
       // Derive stage_label from stage enum
       switch(pos.stage)
@@ -1903,7 +1912,9 @@ public:
             double atr_now = (m_context != NULL) ? m_context.GetATRCurrent() : 0;
             double atr_prev = 0;
             {
-               // Get ATR from 5 bars ago via price-range approximation
+               // Sprint 5E: removed IndicatorRelease() — iATR returns a shared handle
+               // used by Chandelier, VolRegime, SMC, RegimeClassifier. Releasing it
+               // corrupts the shared refcount. MT5 cleans up handles at EA deinit.
                double atr_buf[];
                int atr_handle = iATR(_Symbol, PERIOD_H1, 14);
                if(atr_handle != INVALID_HANDLE)
@@ -1911,7 +1922,6 @@ public:
                   ArraySetAsSeries(atr_buf, true);
                   if(CopyBuffer(atr_handle, 0, 5, 1, atr_buf) > 0)
                      atr_prev = atr_buf[0];
-                  IndicatorRelease(atr_handle);
                }
             }
             if(atr_prev > 0 && atr_now > 0 && atr_now / atr_prev < InpRunnerVolDecayThreshold)
@@ -2057,9 +2067,9 @@ public:
                   // Move stop to breakeven
                   double be_sl = m_positions[i].entry_price;
                   if(m_positions[i].direction == SIGNAL_LONG)
-                     be_sl += InpTrailBEOffset * _Point;
+                     be_sl += InpTrailBEOffset * _Point * (InpAutoScalePoints ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) / 2000.0) : 1.0);
                   else
-                     be_sl -= InpTrailBEOffset * _Point;
+                     be_sl -= InpTrailBEOffset * _Point * (InpAutoScalePoints ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) / 2000.0) : 1.0);
 
                   be_sl = NormalizeDouble(be_sl, (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS));
                   bool improves = (m_positions[i].direction == SIGNAL_LONG)
@@ -2387,9 +2397,9 @@ private:
                         // Calculate the BE stop level with offset
                         double be_sl = pos.entry_price;
                         if(pos.direction == SIGNAL_LONG)
-                           be_sl += InpTrailBEOffset * _Point;
+                           be_sl += InpTrailBEOffset * _Point * (InpAutoScalePoints ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) / 2000.0) : 1.0);
                         else
-                           be_sl -= InpTrailBEOffset * _Point;
+                           be_sl -= InpTrailBEOffset * _Point * (InpAutoScalePoints ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) / 2000.0) : 1.0);
 
                         // Mark at_breakeven when trailing SL has reached the BE level
                         if(pos.direction == SIGNAL_LONG && normalized_sl >= be_sl)
@@ -2537,7 +2547,8 @@ private:
 
          ExitSignal exit_sig = m_exit_plugins[e].CheckForExitSignal(pos.ticket);
 
-         if(exit_sig.valid)
+         // Sprint 5E: check shouldExit OR valid (4 plugins set shouldExit, 1 sets valid)
+         if(exit_sig.valid || exit_sig.shouldExit)
          {
             LogPrint("Exit signal for ticket ", pos.ticket, ": ", exit_sig.reason);
             exit_reason = "EXIT_PLUGIN:" + exit_sig.reason;

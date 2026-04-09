@@ -208,7 +208,7 @@ public:
       // DISABLED by data: -25.9R across 6 years (2019-2025), net loser in 4/6 years.
       // Dominates every major loss streak. Toggle: InpEnableBearishEngulfing
       // =============================================================
-      if(InpEnableBearishEngulfing &&
+      if(g_profileEnableBearishEngulfing &&
          (trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL || trend_bias == TREND_BULLISH))
       {
          bool prev_bullish = (close[2] > open[2]);

@@ -357,7 +357,7 @@ public:
    //+------------------------------------------------------------------+
    bool IsCompatibleWithRegime(ENUM_REGIME_TYPE regime)
    {
-      return true;
+      return InpFileSignalSkipRegime;  // Configurable: true = bypass regime, false = respect regime
    }
 
    //+------------------------------------------------------------------+
@@ -444,6 +444,13 @@ public:
             signal.comment = "FileSignal #" + IntegerToString(m_trades[i].MagicNumber);
             signal.source = SIGNAL_SOURCE_FILE;
             signal.patternType = PATTERN_NONE;
+            signal.setupQuality = InpFileSignalQuality;
+            signal.qualityScore = (InpFileSignalQuality == SETUP_A_PLUS) ? 95 :
+                                  (InpFileSignalQuality == SETUP_A) ? 80 :
+                                  (InpFileSignalQuality == SETUP_B_PLUS) ? 65 : 50;
+            signal.requiresConfirmation = !InpFileSignalSkipConfirmation;  // Configurable
+            if(signal.riskPercent <= 0)
+               signal.riskPercent = InpFileSignalRiskPct;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 

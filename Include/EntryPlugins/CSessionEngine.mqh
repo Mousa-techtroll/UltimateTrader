@@ -324,7 +324,7 @@ public:
             // The constructor sets m_gmt_offset from the gmt_offset parameter.
             // If that's also 0, use 2 (GMT+2, common for forex brokers).
             if(m_gmt_offset == 0)
-               m_gmt_offset = 2;  // GMT+2 default for most forex brokers
+               m_gmt_offset = InpBrokerGMTOffset;  // Sprint 5B: configurable fallback (was hardcoded 2)
             Print("[SessionEngine] Backtester mode: using GMT+", m_gmt_offset, " (TimeGMT unreliable in tester)");
          }
       }
@@ -454,6 +454,24 @@ public:
       return signal;
    }
 
+   //+------------------------------------------------------------------+
+   //| GetGMTHour - convert server time to GMT hour (public service)     |
+   //+------------------------------------------------------------------+
+   int GetGMTHour(datetime server_time)
+   {
+      MqlDateTime dt;
+      TimeToStruct(server_time, dt);
+      int hour = dt.hour - m_gmt_offset;
+      if(hour < 0) hour += 24;
+      if(hour >= 24) hour -= 24;
+      return hour;
+   }
+
+   //+------------------------------------------------------------------+
+   //| GetGMTOffset - return current broker GMT offset                    |
+   //+------------------------------------------------------------------+
+   int GetGMTOffset() { return m_gmt_offset; }
+
 private:
    void EvaluateModeKill(int idx)
    {
@@ -488,19 +506,6 @@ private:
          Print("[SessionEngine] MODE KILL (neg expectancy): ", EnumToString(m_mode_perf[idx].mode),
                " exp=", DoubleToString(exp, 2), " after ", trades, " trades");
       }
-   }
-
-   //+------------------------------------------------------------------+
-   //| GetGMTHour - convert server time to GMT hour                      |
-   //+------------------------------------------------------------------+
-   int GetGMTHour(datetime server_time)
-   {
-      MqlDateTime dt;
-      TimeToStruct(server_time, dt);
-      int hour = dt.hour - m_gmt_offset;
-      if(hour < 0) hour += 24;
-      if(hour >= 24) hour -= 24;
-      return hour;
    }
 
    //+------------------------------------------------------------------+

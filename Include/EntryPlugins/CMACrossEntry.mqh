@@ -167,11 +167,12 @@ public:
       // bar[1]: fast > slow  (after cross)
       // NY session gate: NY loses -3.6R across 72 trades (Asia +4.2R, London +8.7R)
       // =============================================================
-      if(InpBullMACrossBlockNY)
+      if(g_profileBullMACrossBlockNY)
       {
-         MqlDateTime dt_mc;
-         TimeToStruct(TimeCurrent(), dt_mc);
-         if(dt_mc.hour >= 13)  // NY = 13:00+ server time
+         // Sprint 5B: GMT-aware NY block
+         int gmt_hour = (g_sessionEngine != NULL) ?
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : 13;
+         if(gmt_hour >= 13)  // NY = 13:00+ GMT
             return signal;
       }
 

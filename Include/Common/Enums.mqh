@@ -194,6 +194,17 @@ enum ENUM_TRAIL_SEND_POLICY
 };
 
 //+------------------------------------------------------------------+
+//| Symbol Profile Enumeration                                        |
+//+------------------------------------------------------------------+
+enum ENUM_SYMBOL_PROFILE
+{
+   SYMBOL_PROFILE_XAUUSD = 0,     // XAUUSD (Gold) — production optimized
+   SYMBOL_PROFILE_USDJPY = 1,     // USDJPY — JPY cross, clean trends
+   SYMBOL_PROFILE_GBPJPY = 2,     // GBPJPY — volatile JPY cross
+   SYMBOL_PROFILE_AUTO   = 3      // Auto-detect from symbol name
+};
+
+//+------------------------------------------------------------------+
 //| Macro Mode Enumeration (for DXY/VIX availability tracking)       |
 //+------------------------------------------------------------------+
 enum ENUM_MACRO_MODE
