@@ -1861,6 +1861,32 @@ public:
                                  " | Actual profit: $", DoubleToString(tp2_actual_profit, 2));
 
                         SaveOnStateChange();
+
+                        // P2-A: Regime-conditional runner kill
+                        // In CHOPPY/VOLATILE/RANGING, runners have negative EV — close all
+                        if(InpRunnerRegimeConditional && m_positions[i].remaining_lots > 0)
+                        {
+                           ENUM_REGIME_TYPE live_regime = REGIME_UNKNOWN;
+                           if(m_context != NULL)
+                              live_regime = m_context.GetCurrentRegime();
+
+                           bool kill_runner = (live_regime == REGIME_CHOPPY && InpRunnerCloseInChoppy)
+                                           || (live_regime == REGIME_VOLATILE && InpRunnerCloseInVolatile)
+                                           || (live_regime == REGIME_RANGING && InpRunnerCloseInRanging);
+
+                           if(kill_runner)
+                           {
+                              CTrade kill_trade;
+                              kill_trade.SetExpertMagicNumber(m_magic_number);
+                              if(kill_trade.PositionClose(m_positions[i].ticket))
+                              {
+                                 LogPrint("[RunnerKill] Runner closed at TP2: regime=",
+                                          EnumToString(live_regime),
+                                          " | Ticket=", m_positions[i].ticket,
+                                          " | Remaining=", DoubleToString(m_positions[i].remaining_lots, 2));
+                              }
+                           }
+                        }
                      }
                   }
                }

@@ -233,16 +233,31 @@ public:
          CalculateDefaultTPs(sig_type, entry_price, risk_distance, tp1, tp2);
       }
 
-      // R:R validation
+      // R:R validation — relaxed for SHORT crash/reversal in VOLATILE/CHOPPY
       if(m_min_rr_ratio > 0)
       {
          double reward = MathAbs(MathMax(tp1, tp2) - entry_price);
          double actual_rr = (risk_distance > 0) ? reward / risk_distance : 0;
 
-         if(actual_rr < m_min_rr_ratio)
+         double effective_min_rr = m_min_rr_ratio;
+
+         // Relax R:R for SHORT signals in high-vol regimes (crash reversals)
+         if(sig_type == SIGNAL_SHORT && m_context != NULL)
+         {
+            ENUM_REGIME_TYPE live_regime = m_context.GetCurrentRegime();
+            if(live_regime == REGIME_VOLATILE || live_regime == REGIME_CHOPPY)
+            {
+               effective_min_rr = InpMinRRShortCrash;
+               LogPrint("[RR_Relax] SHORT in ", EnumToString(live_regime),
+                        " | R:R min: ", DoubleToString(m_min_rr_ratio, 2),
+                        " -> ", DoubleToString(effective_min_rr, 2));
+            }
+         }
+
+         if(actual_rr < effective_min_rr)
          {
             LogPrint("TRADE REJECTED: R:R ", DoubleToString(actual_rr, 2),
-                     " < min ", m_min_rr_ratio);
+                     " < min ", DoubleToString(effective_min_rr, 2));
             LogRiskAudit(signal, sig_type, requested_risk_pct,
                          false, false,
                          StringFormat("RR_BELOW_MIN_%.2f", actual_rr),

@@ -1,6 +1,6 @@
 # Input Parameters Reference
 
-> UltimateTrader EA | Updated 2026-04-10
+> UltimateTrader EA v18 | Updated 2026-04-10
 
 ---
 
@@ -27,13 +27,13 @@
 
 | Parameter | Default | Description |
 |---|---|---|
-| `InpRiskAPlusSetup` | 1.5% | A+ base risk (raised from 0.8%) |
+| `InpRiskAPlusSetup` | 1.5% | A+ base risk |
 | `InpRiskASetup` | 1.0% | A base risk |
 | `InpRiskBPlusSetup` | 0.75% | B+ base risk |
 | `InpRiskBSetup` | 0.6% | B base risk |
-| `InpMaxRiskPerTrade` | 1.5% | Hard cap per trade |
+| `InpMaxRiskPerTrade` | 2.0% | Hard cap per trade |
 | `InpMaxTotalExposure` | 5.0% | Max portfolio exposure |
-| `InpDailyLossLimit` | 4.0% | Daily loss halt threshold |
+| `InpDailyLossLimit` | 3.0% | Daily loss halt threshold |
 | `InpMaxPositions` | 5 | Max concurrent positions |
 | `InpMaxTradesPerDay` | 5 | Max trades per day |
 
@@ -43,9 +43,7 @@
 
 | Parameter | Default | Description |
 |---|---|---|
-| `InpShortRiskMultiplier` | 0.5x | Standard short risk reduction |
-
-Exempt: Volatility Breakout, Crash Breakout (1.0x).
+| `InpShortRiskMultiplier` | 1.0x | OFF -- removed from pipeline |
 
 ---
 
@@ -53,6 +51,7 @@ Exempt: Volatility Breakout, Crash Breakout (1.0x).
 
 | Parameter | Default | Description |
 |---|---|---|
+| `InpEnableLossScaling` | true | Enabled but strategy not initialized -- DEAD code |
 | `InpLossLevel1Reduction` | 0.75x | At 2 consecutive losses |
 | `InpLossLevel2Reduction` | 0.50x | At 4 consecutive losses |
 
@@ -148,7 +147,7 @@ Exempt: Volatility Breakout, Crash Breakout (1.0x).
 | A+ | >= 8 |
 | A | >= 7 |
 | B+ | >= 6 |
-| B | >= 7 (same as A, filters B/B+) |
+| B | >= 7 (same as A, effectively filters out B/B+) |
 
 ---
 
@@ -187,11 +186,59 @@ Per-regime TP/trailing/BE stamped at entry. Chandelier adapts to live regime.
 
 ---
 
-## Equity Curve Filter
+## EC v3 (Equity Curve Filter)
 
 | Parameter | Default | Description |
 |---|---|---|
-| `InpEnableECFilter` | true | Enable EC filter |
-| EC fast EMA | 20 | Fast EMA of R-multiples |
-| EC slow EMA | 50 | Slow EMA of R-multiples |
-| EC reduced risk | 0.5x | Multiplier when fast < slow |
+| `InpEnableECv2` | true | Enable EC v3 filter |
+| `InpECFastPeriod` | 20 | Fast EMA of R-multiples |
+| `InpECSlowPeriod` | 50 | Slow EMA of R-multiples |
+| `InpECMinTrades` | 50 | Min trades before EC activates |
+| `InpECDeadZone` | 0.05 | No action below this spread |
+| `InpECModerateZone` | 0.20 | Moderate drawdown threshold |
+| `InpECSevereZone` | 0.50 | Severe drawdown threshold |
+| `InpECMaxMult` | 1.00 | Max risk multiplier |
+| `InpECMinMult` | 0.70 | Min risk multiplier |
+| `InpECStepDown` | 0.08 | Step-down speed per update |
+| `InpECStepUp` | 0.05 | Step-up speed per update |
+| `InpECHysteresis` | 3 | Required consecutive signals before state change |
+| `InpECProtectRecovery` | true | Protect recovery streaks |
+| `InpECRecoveryBias` | 0.05 | Upward bias during recovery |
+
+---
+
+## EC Vol Layer
+
+| Parameter | Default | Description |
+|---|---|---|
+| `InpECVolEnable` | true | Enable volatility overlay |
+| ATR low threshold | 0.90 | Below = low vol |
+| ATR high threshold | 1.30 | Above = high vol |
+| ATR extreme threshold | 1.60 | Above = extreme vol |
+| `InpECVolLowRelax` | 1.03 | Multiplier in low vol |
+| `InpECVolHighReduce` | 0.97 | Multiplier in high vol |
+| `InpECVolExtremeReduce` | 0.93 | Multiplier in extreme vol |
+
+---
+
+## EC Forward-Looking
+
+| Parameter | Default | Description |
+|---|---|---|
+| `InpECFwdEnable` | false | DISABLED -- open-trade stress metrics |
+
+---
+
+## EC Strategy-Weighted
+
+| Parameter | Default | Description |
+|---|---|---|
+| `InpECStratEnable` | false | DISABLED -- per-strategy EC weighting |
+
+---
+
+## Old EC v1
+
+| Parameter | Default | Description |
+|---|---|---|
+| `InpEnableEquityCurveFilter` | false | Replaced by EC v3 |

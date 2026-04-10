@@ -12,6 +12,7 @@ input bool   InpEnableECv2 = true;                // Enable EC continuous risk c
 input int    InpECv2FastPeriod = 20;               // Fast EMA period (trades)
 input int    InpECv2SlowPeriod = 50;               // Slow EMA period (trades)
 input int    InpECv2MinTrades = 50;                // Warmup: min closed trades before activation
+input double InpECv2WarmupMult = 1.00;             // Warmup multiplier (1.0 = no reduction, tested 0.90 = -7% PnL)
 input double InpECv2DeadZone = 0.05;              // Dead zone: ignore tiny EMA spread
 input double InpECv2ModerateZone = 0.20;           // Moderate underperformance threshold
 input double InpECv2SevereZone = 0.50;             // Severe underperformance threshold
@@ -473,8 +474,13 @@ public:
       if(!m_initialized || !InpEnableECv2)
          return 1.0;
 
+      // During warmup: conservative default + vol layer (independent of trade history)
       if(m_closedTrades < InpECv2MinTrades)
-         return 1.0;
+      {
+         double warmup_mult = InpECv2WarmupMult;  // 0.90 default
+         warmup_mult *= m_volAdjustment;           // Vol layer applies independently
+         return Clamp(warmup_mult, InpECv2MinMult, InpECv2MaxMult);
+      }
 
       // Composite: core * vol * forward * strategy
       double mult = m_currentMult;

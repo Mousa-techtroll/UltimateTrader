@@ -8,16 +8,17 @@
 
 1. Weekend closure check
 2. MAE/MFE update
-3. TP0 cascade: 0.7R profit triggers close of 15% of original lots
-4. TP1 cascade: 1.3R profit triggers close of 40% of remaining lots
-5. TP2 cascade: 1.8R profit triggers close of 30% of remaining lots
-6. Early invalidation (DISABLED: -26.9R)
-7. Smart runner exit (DISABLED: -$8K)
-8. Universal stall (DISABLED: -$4,189)
-9. Anti-stall (S3/S6 only): 5 M15 bars with <0.8R profit triggers 50% reduction + BE; 8 bars triggers close
-10. Runner promotion (DISABLED)
-11. Apply trailing plugins (Chandelier)
-12. Check exit plugins
+3. EC v3 Layer 2 feed: open-trade stress metrics (forward-looking data, currently disabled)
+4. TP0 cascade: 0.7R profit triggers close of 15% of original lots
+5. TP1 cascade: 1.3R profit triggers close of 40% of remaining lots
+6. TP2 cascade: 1.8R profit triggers close of 30% of remaining lots
+7. Early invalidation (DISABLED: -26.9R)
+8. Smart runner exit (DISABLED: -$8K)
+9. Universal stall (DISABLED: -$4,189)
+10. Anti-stall (S3/S6 only): 5 M15 bars triggers 50% reduction + BE; 8 bars triggers close
+11. Runner promotion (DISABLED)
+12. Apply trailing plugins (Chandelier)
+13. Check exit plugins
 
 ---
 
@@ -28,7 +29,17 @@
 | TP0 | 0.7R profit | 15% of original | INITIAL -> TP0_HIT |
 | TP1 | 1.3R profit | 40% of remaining | TP0_HIT -> TP1_HIT |
 | TP2 | 1.8R profit | 30% of remaining | TP1_HIT -> TP2_HIT |
-| Runner | Chandelier trail | Remaining ~36% | TP2_HIT -> CLOSED |
+| Runner | Chandelier trail | Remaining ~36% of original | TP2_HIT -> CLOSED |
+
+---
+
+## Chandelier Trailing
+
+- **Formula (long):** `new_sl = HighestHigh(10) - ATR(14) x 3.0`
+- Regime-adaptive multiplier (2.5-3.5x range)
+- Min profit before trailing starts: 60 points
+- SL can never loosen (only tighten)
+- Trail send policies: EVERY_UPDATE, LOCK_STEPS (BE/1R/2R/3R), BAR_CLOSE, RUNNER_POLICY
 
 ---
 
@@ -42,25 +53,14 @@
 
 ---
 
-## Chandelier Trailing
-
-- **Formula (long):** `new_sl = HighestHigh(10) - ATR(14) x 3.0`
-- Regime-adaptive multiplier (2.5-3.5x range)
-- Min profit before trailing starts: 60 points
-- Min SL movement: 50 points
-- SL can never loosen (only tighten)
-- Trail send policies: EVERY_UPDATE, LOCK_STEPS (BE/1R/2R/3R), BAR_CLOSE, RUNNER_POLICY
-
----
-
 ## Exit Plugins
 
 | # | Plugin | Behavior |
 |---|---|---|
 | 1 | RegimeAwareExit | Close on CHOPPY + H1 EMA50 structure break, or macro opposition (score >=+/-3) |
-| 2 | DailyLossHaltExit | Daily P&L <= -4% triggers close-all and halt |
+| 2 | DailyLossHaltExit | Daily P&L <= -3% triggers close-all and halt |
 | 3 | WeekendCloseExit | Friday 20:00 server time |
-| 4 | MaxAgeExit | 120 hours max hold (close only if losing) |
+| 4 | MaxAgeExit | 120 hours max hold |
 | 5 | StandardExitStrategy | 48h + losing, or -30% loss, or +50% profit partial |
 
 ---

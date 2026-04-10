@@ -1526,6 +1526,10 @@ void OnTick()
                   // TRENDING + NORMAL: stay at 1.0 (full risk, compounding intact)
                }
 
+               // Session scaling NOT applied to confirmed signals.
+               // The $28,204 baseline was built without it. Adding it caused -27% PnL.
+               // Session scaling remains active for immediate signals only (shorts).
+
                // Execute confirmed signal
                SPosition position = g_tradeOrchestrator.ProcessConfirmedSignal(pending);
                if(position.ticket > 0)

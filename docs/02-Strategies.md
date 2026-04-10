@@ -1,8 +1,7 @@
 # Entry Strategies
 
-> **v18 (2026-04-10).** Production state: 13 entry strategies (8 active, 5 low-frequency/niche),
-> 9 disabled, 13 confirmed dead. 806 trades across 7 years (2019--2025), $10,779
-> total PnL, 118R, 0.150 R/trade. Zero net-negative strategies remain in the active set.
+> **v18 (2026-04-10).** Production state: EC v3 core+vol, A+=1.5%, 2019--2026.
+> 11 active plugins, 9 disabled. Top 5 strategies by sample size listed below.
 
 ---
 
@@ -10,16 +9,28 @@
 
 | # | Strategy | Class | Trades | WR | Avg R | PnL ($) | Direction |
 |---|---|---|---|---|---|---|---|
-| 1 | Bullish Engulfing | CEngulfingEntry | 287 | 45% | +0.150 | $7,834 | LONG |
-| 2 | Bullish Pin Bar | CPinBarEntry | 248 | 42% | +0.087 | $6,250 | LONG |
-| 3 | Bearish Pin Bar | CPinBarEntry | 181 | 43% | +0.062 | $2,144 | SHORT |
-| 4 | Bullish MA Cross | CMACrossEntry | 58 | 52% | +0.351 | $5,534 | LONG |
-| 5 | Rubber Band Short | CExpansionEngine | 96 | 48% | +0.118 | $746 | SHORT |
+| 1 | Bullish Engulfing | CEngulfingEntry | 287 | 44% | +0.148 | $9,585 | LONG |
+| 2 | Bullish Pin Bar | CPinBarEntry | 247 | 42% | +0.091 | $8,359 | LONG |
+| 3 | Bullish MA Cross | CMACrossEntry | 58 | 52% | +0.360 | $6,324 | LONG |
+| 4 | Bearish Pin Bar | CPinBarEntry | 181 | 43% | +0.066 | $2,344 | SHORT |
+| 5 | Rubber Band Short | CExpansionEngine | 96 | 49% | +0.130 | $782 | SHORT |
 | 6 | S3 Range Edge Fade | CRangeEdgeFade | -- | -- | -- | -- | BOTH |
 | 7 | S6 Failed Break Long | CFailedBreakReversal | -- | -- | -- | -- | LONG |
 | 8 | IC Breakout | CExpansionEngine | -- | -- | -- | -- | BOTH |
 
 Strategies 6--8 are low-frequency and lack statistically significant sample sizes.
+
+### Quality Tier Breakdown
+
+| Tier | Trades | Avg R | PnL ($) |
+|---|---|---|---|
+| A+ | 544 | +0.164 | $22,263 |
+| A | 245 | +0.107 | $5,899 |
+| B+ | 92 | -0.026 | $42 |
+
+### Active Plugins
+
+Engulfing, Pin Bar, MA Cross, Range Box, False Breakout, Displacement, Session Breakout, Volatility Breakout, Crash Breakout, S3 Range Edge Fade, S6 Failed Break Reversal.
 
 ---
 
@@ -32,9 +43,9 @@ Strategies 6--8 are low-frequency and lack statistically significant sample size
 | Metric | Value |
 |---|---|
 | Trades | 287 |
-| Win Rate | 45% |
-| Avg R/trade | +0.150 |
-| PnL | $7,834 |
+| Win Rate | 44% |
+| Avg R/trade | +0.148 |
+| PnL | $9,585 |
 
 Best strategy by total dollar contribution. Detects bullish engulfing candles on H1
 where the bullish candle's body fully engulfs the prior bearish candle's body.
@@ -57,10 +68,10 @@ improvement came from disabling this side.
 
 | Metric | Value |
 |---|---|
-| Trades | 248 |
+| Trades | 247 |
 | Win Rate | 42% |
-| Avg R/trade | +0.087 |
-| PnL | $6,250 |
+| Avg R/trade | +0.091 |
+| PnL | $8,359 |
 
 Detects pin bar reversals with tail/body ratio analysis on H1. A candle with a long
 lower wick and small body near the top indicates rejection of lower prices.
@@ -73,31 +84,7 @@ lower wick and small body near the top indicates rejection of lower prices.
 
 ---
 
-### Strategy 3: Bearish Pin Bar
-
-**Class:** `CPinBarEntry` | **Pattern:** `PATTERN_PIN_BAR` | **Direction:** SHORT
-
-| Metric | Value |
-|---|---|
-| Trades | 181 |
-| Win Rate | 43% |
-| Avg R/trade | +0.062 |
-| PnL | $2,144 |
-
-Bearish equivalent: long upper wick, small body near bottom. SHORT signals bypass the
-full validator and execute immediately (no confirmation candle). Short risk uses a
-0.5x multiplier.
-
-**Session gates (one of two must be active):**
-- `g_profileBearPinBarAsiaOnly` -- restricts to Asia session only
-- `InpBearPinBarBlockNY` -- blocks New York session, allows Asia + London
-
-NY bearish pin bars lose -1.9R in aggregate. The GMT/DST fix revealed London was
-positive (+4.4R), so the gate was changed from Asia-only to NY-block.
-
----
-
-### Strategy 4: Bullish MA Cross
+### Strategy 3: Bullish MA Cross
 
 **Class:** `CMACrossEntry` | **Pattern:** `PATTERN_MA_CROSSOVER` | **Direction:** LONG
 
@@ -105,8 +92,8 @@ positive (+4.4R), so the gate was changed from Asia-only to NY-block.
 |---|---|
 | Trades | 58 |
 | Win Rate | 52% |
-| Avg R/trade | +0.351 |
-| PnL | $5,534 |
+| Avg R/trade | +0.360 |
+| PnL | $6,324 |
 
 Highest R/trade of any strategy. Fast MA (10) crossing above slow MA (21) on H1
 indicates a shift from bearish to bullish momentum.
@@ -124,6 +111,29 @@ Bearish MA Cross is hardcoded OFF (score 0, never fires).
 
 ---
 
+### Strategy 4: Bearish Pin Bar
+
+**Class:** `CPinBarEntry` | **Pattern:** `PATTERN_PIN_BAR` | **Direction:** SHORT
+
+| Metric | Value |
+|---|---|
+| Trades | 181 |
+| Win Rate | 43% |
+| Avg R/trade | +0.066 |
+| PnL | $2,344 |
+
+Bearish equivalent: long upper wick, small body near bottom. SHORT signals bypass the
+full validator and execute immediately (no confirmation candle).
+
+**Session gates (one of two must be active):**
+- `g_profileBearPinBarAsiaOnly` -- restricts to Asia session only
+- `InpBearPinBarBlockNY` -- blocks New York session, allows Asia + London
+
+NY bearish pin bars lose -1.9R in aggregate. The GMT/DST fix revealed London was
+positive (+4.4R), so the gate was changed from Asia-only to NY-block.
+
+---
+
 ### Strategy 5: Rubber Band Short (Death Cross)
 
 **Class:** `CExpansionEngine` | **Pattern:** `PATTERN_PANIC_MOMENTUM` | **Direction:** SHORT
@@ -131,9 +141,9 @@ Bearish MA Cross is hardcoded OFF (score 0, never fires).
 | Metric | Value |
 |---|---|
 | Trades | 96 |
-| Win Rate | 48% |
-| Avg R/trade | +0.118 |
-| PnL | $746 |
+| Win Rate | 49% |
+| Avg R/trade | +0.130 |
+| PnL | $782 |
 
 Death cross + rubber band snap. When D1 Death Cross is active (EMA50 < EMA200) and
 price has bounced above EMA21 by >1.5x ATR, the system sells the corrective bounce.
@@ -259,7 +269,6 @@ Hours gate restricts entries to 13--17 GMT (New York open through mid-session).
 
 | Strategy | Result | Reason |
 |---|---|---|
-| Bearish Engulfing | -35.3R, 37% WR | Net negative in all conditions. Confirmed dead. |
 | BB Mean Reversion | -1.1R / 10 trades | Never positive in any test period |
 | Liquidity Sweep (old) | -- | Replaced by Liquidity Engine |
 | Support Bounce | -- | Pending validation, never enabled |
@@ -269,6 +278,7 @@ Hours gate restricts entries to 13--17 GMT (New York open through mid-session).
 | Silver Bullet | -2.1R / 6 years | Always losing. ICT concept has no edge on gold H1. |
 | London Close Reversal | 27% WR, -$229 | Net negative in 2yr backtest |
 | Compression Breakout | PF 0.52, -$240 | Inconsistent. Net negative in edge period. |
+| Bearish Engulfing | -35.3R, 37% WR | Net negative in all conditions. Confirmed dead. |
 | Bearish MA Cross | Hardcoded OFF | Fights long-term gold uptrend |
 | London Breakout | 0% WR | Dead on arrival |
 | NY Continuation | 0% WR | Dead on arrival |
@@ -286,9 +296,7 @@ Point-based system scoring 0--10. Determines trade quality tier and risk sizing.
 
 | Source | Points | Condition |
 |---|---|---|
-| Trend alignment | +2 | D1 and H4 agree |
-| Trend alignment | +1 | H4 trend alone |
-| CHoCH (Change of Character) | +2 | Structural shift detected |
+| Trend alignment | 0--3 | D1/H4 agreement, multi-timeframe |
 | Pattern direction match | 0--2 | Pattern aligns with higher-TF trend |
 | Extreme RSI | +3 | RSI > 70 or RSI < 30 |
 | Regime: TRENDING | +2 | Market in trend regime |
@@ -302,14 +310,14 @@ Point-based system scoring 0--10. Determines trade quality tier and risk sizing.
 
 | Tier | Min Points | Risk % |
 |---|---|---|
-| A+ | 8 | 0.8% |
-| A | 7 | 0.8% |
-| B+ | 6 | 0.6% |
-| B | 3--5 | 0.5% |
-| NONE | < 3 | Rejected |
+| A+ | 8 | 1.5% |
+| A | 7 | 1.0% |
+| B+ | 6 | 0.75% |
+| B | 7 (= unreachable, same as A) | 0.6% |
+| NONE | < 6 | Rejected |
 
-B setup threshold is set equal to A (7 points), so B-quality trades never pass.
-This is intentional.
+B tier threshold is set equal to A (7 points), making B-quality trades unreachable.
+This is intentional -- B trades never fire.
 
 ---
 
@@ -329,7 +337,7 @@ Entry signals pass through a multi-stage validation pipeline before execution.
 
 **SHORT signal bypass:** SHORT signals skip the full validator. Only an ATR minimum
 check is applied. This is by design -- short setups are already gated by session
-blocks, quality requirements, and 0.5x risk multipliers.
+blocks, quality requirements, and regime filters.
 
 **Mean reversion bypass:** S3 and S6 execute immediately without confirmation candle.
 These are time-sensitive reversal entries where delay would miss the edge.

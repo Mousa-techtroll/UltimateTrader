@@ -1,10 +1,10 @@
 # System Architecture
 
-> UltimateTrader EA -- Production Reference (2026-04-10)
+> UltimateTrader EA -- v18 Production Reference (2026-04-10)
 >
 > This document describes the current production architecture after all experiments,
-> sprint fixes, filter validations, GMT corrections, symbol profiles, and momentum
-> filter integration.
+> sprint fixes, filter validations, GMT corrections, symbol profiles, and EC v3
+> integration.
 
 ---
 
@@ -27,17 +27,132 @@ H1 bar, manages open positions on every tick, and persists state across restarts
 UltimateTrader.mq5              - Main EA (OnInit, OnTick, gate chain)
 UltimateTrader_Inputs.mqh       - All input parameters (~280, 47 groups)
 Include/
-  Common/                       - Enums, Structs, Utils, SymbolProfile
-  Core/                         - Orchestrators, Coordinator, Scaler, Monitor
-  EntryPlugins/                 - 19 entry plugins + 4 engines
-  ExitPlugins/                  - 5 exit strategies
-  TrailingPlugins/              - 6 trailing strategies (1 active)
-  RiskPlugins/                  - Quality tier risk strategy
-  Validation/                   - SignalValidator, SetupEvaluator, MarketFilters
-  MarketAnalysis/               - Context, Regime, Trend, Macro, Crash, SMC, Volatility
-  Infrastructure/               - Logger, ErrorHandler, Health, Recovery
+  Common/                       - Enums, Structs, Utils, TradeUtils, SymbolProfile
+    Enums.mqh
+    Structs.mqh
+    SymbolProfile.mqh
+    TradeUtils.mqh
+    Utils.mqh
+  ComponentManagement/          - Component manager interface + implementation
+    CComponentManager.mqh
+    IComponentManager.mqh
+  Core/                         - Orchestrators, Coordinator, Scaler, Monitor, EC v3
+    CAdaptiveTPManager.mqh
+    CDayTypeRouter.mqh
+    CEquityCurveRiskController.mqh   <-- EC v3 (core + vol layer)
+    CMarketStateManager.mqh
+    CPositionCoordinator.mqh
+    CRegimeRiskScaler.mqh
+    CRiskMonitor.mqh
+    CSignalManager.mqh
+    CSignalOrchestrator.mqh
+    CTradeOrchestrator.mqh
   Display/                      - Chart display, trade logger
+    CDisplay.mqh
+    CTradeLogger.mqh
+  EntryPlugins/                 - 19 entry plugins + 4 engines
+    CBBMeanReversionEntry.mqh       (disabled)
+    CCrashBreakoutEntry.mqh
+    CDisplacementEntry.mqh
+    CEngulfingEntry.mqh
+    CExpansionEngine.mqh
+    CFailedBreakReversal.mqh        (S6)
+    CFalseBreakoutFadeEntry.mqh
+    CFileEntry.mqh
+    CLiquidityEngine.mqh
+    CLiquiditySweepEntry.mqh        (disabled)
+    CMACrossEntry.mqh
+    CPinBarEntry.mqh
+    CPullbackContinuationEngine.mqh (disabled)
+    CRangeBoxEntry.mqh
+    CRangeEdgeFade.mqh              (S3)
+    CSessionBreakoutEntry.mqh
+    CSessionEngine.mqh
+    CSupportBounceEntry.mqh         (disabled)
+    CVolatilityBreakoutEntry.mqh
   Execution/                    - Enhanced trade executor
+    CEnhancedPositionManager.mqh
+    CEnhancedTradeExecutor.mqh
+    TradeDataStructure.mqh
+  ExitPlugins/                  - 5 exit strategies
+    CDailyLossHaltExit.mqh
+    CMaxAgeExit.mqh
+    CRegimeAwareExit.mqh
+    CStandardExitStrategy.mqh
+    CWeekendCloseExit.mqh
+  Infrastructure/               - Logger, ErrorHandler, Health, Recovery
+    CErrorHandler.mqh
+    CHealthBasedRiskAdjuster.mqh
+    CLoggingSettings.mqh
+    CMemorySafeHelper.mqh
+    CSmartPointer.mqh
+    ConcurrencyManager.mqh
+    ErrorHandlingUtils.mqh
+    HealthMonitor.mqh
+    Logger.mqh
+    RecoveryManager.mqh
+    TimeoutManager.mqh
+  MarketAnalysis/               - Context, Regime, Trend, Macro, Crash, SMC, Volatility
+    BillWilliams.mqh
+    CATRCalculator.mqh
+    CAdaptiveParameters.mqh
+    CCrashDetector.mqh
+    CIndicatorHandle.mqh
+    CMacroBias.mqh
+    CMarketCondition.mqh
+    CMarketContext.mqh
+    CMomentumFilter.mqh
+    CRangeBoxDetector.mqh
+    CRegimeClassifier.mqh
+    CSMCOrderBlocks.mqh
+    CTrendDetector.mqh
+    CVolatilityRegimeManager.mqh
+    CXAUUSDEnhancer.mqh
+    Custom.mqh
+    IMarketContext.mqh
+    Indicator.mqh
+    Indicators.mqh
+    Oscilators.mqh
+    Series.mqh
+    TimeSeries.mqh
+    Trend.mqh
+    Volumes.mqh
+  PluginSystem/                 - Base classes, plugin manager/mediator/registry
+    CEntryStrategy.mqh
+    CExitStrategy.mqh
+    CPluginInterfaces.mqh
+    CPluginManager.mqh
+    CPluginMediator.mqh
+    CPluginRegistry.mqh
+    CPluginValidator.mqh
+    CRiskStrategy.mqh
+    CTradeStrategy.mqh
+    CTrailingStrategy.mqh
+    IMarketContext.mqh
+  RiskPlugins/                  - Quality tier risk (NOT initialized), ATR risk
+    CATRBasedRiskStrategy.mqh
+    CQualityTierRiskStrategy.mqh
+  TrailingPlugins/              - Chandelier (active), 6 disabled
+    CATRTrailing.mqh
+    CChandelierTrailing.mqh
+    CHybridTrailing.mqh
+    CParabolicSARTrailing.mqh
+    CSmartTrailingStrategy.mqh
+    CSteppedTrailing.mqh
+    CSwingTrailing.mqh
+  Validation/                   - SignalValidator, SetupEvaluator, MarketFilters
+    CAdaptivePriceValidator.mqh
+    CMarketFilters.mqh
+    CSetupEvaluator.mqh
+    CSignalValidator.mqh
+Tests/
+  TestPartialCloseStateMachine.mq5
+  TestPositionPersistence.mq5
+  TestQualityScoring.mq5
+  TestRegimeClassification.mq5
+  TestRiskPipeline.mq5
+docs/
+claude/
 ```
 
 ---
@@ -59,7 +174,7 @@ Layer 3    EntryPlugins + Engines + S3/S6 + CFileEntry (via CEntryStrategy base 
                |
 Layer 4    Core (CSignalOrchestrator + CDayTypeRouter)
                |
-Layer 5    Core (CTradeOrchestrator + CRiskMonitor + CRegimeRiskScaler)
+Layer 5    Core (CTradeOrchestrator + CRiskMonitor + CRegimeRiskScaler + CEquityCurveRiskController)
                |
 Layer 6    Execution (CEnhancedTradeExecutor)
                |
@@ -96,14 +211,20 @@ It does not depend on any concrete implementation.
 | 10 | CRangeEdgeFade (S3) | Range edge sweep-and-reclaim |
 | 11 | CFailedBreakReversal (S6) | Failed breakout spike-and-snap |
 
-**Disabled:** CLiquiditySweepEntry, CBBMeanReversionEntry, CSupportBounceEntry
+**Disabled:**
+
+| Plugin | Reason |
+|--------|--------|
+| CBBMeanReversionEntry | -1.1R/10 trades, never positive |
+| CLiquiditySweepEntry | Net negative |
+| CSupportBounceEntry | Net negative |
 
 ### Entry Engines (4 total)
 
 | # | Engine | Active Modes | Disabled Modes |
 |---|--------|-------------|----------------|
 | 1 | CLiquidityEngine | OB retest | FVG, SFP |
-| 2 | CSessionEngine | (none) | London BO, NY Cont, Silver Bullet, LC Rev (all 0% WR) |
+| 2 | CSessionEngine | (none -- all disabled) | London BO, NY Cont, Silver Bullet, LC Rev (all 0% WR) |
 | 3 | CExpansionEngine | Rubber Band/Death Cross, IC Breakout | Compression BO |
 | 4 | CPullbackContinuationEngine | (none -- fully disabled) | -0.5R/38 trades |
 
@@ -111,26 +232,46 @@ It does not depend on any concrete implementation.
 
 | Plugin | Status |
 |--------|--------|
-| CChandelierTrailing | ACTIVE: ATR x 3.0 on H1, regime-adaptive multiplier |
+| CChandelierTrailing | **ACTIVE:** 3.0x ATR on H1, regime-adaptive (3.5x trending, 2.5x choppy) |
 | CATRTrailing | Disabled |
 | CSwingTrailing | Disabled |
 | CParabolicSARTrailing | Disabled |
 | CSteppedTrailing | Disabled |
 | CHybridTrailing | Disabled |
+| CSmartTrailingStrategy | Not registered |
 
 ### Exit Plugins
 
 | # | Plugin | Behavior |
 |---|--------|----------|
 | 1 | CRegimeAwareExit | CHOPPY structure break + macro opposition |
-| 2 | CDailyLossHaltExit | Daily loss <= -4% halts trading |
-| 3 | CWeekendCloseExit | Friday 20:00 close all |
+| 2 | CDailyLossHaltExit | Daily loss <= -3% halts trading |
+| 3 | CWeekendCloseExit | Friday close all |
 | 4 | CMaxAgeExit | 120h max hold |
 | 5 | CStandardExitStrategy | Time/loss/profit thresholds |
 
 ### Risk Plugins
 
-- CQualityTierRiskStrategy -- Quality-based sizing with consecutive loss scaling, short protection, volatility adjustment
+| Plugin | Status |
+|--------|--------|
+| CQualityTierRiskStrategy | EXISTS but NOT initialized -- fallback tick-value sizing is active |
+| CATRBasedRiskStrategy | Available, not primary |
+
+CQualityTierRiskStrategy's `Initialize()` is intentionally never called. Its 8-step
+chain (consecutive loss scaling, short 0.5x protection, volatility adjustment, etc.)
+is dead code. All lot sizing goes through fallback tick-value calculation.
+
+### CEquityCurveRiskController (EC v3)
+
+Located at `Include/Core/CEquityCurveRiskController.mqh`. The ONLY adaptive drawdown
+control in the live pipeline.
+
+| Layer | Status | Parameters |
+|---|---|---|
+| Core | ACTIVE | EMA(20)/EMA(50) of R-multiples, continuous 1.0 to 0.70 scaling, 50-trade warmup |
+| Volatility | ACTIVE | ATR-ratio bands (low 0.90, high 1.30, extreme 1.60), floor 0.90 ceiling 1.05 |
+| Forward-Looking | REJECTED | Disabled -- 13.6:1 cost/benefit ratio, too noisy for gold |
+| Strategy-Weighted | REJECTED | Disabled -- flips 2021 negative, -1.6R for $133 DD savings |
 
 ### Plugin Class Hierarchy
 
@@ -167,7 +308,7 @@ CTradeStrategy                    (base for all plugins)
     |       +-- CStandardExitStrategy
     |
     +-- CRiskStrategy             (base for position sizing)
-    |       +-- CQualityTierRiskStrategy
+    |       +-- CQualityTierRiskStrategy  (NOT initialized)
     |       +-- CATRBasedRiskStrategy
     |
     +-- CTrailingStrategy         (base for trailing stop logic)
@@ -207,6 +348,7 @@ Runs independently in OnTick step 2b.
 | Regime Risk Scaler | CRegimeRiskScaler | Regime classification to risk/exit profiles |
 | Market Context | CMarketContext | 7 integrated analysis components (trend, regime, macro, crash, SMC, volatility, momentum) |
 | Risk Monitor | CRiskMonitor | Trading halt, daily loss tracking |
+| EC v3 Controller | CEquityCurveRiskController | Continuous equity-curve drawdown scaling (core + vol layers) |
 
 ---
 
@@ -300,7 +442,8 @@ OnTick()
   |     |     +-- Session risk multiplier (London 0.5x, NY 0.9x, Asia 1.0x)
   |     |     +-- Entry sanity (SL distance >= 3x spread)
   |     |     +-- Regime risk scaling
-  |     |     +-- Breakout probation divert
+  |     |     +-- EC v3 risk controller
+  |     |     +-- Hard cap (2.0%)
   |     |     |
   |     |     +-- [6] g_tradeOrchestrator.ExecuteSignal()
   |     |
@@ -344,17 +487,22 @@ the trade's lifetime. Chandelier multiplier adapts dynamically to the live regim
 
 ---
 
-## Risk Pipeline
+## Risk Pipeline (Production)
 
-1. **Quality tier base risk:** A+ 0.8%, A 0.8%, B+ 0.6%, B 0.5%
-2. **Short protection:** multiply by profile short multiplier (0.5x for gold)
-3. **Session risk:** London 0.5x, NY 0.9x, Asia 1.0x
-4. **Regime risk scaling:** Trending 1.25x, Normal 1.0x, Choppy 0.6x, Volatile 0.75x
-5. **ATR velocity multiplier:** 1.15x when H1 ATR accelerates >15% (trend trades only)
-6. **Volatility regime multiplier:** Very Low 1.0x through Extreme 0.65x (skipped when regime scaler active)
-7. **Consecutive loss scaling:** Level 1 (2-3 losses) 0.75x, Level 2 (4+) 0.5x
-8. **Session quality factor:** 0.5x if execution quality < 0.50
-9. **Hard cap:** 1.2% maximum risk per trade
+CQualityTierRiskStrategy is intentionally NOT initialized. Fallback sizing handles
+all lots. The 8-step chain (loss scaling, short 0.5x, vol adjustment) is dead code.
+
+**What actually runs:**
+
+1. **Quality tier base risk:** A+ 1.5%, A 1.0%, B+ 0.75%
+2. **Regime risk scaling:** Trending 1.25x, Normal 1.0x, Choppy 0.6x, Volatile 0.75x
+3. **Session risk scaling:** London 0.5x, NY 0.9x, Asia 1.0x
+4. **EC v3 controller:** Continuous 1.0 to 0.70 (core layer) + vol layer (0.90--1.05)
+5. **Hard cap:** 2.0%
+6. **Fallback lot sizing:** Tick-value calculation from final risk %
+
+No short protection. No consecutive loss scaling. No volatility regime multiplier.
+EC v3 is the ONLY adaptive drawdown control.
 
 ---
 
@@ -400,7 +548,7 @@ and restores mode performance to each engine.
 
 MQL5 has no garbage collection. The EA uses a strict `new`/`delete` pattern:
 
-1. `OnInit()` creates all objects in dependency order (Layer 0 through 10)
+1. `OnInit()` creates all objects in dependency order (Layer 0 through 8)
 2. Each object is assigned to a global pointer
 3. `OnDeinit()` saves state, exports telemetry, deletes in reverse order
 4. Each plugin's `Deinitialize()` releases indicator handles
@@ -413,7 +561,8 @@ MQL5 has no garbage collection. The EA uses a strict `new`/`delete` pattern:
 
 | Behavior | Status | Reason |
 |----------|--------|--------|
-| Risk strategy Initialize() | NOT called | Fallback tick-value sizing outperforms quality-tier chain |
+| CQualityTierRiskStrategy Initialize() | NOT called | Fallback tick-value sizing; 8-step chain is dead code |
+| CEquityCurveRiskController | ACTIVE | EC v3: only adaptive drawdown control in pipeline |
 | Auto-kill | DISABLED | Name mismatch bug caused false kills |
 | Mode RecordModeResult | DISABLED | Prevents interference with proven behavior |
 | Zone recycling | DISABLED | First 20 zones permanent |
@@ -426,6 +575,8 @@ MQL5 has no garbage collection. The EA uses a strict `new`/`delete` pattern:
 | S6 short side | DISABLED | -8.9R across 6 years |
 | BB Mean Reversion Short | DISABLED | -1.1R/10 trades |
 | Pullback Continuation | DISABLED | -0.5R/38 trades |
+| Short protection multiplier | NOT active | Dead code in uninitialized risk strategy |
+| Consecutive loss scaling | NOT active | Dead code in uninitialized risk strategy |
 | ATR velocity risk mult | ACTIVE | 1.15x when H1 ATR accelerates >15% |
 | SessionQuality gate | ACTIVE | Blocks/reduces entries based on quality |
 | TP1/TP2 independence | ACTIVE | Not gated on TP0 |

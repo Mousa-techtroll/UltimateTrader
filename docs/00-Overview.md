@@ -1,12 +1,12 @@
 # UltimateTrader EA -- System Overview
 
-> **Production state (2026-04-10).** Backtest performance across 7 years (2019--2026):
-> - 881 trades, $23,187 profit, 110.3R, +0.125 R/trade
-> - PF 1.42--1.46, Sharpe 2.90, Recovery Factor 10.85
-> - Max drawdown: 6.14% ($1,926)
-> - All 7 years positive (2020 barely at +$3)
-> - A+ trades: 82% of all profit ($18,984 from 544 trades)
-> - B+ trades: net negative (-$172 from 92 trades)
+> **v18 Production (2026-04-10).** Backtest across 7 years (2019--2025):
+> - 881 trades, $28,204 profit, 113.2R, +0.128 R/trade
+> - PF 1.45, Sharpe 2.84, Recovery Factor 8.42
+> - Max drawdown: $2,774 (17.8%)
+> - All 7 years positive
+> - A+ trades: 82% of profit ($22,263 from 544 trades)
+> - B+ trades: near breakeven (+$42 from 92 trades)
 
 ---
 
@@ -15,14 +15,12 @@
 UltimateTrader is a professional XAUUSD (Gold) H1 Expert Advisor for MetaTrader 5.
 It runs fully automated on the one-hour chart, detecting high-probability setups via
 Smart Money Concepts (SMC), candlestick pattern recognition, session-based timing, and
-structural expansion patterns. Position sizing uses fallback tick-value risk calculation
-with quality-tier and regime-based adjustments.
+structural expansion patterns.
 
-The system merges **Stack17 trading intelligence** -- the signal detection, market
-regime analysis, and pattern recognition layer that decides *what* and *when* to
-trade -- with the **AICoder V1 infrastructure** -- the plugin architecture, health
-monitoring, error recovery, and execution framework that decides *how* to trade
-safely and reliably.
+Position sizing uses fallback tick-value risk calculation. CQualityTierRiskStrategy
+is intentionally NOT initialized -- the 8-step sizing chain (loss scaling, short 0.5x,
+vol adjustment) is dead code. Fallback lot sizing handles all trades. EC v3 is the
+ONLY adaptive drawdown control.
 
 ---
 
@@ -30,15 +28,12 @@ safely and reliably.
 
 ### Plugin-Based Design
 
-The EA is built on a plugin architecture with four major categories:
-
 | Category | Count | Purpose |
 |---|---|---|
-| Entry plugins | 19 | Signal detection (candlestick, SMC, structure, file-based) |
+| Entry plugins | 11 active + 3 disabled | Signal detection (candlestick, SMC, structure, file-based) |
 | Engines | 4 | Higher-level pattern orchestration |
-| Trailing plugins | 7 | ATR, Swing, Chandelier, Parabolic SAR, Stepped, Hybrid, Smart |
+| Trailing plugins | 1 active (Chandelier) | ATR-based trailing stop |
 | Exit plugins | 5 | Regime-Aware, Daily Loss Halt, Weekend Close, Max Age, Standard |
-| Risk plugins | 2 | ATR-based risk, quality-tier risk |
 
 ### Signal Flow
 
@@ -55,7 +50,9 @@ pin bars, MA cross). Mean reversion and short signals execute immediately.
 |---|---|---|
 | A+ | 1.5% | Highest conviction setups |
 | A | 1.0% | Strong setups |
-| B+ | 0.75% | Marginal setups (net negative historically) |
+| B+ | 0.75% | Marginal setups (near breakeven historically) |
+
+B tier is unreachable -- threshold is 7, same as A.
 
 ### Regime Classification
 
@@ -77,12 +74,39 @@ Market regime is classified with hysteresis to prevent rapid switching:
    - TP1: 1.3R (close 40%)
    - TP2: 1.8R (close 30%)
 3. **Trailing** -- Chandelier Exit at 3.0x ATR on H1 (regime-adaptive: 3.5x trending, 2.5x choppy)
-4. **Exit** -- trailing stop hit, max age (72h), weekend close, or regime-aware close
+4. **Exit** -- trailing stop hit, max age (120h), weekend close, or regime-aware close
 
-### Equity Curve Filter
+---
 
-EMA(20) vs EMA(50) of R-multiples. When the equity curve is in drawdown (fast EMA
-below slow EMA), risk is halved to 0.5x.
+## Risk Pipeline (CRITICAL)
+
+The actual production risk flow. CQualityTierRiskStrategy is NOT initialized -- the
+8-step chain documented in that class (loss scaling, short 0.5x, vol adjustment) never
+runs. All lot sizing goes through fallback tick-value calculation.
+
+**What actually executes:**
+
+1. **Quality tier base risk:** A+ 1.5%, A 1.0%, B+ 0.75%
+2. **Regime risk scaling:** TRENDING 1.25x, NORMAL 1.0x, CHOPPY 0.6x, VOLATILE 0.75x
+3. **Session risk scaling:** London 0.5x, NY 0.9x, Asia 1.0x
+4. **EC v3 controller:** Continuous multiplier 1.0 to 0.70 (core layer) + vol layer
+5. **Hard cap:** 2.0%
+6. **Fallback lot sizing:** Tick-value calculation from final risk %
+
+There is NO short protection multiplier, NO consecutive loss scaling, NO volatility
+regime multiplier in the live pipeline. Those exist only in the uninitialized
+CQualityTierRiskStrategy dead code.
+
+### EC v3 -- Equity Curve Risk Controller
+
+The only adaptive drawdown control. Located at `Include/Core/CEquityCurveRiskController.mqh`.
+
+| Layer | Status | Function |
+|---|---|---|
+| Core | ACTIVE | EMA(20) vs EMA(50) of R-multiples, continuous 1.0 to 0.70 scaling |
+| Volatility | ACTIVE | ATR-ratio tightening/relaxing (0.90--1.05 band) |
+| Forward-Looking | REJECTED | 13.6:1 cost/benefit, too noisy for gold |
+| Strategy-Weighted | REJECTED | Flips 2021 negative, -1.6R for $133 DD savings |
 
 ---
 
@@ -95,7 +119,7 @@ Signals pass through these gates in order before execution:
 | 1 | Shock volatility | Block during extreme volatility spikes |
 | 2 | Session quality | Block during low-quality session periods |
 | 3 | Spread | Block when spread exceeds threshold |
-| 4 | Regime thrash cooldown | Block immediately after regime classification changes |
+| 4 | Regime thrash cooldown | Block after rapid regime classification changes |
 | 5 | Signal detection | Orchestrator collects and ranks signals |
 | 6 | Extension filter | Block when 72h momentum is overextended |
 | 7 | Position limit | Block when max concurrent positions reached |
@@ -104,10 +128,9 @@ Signals pass through these gates in order before execution:
 | 10 | Session quality factor | Apply session-based risk scaling |
 | 11 | Entry sanity | Verify SL distance vs spread is reasonable |
 | 12 | Regime risk scaling | Apply regime multipliers (see table above) |
-| 13 | Quality trend boost | *Disabled* |
-| 14 | ATR velocity boost | 1.15x risk when H1 ATR accelerating >15% |
-| 15 | Breakout probation | *Disabled* |
-| 16 | Execute | CTradeOrchestrator places the trade |
+| 13 | EC v3 | Equity curve continuous risk controller |
+| 14 | Hard cap | 2.0% maximum risk per trade |
+| 15 | Execute | CTradeOrchestrator places the trade |
 
 ---
 
@@ -115,11 +138,11 @@ Signals pass through these gates in order before execution:
 
 ### Quality Tier Breakdown
 
-| Tier | Trades | PnL ($) | % of Total Profit | Avg Impact |
+| Tier | Trades | PnL ($) | % of Total Profit | Notes |
 |---|---|---|---|---|
-| A+ | 544 | $18,984 | 82% | Core profit driver |
+| A+ | 544 | $22,263 | 82% | Core profit driver |
 | A | -- | -- | -- | Positive contributor |
-| B+ | 92 | -$172 | Net negative | Marginal, kept for diversification |
+| B+ | 92 | +$42 | Near breakeven | Marginal, kept for diversification |
 
 ### Risk Model
 
@@ -131,8 +154,7 @@ UltimateTrader operates on an asymmetric win/loss model:
 - The edge is asymmetric capital allocation, not signal quality
 
 The runner portion of trades (the final ~36% after all partials) loses in aggregate.
-This is the insurance premium for capturing large trailing exits. Cutting the runner
-costs approximately $8,000 in total profit.
+This is the insurance premium for capturing large trailing exits.
 
 ### Risk Parameters
 
@@ -141,17 +163,12 @@ costs approximately $8,000 in total profit.
 | A+ base risk | 1.5% |
 | A base risk | 1.0% |
 | B+ base risk | 0.75% |
-| Max risk per trade | 1.2% |
+| Hard cap risk per trade | 2.0% |
 | Max concurrent positions | 5 |
 | Daily loss limit | 3.0% |
-| Short risk multiplier | 0.5x |
 | London risk multiplier | 0.50x |
 | NY risk multiplier | 0.90x |
-| Equity curve drawdown multiplier | 0.5x |
-
-**Double volatility adjustment guard:** When regime risk scaler is active, the
-volatility regime multiplier is skipped to prevent double-reduction
-(`InpVolRegimeYieldsToRegimeRisk`).
+| EC v3 floor multiplier | 0.70x |
 
 ---
 
@@ -164,7 +181,7 @@ volatility regime multiplier is skipped to prevent double-reduction
 | New York | 13:00 -- 17:00 | Active. 0.90x risk. MA Cross blocked. Bearish Pin Bar blocked. |
 | Late session | 17:00+ | Active. Lower volume. |
 
-All session classification uses GMT-aware logic (Sprint 5B fix).
+All session classification uses GMT-aware logic.
 
 ---
 
@@ -213,7 +230,7 @@ degraded performance. It is locked at the current configuration.
 - **Chandelier Exit:** 3.0x ATR on H1 (regime-adaptive: 3.5x trending, 2.5x choppy)
 - **Breakeven:** Regime-specific R trigger (1.0R normal, 1.2R trending, 0.7R choppy, 0.8R volatile) with 50-point offset
 - **Weekend close:** All positions closed Friday
-- **Max age:** 72 hours maximum position duration
+- **Max age:** 120 hours maximum position duration
 - **Regime-aware exit:** CHOPPY regime closes open trend positions
 - **Anti-stall:** S3/S6 trades reduced at 5 M15 bars, closed at 8 M15 bars (checks Chandelier SL before force-closing)
 
@@ -241,9 +258,6 @@ the symbol's price to gold's reference price ($2000).
 When `InpSignalSource = SIGNAL_SOURCE_BOTH`, pattern-based and CSV file signals
 fire independently:
 
-- **Pattern signals:** standard orchestrator pipeline (step 2a in OnTick)
-- **File signals:** independent execution path (step 2b in OnTick), bypass regime and confirmation gates
-
 | Mode | Behavior |
 |---|---|
 | SIGNAL_SOURCE_PATTERN | Internal pattern engine only |
@@ -251,14 +265,6 @@ fire independently:
 | SIGNAL_SOURCE_BOTH | Both fire independently |
 
 **CSV format:** `DateTime,Symbol,Action,RiskPct,Entry,EntryMax,SL,TP1,TP2,TP3`
-
-| Parameter | Default | Purpose |
-|---|---|---|
-| `InpFileSignalQuality` | SETUP_A | File signal quality tier |
-| `InpFileSignalRiskPct` | 0.8% | Default risk when CSV has 0 or missing |
-| `InpFileCheckInterval` | 60 seconds | How often EA checks for new signals |
-| `InpFileSignalSkipRegime` | true | Bypass regime filter |
-| `InpFileSignalSkipConfirmation` | true | Execute immediately |
 
 ---
 
@@ -272,9 +278,10 @@ UltimateTrader/
   Include/
     Common/         (5 files)     -- Enums, Structs, Utils, TradeUtils, SymbolProfile
     ComponentManagement/ (2 files)-- Component manager interface + implementation
-    Core/           (9 files)     -- Orchestrators, Day Router, Risk Monitor,
+    Core/           (10 files)    -- Orchestrators, Day Router, Risk Monitor,
                                      Adaptive TP, Signal Manager, Position Coordinator,
-                                     Market State Manager, Regime Risk Scaler
+                                     Market State Manager, Regime Risk Scaler,
+                                     CEquityCurveRiskController (EC v3)
     Display/        (2 files)     -- Chart display + trade logger (CSV/JSON export)
     EntryPlugins/   (19 files)    -- 3 engines + 13 legacy entry plugins + S3/S6 + FileEntry
     Execution/      (3 files)     -- Enhanced executor, position manager, trade data
@@ -284,9 +291,8 @@ UltimateTrader/
     MarketAnalysis/ (24 files)    -- IMarketContext, CMarketContext, 7 analysis
                                      components, indicator wrappers
     PluginSystem/   (11 files)    -- Base classes, plugin manager/mediator/registry
-    RiskPlugins/    (2 files)     -- ATR-based risk, quality-tier risk
-    TrailingPlugins/(7 files)     -- ATR, Swing, Chandelier, Parabolic SAR,
-                                     Stepped, Hybrid, Smart
+    RiskPlugins/    (2 files)     -- ATR-based risk, quality-tier risk (NOT initialized)
+    TrailingPlugins/(7 files)     -- Chandelier (active), 6 disabled
     Validation/     (4 files)     -- Signal validator, setup evaluator, market filters
 
   Tests/            (5 files)     -- Regime, risk, quality, partial close, persistence
@@ -301,7 +307,7 @@ UltimateTrader/
 1. The edge is asymmetric capital allocation, not signal quality.
 2. Confirmation candle IS the quality gate -- it cannot be out-filtered.
 3. Trailing is at Goldilocks optimum -- both tighter and wider degrade profit.
-4. Runner losses are insurance premium for tail captures -- cutting them costs $8K.
+4. Runner losses are insurance premium for tail captures.
 5. 76% SL rate is the cost of the compounding engine, not a bug.
 6. Exit modifications are always net negative (6 failures, 0 successes). The exit system is locked.
 7. The system thrives in trending, high-volatility gold and needs filters to reduce damage in non-ideal conditions.

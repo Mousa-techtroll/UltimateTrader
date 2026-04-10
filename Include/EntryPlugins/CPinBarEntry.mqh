@@ -172,6 +172,29 @@ public:
 
                double tp = entry + (entry - sl) * m_rr_target;
 
+               // P1-B: Proximity-to-high filter — block LONG if near recent high
+               if(InpPinBarProximityFilter)
+               {
+                  int highest_bar = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, InpPinBarHighLookback, 1);
+                  if(highest_bar >= 0)
+                  {
+                     double recent_high = iHigh(_Symbol, PERIOD_H1, highest_bar);
+                     if(recent_high > 0)
+                     {
+                        double dist_from_high = (recent_high - entry) / recent_high * 100.0;
+                        if(dist_from_high < InpPinBarProximityPct)
+                        {
+                           Print("[PinBarFilter] LONG blocked: price ", DoubleToString(entry, 2),
+                                 " within ", DoubleToString(dist_from_high, 2),
+                                 "% of ", InpPinBarHighLookback, "-bar high ",
+                                 DoubleToString(recent_high, 2),
+                                 " (threshold: ", DoubleToString(InpPinBarProximityPct, 1), "%)");
+                           return signal;  // empty signal
+                        }
+                     }
+                  }
+               }
+
                signal.valid = true;
                signal.symbol = _Symbol;
                signal.action = "BUY";

@@ -26,7 +26,7 @@ input bool   InpFileSignalSkipConfirmation = true;                 // File signa
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
-input double InpRiskAPlusSetup = 1.0;        // Risk % for A+ setups — EC filter compensated (+25% base, 0.5x during DD)
+input double InpRiskAPlusSetup = 1.5;        // Risk % for A+ setups — v18 production (EC v3 manages drawdown)
 input double InpRiskASetup = 1.0;            // Risk % for A setups — EC filter compensated
 input double InpRiskBPlusSetup = 0.75;       // Risk % for B+ setups — EC filter compensated
 input double InpRiskBSetup = 0.6;            // Risk % for B setups — EC filter compensated
@@ -96,6 +96,7 @@ input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
 input double InpMinSLPoints = 800.0;         // Minimum SL distance (points) — auto-scaled for non-gold symbols
 input bool   InpAutoScalePoints = true;      // Auto-scale all point distances by symbol price (gold=reference)
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
+input double InpMinRRShortCrash = 1.30;      // REVERTED to match default (0.50 caused butterfly effects)
 input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
 input double InpMinRoomToObstacle = 2.0;     // Min room to structural obstacle (R-multiples)
 input int    InpRSIPeriod = 14;              // RSI period
@@ -208,6 +209,9 @@ input double InpVIXLow = 15.0;              // VIX low threshold
 input group "══════ PATTERN ENABLE/DISABLE ══════"
 input bool   InpEnableEngulfing = true;      // Enable Engulfing
 input bool   InpEnablePinBar = true;         // Pin Bar ON (baseline — Bearish PF 1.48 carries 2023)
+input bool   InpPinBarProximityFilter = false;  // Pin Bar: REJECTED — blocked 94% of entries in trending markets
+input int    InpPinBarHighLookback = 20;        // Pin Bar: lookback bars for recent high (H1)
+input double InpPinBarProximityPct = 1.0;       // Pin Bar: block if within X% of high
 input bool   InpEnableLiquiditySweep = false;// Enable Liquidity Sweep (DISABLED: engine SFP mode replaces this)
 input bool   InpEnableMACross = true;        // Enable MA Cross (baseline)
 input bool   InpEnableBBMeanReversion = false;// BB MR DISABLED: -1.1R/10 trades, never positive
@@ -460,6 +464,10 @@ input bool   InpConfirmedStricterInChop = true;                   // Require sco
 //--- Group 47: RUNNER EXIT MODE
 input group "══════ RUNNER EXIT MODE ══════"
 input bool               InpEnableRunnerExitMode = false;         // Runner mode OFF: -$391 in isolation test (v8). Trail system untouchable.
+input bool               InpRunnerRegimeConditional = false;     // REVERTED: runner kill cost -$2K, Core Truth #4 confirmed
+input bool               InpRunnerCloseInChoppy = true;          // Runner: kill in CHOPPY
+input bool               InpRunnerCloseInVolatile = true;        // Runner: kill in VOLATILE
+input bool               InpRunnerCloseInRanging = true;         // Runner: kill in RANGING
 input ENUM_SETUP_QUALITY InpRunnerMinQuality = SETUP_A;           // Minimum setup quality for runner mode
 input int                InpRunnerMinConfluence = 75;             // Minimum confluence to qualify at entry
 input int                InpRunnerNormalMinConfluence = 85;       // Reserved for future revalidation if NORMAL runner mode returns
