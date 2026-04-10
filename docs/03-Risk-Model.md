@@ -1,6 +1,6 @@
 # Risk Model
 
-> UltimateTrader EA | LOCKED v14 Production Reference | 2026-04-05
+> UltimateTrader EA | LOCKED v17 Production Reference | 2026-04-04
 
 ---
 
@@ -10,11 +10,11 @@ UltimateTrader uses a multiplier-chain risk model. Each signal starts with a bas
 
 The system profits from asymmetric payoff at a 42% win rate. Rare +4R to +8R runners generate the majority of returns. The risk model is designed to preserve capital during losing streaks and choppy conditions while deploying full size when conditions favor tail captures.
 
-**Production metrics (7 years, 2019-2025):** 758 trades, $11,135, 120.8R, 0.159 R/trade, PF 1.58, DD 3.38%, Sharpe 4.91.
+**Production metrics (7 years, 2019-2025):** 882 trades, $12,711, 108.3R, 0.123 R/trade, PF 1.58, DD 3.38%, Sharpe 4.91.
 
 ### Barbell Allocation Philosophy
 
-The risk model implements a barbell capital allocation strategy, proven across 23 experiments:
+The risk model implements a barbell capital allocation strategy, proven across ~30 experiments:
 
 - **Confirmed longs** (confirmation candle required): PF 1.01 at full risk. These are the compounding engine -- high-volume, moderate edge, capturing trending gold moves.
 - **Immediate shorts** (no confirmation): PF 1.08 at reduced risk (0.5x short multiplier). These are the stabilizer -- lower volume, consistent edge, providing short-side diversification.
@@ -29,7 +29,8 @@ Equalizing risk across both paths was tested twice and rejected both times. The 
 | Volatility regime | `Include/MarketAnalysis/CVolatilityRegimeManager.mqh` |
 | Health adjuster | `Include/Infrastructure/CHealthBasedRiskAdjuster.mqh` |
 | Shock detection | `Include/Execution/CEnhancedTradeExecutor.mqh` |
-| Input parameters | `UltimateTrader_Inputs.mqh` (Groups 2-4, 14, 22, 36-38, 40-43) |
+| Symbol profile | `Include/Common/SymbolProfile.mqh` |
+| Input parameters | `UltimateTrader_Inputs.mqh` (Groups 0-4, 14, 22, 36-38, 40-43) |
 
 ---
 
@@ -46,15 +47,15 @@ Where `effective_risk_pct` is computed by the following chain:
 ```
 Base Risk (quality tier)
     x Consecutive Loss Scaling
-    x Volatility Regime Adjustment
-    x Short Protection
+    x Volatility Regime Adjustment (skipped when regime scaler active -- Sprint 5A)
+    x Short Protection (reads from symbol profile -- BUG 3 fix)
     x Regime Risk Scaler
     x ATR Velocity Multiplier
     x Session Risk Multiplier
     x Health-Based Adjustment
-    x Session Execution Quality Gate
+    x Session Execution Quality Gate (BUG 1+2 fix: now blocks/reduces)
     -> Hard Cap (max 1.2%, min 0.1%)
-    -> Lot Normalization (broker step, min/max, margin check)
+    -> Lot Normalization (broker step, min/max, margin check, zero-division guard -- M6 fix)
 ```
 
 Each multiplier is described in the sections below.
@@ -80,14 +81,12 @@ Every signal is scored on a 0-10 point scale, mapped to a quality tier, and assi
 
 **Bear regime shift:** In bear regime, BB Mean Reversion shorts are force-upgraded to A tier. MA Cross shorts are force-upgraded to B+. All other bear-regime shorts receive +2 bonus points.
 
-**CI(10) quality scoring (A/B Test 26, adopted):** The H1 Choppiness Index (period 10) adjusts quality score by +/-1 point:
+**CI(10) quality scoring:** The H1 Choppiness Index (period 10) adjusts quality score by +/-1 point:
 
 | Pattern Type | CI < 40 (smooth) | CI > 55 (choppy) |
 |---|---|---|
 | Trend-following | +1 | -1 |
 | Mean reversion | -1 | +1 |
-
-This filter improved the losing period by +$197 with lower drawdown (-1.1%), while maintaining PF 1.27 in the edge period.
 
 **Cap:** Total score is capped at 10 points.
 
@@ -101,7 +100,7 @@ This filter improved the losing period by +$197 with lower drawdown (-1.1%), whi
 | B | >= 5 | 0.5% | `InpRiskBSetup` |
 | None | < 5 | Rejected | Signal not traded |
 
-Note: A+ was equalized from 1.0% to 0.8% after A/B testing showed A+ setups had PF 1.00 at 1.0% (oversized relative to A at PF 1.46). The equalization improved risk-adjusted returns.
+Note: A+ was equalized from 1.0% to 0.8% after A/B testing showed A+ setups had PF 1.00 at 1.0% (oversized relative to A at PF 1.46).
 
 Thresholds are configurable via Group 22 inputs (`InpPointsAPlusSetup`, `InpPointsASetup`, `InpPointsBPlusSetup`, `InpPointsBSetup`).
 
@@ -135,9 +134,11 @@ The `CVolatilityRegimeManager` classifies current volatility by comparing H1 ATR
 | High | 1.0-1.3x avg | 0.85x | SL tightened to 0.85x ATR multiplier |
 | Extreme | > 1.3x avg | 0.65x | SL tightened to 0.70x ATR multiplier |
 
-SL tightening is separate from risk reduction. It reduces the ATR-based stop distance, which changes position size for the same dollar risk, but the dollar risk is already reduced by the multiplier.
+SL tightening is separate from risk reduction.
 
-**Toggle:** `InpEnableVolRegime` (Group 14, default `true`). All thresholds and multipliers are configurable in Group 14.
+**Sprint 5A fix (double volatility adjustment guard):** When `InpVolRegimeYieldsToRegimeRisk = true` (default) AND the regime risk scaler is active, the volatility regime adjustment is SKIPPED entirely. This prevents double-reduction where both the vol regime and the regime scaler independently reduce risk for the same market condition.
+
+**Toggle:** `InpEnableVolRegime` (Group 14, default `true`).
 
 ---
 
@@ -151,9 +152,9 @@ Short positions carry structural risk in a gold-focused EA (gold's long-term bul
 | Mean reversion shorts | 0.70x | BB Mean Reversion, Range Box, False Breakout Fade |
 | Exempt shorts | 1.00x | Volatility Breakout, Crash Breakout |
 
-The standard multiplier is configurable via `InpShortRiskMultiplier` (Group 3, default `0.5`).
+The standard multiplier reads from `g_profileShortRiskMultiplier`, which is set by the symbol profile system (BUG 3 fix: was self-assignment no-op). Default for gold is 0.5x. USDJPY uses 0.75x, GBPJPY uses 0.70x.
 
-**Rationale:** Breakout and crash shorts fire during momentum-driven moves where bearish thesis is strongest. Mean reversion shorts have structural edge in ranging markets. Standard trend-following shorts against gold's bullish drift receive full 50% reduction.
+**Rationale:** Breakout and crash shorts fire during momentum-driven moves where bearish thesis is strongest. Mean reversion shorts have structural edge in ranging markets.
 
 ---
 
@@ -186,17 +187,13 @@ When H1 ATR is accelerating beyond the threshold, trend-aligned trades receive a
 The ATR velocity is computed via `GetATRVelocity()` in `CMarketContext`, which uses
 direct True Range computation from OHLC data rather than a shared `iATR()` handle.
 The direct computation was adopted after discovering that the shared `iATR()` handle
-corrupted data for other ATR-dependent components.
+corrupted data for other ATR-dependent components (Sprint 5E-H3 fix).
 
 **Critical design note:** This feature was first tested as a quality point (+1 when
 ATR accelerating). The quality point implementation caused a butterfly effect --
 changing signal quality scores changed which trades were selected as A+ vs A,
-cascading into completely different trade sequences. In 2025 alone, 80 trades were
-killed by this cascade. The risk multiplier implementation avoids this entirely by
-leaving signal selection unchanged and only modifying position size.
-
-**Impact:** +$159 across 4 test years. Marginal but positive, with zero butterfly
-effect on trade selection.
+cascading into completely different trade sequences. The risk multiplier implementation
+avoids this entirely by leaving signal selection unchanged.
 
 **Toggle:** `InpEnableATRVelocity` (Group 2, default `true`).
 
@@ -211,6 +208,8 @@ Per-session risk adjustments based on observed session-level performance.
 | London | 0.50x | 31% win rate. Higher chop and false breakout frequency. |
 | New York | 0.90x | 52% win rate. Slight noise reduction during overlap. |
 | Asia | 1.00x | Cleanest setups, lowest volatility. |
+
+Session classification uses GMT-aware logic (Sprint 5B fix) across all 14 locations.
 
 **Toggle:** `InpEnableSessionRiskAdjust` (Group 42, default `true`).
 
@@ -233,9 +232,13 @@ Health is determined by indicator handle validity, execution success rate, order
 
 ---
 
-## Step 8: Session Execution Quality Gate (was Step 8 pre-v14, now Step 9 in chain)
+## Step 8: Session Execution Quality Gate
 
 A real-time microstructure check that prevents trades during adverse execution conditions.
+
+**BUG 1 fix (v17):** The session quality gate was a dead print statement -- it logged the quality score but never actually blocked entries. Now correctly blocks when quality < 0.25.
+
+**BUG 2 fix (v17):** The `g_session_quality_factor` variable was computed but never applied. It is now used as a risk multiplier in the sizing chain.
 
 ### 3-Component Score (0.0 to 1.0)
 
@@ -266,7 +269,7 @@ Absolute ceiling regardless of all prior calculations.
 | `InpMaxRiskPerTrade` | 1.2% | Hard cap per trade |
 | Minimum floor | 0.1% | Prevents rounding to zero |
 
-After capping, lot size is calculated from account balance, risk amount, and stop distance, then normalized to broker specifications (lot step, min/max lot, margin check).
+After capping, lot size is calculated from account balance, risk amount, and stop distance, then normalized to broker specifications (lot step, min/max lot, margin check). NormalizeLots includes a zero-division guard (M6 fix).
 
 ---
 
@@ -303,47 +306,48 @@ Step 2: Consecutive loss scaling
   Risk: 0.8%
 
 Step 3: Volatility regime
-  ATR ratio 1.15 -> VOL_HIGH: 0.85x
-  Risk: 0.8% x 0.85 = 0.68%
+  Regime scaler is active (TRENDING 1.25x) -> vol regime SKIPPED (Sprint 5A)
+  Risk: 0.8%
 
 Step 4: Short protection
   BUY signal: 1.00x (no reduction)
-  Risk: 0.68%
+  Risk: 0.8%
 
 Step 5: Regime risk scaler
   TRENDING: 1.25x
-  Risk: 0.68% x 1.25 = 0.85%
+  Risk: 0.8% x 1.25 = 1.00%
 
 Step 5b: ATR velocity multiplier
   ATR acceleration 18% > 15% threshold: 1.15x
-  Risk: 0.85% x 1.15 = 0.978%
+  Risk: 1.00% x 1.15 = 1.15%
 
 Step 6: Session risk
   Asia: 1.00x
-  Risk: 0.978%
+  Risk: 1.15%
 
 Step 7: Health adjustment
   Excellent: 1.00x
-  Risk: 0.978%
+  Risk: 1.15%
 
 Step 8: Execution quality gate
   Score 0.68 > 0.50: no reduction
-  Risk: 0.978%
+  g_session_quality_factor applied (BUG 2 fix)
+  Risk: 1.15%
 
 Step 10: Hard cap
-  0.978% < 1.2% cap: no capping
-  0.978% > 0.1% floor: no floor
-  Final risk: 0.978%
+  1.15% < 1.2% cap: no capping
+  1.15% > 0.1% floor: no floor
+  Final risk: 1.15%
 ```
 
 ### Lot Calculation
 
 ```
-Risk amount:    $10,000 x 0.978% = $97.80
+Risk amount:    $10,000 x 1.15% = $115.00
 Stop distance:  1000 points
 Tick value:     ~$0.01/point (XAUUSD, 1 lot)
-Lots:           $97.80 / (1000 x $0.01) = 0.098
-Normalized:     0.10 lots (broker step)
+Lots:           $115.00 / (1000 x $0.01) = 0.115
+Normalized:     0.12 lots (broker step)
 ```
 
 ### Worst-Case Stacking
@@ -351,7 +355,8 @@ Normalized:     0.10 lots (broker step)
 A short trade during London session in extreme volatility with 4+ consecutive losses and degraded health:
 
 ```
-0.5% (B tier) x 0.50 (4+ losses) x 0.65 (extreme vol) x 0.50 (standard short)
+0.5% (B tier) x 0.50 (4+ losses) x 0.65 (extreme vol, if regime scaler inactive)
+  x 0.50 (standard short, from symbol profile)
   x 0.60 (choppy regime) x 0.50 (London) x 0.60 (degraded health)
   x 0.50 (execution quality 0.25-0.50)
   = 0.0015% -> floored to 0.1%
@@ -418,7 +423,6 @@ Blocks longs when gold has risen > 0.5% over 72 hours while the weekly EMA(20) i
 | Max concurrent positions | 5 | `InpMaxPositions` | New entries rejected at limit. |
 | Max trades per day | 5 | `InpMaxTradesPerDay` | New entries rejected after limit. Resets daily. |
 | Max total exposure | 5.0% | `InpMaxTotalExposure` | Sum of all open position risk cannot exceed this. |
-| Max margin usage | 80.0% | `InpMaxMarginUsage` | Margin check rejects if required margin > 80% of free margin. |
 
 ---
 
@@ -432,9 +436,12 @@ The following risk systems are present in code but disabled in production. Each 
 | Early invalidation | DISABLED | `InpEnableEarlyInvalidation = false` | -26.90R net destroyer in backtest. Cuts losers before they can recover, destroying the asymmetric payoff profile. |
 | Mode RecordModeResult | DISABLED | N/A (code-level) | Engine mode kill was dead code in baseline. Same pattern as auto-kill. |
 | Batched trailing | OFF | `InpBatchedTrailing = false` | Only updates broker SL at R-levels. Between levels, reversals hit stale broker SL, giving back 1-2R per trade. |
-| Reward-room filter | OFF | `InpEnableRewardRoom = false` | Rejected 95% of all trades. Gold's structural density (H4 swings every $20-40, round $50 levels, PDH/PDL, SMC zones) means obstacles always exist within 2.0R. |
-| Universal stall detector | OFF | `InpEnableUniversalStall = false` | -$3,519 across 4 years. Retrospective analysis predicted +40.7R but live backtest showed stalled trades recover more than predicted. Code present but disabled. |
-| Quality-trend boost | OFF | `InpEnableQualityTrendBoost = false` | $0 net impact across 4 years. A+ setups in TRENDING regime get 1.35x risk. Not worth added complexity for zero benefit. Code present but disabled. |
+| Reward-room filter | OFF | `InpEnableRewardRoom = false` | Rejected 95% of all trades. Gold's structural density means obstacles always exist within 2.0R. |
+| Universal stall detector | OFF | `InpEnableUniversalStall = false` | -$4,189 across 4 years. Retrospective analysis predicted +40.7R but live backtest showed stalled trades recover more than predicted. |
+| Quality-trend boost | OFF | `InpEnableQualityTrendBoost = false` | $0 net impact across 4 years. Not worth added complexity. |
+| Structure-based exit | OFF | `InpStructureBasedExit = false` | CHOPPY regime never occurs on gold (0/815 trades). Gate has nothing to gate. |
+| SMC zone strength decay | OFF | `InpEnableSMCZoneDecay = false` | Sprint 5C: graduated decay system added but disabled by default. |
+| Wednesday risk reduction | OFF | `InpEnableWednesdayReduction = false` | -$101 net across 4 years. Not worth it. |
 
 ---
 
@@ -453,10 +460,10 @@ Signal Detected
 [Step 2]  Loss Scaling      ->  x 0.50 - 1.00
      |
      v
-[Step 3]  Vol Regime         ->  x 0.65 - 1.00
+[Step 3]  Vol Regime         ->  x 0.65 - 1.00 (SKIPPED if regime scaler active)
      |
      v
-[Step 4]  Short Protection   ->  x 0.50 - 1.00
+[Step 4]  Short Protection   ->  x 0.50 - 1.00 (from symbol profile)
      |
      v
 [Step 5]  Regime Risk        ->  x 0.60 - 1.25
@@ -471,11 +478,11 @@ Signal Detected
 [Step 7]  Health Adjust      ->  x 0.30 - 1.00
      |
      v
-[Step 8]  Exec Quality       ->  Block / 0.50x / Pass
+[Step 8]  Exec Quality       ->  Block / 0.50x / Pass (now functional: BUG 1+2 fix)
      |
      v
 [Step 10] Hard Cap           ->  max 1.2%, min 0.1%
      |
      v
-Lot Calculation -> Broker Normalization -> Trade Execution
+Lot Calculation -> Broker Normalization (M6 zero-div guard) -> Trade Execution
 ```

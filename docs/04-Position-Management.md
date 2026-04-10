@@ -1,6 +1,6 @@
 # Position Management & Exit System
 
-> UltimateTrader EA | LOCKED v14 Production Reference | 2026-04-05
+> UltimateTrader EA | LOCKED v17 Production Reference | 2026-04-04
 
 ---
 
@@ -12,14 +12,14 @@ The exit system is at a verified Goldilocks optimum. Six separate attempts to im
 
 | # | Test | Change | Result | Mechanism of Failure |
 |---|---|---|---|---|
-| 1 | Smart Runner Exit v1 | Strict: volatility decay exit + momentum fade (2 weak candles) + CHOPPY/VOLATILE regime kill on runners | **-76% profit (-$8,282)** | Runners are the tail-capture engine. Cutting runners at the first sign of weakness eliminates the +4R to +8R trades that generate the entire profit. The -87.7R runner drag is the insurance premium for $12,000+ in trailing exits. |
+| 1 | Smart Runner Exit v1 | Strict: volatility decay exit + momentum fade (2 weak candles) + CHOPPY/VOLATILE regime kill on runners | **-76% profit (-$8,282)** | Runners are the tail-capture engine. Cutting runners at the first sign of weakness eliminates the +4R to +8R trades that generate the entire profit. The runner drag is the insurance premium for large trailing exits. |
 | 2 | Smart Runner Exit v2 | Softened thresholds: vol decay 0.50 (from 0.70), require 3 weak candles (from 2), tightened body ratio 0.30 (from 0.40) | **-73% profit (-$7,975)** | Same failure mode. Even with softer thresholds, the filter still clips enough runners to destroy the asymmetric payoff. The problem is structural: any signal that exits runners early loses the tail. |
 | 3 | Wider Chandelier trailing | Chandelier multiplier increased by +0.5 (confirmed longs only, 1.2x wider) | **-$1,127, DD +1.18%** | Wider trailing lets reversals eat more profit before the stop triggers. Trades that would have exited at +2R now exit at +1R or worse. The extra room does not produce proportionally larger winners. |
-| 4 | Phased breakeven | Progressive BE: move SL to -0.5R at TP0, then to entry at TP1, instead of fixed 0.8R trigger | **PF 1.27 -> 1.06** | Phased BE clips runners by moving the stop too aggressively after TP0. Faster turnover (+trades) but each trade captures less. Net effect: the system degrades to a mediocre scalper. |
+| 4 | Phased breakeven | Progressive BE: move SL to -0.5R at TP0, then to entry at TP1, instead of fixed trigger | **PF 1.27 -> 1.06** | Phased BE clips runners by moving the stop too aggressively after TP0. Faster turnover (+trades) but each trade captures less. Net effect: the system degrades to a mediocre scalper. |
 | 5 | Runner-mode trailing cadence | H1-bar-close cadence for broker SL sends on runner-qualified trades; entry-locked Chandelier floor | **-$391 in isolation test** | The cadence delay between bar-close checks lets reversals eat profit between checks. The entry-locked floor prevented normal Chandelier tightening during regime transitions. Net: mild negative. |
-| 6 | Universal stall detector | Close all trades that have been open 8+ hours without hitting TP0 | **-$3,519 across 4 years** | Retrospective analysis predicted +40.7R improvement but the live backtest showed the opposite. Stalled trades eventually recover at a higher rate than static analysis predicts because regime changes, trailing adjustments, and partial closes interact dynamically. This is the clearest example of retrospective analysis overestimating improvement. |
+| 6 | Universal stall detector | Close all trades that have been open 8+ hours without hitting TP0 | **-$4,189 across 4 years** | Retrospective analysis predicted +40.7R improvement but the live backtest showed the opposite. Stalled trades eventually recover at a higher rate than static analysis predicts because regime changes, trailing adjustments, and partial closes interact dynamically. Re-tested after Sprint 5 exit fixes: STILL destructive. |
 
-**Additional failed trailing parameter tests:** Chandelier multiplier -0.5 (tighter) also degraded performance. Both tighter and wider Chandelier settings are worse than the current 3.0x/3.5x/2.5x/3.0x regime profile. BE trigger at 1.0R (from 0.8R) also tested and rejected.
+**Additional failed trailing parameter tests:** Chandelier multiplier -0.5 (tighter) also degraded performance. Both tighter and wider Chandelier settings are worse than the current regime-adaptive profile. BE trigger changes also tested and rejected.
 
 **Conclusion:** The exit system has been tested from every angle -- tighter trailing, wider trailing, smarter runner exits (2 variants), progressive breakeven, runner-specific cadence, and universal stall detection. All 6 tests degraded profitability. The current configuration is the only known profitable combination.
 
@@ -31,9 +31,9 @@ Any proposed exit modification MUST be A/B tested against the production baselin
 
 Once a trade is opened, the position management system takes ownership. It manages partial closes through a 3-tier TP cascade, moves the stop to breakeven, applies Chandelier trailing, checks exit conditions, persists state across restarts, and records MAE/MFE telemetry.
 
-The system profits from asymmetric payoff: 42% win rate with a 1.65 payoff ratio (avg winner 1.00R, avg loser -0.61R). The runner pool is the core profit engine -- it carries -87.7R of drag across 1,182 trades but funds $12,000+ in trailing exits. TP0 contributes 66.6R across 623 trades, acting as essential glue that keeps the system profitable while runners build.
+The system profits from asymmetric payoff: 42% win rate with a 1.65 payoff ratio. The runner pool is the core profit engine -- it carries drag in aggregate but funds large trailing exits. TP0 acts as essential glue that keeps the system profitable while runners build.
 
-**Production metrics:** 758 trades, $11,135, 120.8R, 0.159 R/trade across 7 years.
+**Production metrics:** 882 trades, $12,711, 108.3R, 0.123 R/trade across 7 years.
 
 **Source files:**
 
@@ -52,6 +52,8 @@ The system profits from asymmetric payoff: 42% win rate with a 1.65 payoff ratio
 ## TP Cascade
 
 The position management system uses a 3-tier partial close cascade. Each tier closes a portion of the position at a predetermined R-multiple distance.
+
+**BUG 5 fix (v17):** TP1 and TP2 are no longer gated on `InpEnableTP0`. They fire independently regardless of whether TP0 is enabled. Previously, disabling TP0 would silently disable all higher TP levels.
 
 ### Default Profile (Normal Regime)
 
@@ -88,8 +90,6 @@ When price reaches 0.70R in the favorable direction:
 3. Breakeven logic is unlocked (gated by TP0 -- see Breakeven section).
 4. State is persisted to disk.
 
-**TP0 is essential glue:** 66.6R contribution across 623 trades (52.7% fire rate). 28 trades were saved by TP0 -- the runner lost money but TP0 kept the trade net positive, preserving 5.6R. Without TP0, 21 additional trades would be flat and runner drag would dominate the system.
-
 ### TP1: First Target
 
 | Parameter | Value | Input |
@@ -106,12 +106,7 @@ When price reaches 0.70R in the favorable direction:
 
 ### Runner
 
-The remaining ~35% of the original position enters trailing and rides the Chandelier stop until exit. This is the tail-capture engine:
-
-- Runner pool total: -87.7R drag across 1,182 trades (40.0% runner win rate)
-- Runner drag breakdown: 395 trades in the -0.5R to -1.0R bucket account for -322.6R (the largest drag source)
-- But 137 trades reached MFE > 2R, all ending positive. Zero trades with MFE > 2R lost money.
-- The runner funds $12,000+ in trailing exits -- the system's entire profit engine
+The remaining ~35% of the original position enters trailing and rides the Chandelier stop until exit. This is the tail-capture engine. The runner pool carries aggregate drag but funds the system's large trailing exits -- cutting runners costs approximately $8,000 in total profit.
 
 ---
 
@@ -144,8 +139,15 @@ Breakeven is gated by TP0 -- it only activates after the TP0 early partial has b
 
 | Parameter | Value | Input |
 |---|---|---|
-| Trigger distance | 0.8R MFE (Normal regime) | `InpTrailBETrigger` |
-| Offset | 50 points | `InpTrailBEOffset` / `InpBreakevenOffset` |
+| Trigger distance | Regime-specific (see table) | `InpTrailBETrigger` |
+| Offset | 50 points | `InpTrailBEOffset` |
+
+| Regime | BE Trigger |
+|---|---|
+| Normal | 1.0R |
+| Trending | 1.2R |
+| Choppy | 0.7R |
+| Volatile | 0.8R |
 
 When unrealized profit reaches the BE trigger AND TP0 has been captured:
 1. Stop loss is moved to `entry_price + 50 points` (longs) or `entry_price - 50 points` (shorts).
@@ -163,7 +165,7 @@ The 50-point offset ensures the trade locks in a small profit rather than sittin
 
 ### Active Strategy: Chandelier Exit (TRAIL_CHANDELIER)
 
-The Chandelier Exit is the only active trailing strategy. Five other strategies (ATR, Swing, Parabolic SAR, Stepped, Hybrid) exist in code but are disabled. All were tested; Chandelier is the only profitable option.
+The Chandelier Exit is the only active trailing strategy. Five other strategies (ATR, Swing, Parabolic SAR, Stepped, Hybrid) exist in code but are disabled.
 
 **File:** `Include/TrailingPlugins/CChandelierTrailing.mqh`
 
@@ -184,7 +186,9 @@ chandelier_distance = ATR(14) x multiplier
 new_SL = highest_high - chandelier_distance
 ```
 
-The SL is only moved if the new value is higher than the current SL and movement exceeds the 50-point minimum threshold. The stop hangs from the highest point like a chandelier, naturally adapting to volatility via ATR and to trend strength via the highest-high anchor.
+The SL is only moved if the new value is higher than the current SL and movement exceeds the 50-point minimum threshold.
+
+**ATR<=0 guard (M4 fix):** If ATR returns zero or negative (data gap, indicator failure), the trailing calculation is skipped entirely to prevent erroneous stop placement.
 
 The Chandelier multiplier varies by regime (see Regime Exit Profiles):
 
@@ -211,7 +215,7 @@ The Chandelier multiplier varies by regime (see Regime Exit Profiles):
 
 Every trailing update is immediately sent to the broker. The broker's SL matches the internal SL at all times.
 
-Batched trailing (sending updates only at R-level checkpoints) was tested and rejected. Between R-levels, reversals hit the stale broker SL, giving back 1-2R per trade. The immediate-send mode is the only profitable configuration.
+Batched trailing (sending updates only at R-level checkpoints) was tested and rejected. Between R-levels, reversals hit the stale broker SL, giving back 1-2R per trade.
 
 ---
 
@@ -224,17 +228,23 @@ Applies only to S3 (range edge fade) and S6 (failed-break reversal) trades.
 | Trade has been open for 5 M15 bars AND profit < 0.8R | Reduce position by 50% |
 | Trade has been open for 8 M15 bars AND profit < 0.8R | Close position entirely |
 
-**Rationale:** S3/S6 trades target range-edge reversals that should move quickly. If the trade stalls for 5+ bars without reaching 0.8R, the thesis is weakening. The progressive reduction limits exposure on trades that are unlikely to reach their targets.
+**BUG 4 fix (v17):** Anti-stall now checks the Chandelier-computed SL before force-closing a position. Previously, it could close a position that the Chandelier trailing would have already protected with a tight stop, resulting in unnecessary exits.
 
-**Toggle:** `InpEnableAntiStall` (Group 2, default `true`). Part of the S3/S6 framework adopted in A/B Test 28.
+**H4 fix (v17):** S6 off-by-one M15 bar fixed (shift 2 corrected to shift 1).
+
+**Toggle:** `InpEnableAntiStall` (Group 2, default `true`). Part of the S3/S6 framework.
 
 **Anti-stall does not apply to any other trade type.** Trend-following and breakout trades have different time horizons and are managed by the standard TP cascade and trailing system.
 
 ---
 
-## Hard Exit Conditions
+## Exit Plugin System
 
-### Weekend Close
+**Sprint 5E-H1 fix (v17):** Exit plugins now actually fire. The previous code had a logic error (`valid || shouldExit`) that prevented exit plugins from executing their close logic. This was corrected so that exit signals properly trigger position closure.
+
+### Hard Exit Conditions
+
+#### Weekend Close
 
 All positions are closed on Friday at 20:00 server time.
 
@@ -243,9 +253,9 @@ All positions are closed on Friday at 20:00 server time.
 | Enabled | true | `InpCloseBeforeWeekend` |
 | Close hour | 20:00 | `InpWeekendCloseHour` |
 
-Prevents gap risk over the weekend. Weekend-closed runners show +0.34 avg R (72.2% win rate on 18 trades) -- the system correctly captures partial profit before the market closes.
+Prevents gap risk over the weekend.
 
-### Max Position Age
+#### Max Position Age
 
 Positions open longer than 72 hours are closed at market.
 
@@ -255,7 +265,7 @@ Positions open longer than 72 hours are closed at market.
 
 Stale positions tie up margin and may no longer reflect the thesis under which they were opened.
 
-### Daily Loss Halt
+#### Daily Loss Halt
 
 When the day's cumulative P&L exceeds the daily loss limit, all positions are closed and trading halts for the remainder of the day.
 
@@ -265,13 +275,15 @@ When the day's cumulative P&L exceeds the daily loss limit, all positions are cl
 
 Resets at midnight server time.
 
-### Regime-Aware Exit
+#### Regime-Aware Exit
 
 Closes trend-following positions when the market regime transitions to CHOPPY.
 
 **Key exception:** Mean reversion patterns (BB Mean Reversion, Range Box, False Breakout Fade) are exempt from choppy-regime closure because they thrive in directionless markets.
 
 Also monitors macro opposition: if the macro score strongly opposes the trade direction (threshold default 3), the position is closed.
+
+**Note:** CHOPPY regime never occurs on gold in backtesting (0/815 trades), making `InpStructureBasedExit` a no-op. The gate has nothing to gate.
 
 **Toggle:** `InpAutoCloseOnChoppy` (Group 2, default `true`).
 
@@ -296,7 +308,7 @@ INITIAL  -->  TP0_HIT  -->  TP1_HIT  -->  TP2_HIT  -->  TRAILING
 | TP2_HIT | ~64% of original closed. Runner trails. |
 | TRAILING | ~35% remainder trails until stopped out or hard exit fires. |
 
-**Persistence:** Stage is serialized to `UltimateTrader_State.bin` after every transition. On restart, `ReconcileWithBroker()` restores from the persisted file and reconciles with live broker data. This prevents double-partial-closes or lost breakeven state after restarts.
+**Persistence:** Stage is serialized to `UltimateTrader_State.bin` after every transition. The `original_sl` field is now persisted across restarts (Sprint 5E-H2 fix). On restart, `ReconcileWithBroker()` restores from the persisted file and reconciles with live broker data. This prevents double-partial-closes or lost breakeven state after restarts.
 
 ---
 
@@ -309,8 +321,8 @@ When multiple exit conditions are active simultaneously, they are evaluated in t
 3. **Daily loss halt** -- close all positions, halt trading
 4. **Max age** -- close stale positions
 5. **Regime-aware exit** -- close trend positions in CHOPPY
-6. **Trailing stop** -- compute new SL, send to broker
-7. **Anti-stall** -- reduce/close stalling S3/S6 trades
+6. **Trailing stop** -- compute new SL, send to broker (ATR<=0 guard -- M4 fix)
+7. **Anti-stall** -- reduce/close stalling S3/S6 trades (checks Chandelier SL first -- BUG 4 fix)
 
 If an exit signal and a trailing update fire on the same tick, the exit signal takes precedence.
 
@@ -349,63 +361,6 @@ Minimum floors: TP1 >= 1.2R, TP2 >= 1.5R. TP2 must exceed TP1 by at least 0.5R.
 
 ---
 
-## Key Metrics from Exit Quality Analysis
-
-Data from 1,183 trades across 7 years (2019-2025).
-
-### System Efficiency
-
-| Metric | Value |
-|---|---|
-| Win rate | 42.4% (502W / 681L) |
-| Avg winner R | 1.00 |
-| Avg loser R | -0.61 |
-| Payoff ratio | 1.65 |
-| R per trade | 0.076 |
-| Winner MFE capture | 61.2% |
-
-### Runner Pool
-
-| Metric | Value |
-|---|---|
-| Total runner trades | 1,182 |
-| Runner win rate | 40.0% |
-| Runner total R | -87.7R |
-| Runner total P&L | -$6,468 |
-| Only profitable year | 2025 (+13.1R) |
-
-### TP0 Contribution
-
-| Metric | Value |
-|---|---|
-| TP0 fire rate | 52.7% (623 of 1,183) |
-| TP0 total R | 66.6R |
-| TP0=YES win rate | 75.1% |
-| TP0=NO win rate | 6.1% |
-| Trades saved by TP0 | 28 (5.6R preserved) |
-
-### Large Winner Protection
-
-| Metric | Value |
-|---|---|
-| MFE > 2R trades | 137 |
-| MFE > 2R that lost | 0 (100% protection) |
-| Avg MFE for >2R trades | 2.61R |
-| Avg captured for >2R trades | 1.49R (56.8% capture) |
-
-### Known Leakage Points
-
-| Source | Magnitude | Status |
-|---|---|---|
-| MFE > 1R then lost | 72 trades, 111.9R wasted | Structural. Attempts to fix (Smart Runner Exit v1/v2) cost -73% to -76% profit. |
-| Runner -0.5R to -1R bucket | 395 trades, -322.6R | Largest drag. This is the cost of the tail-capture strategy. |
-| MAE >= 1R | 180 trades, 0.6% survival | Near-guaranteed losses. But cutting these early (Early Invalidation) was -26.90R net. |
-| +1R reversal rate | 14.1% (72 of 512) | Some trades reach +1R then reverse to negative. The trailing system limits this to 14.1%. |
-
-These leakage points have been investigated and tested. In every case, the proposed fix degraded overall profitability more than the leakage itself costs. The current configuration accepts these known losses as the price of maintaining the asymmetric payoff profile.
-
----
-
 ## Configuration Quick Reference
 
 | Group | Input | Default | Purpose |
@@ -413,8 +368,8 @@ These leakage points have been investigated and tested. In every case, the propo
 | 40 | `InpEnableTP0` | true | Enable TP0 early partial |
 | 40 | `InpTP0Distance` | 0.70 | TP0 at 0.70R (A/B tested: +$685) |
 | 40 | `InpTP0Volume` | 15.0% | Close 15% at TP0 |
-| 8 | `InpTP1Distance` | 1.3 | TP1 at 1.3R |
-| 8 | `InpTP2Distance` | 1.8 | TP2 at 1.8R |
+| 8 | `InpTP1Distance` | 1.3 | TP1 at 1.3R (independent of TP0 -- BUG 5 fix) |
+| 8 | `InpTP2Distance` | 1.8 | TP2 at 1.8R (independent of TP0 -- BUG 5 fix) |
 | 8 | `InpTP1Volume` | 40.0% | Close 40% of remaining at TP1 |
 | 8 | `InpTP2Volume` | 30.0% | Close 30% of remaining at TP2 |
 | 8 | `InpBreakevenOffset` | 50 pts | BE offset past entry |
@@ -426,12 +381,13 @@ These leakage points have been investigated and tested. In every case, the propo
 | 39 | `InpDisableBrokerTrailing` | false | Broker SL modification enabled |
 | 44 | `InpEnableRegimeExit` | true | Regime-aware exit profiles |
 | 2 | `InpAutoCloseOnChoppy` | true | Close trend positions in CHOPPY |
-| 2 | `InpEnableAntiStall` | true | Anti-stall for S3/S6 trades |
+| 2 | `InpEnableAntiStall` | true | Anti-stall for S3/S6 trades (checks Chandelier SL -- BUG 4 fix) |
 | 2 | `InpMaxPositionAgeHours` | 72 | Max position age |
 | 2 | `InpCloseBeforeWeekend` | true | Friday 20:00 close |
 | 2 | `InpWeekendCloseHour` | 20 | Weekend close hour |
 | 46 | `InpEnableSmartRunnerExit` | false | DISABLED: -73% to -76% profit |
 | 47 | `InpEnableRunnerExitMode` | false | DISABLED: -$391 |
+| 2 | `InpEnableUniversalStall` | false | DISABLED: -$4,189 across 4 years |
 
 ---
 
@@ -441,7 +397,7 @@ These leakage points have been investigated and tested. In every case, the propo
 |---|---|---|---|
 | Smart Runner Exit | `InpEnableSmartRunnerExit = false` | -$7,975 to -$8,282 | Cuts tail captures. Runner drag is the insurance premium. |
 | Runner Exit Mode | `InpEnableRunnerExitMode = false` | -$391 | H1 cadence + entry-locked floor: too slow to react, too rigid to adapt. |
-| Phased Breakeven | `InpEnablePhasedBE = false` (removed) | PF 1.27 -> 1.06 | Clips runners via aggressive SL advancement post-TP0. |
+| Phased Breakeven | Removed | PF 1.27 -> 1.06 | Clips runners via aggressive SL advancement post-TP0. |
 | Early Invalidation | `InpEnableEarlyInvalidation = false` | -26.90R | Cuts losers that could recover, destroying asymmetric profile. |
-| Batched Trailing | `InpBatchedTrailing = false` | -$742, stale SL | Between R-level checkpoints, reversals hit stale broker SL. |
-| Universal Stall | `InpEnableUniversalStall = false` | -$3,519 | Stalled trades recover. Retrospective +40.7R estimate was wrong. |
+| Batched Trailing | `InpBatchedTrailing = false` | Stale SL | Between R-level checkpoints, reversals hit stale broker SL. |
+| Universal Stall | `InpEnableUniversalStall = false` | -$4,189 | Stalled trades recover. Retrospective +40.7R estimate was wrong. Re-confirmed dead after Sprint 5 exit fixes. |

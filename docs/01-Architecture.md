@@ -1,10 +1,11 @@
 # System Architecture
 
-> UltimateTrader EA -- LOCKED v14 Production Reference (2026-04-05)
+> UltimateTrader EA -- LOCKED v17 Production Reference (2026-04-04)
 >
 > This document describes the final production architecture. It reflects all
-> changes through 23 experiments, including the AGRE v2 cycle and subsequent
-> ATR velocity, strategy disables, and universal stall testing.
+> changes through ~30 experiments, including Sprint 5 bug fixes, code audit fixes,
+> filter re-validations after GMT corrections, the symbol profile system, and the
+> file signal source.
 
 ---
 
@@ -15,7 +16,7 @@ Smart Money Concepts (SMC), multi-timeframe regime classification, and a plugin-
 strategy framework into a single execution pipeline. The EA processes one decision per
 H1 bar, manages open positions on every tick, and persists state across restarts.
 
-**Instrument:** XAUUSD (gold)
+**Instrument:** XAUUSD (gold), with symbol profile support for USDJPY, GBPJPY
 **Timeframe:** H1 (primary), H4 (trend confirmation), D1/W1 (bias filters)
 **Architecture:** Layered plugin system with gate-chain signal flow
 
@@ -28,11 +29,11 @@ The EA is organized into 14 source folders plus the root entry point.
 | Folder | Files | Responsibility |
 |---|---|---|
 | *(root)* | 2 | Main EA (`UltimateTrader.mq5`) + input parameters (`UltimateTrader_Inputs.mqh`) |
-| `Common` | 4 | Shared enums, structs, and utility functions |
+| `Common` | 5 | Shared enums, structs, utility functions, SymbolProfile globals |
 | `ComponentManagement` | 2 | Component lifecycle manager interface and implementation |
 | `Core` | 9 | Orchestration: signal flow, trade execution, position coordination, risk monitoring, day-type routing, adaptive TPs, market state management, regime risk scaling |
 | `Display` | 2 | On-chart HUD rendering + CSV/JSON trade logger and telemetry export |
-| `EntryPlugins` | 19 | 4 engines + 13 legacy/specialized entry plugins + S3/S6 range structure |
+| `EntryPlugins` | 19 | 4 engines + 13 legacy/specialized entry plugins + S3/S6 range structure + CFileEntry |
 | `Execution` | 3 | Broker interface: order placement, modification, spread/slippage gates, retry logic |
 | `ExitPlugins` | 5 | Exit decision plugins: regime-aware, daily loss halt, weekend close, max age, standard |
 | `Infrastructure` | 11 | Logging, error handling, health monitoring, concurrency, recovery, memory safety |
@@ -52,11 +53,13 @@ higher layers. Communication flows downward through interfaces, upward through d
 structures (structs).
 
 ```
+Layer 0    SymbolProfile (globals set by ApplySymbolProfile() in OnInit)
+               |
 Layer 1    MarketAnalysis (IMarketContext + 7 components + CRangeBoxDetector)
                |
 Layer 2    Validation (SignalValidator + SetupEvaluator + MarketFilters)
                |
-Layer 3    EntryPlugins + Engines + S3/S6 (via CEntryStrategy base class)
+Layer 3    EntryPlugins + Engines + S3/S6 + CFileEntry (via CEntryStrategy base class)
                |
 Layer 4    Core (CSignalOrchestrator + CDayTypeRouter)
                |
@@ -69,7 +72,7 @@ Layer 7    Core (CPositionCoordinator + trailing/exit plugin dispatch)
 Layer 8    Display (CDisplay + CTradeLogger)
 ```
 
-**Infrastructure** (Layer 0) is a cross-cutting concern available to all layers:
+**Infrastructure** (cross-cutting) is available to all layers:
 logging, error handling, health monitoring, and memory management.
 
 **PluginSystem** provides the abstract base classes that Layers 3, 4, and 7 extend.
@@ -84,16 +87,17 @@ Each object is assigned to a global pointer. Key initialization steps:
 
 | Layer | Components Created | Notes |
 |---|---|---|
+| 0 | `ComputePointScale()`, `ApplySymbolProfile()` | Auto-scale point distances for non-gold symbols. Symbol profile sets globals (session filters, short mult, strategy enables) before any plugin runs. |
 | 1 | `CMarketContext`, `CMarketStateManager` | Wraps 7 Stack17 analysis components. Volatility manager configured with input params after construction. |
 | 2 | `CSignalValidator`, `CSetupEvaluator` | Validator-level SMC gating disabled (engines handle SMC internally). |
-| 3 | 13 legacy plugins + `CRangeEdgeFade` (S3) + `CFailedBreakReversal` (S6) + `CRangeBoxDetector` | S3/S6 replace RangeBox + FalseBreakout when `InpEnableS3S6=true`. Shared `CRangeBoxDetector` is injected into both. |
+| 3 | 13 legacy plugins + `CRangeEdgeFade` (S3) + `CFailedBreakReversal` (S6) + `CRangeBoxDetector` + `CFileEntry` | S3/S6 replace RangeBox + FalseBreakout when `InpEnableS3S6=true`. CFileEntry initialized separately in BOTH mode (not registered in orchestrator). |
 | 3b | 4 engines: Liquidity, Session, Expansion, PullbackContinuation | Each engine has modes configured via `ConfigureModes()`. Day router created here. |
-| 4 | 4 exit plugins: DailyLossHalt, Weekend, MaxAge, RegimeAware | Registered in fixed order. |
-| 5 | 6 trailing plugins | All created but only the selected `InpTrailStrategy` is enabled (default: Chandelier). Others are `SetEnabled(false)`. |
+| 4 | 4 exit plugins: DailyLossHalt, Weekend, MaxAge, RegimeAware | Registered in fixed order. Exit plugins now actually fire (Sprint 5E-H1: `valid \|\| shouldExit` fix). |
+| 5 | 6 trailing plugins | All created but only the selected `InpTrailStrategy` is enabled (default: Chandelier). Others are `SetEnabled(false)`. ATR<=0 guard protects against data-gap stops (M4 fix). |
 | 6 | `CQualityTierRiskStrategy` | **Initialize() is NOT called.** This preserves fallback tick-value sizing, which produced the proven baseline. The quality-tier 8-step multiplier chain is dead code. |
 | 7 | `CTrade`, `CErrorHandler`, `CEnhancedTradeExecutor` | Spread and slippage limits set from inputs. |
 | 8 | `CAdaptiveTPManager`, `CSignalManager`, `CTradeLogger` | Adaptive TP wires volatility/trend multipliers. |
-| 9 | `CSignalOrchestrator`, `CTradeOrchestrator`, `CPositionCoordinator`, `CRiskMonitor`, `CRegimeRiskScaler` | Orchestrators receive references to all lower-layer components. Regime exit profiles (4 profiles: Trending/Normal/Choppy/Volatile) configured here. Position coordinator loads persisted state via `LoadOpenPositions()`. |
+| 9 | `CSignalOrchestrator`, `CTradeOrchestrator`, `CPositionCoordinator`, `CRiskMonitor`, `CRegimeRiskScaler` | Orchestrators receive references to all lower-layer components. Regime exit profiles (4 profiles: Trending/Normal/Choppy/Volatile) configured here. Position coordinator loads persisted state via `LoadOpenPositions()`. original_sl persisted across restarts (Sprint 5E-H2 fix). |
 | 10 | `CDisplay` | Chart HUD. Timer set to 5s for live health monitoring. |
 
 ---
@@ -128,9 +132,10 @@ OnTick()
   |     |
   |     +-- Friday block check (skip all entries on Fridays)
   |     |
-  |     +-- [2] Check pending confirmation signal
+  |     +-- [2a] Check pending confirmation signal (pattern pipeline)
   |     |     |   g_signalOrchestrator.CheckPendingConfirmation()
   |     |     |   g_signalOrchestrator.RevalidatePending()
+  |     |     |     (SHORT signals bypass revalidation -- H6 fix)
   |     |     |
   |     |     +-- Long extension filter (72h rise + weekly EMA falling)
   |     |     +-- Confirmed entry quality filter (CQF, disabled)
@@ -141,7 +146,16 @@ OnTick()
   |     |           Position stamped with regime exit profile
   |     |           -> g_posCoordinator.AddPosition()
   |     |
-  |     +-- [3] Gate chain for new signals
+  |     +-- [2b] File signal check (SIGNAL_SOURCE_BOTH mode)
+  |     |     |   g_fileEntry.CheckForEntrySignal() -- independent path
+  |     |     |   No competition with pattern signals
+  |     |     |   File signals bypass regime filter (InpFileSignalSkipRegime)
+  |     |     |   File signals skip confirmation (InpFileSignalSkipConfirmation)
+  |     |     |
+  |     |     +-- g_tradeOrchestrator.ExecuteSignal()
+  |     |           -> g_posCoordinator.AddPosition()
+  |     |
+  |     +-- [3] Gate chain for new pattern signals
   |     |     |
   |     |     +-- g_riskMonitor: Is trading halted? Can we trade?
   |     |     |     NO -> skip
@@ -150,9 +164,10 @@ OnTick()
   |     |     |     EXTREME -> block ALL entries this bar
   |     |     |     MODERATE -> reduce g_session_quality_factor
   |     |     |
-  |     |     +-- GATE 2: Session quality
+  |     |     +-- GATE 2: Session quality (BUG 1 fix: now actually blocks)
   |     |     |     quality < 0.25 -> block entries
   |     |     |     quality < 0.50 -> halve risk
+  |     |     |     g_session_quality_factor applied as risk multiplier (BUG 2 fix)
   |     |     |
   |     |     +-- GATE 3: Spread check
   |     |     |     spread > InpMaxSpreadPoints -> skip
@@ -165,7 +180,7 @@ OnTick()
   |     |           Iterates all registered CEntryStrategy plugins:
   |     |           - Engines run internal priority cascade per mode
   |     |           - Legacy plugins check their pattern
-  |     |           - Session/skip hour filter applied
+  |     |           - Session/skip hour filter applied (GMT-aware, Sprint 5B)
   |     |           - Confidence filter applied
   |     |           - Auto-kill gate checked (per-plugin)
   |     |           |
@@ -178,20 +193,22 @@ OnTick()
   |     |     +-- Session risk multiplier (London 0.5x, NY 0.9x, Asia 1.0x)
   |     |     +-- Entry sanity (SL distance >= 3x spread)
   |     |     +-- Regime risk scaling (Trending 1.25x, Choppy 0.6x, Volatile 0.75x)
+  |     |     +-- Vol regime yields to regime risk (Sprint 5A: no double-reduction)
   |     |     +-- Breakout probation divert (if applicable)
   |     |
   |     |     +-- [6] g_tradeOrchestrator.ExecuteSignal()
   |     |           |
   |     |           +-- Quality tier evaluation (A+ / A / B+ / B)
   |     |           +-- Risk sizing (fallback tick-value method)
-  |     |           +-- Vol regime risk multiplier
-  |     |           +-- Short protection multiplier (0.5x)
+  |     |           +-- Vol regime risk multiplier (skipped if regime scaler active)
+  |     |           +-- Short protection multiplier (from symbol profile, BUG 3 fix)
   |     |           +-- Regime risk scaling (Trending 1.25x, etc.)
   |     |           +-- ATR velocity risk multiplier (1.15x when ATR accel >15%)
   |     |           +-- Consecutive loss scaling
   |     |           +-- Adaptive TP calculation
   |     |           +-- Min R:R check (1.3)
   |     |           +-- D1 200 EMA directional filter
+  |     |           +-- NormalizeLots with zero-division guard (M6 fix)
   |     |           +-- Broker order placement
   |     |           |
   |     |           +-- SPosition created with full metadata
@@ -208,11 +225,15 @@ OnTick()
   |           +-- Update MAE/MFE tracking
   |           +-- Check early invalidation (disabled: net -26.9R)
   |           +-- Check exit plugins (daily loss halt, weekend, max age, regime)
+  |           |     Exit plugins now actually fire (Sprint 5E-H1 fix)
   |           +-- Run selected trailing strategy (Chandelier only in production)
+  |           |     ATR<=0 guard prevents data-gap stops (M4 fix)
   |           +-- Anti-stall: reduce/close stalling S3/S6 trades (5/8 M15 bars)
+  |           |     Checks Chandelier SL before force-closing (BUG 4 fix)
+  |           |     S6 uses correct M15 bar shift (H4 fix: shift 2 -> shift 1)
   |           +-- TP0 partial: close at regime-specific distance (default 0.7R)
-  |           +-- TP1 partial: close at regime-specific distance
-  |           +-- TP2 partial: close at regime-specific distance
+  |           +-- TP1 partial: close at regime-specific distance (independent of TP0, BUG 5 fix)
+  |           +-- TP2 partial: close at regime-specific distance (independent of TP0, BUG 5 fix)
   |           +-- TP0-gated breakeven (BE only after TP0 captured)
   |           +-- Update position stage (INITIAL -> TP0 -> TP1 -> TP2 -> TRAILING)
   |           +-- Broker SL modification (every update, not batched)
@@ -224,6 +245,45 @@ OnTick()
   |
   +-- [Every tick, live only] g_display.UpdateDisplay()
 ```
+
+---
+
+## Symbol Profile System
+
+Added in v17. The EA supports per-instrument configuration through `ENUM_SYMBOL_PROFILE`
+(XAUUSD, USDJPY, GBPJPY, AUTO). The profile is detected at startup by `DetectSymbolProfile()`
+and applied by `ApplySymbolProfile()` before any plugin runs.
+
+### Profile Globals (Include/Common/SymbolProfile.mqh)
+
+| Global | Purpose | Gold Default |
+|---|---|---|
+| `g_profileBearPinBarAsiaOnly` | Bearish Pin Bar session gate | true |
+| `g_profileBullMACrossBlockNY` | MA Cross NY block | true |
+| `g_profileRubberBandAPlusOnly` | Rubber Band quality gate | true |
+| `g_profileLongExtensionFilter` | Momentum exhaustion filter | true |
+| `g_profileEnableCIScoring` | CI(10) quality adjustment | true |
+| `g_profileEnableBearishEngulfing` | Bearish Engulfing enable | false |
+| `g_profileEnableS6Short` | S6 short side | false |
+| `g_profileEnableCrashBreakout` | Crash/Rubber Band | true |
+| `g_profileEnableBearishPinBar` | Bearish Pin Bar | true |
+| `g_profileShortRiskMultiplier` | Short risk multiplier | 0.5 |
+
+Plugins read `g_profile*` globals instead of raw `Inp*` values, ensuring profile-aware
+behavior without modifying plugin code.
+
+### Auto-Scaling Points
+
+When `InpAutoScalePoints = true`, all point-based distances are scaled by the ratio
+of the symbol's price to a gold reference price ($2000):
+
+```
+scale = symbol_price / 2000.0
+g_scaledMinSLPoints = InpMinSLPoints * scale
+```
+
+This allows the EA to produce reasonable SL/TP/trailing distances on lower-priced
+instruments like silver ($30 -> scale 0.015).
 
 ---
 
@@ -248,6 +308,10 @@ At runtime, `CSignalOrchestrator` iterates the plugin array and calls
 or the highest-quality signal is selected (engines produce at most one signal each
 via internal priority cascade).
 
+**CFileEntry in BOTH mode:** Initialized but NOT registered with the orchestrator.
+It runs independently in step 2b of OnTick, so both file and pattern signals can
+execute on the same bar without competition.
+
 ### Plugin Class Hierarchy
 
 ```
@@ -260,10 +324,10 @@ CTradeStrategy                    (base for all plugins)
     |       |                          Silver Bullet[OFF], LC Reversal[OFF])
     |       +-- CExpansionEngine      (3 modes: Panic Mom[OFF], IC BO[ON], Compression BO[OFF])
     |       +-- CPullbackContinuationEngine  (DISABLED: -0.5R/38 trades, no edge)
-    |       +-- CRangeEdgeFade        (S3: range edge fade — active when S3/S6 enabled)
-    |       +-- CFailedBreakReversal  (S6: failed-break reversal — active when S3/S6 enabled)
+    |       +-- CRangeEdgeFade        (S3: range edge fade -- active when S3/S6 enabled)
+    |       +-- CFailedBreakReversal  (S6: failed-break reversal -- active when S3/S6 enabled)
     |       +-- CEngulfingEntry       (bearish engulfing disabled)
-    |       +-- CPinBarEntry          (bearish asia-only, bullish active)
+    |       +-- CPinBarEntry          (bearish NY-blocked, bullish active)
     |       +-- CLiquiditySweepEntry  (disabled: replaced by engine SFP)
     |       +-- CMACrossEntry         (bearish OFF in code, bullish blocks NY)
     |       +-- CBBMeanReversionEntry (DISABLED: -1.1R/10 trades, never positive)
@@ -272,7 +336,7 @@ CTradeStrategy                    (base for all plugins)
     |       +-- CVolatilityBreakoutEntry (active)
     |       +-- CCrashBreakoutEntry   (active)
     |       +-- CSupportBounceEntry   (disabled)
-    |       +-- CFileEntry            (CSV signal reader)
+    |       +-- CFileEntry            (CSV signal reader -- independent path in BOTH mode)
     |       +-- CDisplacementEntry    (standalone displacement)
     |       +-- CSessionBreakoutEntry (standalone session, disabled when engine active)
     |
@@ -290,7 +354,7 @@ CTradeStrategy                    (base for all plugins)
     +-- CTrailingStrategy         (base for trailing stop logic)
             +-- CATRTrailing           (disabled in production)
             +-- CSwingTrailing         (disabled in production)
-            +-- CChandelierTrailing    (ACTIVE: sole trailing method)
+            +-- CChandelierTrailing    (ACTIVE: sole trailing method, ATR<=0 guard)
             +-- CParabolicSARTrailing  (disabled in production)
             +-- CSteppedTrailing       (disabled in production)
             +-- CHybridTrailing        (disabled in production)
@@ -320,8 +384,8 @@ When enabled, auto-kill operates at two levels:
 
 ## S3/S6 Range Structure Framework
 
-Added in A/B test 28 (2026-04-04). Replaces the legacy `CRangeBoxEntry` and
-`CFalseBreakoutFadeEntry` plugins with a structure-aware range trading system.
+Replaces the legacy `CRangeBoxEntry` and `CFalseBreakoutFadeEntry` plugins with a
+structure-aware range trading system.
 
 ### Components
 
@@ -329,20 +393,21 @@ Added in A/B test 28 (2026-04-04). Replaces the legacy `CRangeBoxEntry` and
 |---|---|---|
 | Range Box Detector | `CRangeBoxDetector` | Shared H1 range box identification. Updated once per H1 bar. Validates box width, age, and touch count. |
 | S3: Range Edge Fade | `CRangeEdgeFade` | Fades price at validated range boundaries. Requires middle-50% dead zone clearance. Stealth-trend protection prevents fading in disguised trends. |
-| S6: Failed-Break Reversal | `CFailedBreakReversal` | Enters on confirmed failed breakouts with sweep+reclaim mechanics. Short side disabled (`InpEnableS6Short=false`: -8.9R across 6 years). |
+| S6: Failed-Break Reversal | `CFailedBreakReversal` | Enters on confirmed failed breakouts with sweep+reclaim mechanics. Short side disabled (`InpEnableS6Short=false`: -8.9R across 6 years). Uses correct M15 bar shift (H4 fix). Sets `signal.symbol = _Symbol` (H5 fix). |
 
 ### Anti-Stall Mechanism
 
 When `InpEnableAntiStall=true`, S3/S6 trades that stall in the range are managed:
 - At 5 M15 bars without progress: reduce position by 50%
 - At 8 M15 bars without progress: close remaining position
+- Anti-stall now checks Chandelier SL before force-closing (BUG 4 fix)
 
 ---
 
 ## CI Scoring System
 
-Added in A/B test 26 (2026-04-04). Uses a Choppiness Index with period 10 on H1
-to score trade quality based on regime suitability.
+Uses a Choppiness Index with period 10 on H1 to score trade quality based on regime
+suitability.
 
 | Regime | CI Range | Effect |
 |---|---|---|
@@ -358,10 +423,8 @@ quality tier (A+/A/B+/B) and consequently the risk allocation.
 
 ## ATR Velocity Risk Multiplier
 
-Added after the AGRE v2 cycle. When H1 ATR is accelerating, trend trades receive a
-1.15x risk multiplier (larger position size).
-
-**Implementation details:**
+When H1 ATR is accelerating, trend trades receive a 1.15x risk multiplier (larger
+position size).
 
 | Parameter | Value | Input |
 |---|---|---|
@@ -380,11 +443,11 @@ signals scored A+ vs A changed the entire selection order, killing 80 trades in 
 and wiping out the benefit. Reimplemented as a pure risk multiplier, the feature added
 +$159 cleanly with zero trade selection changes.
 
-**Bug fix:** The original `GetATRVelocity()` implementation used `iATR()` to create a
-shared indicator handle. This handle was also used by other ATR-dependent components
-(regime classifier, volatility manager), and sharing it caused data corruption. The
-fix replaced `iATR()` with direct True Range computation from OHLC data, eliminating
-the shared handle entirely.
+**Bug fix (Sprint 5E-H3):** The original `GetATRVelocity()` implementation used
+`iATR()` to create a shared indicator handle. This handle was also used by other
+ATR-dependent components (regime classifier, volatility manager), and sharing it
+caused data corruption. The fix replaced `iATR()` with direct True Range computation
+from OHLC data, eliminating the shared handle entirely.
 
 ---
 
@@ -399,8 +462,8 @@ components. Each is created in the constructor and updated once per new H1 bar.
 | 2 | Trend Detector | `CTrendDetector` | Trend direction and strength from MA cross, swing structure, H4 confirmation |
 | 3 | Macro Bias | `CMacroBias` | DXY/VIX-based directional bias score (-4 to +4) |
 | 4 | Crash Detector | `CCrashDetector` | Death Cross detection (D1 EMA50 < EMA200), Rubber Band overextension |
-| 5 | SMC Order Blocks | `CSMCOrderBlocks` | Order block identification, FVG detection, BOS/CHoCH structure, confluence scoring |
-| 6 | Volatility Regime Manager | `CVolatilityRegimeManager` | ATR-ratio-based 5-tier classification (Very Low/Low/Normal/High/Extreme), risk and SL multipliers |
+| 5 | SMC Order Blocks | `CSMCOrderBlocks` | Order block identification, FVG detection, BOS/CHoCH structure, confluence scoring. Optional zone strength decay (Sprint 5C, disabled by default). |
+| 6 | Volatility Regime Manager | `CVolatilityRegimeManager` | ATR-ratio-based 5-tier classification (Very Low/Low/Normal/High/Extreme), risk and SL multipliers. Yields to regime risk scaler when active (Sprint 5A). |
 | 7 | Momentum Filter | `CMomentumFilter` | Optional momentum confirmation gate (disabled in production) |
 
 ### IMarketContext API Summary
@@ -447,6 +510,9 @@ Chandelier multiplier adapts dynamically to the live regime (Phase 3 behavior).
 CHOPPY takes profit fast and protects capital. VOLATILE provides moderate protection.
 NORMAL uses baseline behavior.
 
+**TP1/TP2 independence (BUG 5 fix):** TP1 and TP2 are no longer gated on InpEnableTP0.
+They fire independently regardless of whether TP0 is enabled.
+
 ---
 
 ## Risk Pipeline
@@ -455,13 +521,13 @@ Position sizing follows a multi-step pipeline. The quality-tier strategy's full
 8-step chain is disabled; fallback tick-value sizing is used instead.
 
 1. **Quality tier base risk:** A+ 0.8%, A 0.8%, B+ 0.6%, B 0.5%
-2. **Short protection:** multiply by 0.5 for non-exempt short trades
+2. **Short protection:** multiply by profile short multiplier (0.5x for gold) for non-exempt short trades (BUG 3 fix: reads from g_profileShortRiskMultiplier)
 3. **Session risk:** London 0.5x, NY 0.9x, Asia 1.0x
 4. **Regime risk scaling:** Trending 1.25x, Normal 1.0x, Choppy 0.6x, Volatile 0.75x
 5. **ATR velocity multiplier:** 1.15x when H1 ATR accelerates >15% (trend trades only)
-6. **Volatility regime multiplier:** Very Low 1.0x through Extreme 0.65x
+6. **Volatility regime multiplier:** Very Low 1.0x through Extreme 0.65x (skipped when regime scaler active -- Sprint 5A)
 7. **Consecutive loss scaling:** Level 1 (2-3 losses) 0.75x, Level 2 (4+) 0.5x
-8. **Session quality factor:** 0.5x if execution quality < 0.50
+8. **Session quality factor:** 0.5x if execution quality < 0.50 (BUG 1+2 fix: now actually blocks/reduces)
 9. **Hard cap:** 1.2% maximum risk per trade
 
 ---
@@ -482,10 +548,10 @@ The position coordinator saves and restores a binary state file containing:
 | `checksum` | `uint` | CRC32 of all position record bytes |
 | `saved_at` | `datetime` | Timestamp when file was written |
 
-Each `PersistedPosition` record contains: ticket, entry price, SL, TP1, TP2, position
-stage, lot sizes (original/remaining), pattern type, setup quality, breakeven state,
-risk percentage, trailing mode, entry regime, MAE, MFE, direction, and regime exit
-profile fields.
+Each `PersistedPosition` record contains: ticket, entry price, SL, original_sl
+(Sprint 5E-H2: persisted across restarts), TP1, TP2, position stage, lot sizes
+(original/remaining), pattern type, setup quality, breakeven state, risk percentage,
+trailing mode, entry regime, MAE, MFE, direction, and regime exit profile fields.
 
 ### Mode Performance State
 
@@ -510,7 +576,9 @@ These behaviors differ from what a naive reading of the code might suggest:
 | Auto-kill | DISABLED at orchestrator level | Name mismatch bug caused false kills in proven baseline |
 | Mode RecordModeResult | DISABLED in CPositionCoordinator | Prevents mode-level tracking from interfering with proven behavior |
 | Zone recycling | DISABLED in CSMCOrderBlocks | First 20 zones are permanent (no max-age eviction) |
+| SMC zone strength decay | DISABLED by default | Sprint 5C: A/B toggle `InpEnableSMCZoneDecay` |
 | Batched trailing | OFF | Every trailing update sent to broker immediately; batched mode caused stale SL on reversals |
+| Vol regime yields to regime risk | ON | Sprint 5A: prevents double-reduction when regime scaler active |
 | Bearish MA Cross | OFF via hardcoded `if(false)` | Bearish direction was net negative |
 | Panic Momentum | OFF via hardcoded `if(false)` | Inconsistent PF across years |
 | Friday entries | BLOCKED | 38.7% WR, -1.35R in backtest |
@@ -519,8 +587,13 @@ These behaviors differ from what a naive reading of the code might suggest:
 | BB Mean Reversion Short | DISABLED | -1.1R/10 trades, never positive in any period |
 | Pullback Continuation | DISABLED | -0.5R/38 trades, no edge |
 | Quality-trend boost | DISABLED (code present) | $0 net across 4 years, not worth complexity |
-| Universal stall detector | DISABLED (code present) | -$3,519 across 4 years. Stalled trades recover more than analysis predicted |
+| Universal stall detector | DISABLED (code present) | -$4,189 across 4 years. Stalled trades recover more than analysis predicted |
 | ATR velocity risk mult | ACTIVE | 1.15x risk when H1 ATR accelerates >15% (5-bar rate of change). Direct TR computation, no shared indicator handle |
+| SessionQuality gate | ACTIVE (BUG 1 fix) | Was dead print, now blocks/reduces entries |
+| g_session_quality_factor | ACTIVE (BUG 2 fix) | Applied as actual risk multiplier |
+| Symbol profile short mult | ACTIVE (BUG 3 fix) | Was self-assignment no-op, now reads from input |
+| Anti-stall Chandelier check | ACTIVE (BUG 4 fix) | Checks SL before force-closing S3/S6 trades |
+| TP1/TP2 independence | ACTIVE (BUG 5 fix) | No longer gated on InpEnableTP0 |
 
 ---
 
@@ -546,16 +619,22 @@ MQL5 does not have automatic garbage collection. UltimateTrader uses a disciplin
 
 | File | Purpose |
 |---|---|
-| `UltimateTrader.mq5` | Main EA: OnInit, OnTick, OnDeinit, RegisterEntryPlugin, gate chain, signal flow |
-| `UltimateTrader_Inputs.mqh` | All ~300 input parameters across 47 groups |
+| `UltimateTrader.mq5` | Main EA: OnInit, OnTick, OnDeinit, RegisterEntryPlugin, gate chain, signal flow, symbol profile, auto-scaling |
+| `UltimateTrader_Inputs.mqh` | All ~280 input parameters across 47 groups |
+
+### Include/Common/
+
+| File | Purpose |
+|---|---|
+| `SymbolProfile.mqh` | Runtime profile override globals (g_profile* variables) set by ApplySymbolProfile() |
 
 ### Include/Core/
 
 | File | Purpose |
 |---|---|
-| `CSignalOrchestrator.mqh` | Iterates entry plugins, manages pending confirmation, tracks plugin auto-kill |
-| `CTradeOrchestrator.mqh` | Converts validated signals into broker orders: risk sizing, adaptive TP, execution |
-| `CPositionCoordinator.mqh` | Position lifecycle: trailing dispatch, exit checks, partial close state machine, MAE/MFE, state persistence |
+| `CSignalOrchestrator.mqh` | Iterates entry plugins, manages pending confirmation, tracks plugin auto-kill. GMT-aware session classification (Sprint 5B). SHORT bypass in RevalidatePending (H6 fix). |
+| `CTradeOrchestrator.mqh` | Converts validated signals into broker orders: risk sizing, adaptive TP, execution. NormalizeLots zero-division guard (M6 fix). |
+| `CPositionCoordinator.mqh` | Position lifecycle: trailing dispatch, exit checks, partial close state machine, MAE/MFE, state persistence. Exit plugins fire correctly (5E-H1 fix). original_sl persisted (5E-H2). Anti-stall checks Chandelier SL (BUG 4). TP1/TP2 independent of TP0 (BUG 5). |
 | `CDayTypeRouter.mqh` | Classifies market day as VOLATILE / TREND / RANGE / DATA |
 | `CRiskMonitor.mqh` | Daily PnL tracking, trade count, consecutive errors, halt conditions |
 | `CAdaptiveTPManager.mqh` | Adjusts TP distances based on volatility regime and trend strength |
@@ -573,8 +652,8 @@ MQL5 does not have automatic garbage collection. UltimateTrader uses a disciplin
 | `CTrendDetector.mqh` | Multi-timeframe trend direction and strength |
 | `CMacroBias.mqh` | DXY/VIX correlation analysis |
 | `CCrashDetector.mqh` | Death Cross and Rubber Band detection |
-| `CSMCOrderBlocks.mqh` | Order blocks, FVGs, BOS/CHoCH, confluence scoring |
-| `CVolatilityRegimeManager.mqh` | 5-tier volatility classification and risk/SL multipliers |
+| `CSMCOrderBlocks.mqh` | Order blocks, FVGs, BOS/CHoCH, confluence scoring. Zone strength decay (Sprint 5C). |
+| `CVolatilityRegimeManager.mqh` | 5-tier volatility classification and risk/SL multipliers. Yields to regime scaler (Sprint 5A). |
 | `CMomentumFilter.mqh` | Optional momentum confirmation (disabled) |
 | `CRangeBoxDetector.mqh` | Shared H1 range box detection for S3/S6 framework |
 
@@ -583,13 +662,13 @@ MQL5 does not have automatic garbage collection. UltimateTrader uses a disciplin
 | File | Purpose |
 |---|---|
 | `CLiquidityEngine.mqh` | 3-mode SMC engine (Displacement, OB Retest, FVG) |
-| `CSessionEngine.mqh` | 5-mode session engine (Asian, London BO, NY Cont, Silver Bullet, LC Rev) |
+| `CSessionEngine.mqh` | 5-mode session engine (Asian, London BO, NY Cont, Silver Bullet, LC Rev). GMT-aware (Sprint 5B). |
 | `CExpansionEngine.mqh` | 3-mode expansion engine (Panic Mom, IC BO, Compression BO) |
 | `CPullbackContinuationEngine.mqh` | Trend pullback re-entry with multi-cycle support |
 | `CRangeEdgeFade.mqh` | S3: validated range edge fade entries |
-| `CFailedBreakReversal.mqh` | S6: failed-breakout reversal entries |
+| `CFailedBreakReversal.mqh` | S6: failed-breakout reversal entries. Off-by-one fix (H4). signal.symbol fix (H5). |
 | `CEngulfingEntry.mqh` | Engulfing candle pattern (bearish disabled) |
-| `CPinBarEntry.mqh` | Pin bar pattern (bearish asia-only) |
+| `CPinBarEntry.mqh` | Pin bar pattern (bearish NY-blocked, bullish active) |
 | `CMACrossEntry.mqh` | MA crossover (bearish OFF, bullish blocks NY) |
 | `CBBMeanReversionEntry.mqh` | Bollinger Band mean reversion |
 | `CVolatilityBreakoutEntry.mqh` | Donchian + Keltner breakout |
@@ -600,7 +679,13 @@ MQL5 does not have automatic garbage collection. UltimateTrader uses a disciplin
 | `CFalseBreakoutFadeEntry.mqh` | Legacy false breakout (replaced by S3/S6) |
 | `CLiquiditySweepEntry.mqh` | Legacy liquidity sweep (replaced by engine SFP) |
 | `CSupportBounceEntry.mqh` | S/R bounce (disabled) |
-| `CFileEntry.mqh` | CSV signal reader |
+| `CFileEntry.mqh` | CSV signal reader. Independent path in BOTH mode. |
+
+### Include/TrailingPlugins/
+
+| File | Purpose |
+|---|---|
+| `CChandelierTrailing.mqh` | ACTIVE: Chandelier Exit trailing. ATR<=0 guard (M4 fix). |
 
 ### Include/Validation/
 

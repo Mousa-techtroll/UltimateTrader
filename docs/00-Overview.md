@@ -1,11 +1,11 @@
 # UltimateTrader EA -- System Overview
 
-> **LOCKED v14 (2026-04-05).** Production performance across 7 years (2019--2025):
-> - 758 trades, $11,135 total PnL, 120.8R, 0.159 R/trade
+> **LOCKED v17 (2026-04-04).** Production performance across 7 years (2019--2025):
+> - 882 trades, $12,711 total PnL, 108.3R, 0.123 R/trade
 > - PF 1.58, DD 3.38%, Sharpe 4.91 (2024--2026 window)
-> - All non-bull years positive except 2019 (-2.4R)
-> - 7 active strategies (+1 negligible), 13 disabled strategies
-> - 23 experiments tested, 12 shipped, 11 rejected
+> - All 7 years positive
+> - 8 active strategies (+1 negligible), 13 disabled strategies
+> - ~30 experiments tested across the full optimization campaign
 > - Exit system proven untouchable across 6 failed modification attempts
 
 ## What It Is
@@ -22,28 +22,37 @@ trade -- with the **AICoder V1 infrastructure** -- the plugin architecture, heal
 monitoring, error recovery, and execution framework that decides *how* to trade
 safely and reliably.
 
+A **symbol profile system** allows the EA to adapt session filters, short multiplier,
+and strategy enables per instrument (XAUUSD, USDJPY, GBPJPY, AUTO). The profile is
+detected at startup and applied before any plugin runs.
+
+A **file signal source** (SIGNAL_SOURCE_BOTH mode) allows external CSV signals to
+fire independently alongside the pattern engine, with independent execution path
+(step 2b in OnTick).
+
 ---
 
 ## Transformation Journey
 
 The system underwent a systematic optimization campaign from its original state to the
 current production configuration. The transformation was driven by forensic trade
-analysis, per-strategy performance decomposition, and 17 controlled A/B tests.
+analysis, per-strategy performance decomposition, Sprint 5 bug fixes, code audit fixes,
+filter re-validation after GMT corrections, and ~30 controlled experiments.
 
-| Metric | Original (v1) | Current (v14) | Delta |
+| Metric | Original (v1) | Current (v17) | Delta |
 |---|---|---|---|
-| Total trades (7yr) | 1,831 | 758 | -59% |
-| Total PnL ($) | $7,102 | $11,135 | +57% |
-| Total PnL (R) | 52.9R | 120.8R | +128% |
-| Avg R per trade | 0.029 | 0.159 | +5.5x |
-| Bad years (2020--2023) | -$1,197 / -27.8R | Positive / +21.0R | Flipped |
+| Total trades (7yr) | 1,831 | 882 | -52% |
+| Total PnL ($) | $7,102 | $12,711 | +79% |
+| Total PnL (R) | 52.9R | 108.3R | +105% |
+| Avg R per trade | 0.029 | 0.123 | +4.2x |
+| Bad years (2020--2023) | -$1,197 / -27.8R | All positive | Flipped |
 
 **Core insight:** The original system had high trade volume but low selectivity. Over
 half the trades were net-negative on average. Removing losing strategies and applying
-targeted session/quality filters cut trade count by 59% while increasing profit by 57%.
+targeted session/quality filters cut trade count by 52% while increasing profit by 79%.
 Every removed trade was net-negative on average.
 
-### The 12 Shipped Changes
+### The Shipped Changes
 
 These changes were validated through controlled A/B testing and adopted into production:
 
@@ -54,7 +63,7 @@ These changes were validated through controlled A/B testing and adopted into pro
 | 3 | Silver Bullet disabled | +2.1R recovered | Strategy analysis |
 | 4 | BB Mean Reversion Short disabled | +1.1R recovered (-1.1R/10 trades, never positive) | Strategy analysis |
 | 5 | Pullback Continuation disabled | +0.5R recovered (-0.5R/38 trades, no edge) | Strategy analysis |
-| 6 | Bearish Pin Bar Asia-only gate | +11.7R saved (non-Asia loses) | Session analysis |
+| 6 | Bearish Pin Bar NY block | +1.9R saved (NY only loses, Asia+London both positive after GMT fix) | Session analysis / Filter re-validation |
 | 7 | Rubber Band A/A+ quality gate | +4.0R saved (B+ loses) | Quality analysis |
 | 8 | Bullish MA Cross NY block | +3.6R saved (NY session loses) | Session analysis |
 | 9 | Momentum exhaustion filter | +15.4R saved (counter-trend bounce block) | Momentum filter design |
@@ -62,11 +71,48 @@ These changes were validated through controlled A/B testing and adopted into pro
 | 11 | S3/S6 range structure framework | +$158 in edge period (replaces RangeBox + FBF) | A/B Test 28 |
 | 12 | ATR velocity risk multiplier | +$159 (1.15x risk when H1 ATR accelerates >15%) | A/B Test |
 
-**Confirmation candle** (1-bar delayed entry) is the foundational quality gate for
-trend patterns, present from baseline. Three separate CQF filter attempts to improve
-upon it all degraded profit.
+### Sprint 5 Bug Fixes (Major System Changes)
 
-### The 11 Rejected Changes
+| ID | Fix | Impact |
+|---|---|---|
+| 5A | Double volatility adjustment guard | Prevented double-reduction when regime scaler active |
+| 5B | GMT/DST session fixing | 14 locations across 10 files corrected for proper GMT awareness |
+| 5C | SMC zone strength decay system | Added graduated zone decay (disabled by default, `InpEnableSMCZoneDecay`) |
+| 5D | Early invalidation layers reduced | Soft revalidation, multi-bar confirmation window options |
+| 5E-H1 | Exit plugins now fire | Fixed `valid \|\| shouldExit` logic so exit plugins actually execute |
+| 5E-H2 | original_sl persisted across restarts | SL now survives EA restarts |
+| 5E-H3 | Shared ATR handle leak fixed | Eliminated shared iATR handle corruption |
+
+### Code Audit Bug Fixes (v17)
+
+| ID | Fix | Impact |
+|---|---|---|
+| BUG 1 | SessionQuality gate blocks | Was dead print, now actually blocks entries |
+| BUG 2 | g_session_quality_factor applied | Now used as risk multiplier |
+| BUG 3 | Symbol profile short multiplier | Fixed self-assignment no-op |
+| BUG 4 | Anti-stall checks Chandelier SL | Checks SL before force-closing |
+| BUG 5 | TP1/TP2 independent of TP0 | No longer gated on InpEnableTP0 |
+| M4 | ATR<=0 guard in CChandelierTrailing | Protects against data-gap stops |
+| H4 | S6 off-by-one M15 bar fixed | shift 2 corrected to shift 1 |
+| H5 | S6 signal.symbol assignment | signal.symbol = _Symbol added |
+| H6 | RevalidatePending SHORT bypass | SHORT signals no longer incorrectly revalidated |
+| M6 | NormalizeLots zero-division guard | Prevents division by zero in lot normalization |
+
+### Filter Re-Validation (Post-GMT Fix)
+
+The GMT/DST fix in Sprint 5B changed session classification for all historical trades,
+requiring re-validation of every session-based filter:
+
+| Filter | Result | Action |
+|---|---|---|
+| Bearish Pin Bar | GMT fix made London positive (+4.4R) | Changed from Asia-only to NY-block |
+| MA Cross NY block | Still valid after GMT fix | Confirmed |
+| Rubber Band A/A+ only | B+ still -3.3R/19 trades | Confirmed |
+| Bearish Engulfing | STILL dead (-35.3R) even with working exits | Confirmed disabled |
+| Structure-based exit | CHOPPY regime never occurs (0/815 trades) | Confirmed irrelevant |
+| Universal stall | Still destructive (-$4,189) | Confirmed disabled |
+
+### The Rejected Changes
 
 | # | Category | Result |
 |---|---|---|
@@ -74,12 +120,12 @@ upon it all degraded profit.
 | 2 | Trail tightening (BE) | PF 1.27 to 1.06 |
 | 3 | Smart runner exit (2 variants) | -73%, -76% profit |
 | 4 | Runner-aware cadence | -$391 |
-| 5 | Universal stall detector | -$3,519 across 4 years |
+| 5 | Universal stall detector | -$4,189 across 4 years |
 | 6 | ATR velocity as quality point | Butterfly effect, killed 80 trades |
 | 7 | Quality-trend sizing boost | $0 net, not worth complexity |
 | 8 | Reward-room filter | 95% rejection rate |
 | 9 | CQF entry filter (3 variants) | Always killed profit |
-| 10 | Structure-based exit | No-op (correlated conditions) |
+| 10 | Structure-based exit | No-op (CHOPPY never occurs on gold) |
 | 11 | Various no-ops (thrash cooldown, breakout probation) | No effect |
 
 **Exit modifications: 6 failures, 0 successes.** The exit system is untouchable.
@@ -87,7 +133,7 @@ upon it all degraded profit.
 ### Key Lessons Learned
 
 **Retrospective analysis vs live backtest divergence:** The universal stall detector
-showed +40.7R in retrospective analysis but -$3,519 in live backtest. Stalled trades
+showed +40.7R in retrospective analysis but -$4,189 in live backtest. Stalled trades
 recover more often than static analysis predicts. Retrospective estimates should be
 treated as upper bounds, not forecasts.
 
@@ -96,6 +142,11 @@ selection order, cascading into completely different trade sequences. The ATR ve
 feature was first tested as a quality point and killed 80 trades via this butterfly
 effect. Reimplemented as a pure risk multiplier (no signal selection change), it
 produced +$159 cleanly. Sizing changes must use risk multipliers, not quality points.
+
+**GMT fix invalidates session-based conclusions:** The Sprint 5B GMT/DST correction
+changed which session each trade belonged to. Every session-gated filter had to be
+re-tested. The Bearish Pin Bar gate changed from Asia-only to NY-block because London
+became positive after the fix.
 
 ---
 
@@ -106,76 +157,14 @@ produced +$159 cleanly. Sizing changes must use risk multipliers, not quality po
 | Source files (`.mq5` + `.mqh`) | 105 |
 | Input parameters | ~280 |
 | Input groups | 47 |
-| Active strategies | 7 (+1 negligible: IC Breakout, 4 trades) |
+| Active strategies | 8 (+1 negligible: IC Breakout, 6 trades) |
 | Disabled strategies | 13 |
-| Trailing stop strategy | Chandelier Exit 3.0x ATR (locked) |
+| Trailing stop strategy | Chandelier Exit 3.0x ATR (locked, regime-adaptive) |
 | Exit plugins | 5 (Regime-Aware, Daily Loss Halt, Weekend Close, Max Age, Standard) |
-| Active filters | 7 (CI scoring, Asia gate, A/A+ gate, NY block, momentum, confirmation, Friday) |
-| Experiments tested | 23 (12 shipped, 11 rejected) |
+| Active filters | 7 (CI scoring, NY block for bear pin, A/A+ gate, NY block for MA cross, momentum, confirmation, Friday) |
+| Experiments tested | ~30 (Sprint 5, code audit, strategy tests, filter validations) |
 | Backtest period | 2019--2025 (7 years) |
-
----
-
-## Year-by-Year Performance
-
-| Year | Trades | Win Rate | PnL ($) | PnL (R) | Avg R |
-|---|---|---|---|---|---|
-| 2019 | 122 | 35.2% | -$279 | -2.4R | -0.020 |
-| 2020 | 161 | 41.0% | -$34 | +3.8R | +0.024 |
-| 2021 | 180 | 43.3% | +$127 | +7.4R | +0.041 |
-| 2022 | 200 | 42.0% | +$501 | +7.0R | +0.035 |
-| 2023 | 166 | 36.7% | +$665 | +2.8R | +0.017 |
-| 2024 | 182 | 43.4% | +$1,322 | +12.0R | +0.066 |
-| 2025 | 172 | 52.9% | +$6,111 | +60.3R | +0.351 |
-
-2020--2023 are all positive in R-terms. Only 2019 remains slightly negative at -2.4R.
-The system is architecturally optimized for trending, high-volatility gold. 2025
-delivered that environment (daily ATR 52.0 vs 33.2 in 2024, +56%).
-
----
-
-## Architecture Summary
-
-The system processes data through a strict pipeline. Each layer feeds the next, and
-no layer can bypass the chain.
-
-```
-Market Analysis (regime, trend, SMC, sessions)
-       |
-  Day-Type Router (Volatile / Trend / Range / Default)
-       |
-  Shock Volatility Gate (bar range > 2.0x ATR blocks entry)
-       |
-  Entry Strategies (7 active + 1 negligible)
-       |
-  Entry Filters
-    - CI(10) scoring (+/-1 quality point)
-    - Momentum exhaustion filter (block counter-trend longs)
-    - Session gates (Asia-only for bear pin, NY block for MA cross)
-    - Quality gates (A/A+ only for rubber band)
-    - Confirmation candle (1-bar delayed entry)
-    - Friday block (no new entries)
-       |
-  Quality Scoring & Setup Tier (A+ / A / B+ / B)
-       |
-  Risk Sizing (quality-tier base, regime scaling,
-     ATR velocity multiplier (1.15x when ATR accelerating),
-     session multipliers, consecutive-loss protection,
-     spread gate, margin check)
-       |
-  Broker Execution (spread check, slippage limit, retry)
-       |
-  Position Management
-    - TP0 at 0.70R (15%)
-    - TP1 at 1.3R (40%)
-    - TP2 at 1.8R (30%)
-    - Breakeven at 0.8R MFE
-    - Chandelier Exit 3.0x ATR trailing
-    - Weekend close, Max age 72h
-    - Regime-aware exit (CHOPPY closes trend positions)
-       |
-  Telemetry Export (CSV trade log, JSON engine snapshots)
-```
+| Symbol profiles | 4 (XAUUSD, USDJPY, GBPJPY, AUTO) |
 
 ---
 
@@ -183,17 +172,16 @@ Market Analysis (regime, trend, SMC, sessions)
 
 | Strategy | Trades | PnL (R) | Avg R | Role |
 |---|---|---|---|---|
-| Bullish Engulfing (Confirmed) | 274 | +42.2R | +0.154 | Core -- best overall |
-| Bullish Pin Bar (Confirmed) | 227 | +23.8R | +0.105 | Bull-dependent |
-| Bearish Pin Bar (Asia only) | 94 | +22.8R | +0.243 | Best per-trade, Asia-gated |
-| Bullish MA Cross (Confirmed, no NY) | 49 | +15.5R | +0.317 | Highest avg R, Asia+London |
-| Rubber Band Short (Death Cross, A/A+) | 104 | +12.2R | +0.117 | Bear-market specialist |
-| S3 Range Edge Fade | 6 | small | -- | Validated range box sweep |
-| S6 Failed Break Long | 6 | small | -- | Spike-and-snap reversal |
-| IC Breakout | 4 | small | -- | Institutional candle breakout (negligible) |
+| Bullish Engulfing (Confirmed) | 287 | +41.3R | +0.144 | Core -- best overall |
+| Bullish Pin Bar (Confirmed) | 248 | +20.3R | +0.082 | Bull-dependent |
+| Bullish MA Cross (Confirmed, no NY) | 58 | +19.5R | +0.336 | Highest avg R, Asia+London |
+| Bearish Pin Bar (NY blocked) | 181 | +12.2R | +0.067 | Session-gated (was Asia-only, now NY-block) |
+| Rubber Band Short (Death Cross, A/A+) | 96 | +11.9R | +0.124 | Bear-market specialist |
+| S6 Failed Break Long | 6 | +0.1R | -- | Spike-and-snap reversal |
+| S3 Range Edge Fade | few | small | -- | Validated range box sweep |
+| IC Breakout | 6 | +3.0R | +0.500 | Institutional candle breakout (negligible volume) |
 
-Zero net-negative strategies remain in the active set. BB Mean Reversion Short and
-Pullback Continuation were the last two marginal strategies, disabled in v14.
+Zero net-negative strategies remain in the active set.
 
 See `02-Strategies.md` for detailed per-strategy documentation.
 
@@ -203,7 +191,7 @@ See `02-Strategies.md` for detailed per-strategy documentation.
 
 | Strategy | Reason for Disabling |
 |---|---|
-| Bearish Engulfing | -25.9R across 6 years, worst strategy overall |
+| Bearish Engulfing | -35.3R even with working exits (confirmed dead after re-test with Sprint 5E fix) |
 | S6 Failed Break Short | -8.9R net negative in every subset |
 | Silver Bullet | -2.1R, always losing |
 | BB Mean Reversion Short | -1.1R/10 trades, never positive in any period |
@@ -224,16 +212,59 @@ See `02-Strategies.md` for detailed per-strategy documentation.
 The exit system has been tested 6 times across multiple approaches. Every modification
 degraded performance. It is locked at the current configuration:
 
-- **Chandelier Exit:** 3.0x ATR on H1 with aggressive broker SL updates
+- **Chandelier Exit:** 3.0x ATR on H1 with aggressive broker SL updates (regime-adaptive: 3.5x trending, 2.5x choppy)
 - **Partial close schedule:** TP0 at 0.70R (15%), TP1 at 1.3R (40%), TP2 at 1.8R (30%)
-- **Breakeven:** Triggered at 0.8R MFE with 50-point offset
+- **Breakeven:** Triggered at regime-specific R (1.0R normal, 1.2R trending, 0.7R choppy, 0.8R volatile) with 50-point offset
 - **Weekend close:** All positions closed Friday at configurable hour
 - **Max age:** 72 hours maximum position duration
 - **Regime-aware exit:** CHOPPY regime closes open trend positions
+- **Anti-stall:** S3/S6 trades reduced at 5 M15 bars, closed at 8 M15 bars (checks Chandelier SL before force-closing -- BUG 4 fix)
+- **TP1/TP2:** Independent of TP0 enable (BUG 5 fix)
+- **ATR guard:** ATR<=0 protection in Chandelier trailing prevents data-gap stops (M4 fix)
 
-The runner portion of trades (the final ~36% after all partials) loses -$1,553 in
-aggregate. This is the insurance premium for capturing $12,000+ in trailing exits.
+The runner portion of trades (the final ~36% after all partials) loses in aggregate.
+This is the insurance premium for capturing large trailing exits.
 Cutting the runner costs approximately $8,000 in total profit.
+
+---
+
+## Symbol Profile System
+
+The EA supports per-instrument configuration through `ENUM_SYMBOL_PROFILE`:
+
+| Profile | Overrides |
+|---|---|
+| XAUUSD (default) | All input values are gold-optimized |
+| USDJPY | Bearish Engulfing ON (+4.3R), S6 Short ON (+1.7R), Rubber Band OFF (-9.3R), Bearish Pin Bar OFF (-7.2R), short mult 0.75x |
+| GBPJPY | Gold filters disabled, wider short tolerance (0.70x), Bearish Engulfing ON, S6 Short ON |
+| AUTO | Detects symbol from chart name (XAU/GOLD, USDJPY, GBPJPY) |
+
+Profile globals are declared in `Include/Common/SymbolProfile.mqh` and set by
+`ApplySymbolProfile()` in OnInit before any plugin runs.
+
+Auto-scaling (`InpAutoScalePoints`) adjusts all point-based distances (MinSL,
+TrailMovement, BEOffset, etc.) by the ratio of the symbol's price to gold's reference
+price ($2000), allowing the EA to run on lower-priced instruments.
+
+---
+
+## File Signal Source
+
+When `InpSignalSource = SIGNAL_SOURCE_BOTH`, both pattern-based and CSV file signals
+fire independently:
+
+- **Pattern signals:** standard orchestrator pipeline (step 2a in OnTick)
+- **File signals:** independent execution path (step 2b in OnTick), no competition with patterns
+
+| Parameter | Default | Purpose |
+|---|---|---|
+| `InpFileSignalQuality` | SETUP_A | File signal quality tier |
+| `InpFileSignalRiskPct` | 0.8% | Default risk when CSV has 0 or missing |
+| `InpFileCheckInterval` | 60 seconds | How often EA checks for new signals |
+| `InpFileSignalSkipRegime` | true | Bypass regime filter |
+| `InpFileSignalSkipConfirmation` | true | Execute immediately (no confirmation candle) |
+
+**CSV format:** DateTime,Symbol,Action,RiskPct,Entry,EntryMax,SL,TP1,TP2,TP3
 
 ---
 
@@ -272,10 +303,11 @@ UltimateTrader operates on an **asymmetric win/loss model**:
 |---|---|---|
 | Asia | 00:00 -- 07:00 | Active. Primary window for bearish pin bars. |
 | London | 08:00 -- 13:00 | Active. Reduced risk (0.50x multiplier). |
-| New York | 13:00 -- 17:00 | Active. Slight risk reduction (0.90x). MA Cross blocked. |
+| New York | 13:00 -- 17:00 | Active. Slight risk reduction (0.90x). MA Cross blocked. Bearish Pin Bar blocked. |
 | Late session | 17:00+ | Active. Lower volume. |
 
 Skip zones are disabled in production (start and end hours both set to 11).
+All session classification uses GMT-aware logic (Sprint 5B fix).
 
 ---
 
@@ -303,6 +335,10 @@ Skip zones are disabled in production (start and end hours both set to 11).
 | CHOPPY | 0.60x |
 | VOLATILE | 0.75x |
 
+**Double volatility adjustment guard (Sprint 5A):** When regime risk scaler is active,
+the volatility regime multiplier is skipped to prevent double-reduction
+(`InpVolRegimeYieldsToRegimeRisk`).
+
 ---
 
 ## File Structure
@@ -313,18 +349,18 @@ UltimateTrader/
   UltimateTrader_Inputs.mqh       -- All ~280 input parameters in 47 groups
 
   Include/
-    Common/         (4 files)     -- Enums, Structs, Utils, TradeUtils
+    Common/         (5 files)     -- Enums, Structs, Utils, TradeUtils, SymbolProfile
     ComponentManagement/ (2 files)-- Component manager interface + implementation
-    Core/           (8 files)     -- Orchestrators, Day Router, Risk Monitor,
+    Core/           (9 files)     -- Orchestrators, Day Router, Risk Monitor,
                                      Adaptive TP, Signal Manager, Position Coordinator,
-                                     Market State Manager
+                                     Market State Manager, Regime Risk Scaler
     Display/        (2 files)     -- Chart display + trade logger (CSV/JSON export)
-    EntryPlugins/   (16 files)    -- 3 engines + 13 legacy entry plugins
+    EntryPlugins/   (19 files)    -- 3 engines + 13 legacy entry plugins + S3/S6 + FileEntry
     Execution/      (3 files)     -- Enhanced executor, position manager, trade data
-    ExitPlugins/    (5 files)     -- Regime-aware, daily loss, weekend, max age, standard
+    ExitPlugins/    (5 files)     -- Regime-aware, daily loss halt, weekend close, max age, standard
     Infrastructure/ (11 files)    -- Logger, error handler, health monitor,
                                      concurrency, recovery, smart pointers, timeouts
-    MarketAnalysis/ (23 files)    -- IMarketContext, CMarketContext, 7 analysis
+    MarketAnalysis/ (24 files)    -- IMarketContext, CMarketContext, 7 analysis
                                      components, indicator wrappers
     PluginSystem/   (11 files)    -- Base classes, plugin manager/mediator/registry
     RiskPlugins/    (2 files)     -- ATR-based risk, quality-tier risk
@@ -339,7 +375,7 @@ UltimateTrader/
 
 ---
 
-## Core Truths (Proven by 23 Experiments)
+## Core Truths (Proven by ~30 Experiments)
 
 1. The edge is asymmetric capital allocation, not signal quality.
 2. Confirmation candle IS the quality gate -- it cannot be out-filtered.
@@ -351,7 +387,8 @@ UltimateTrader/
    damage in non-ideal conditions.
 8. Retrospective analysis overestimates improvement. Always validate with live backtests.
 9. Quality point changes cause butterfly effects. Use risk multipliers for sizing changes.
-10. 23 tested, 12 shipped, 11 rejected. The rejection rate (48%) is evidence of discipline.
+10. GMT fixes invalidate session-based conclusions. Re-test everything after timezone corrections.
+11. ~30 tested across the full campaign. The rejection rate is evidence of discipline.
 
 ---
 
@@ -374,9 +411,11 @@ Open an XAUUSD H1 chart. Drag UltimateTrader onto the chart. Enable "Allow Algo 
 
 ### Step 5: Configure Inputs
 The defaults are production-tuned for XAUUSD H1. Key inputs to review:
+- **Symbol Profile** (Group 0): set to AUTO for multi-symbol deployment
 - **Risk Management** (Group 2): risk percentages per quality tier
 - **Execution** (Group 23): set `InpMagicNumber` to a unique value
 - **Emergency** (Group 27): `InpEmergencyDisable` = false to allow trading
+- **Signal Source** (Group 1): set to BOTH for pattern + CSV signals
 
 ### Step 6: Backtest First
 Run the Strategy Tester on XAUUSD H1, tick-based mode. Review results before
