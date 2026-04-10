@@ -288,6 +288,47 @@ public:
          }
       }
 
+      // EC v3: continuous graded risk controller with vol/fwd/strategy layers
+      // Applied after regime+session, before cap. The only adaptive drawdown control.
+      if(g_ecController != NULL && signal.riskPercent > 0)
+      {
+         // Feed volatility data from market context (Layer 1)
+         if(m_context != NULL)
+            g_ecController.UpdateVolatility(m_context.GetATRCurrent(), m_context.GetATRAverage());
+
+         double ec_mult = g_ecController.GetRiskMultiplier(signal.comment);
+         if(ec_mult < 1.0)
+         {
+            double pre_ec = signal.riskPercent;
+            signal.riskPercent *= ec_mult;
+            LogPrint("[ECv3] mult=", DoubleToString(ec_mult, 3),
+                     " core=", DoubleToString(g_ecController.GetCurrentMultiplier(), 3),
+                     " vol=", DoubleToString(g_ecController.GetVolAdjustment(), 3),
+                     " fwd=", DoubleToString(g_ecController.GetFwdAdjustment(), 3),
+                     " sev=", DoubleToString(g_ecController.GetSeverity(), 3),
+                     " | Risk: ", DoubleToString(pre_ec, 2),
+                     "% -> ", DoubleToString(signal.riskPercent, 2), "%");
+         }
+      }
+
+      // Short protection: set InpShortRiskMultiplier=1.0 to disable
+      if(sig_type == SIGNAL_SHORT && InpShortRiskMultiplier < 1.0 && signal.riskPercent > 0)
+      {
+         double pre_short = signal.riskPercent;
+         signal.riskPercent *= InpShortRiskMultiplier;
+         LogPrint("[ShortProtection] Risk: ", DoubleToString(pre_short, 2),
+                  "% -> ", DoubleToString(signal.riskPercent, 2),
+                  "% (x", DoubleToString(InpShortRiskMultiplier, 2), ")");
+      }
+
+      // Hard cap: prevent regime+ATR stacking from creating outsized positions
+      if(signal.riskPercent > InpMaxRiskPerTrade)
+      {
+         LogPrint("[RiskCap] ", DoubleToString(signal.riskPercent, 2),
+                  "% -> ", DoubleToString(InpMaxRiskPerTrade, 2), "%");
+         signal.riskPercent = InpMaxRiskPerTrade;
+      }
+
       // Calculate risk via CRiskStrategy plugin
       double risk_pct = signal.riskPercent;
 

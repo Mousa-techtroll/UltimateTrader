@@ -90,6 +90,7 @@
 #include "Include/Core/CAdaptiveTPManager.mqh"
 #include "Include/Core/CSignalManager.mqh"
 #include "Include/Core/CRegimeRiskScaler.mqh"
+#include "Include/Core/CEquityCurveRiskController.mqh"
 
 // Validation
 #include "Include/Validation/CSignalValidator.mqh"
@@ -180,6 +181,9 @@ bool IsBreakoutPattern(ENUM_PATTERN_TYPE pt)
            pt == PATTERN_COMPRESSION_BO ||
            pt == PATTERN_INSTITUTIONAL_CANDLE);
 }
+
+// EC v2: Continuous equity curve risk controller (replaces binary EC v1)
+CEquityCurveRiskController *g_ecController = NULL;
 
 // Auto-scaling: adjust point-based distances for non-gold symbols
 // Gold reference price ~2000. Scale factor = symbol_price / 2000.
@@ -778,12 +782,10 @@ int OnInit()
    // LAYER 6: Risk Strategy (merged model)
    //================================================================
    g_riskStrategy = new CQualityTierRiskStrategy(g_marketContext);
-   // CRITICAL: Do NOT call Initialize(). The quality-tier 8-step multiplier chain
-   // compounds to 50-80% position size reduction ($561 vs $6,140 with fallback sizing).
-   // The $6,140 proven baseline was ENTIRELY on fallback tick-value sizing.
-   // The quality-tier strategy was dead code throughout our optimization journey.
-   // Keeping it uninitialized preserves fallback behavior.
-   Print("[Init] Risk Strategy: QualityTier (FALLBACK SIZING — quality-tier chain disabled)");
+   // Strategy NOT initialized — fallback sizing active.
+   // The 8-step chain compounds 50-80% reduction (proven harmful in all tests).
+   // Individual protections (cap, EC, short) applied independently in ExecuteSignal.
+   Print("[Init] Risk Strategy: FALLBACK SIZING (strategy chain disabled)");
 
    //================================================================
    // LAYER 7: Execution
@@ -872,6 +874,14 @@ int OnInit()
       g_profileShortRiskMultiplier
    );
    g_tradeOrchestrator.SetTradeLogger(g_tradeLogger);
+
+   // EC v2 controller
+   g_ecController = new CEquityCurveRiskController();
+   if(InpEnableECv2)
+      g_ecController.Initialize();
+   Print("[Init] EC v2: ", InpEnableECv2 ? "ACTIVE" : "DISABLED",
+         " | floor=", DoubleToString(InpECv2MinMult, 2),
+         " | recovery=", InpECv2ProtectRecovery);
 
    // CPositionCoordinator: new constructor (context, executor, logger, magic, weekend, hour)
    g_posCoordinator = new CPositionCoordinator(
@@ -1177,6 +1187,7 @@ void OnDeinit(const int reason)
 
    //--- Layer 6: Risk
    if(g_riskStrategy != NULL) { delete g_riskStrategy; g_riskStrategy = NULL; }
+   if(g_ecController != NULL) { g_ecController.Deinitialize(); delete g_ecController; g_ecController = NULL; }
 
    //--- Layer 5: Trailing Plugins
    if(g_atrTrailing != NULL)        { g_atrTrailing.Deinitialize(); delete g_atrTrailing; }
@@ -1839,6 +1850,9 @@ void OnTick()
                               " | Risk: ", DoubleToString(pre_risk, 2), "% -> ",
                               DoubleToString(signal.riskPercent, 2), "%");
                   }
+
+                  // EC filter moved to CTradeOrchestrator::ExecuteSignal so both
+                  // immediate AND confirmed paths receive it (was immediate-only here)
 
                   // Quality-differentiated trending boost: A+ gets more capital in TRENDING
                   // A+ at +0.141 avg R vs A at +0.111 vs B+ at +0.064 in TRENDING regime

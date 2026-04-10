@@ -26,11 +26,11 @@ input bool   InpFileSignalSkipConfirmation = true;                 // File signa
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
-input double InpRiskAPlusSetup = 0.8;        // Risk % for A+ setups — TEST 4: equalized to 0.8% (A+ has PF 1.00 at 1.0%, oversized vs A at PF 1.46)
-input double InpRiskASetup = 0.8;            // Risk % for A setups (reduced from 1.3)
-input double InpRiskBPlusSetup = 0.6;        // Risk % for B+ setups (reduced from 1.1)
-input double InpRiskBSetup = 0.5;            // Risk % for B setups (reduced from 0.9)
-input double InpMaxRiskPerTrade = 1.2;       // Max risk % per trade (reduced from 1.6)
+input double InpRiskAPlusSetup = 1.0;        // Risk % for A+ setups — EC filter compensated (+25% base, 0.5x during DD)
+input double InpRiskASetup = 1.0;            // Risk % for A setups — EC filter compensated
+input double InpRiskBPlusSetup = 0.75;       // Risk % for B+ setups — EC filter compensated
+input double InpRiskBSetup = 0.6;            // Risk % for B setups — EC filter compensated
+input double InpMaxRiskPerTrade = 2.0;       // Hard cap % per trade (catches regime+ATR stacking outliers)
 input double InpMaxTotalExposure = 5.0;      // Max total portfolio exposure %
 input double InpDailyLossLimit = 3.0;        // Daily loss limit % (halt trading)
 input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier
@@ -40,6 +40,10 @@ input bool   InpStructureBasedExit = false; // CONFIRMED IRRELEVANT: CHOPPY regi
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
 input bool   InpEnableWednesdayReduction = false; // Wednesday 0.85x: -$101 net across 4 years. Not worth it.
 input double InpWednesdayRiskMult = 0.85;        // Wednesday risk multiplier (0.85 = 15% reduction)
+input bool   InpEnableEquityCurveFilter = false;  // EC v1 DISABLED — replaced by EC v2 (CEquityCurveRiskController)
+input int    InpECFastPeriod = 20;                // (EC v1 legacy — unused)
+input int    InpECSlowPeriod = 50;                // (EC v1 legacy — unused)
+input double InpECReducedRiskMult = 0.75;         // (EC v1 legacy — unused)
 input bool   InpEnableQualityTrendBoost = false;  // Quality-trend boost: $0 net across 4 years tested. Not worth complexity.
 input bool   InpEnableUniversalStall = false;    // CONFIRMED DEAD x2: -$4,189 even with exit fixes. Gold consolidates 8-12h before continuing.
 input int    InpStallHours = 8;                  // Hours without TP0 before stall close
@@ -59,7 +63,7 @@ input int    InpBrokerGMTOffset = 2;         // Broker GMT offset (winter) — b
 
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"
-input double InpShortRiskMultiplier = 0.5;   // Short risk multiplier
+input double InpShortRiskMultiplier = 1.0;   // Short protection OFF for Test 5
 input double InpBullMRShortAdxCap = 17.0;    // Bull MR short max ADX (wired: was computed as MathMin(22-5,32)=17)
 input int    InpBullMRShortMacroMax = -3;    // Bull MR short max macro score (wired: was -m_validation_macro_strong=-3)
 input double InpShortTrendMinADX = 22.0;     // Short trend min ADX

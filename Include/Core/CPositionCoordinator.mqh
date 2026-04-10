@@ -1624,6 +1624,33 @@ public:
       // Update MAE/MFE every tick
       UpdateMAEMFE();
 
+      // EC v3 Layer 2: Feed open-trade stress metrics
+      if(g_ecController != NULL && m_position_count > 0)
+      {
+         double sum_mae_r = 0, sum_mfe_r = 0;
+         int stalled = 0;
+         for(int j = 0; j < m_position_count; j++)
+         {
+            double risk_dist = MathAbs(m_positions[j].entry_price - m_positions[j].original_sl);
+            if(risk_dist > 0)
+            {
+               sum_mae_r += m_positions[j].mae / risk_dist;
+               sum_mfe_r += m_positions[j].mfe / risk_dist;
+            }
+            // Stall: open > 8 H1 bars without reaching 0.3R MFE
+            int bars_open = 0;
+            if(m_positions[j].bar_time_at_entry > 0)
+               bars_open = (int)((iTime(_Symbol, PERIOD_H1, 0) - m_positions[j].bar_time_at_entry) / PeriodSeconds(PERIOD_H1));
+            if(bars_open >= 8 && m_positions[j].mfe < risk_dist * 0.30)
+               stalled++;
+         }
+         g_ecController.UpdateOpenTradeMetrics(
+            m_position_count,
+            sum_mae_r / m_position_count,
+            sum_mfe_r / m_position_count,
+            stalled);
+      }
+
       // Process each position in reverse order (safe removal)
       for(int i = m_position_count - 1; i >= 0; i--)
       {
@@ -2287,6 +2314,10 @@ private:
          double r_mult_strat = (risk_dollars_strat > 0) ? total_trade_pnl / risk_dollars_strat : 0;
          m_trade_logger.RecordStrategyTrade(
             m_positions[index].pattern_name, total_trade_pnl, r_mult_strat);
+
+         // EC v3: record R-multiple with pattern name for strategy-weighted EC
+         if(g_ecController != NULL)
+            g_ecController.RecordClosedTradeR(r_mult_strat, m_positions[index].pattern_name);
       }
 
       // Remove from array
