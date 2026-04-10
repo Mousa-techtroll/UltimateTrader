@@ -33,6 +33,11 @@ double NormalizeLots(double lots, string symbol = NULL)
    double max_lot = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
    double lot_step = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
 
+   // M6 FIX: guard against zero/invalid lot_step (matches CQualityTierRiskStrategy version)
+   if(min_lot <= 0) min_lot = 0.01;
+   if(max_lot <= 0) max_lot = 100.0;
+   if(lot_step <= 0) lot_step = 0.01;
+
    lots = MathFloor(lots / lot_step) * lot_step;
    lots = MathMax(lots, min_lot);
    lots = MathMin(lots, max_lot);

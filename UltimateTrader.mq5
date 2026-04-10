@@ -249,7 +249,7 @@ void ApplySymbolProfile()
    g_profileEnableCIScoring     = InpEnableCIScoring;
    g_profileEnableBearishEngulfing = InpEnableBearishEngulfing;
    g_profileEnableS6Short       = InpEnableS6Short;
-   g_profileShortRiskMultiplier = g_profileShortRiskMultiplier;
+   g_profileShortRiskMultiplier = InpShortRiskMultiplier;  // BUG 3 FIX: was self-assignment no-op
 
    switch(profile)
    {
@@ -557,10 +557,14 @@ int OnInit()
    g_liqSweepEntry     = new CLiquiditySweepEntry(NULL, g_scaledMinSLPoints);
    g_maCrossEntry      = new CMACrossEntry(NULL, InpMAFastPeriod, InpMASlowPeriod, InpATRPeriod, InpATRMultiplierSL);
 
-   RegisterEntryPlugin(g_engulfingEntry,  InpEnableEngulfing);
-   RegisterEntryPlugin(g_pinBarEntry,     InpEnablePinBar);
-   RegisterEntryPlugin(g_liqSweepEntry,   InpEnableLiquiditySweep);
-   RegisterEntryPlugin(g_maCrossEntry,    InpEnableMACross);
+   // Pattern plugins only register when signal source includes patterns
+   bool register_patterns = (InpSignalSource == SIGNAL_SOURCE_PATTERN ||
+                             InpSignalSource == SIGNAL_SOURCE_BOTH);
+
+   RegisterEntryPlugin(g_engulfingEntry,  InpEnableEngulfing && register_patterns);
+   RegisterEntryPlugin(g_pinBarEntry,     InpEnablePinBar && register_patterns);
+   RegisterEntryPlugin(g_liqSweepEntry,   InpEnableLiquiditySweep && register_patterns);
+   RegisterEntryPlugin(g_maCrossEntry,    InpEnableMACross && register_patterns);
 
    // Mean Reversion patterns
    g_bbMREntry         = new CBBMeanReversionEntry();
@@ -568,7 +572,7 @@ int OnInit()
    g_fbfEntry          = new CFalseBreakoutFadeEntry();
    g_supportBounceEntry = new CSupportBounceEntry(NULL);
 
-   RegisterEntryPlugin(g_bbMREntry,       InpEnableBBMeanReversion);
+   RegisterEntryPlugin(g_bbMREntry,       InpEnableBBMeanReversion && register_patterns);
 
    // S3/S6 Option B-lite: when enabled, S3/S6 replace RangeBox + FalseBreakout
    // BB Mean Reversion stays for comparison
@@ -580,12 +584,12 @@ int OnInit()
 
       // S6: Failed-Breakout Reversal
       g_failedBreakRev = new CFailedBreakReversal(g_rangeBoxDetector);
-      RegisterEntryPlugin(g_failedBreakRev, true);
+      RegisterEntryPlugin(g_failedBreakRev, register_patterns);
 
       // S3: Range Edge Fade
       g_rangeEdgeFade = new CRangeEdgeFade(g_rangeBoxDetector);
       g_rangeEdgeFade.SetRSIPeriod(InpRSIPeriod);
-      RegisterEntryPlugin(g_rangeEdgeFade, true);
+      RegisterEntryPlugin(g_rangeEdgeFade, register_patterns);
 
       // Disable replaced plugins
       RegisterEntryPlugin(g_rangeBoxEntry, false);
@@ -599,14 +603,14 @@ int OnInit()
       RegisterEntryPlugin(g_fbfEntry,        InpEnableFalseBreakout);
    }
 
-   RegisterEntryPlugin(g_supportBounceEntry, InpEnableSupportBounce);
+   RegisterEntryPlugin(g_supportBounceEntry, InpEnableSupportBounce && register_patterns);
 
    // Volatility Breakout
    g_volBreakoutEntry  = new CVolatilityBreakoutEntry(NULL,
       InpBODonchianPeriod, InpBOKeltnerEMAPeriod, InpBOKeltnerATRPeriod,
       InpBOKeltnerMult, InpBOADXMin, g_scaledBOEntryBuffer, InpBOPullbackATRFrac,
       InpBOCooldownBars);
-   RegisterEntryPlugin(g_volBreakoutEntry, InpEnableVolBreakout);
+   RegisterEntryPlugin(g_volBreakoutEntry, InpEnableVolBreakout && register_patterns);
 
    // Crash Breakout (Bear Hunter)
    g_crashEntry        = new CCrashBreakoutEntry(NULL,
@@ -614,7 +618,7 @@ int OnInit()
       InpCrashRSICeiling, InpCrashRSIFloor,
       InpCrashMaxSpread, InpCrashBufferPoints,
       InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod);
-   RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout);
+   RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
 
    // File-based signals (if enabled)
    // In BOTH mode: file signals run INDEPENDENTLY (not through orchestrator)
@@ -631,11 +635,11 @@ int OnInit()
 
    // Phase 3.4: New entry plugins
    g_displacementEntry = new CDisplacementEntry(NULL, InpDisplacementATRMult);
-   RegisterEntryPlugin(g_displacementEntry, InpEnableDisplacementEntry);
+   RegisterEntryPlugin(g_displacementEntry, InpEnableDisplacementEntry && register_patterns);
 
    g_sessionBreakout = new CSessionBreakoutEntry(NULL, InpAsianRangeStartHour, InpAsianRangeEndHour, InpLondonOpenHour, InpLondonOpenHour + 1, InpNYOpenHour);
    if(!InpEnableSessionEngine)
-      RegisterEntryPlugin(g_sessionBreakout, InpEnableSessionBreakout);
+      RegisterEntryPlugin(g_sessionBreakout, InpEnableSessionBreakout && register_patterns);
 
    //================================================================
    // LAYER 3b: ENTRY ENGINES (Phase 5)
@@ -646,7 +650,7 @@ int OnInit()
       g_dayRouter = new CDayTypeRouter(GetPointer(g_marketContext), InpDayRouterADXThresh);
 
    // Liquidity Engine
-   if(InpEnableLiquidityEngine)
+   if(InpEnableLiquidityEngine && register_patterns)
    {
       g_liquidityEngine = new CLiquidityEngine(GetPointer(g_marketContext), InpDisplacementATRMult, 45.0, g_scaledMinSLPoints);  // Sprint 4G: pass EA-wide min SL
       g_liquidityEngine.SetRSIPeriod(InpRSIPeriod);
@@ -655,7 +659,7 @@ int OnInit()
    }
 
    // Session Engine
-   if(InpEnableSessionEngine)
+   if(InpEnableSessionEngine && register_patterns)
    {
       g_sessionEngine = new CSessionEngine(GetPointer(g_marketContext),
          InpAsianRangeStartHour, InpAsianRangeEndHour,
@@ -667,7 +671,7 @@ int OnInit()
    }
 
    // Expansion Engine
-   if(InpEnableExpansionEngine)
+   if(InpEnableExpansionEngine && register_patterns)
    {
       g_expansionEngine = new CExpansionEngine(GetPointer(g_marketContext), InpInstCandleMult, InpCompressionMinBars, g_scaledMinSLPoints);  // Sprint 4G: pass EA-wide min SL
       g_expansionEngine.ConfigureModes(true, InpExpInstitutionalCandle, InpExpCompressionBO, InpInstCandleMult, InpCompressionMinBars);
@@ -675,7 +679,7 @@ int OnInit()
    }
 
    // Pullback Continuation Engine (analyst recommendation: fills 2024-style gap)
-   if(InpEnablePullbackCont)
+   if(InpEnablePullbackCont && register_patterns)
    {
       g_pullbackEngine = new CPullbackContinuationEngine(
          GetPointer(g_marketContext),
@@ -1671,8 +1675,8 @@ void OnTick()
             double session_quality = g_tradeExecutor.GetSessionExecutionQuality();
             if(session_quality < InpExecQualityBlockThresh)
             {
-               Print("[SessionQuality] Quality=", DoubleToString(session_quality, 2), " < ", DoubleToString(InpExecQualityBlockThresh, 2), " — BLOCKING new entries this session");
-               // Skip signal processing entirely for this bar
+               Print("[SessionQuality] Quality=", DoubleToString(session_quality, 2), " < ", DoubleToString(InpExecQualityBlockThresh, 2), " — BLOCKING new entries this bar");
+               shock_blocked = true;  // BUG 1 FIX: actually block signal processing
             }
             else if(session_quality < InpExecQualityReduceThresh)
             {
@@ -1793,6 +1797,16 @@ void OnTick()
                               "% -> ", DoubleToString(signal.riskPercent, 2),
                               "% (x", DoubleToString(InpWednesdayRiskMult, 2), ")");
                      }
+                  }
+
+                  // BUG 2 FIX: Apply session quality factor as risk reduction
+                  if(g_session_quality_factor < 1.0 && g_session_quality_factor > 0 && signal.riskPercent > 0)
+                  {
+                     double pre_sq = signal.riskPercent;
+                     signal.riskPercent *= g_session_quality_factor;
+                     Print("[SessionQuality] Risk: ", DoubleToString(pre_sq, 2),
+                           "% -> ", DoubleToString(signal.riskPercent, 2),
+                           "% (quality=", DoubleToString(g_session_quality_factor, 2), ")");
                   }
 
                   // Sprint 2: Entry sanity — reject if SL too close to spread

@@ -124,7 +124,7 @@ private:
       if(pattern == PATTERN_BB_MEAN_REVERSION || pattern == PATTERN_RANGE_BOX || pattern == PATTERN_FALSE_BREAKOUT_FADE)
          return risk * 0.7;
 
-      return risk * InpShortRiskMultiplier;  // Default 0.5x for trend-following shorts
+      return risk * g_profileShortRiskMultiplier;  // BUG 3 FIX: profile-aware (gold=0.5x, USDJPY=0.75x)
    }
 
    //+------------------------------------------------------------------+

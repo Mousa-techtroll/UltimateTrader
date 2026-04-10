@@ -151,6 +151,10 @@ public:
 
       double atr = atr_buf[0];
 
+      // M4 FIX: guard against ATR=0 (data gaps, holidays) which would set SL at highest high
+      if(atr <= 0)
+         return update;
+
       // Get high/low arrays for chandelier calculation
       double high[], low[];
       ArraySetAsSeries(high, true);

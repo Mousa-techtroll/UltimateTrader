@@ -139,15 +139,16 @@ public:
             double lower_wick = MathMin(m15_open[s], m15_close[s]) - m15_low[s];
             if(lower_wick / candle_range < 0.35) continue;
 
-            // Reclaim: spike candle or next candle closed back above level
+            // H4 FIX: Reclaim check uses correct bar indices
+            // m15_close[0] = shift 1 (last completed), m15_close[1] = shift 2
             bool reclaimed = false;
             if(m15_close[s] > level) reclaimed = true;
-            if(s == 2 && m15_close[1] > level) reclaimed = true;
+            if(s == 2 && m15_close[0] > level) reclaimed = true;  // H4 FIX: was [1], now [0]
 
             if(!reclaimed) continue;
 
-            // Confirmation candle (shift 1) should be bullish or at least above level
-            double confirm_close = m15_close[1];
+            // H4 FIX: Confirmation uses last completed bar (shift 1 = index 0)
+            double confirm_close = m15_close[0];  // H4 FIX: was [1] (shift 2, stale)
             if(confirm_close <= level) continue;
 
             // Snapback not already exhausted: price hasn't traveled > 1 ATR_M15 from level
@@ -155,6 +156,7 @@ public:
 
             // Valid S6 long reversal
             signal.valid = true;
+            signal.symbol = _Symbol;  // H5 FIX: was missing, caused validation failure
             signal.action = "BUY";
             signal.entryPrice = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
             signal.stopLoss = m15_low[s] - 0.15 * atr_h1;
@@ -188,17 +190,19 @@ public:
             double upper_wick = m15_high[s] - MathMax(m15_open[s], m15_close[s]);
             if(upper_wick / candle_range < 0.35) continue;
 
+            // H4 FIX: correct bar indices for SHORT reclaim
             bool reclaimed = false;
             if(m15_close[s] < level) reclaimed = true;
-            if(s == 2 && m15_close[1] < level) reclaimed = true;
+            if(s == 2 && m15_close[0] < level) reclaimed = true;  // H4 FIX: was [1]
 
             if(!reclaimed) continue;
 
-            double confirm_close = m15_close[1];
+            double confirm_close = m15_close[0];  // H4 FIX: was [1] (stale)
             if(confirm_close >= level) continue;
             if(level - confirm_close > 1.0 * atr_m15) continue;
 
             signal.valid = true;
+            signal.symbol = _Symbol;  // H5 FIX: was missing
             signal.action = "SELL";
             signal.entryPrice = SymbolInfoDouble(_Symbol, SYMBOL_BID);
             signal.stopLoss = m15_high[s] + 0.15 * atr_h1;

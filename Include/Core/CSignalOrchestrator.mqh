@@ -902,22 +902,35 @@ public:
       }
 
       // Re-validate
-      bool is_mr = m_validator.IsMeanReversionPattern(m_pending_signal.pattern_type);
+      // H6 FIX: SHORT signals get the same bypass as in CheckForNewSignals
+      // (ATR minimum only — full TF/MR validator has 5+ interlocking blocks that kill all shorts)
       bool validated = false;
 
-      if(is_mr)
+      if(m_pending_signal.signal_type == SIGNAL_SHORT)
       {
-         validated = m_validator.ValidateMeanReversionConditions(
-            m_pending_signal.pattern_type, current_regime,
-            m_pending_signal.signal_type, current_atr, current_adx,
-            m_mr_max_adx, m_mr_min_atr, m_mr_max_atr);
+         // SHORT bypass: only check ATR minimum (matches CheckForNewSignals logic)
+         validated = (current_atr >= m_tf_min_atr);
+         if(!validated)
+            LogPrint(">>> Pending SHORT revalidation: ATR below minimum");
       }
       else
       {
-         validated = m_validator.ValidateTrendFollowingConditions(
-            current_daily, current_h4, current_regime, current_macro,
-            m_pending_signal.signal_type, m_pending_signal.pattern_type,
-            current_atr, m_tf_min_atr, isBearRegime);
+         bool is_mr = m_validator.IsMeanReversionPattern(m_pending_signal.pattern_type);
+
+         if(is_mr)
+         {
+            validated = m_validator.ValidateMeanReversionConditions(
+               m_pending_signal.pattern_type, current_regime,
+               m_pending_signal.signal_type, current_atr, current_adx,
+               m_mr_max_adx, m_mr_min_atr, m_mr_max_atr);
+         }
+         else
+         {
+            validated = m_validator.ValidateTrendFollowingConditions(
+               current_daily, current_h4, current_regime, current_macro,
+               m_pending_signal.signal_type, m_pending_signal.pattern_type,
+               current_atr, m_tf_min_atr, isBearRegime);
+         }
       }
 
       if(!validated)

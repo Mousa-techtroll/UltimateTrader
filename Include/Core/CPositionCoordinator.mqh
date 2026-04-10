@@ -1708,7 +1708,9 @@ public:
          }
 
          // TP1 partial close (after TP0 has fired)
-         if(InpEnableTP0 && m_positions[i].tp0_closed && !m_positions[i].tp1_closed && m_positions[i].stage == STAGE_TP0_HIT)
+         // BUG 5 FIX: TP1 fires if TP0 was hit, OR if TP0 is disabled and price reached TP1 level
+         if((!InpEnableTP0 || m_positions[i].tp0_closed) && !m_positions[i].tp1_closed &&
+            (m_positions[i].stage == STAGE_TP0_HIT || (!InpEnableTP0 && m_positions[i].stage == STAGE_INITIAL)))
          {
             double risk_dist_tp1 = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
             if(risk_dist_tp1 > 0)
@@ -1773,7 +1775,8 @@ public:
          }
 
          // TP2 partial close (after TP1 has fired)
-         if(InpEnableTP0 && m_positions[i].tp1_closed && !m_positions[i].tp2_closed && m_positions[i].stage == STAGE_TP1_HIT)
+         // BUG 5 FIX: TP2 fires if TP1 was hit regardless of TP0 enable state
+         if(m_positions[i].tp1_closed && !m_positions[i].tp2_closed && m_positions[i].stage == STAGE_TP1_HIT)
          {
             double risk_dist_tp2 = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
             if(risk_dist_tp2 > 0)
@@ -2015,17 +2018,29 @@ public:
                   : (m_positions[i].entry_price - current_price_as) / risk_dist_as;
 
                // Stage 2 (8 bars): close remainder if still stalling
+               // BUG 4 FIX: check if trailing SL is better than market close before force-closing
                if(m15_bars_open >= 8 && profit_r_as < 1.0)
                {
-                  LogPrint("[AntiStall] CLOSE: ", m_positions[i].pattern_name,
-                           " ticket ", m_positions[i].ticket,
-                           " | ", m15_bars_open, " M15 bars | Profit: ",
-                           DoubleToString(profit_r_as, 2), "R — stalled too long");
-                  StampExitRequest(m_positions[i],
-                                   "ANTI_STALL_CLOSE",
-                                   StringFormat("m15_bars=%d | profit_r=%.2f", m15_bars_open, profit_r_as));
-                  ClosePosition(m_positions[i].ticket, "ANTI_STALL_CLOSE");
-                  continue;
+                  // If internal trailing SL is at or above breakeven, let trailing handle it
+                  bool trailing_protects = false;
+                  if(m_positions[i].direction == SIGNAL_LONG && m_positions[i].stop_loss >= m_positions[i].entry_price)
+                     trailing_protects = true;
+                  if(m_positions[i].direction == SIGNAL_SHORT && m_positions[i].stop_loss > 0 && m_positions[i].stop_loss <= m_positions[i].entry_price)
+                     trailing_protects = true;
+
+                  if(!trailing_protects)
+                  {
+                     LogPrint("[AntiStall] CLOSE: ", m_positions[i].pattern_name,
+                              " ticket ", m_positions[i].ticket,
+                              " | ", m15_bars_open, " M15 bars | Profit: ",
+                              DoubleToString(profit_r_as, 2), "R — stalled, trailing not protecting");
+                     StampExitRequest(m_positions[i],
+                                      "ANTI_STALL_CLOSE",
+                                      StringFormat("m15_bars=%d | profit_r=%.2f", m15_bars_open, profit_r_as));
+                     ClosePosition(m_positions[i].ticket, "ANTI_STALL_CLOSE");
+                     continue;
+                  }
+                  // else: trailing SL at BE or better — let Chandelier manage the exit
                }
 
                // Stage 1 (5 bars): reduce to 50% and move stop to BE
