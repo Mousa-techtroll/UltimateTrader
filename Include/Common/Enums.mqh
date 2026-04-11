@@ -118,6 +118,13 @@ enum ENUM_SIGNAL_SOURCE
    SIGNAL_SOURCE_BOTH        // Both sources active
 };
 
+enum ENUM_FILE_SIGNAL_MODE
+{
+   FILE_MODE_STRICT,         // Strict: use CSV SL/TP exactly, reject if invalid
+   FILE_MODE_OPPORTUNISTIC,  // Opportunistic: use CSV SL/TP when valid, auto-fill missing from ATR
+   FILE_MODE_BEST_EFFORT     // Best-effort: ignore CSV SL/TP, EA calculates all from ATR
+};
+
 //+------------------------------------------------------------------+
 //| Health Status Enumeration (from AICoder V1)                      |
 //+------------------------------------------------------------------+

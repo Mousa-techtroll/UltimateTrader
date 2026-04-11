@@ -17,12 +17,13 @@ input ENUM_SYMBOL_PROFILE InpSymbolProfile = SYMBOL_PROFILE_XAUUSD; // Symbol pr
 input group "══════ SIGNAL SOURCE ══════"
 input ENUM_SIGNAL_SOURCE InpSignalSource = SIGNAL_SOURCE_BOTH;     // Signal source: PATTERN=engine only, FILE=CSV only, BOTH=engine+CSV
 input string InpSignalFile = "telegram_signals.csv";               // CSV signal file path (in MQL5/Files/)
-input double InpSignalTimeTolerance = 400;                         // Signal execution window (seconds) — signal expires after this
+input double InpSignalTimeTolerance = 600;                         // Signal execution window (seconds) — 600=10min max signal validity
 input int    InpFileCheckInterval = 60;                            // File re-read interval (seconds) — how often EA checks for new signals
 input ENUM_SETUP_QUALITY InpFileSignalQuality = SETUP_A;           // File signal quality tier (A+=highest priority, B=lowest)
 input double InpFileSignalRiskPct = 0.8;                           // File signal default risk % (when CSV has 0 or missing)
 input bool   InpFileSignalSkipRegime = true;                       // File signals bypass regime filter (execute in any market state)
 input bool   InpFileSignalSkipConfirmation = true;                 // File signals skip confirmation candle (execute immediately)
+input ENUM_FILE_SIGNAL_MODE InpFileSignalMode = FILE_MODE_OPPORTUNISTIC; // CSV parse mode: Strict/Opportunistic/BestEffort
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
@@ -59,7 +60,7 @@ input int    InpMaxPositionAgeHours = 72;    // Max position age (hours)
 input bool   InpCloseBeforeWeekend = true;   // Close positions before weekend
 input int    InpWeekendCloseHour = 20;       // Weekend close hour (server time)
 input int    InpMaxTradesPerDay = 5;         // Max trades per day
-input int    InpBrokerGMTOffset = 2;         // Broker GMT offset (winter) — backtester fallback when TimeGMT() unreliable
+input int    InpBrokerGMTOffset = 3;         // Broker GMT offset (summer DST) — used for CSV signal time conversion
 
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"

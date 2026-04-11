@@ -213,6 +213,20 @@ public:
       double sl = signal.stopLoss;
       double risk_distance = MathAbs(entry_price - sl);
 
+      // Enforce minimum stop distance (broker rejects SL too close to price)
+      double min_stop_dist = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL) * _Point;
+      if(min_stop_dist < 1.0) min_stop_dist = 1.0;  // At least $1 for gold
+      if(risk_distance > 0 && risk_distance < min_stop_dist)
+      {
+         // Widen SL to meet broker minimum
+         if(sig_type == SIGNAL_LONG)
+            sl = entry_price - min_stop_dist;
+         else
+            sl = entry_price + min_stop_dist;
+         risk_distance = min_stop_dist;
+         signal.stopLoss = sl;
+      }
+
       if(risk_distance <= 0)
       {
          LogPrint("ERROR: Invalid risk distance - trade rejected");
@@ -233,8 +247,8 @@ public:
          CalculateDefaultTPs(sig_type, entry_price, risk_distance, tp1, tp2);
       }
 
-      // R:R validation — relaxed for SHORT crash/reversal in VOLATILE/CHOPPY
-      if(m_min_rr_ratio > 0)
+      // R:R validation — skipped entirely for file signals (external source, not our quality call)
+      if(m_min_rr_ratio > 0 && signal.source != SIGNAL_SOURCE_FILE)
       {
          double reward = MathAbs(MathMax(tp1, tp2) - entry_price);
          double actual_rr = (risk_distance > 0) ? reward / risk_distance : 0;

@@ -1661,6 +1661,80 @@ public:
             continue;
          }
 
+         // FILE SIGNALS: use CSV TP levels as hard price targets, skip trailing
+         // The CSV SL is already set as the broker SL — just check TP hits
+         if(m_positions[i].signal_source == SIGNAL_SOURCE_FILE)
+         {
+            double cur_price = PositionGetDouble(POSITION_PRICE_CURRENT);
+
+            // Check TP1 hit (close 50%)
+            if(!m_positions[i].tp0_closed && m_positions[i].tp1 > 0)
+            {
+               bool tp1_hit = (m_positions[i].direction == SIGNAL_LONG && cur_price >= m_positions[i].tp1) ||
+                              (m_positions[i].direction == SIGNAL_SHORT && cur_price <= m_positions[i].tp1);
+               if(tp1_hit)
+               {
+                  double close_lots = NormalizeDouble(m_positions[i].remaining_lots * 0.50, 2);
+                  double min_lot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+                  if(close_lots >= min_lot && m_positions[i].remaining_lots - close_lots >= min_lot)
+                  {
+                     CTrade tp_trade;
+                     tp_trade.SetExpertMagicNumber(m_magic_number);
+                     if(tp_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
+                     {
+                        m_positions[i].tp0_closed = true;
+                        m_positions[i].remaining_lots -= close_lots;
+                        m_positions[i].stage = STAGE_TP0_HIT;
+                        m_positions[i].stage_label = "FILE_TP1";
+
+                        // Move SL to breakeven
+                        double be_sl = m_positions[i].entry_price;
+                        if((m_positions[i].direction == SIGNAL_LONG && be_sl > m_positions[i].stop_loss) ||
+                           (m_positions[i].direction == SIGNAL_SHORT && be_sl < m_positions[i].stop_loss))
+                        {
+                           m_positions[i].stop_loss = be_sl;
+                           m_positions[i].at_breakeven = true;
+                           CTrade be_trade;
+                           be_trade.SetExpertMagicNumber(m_magic_number);
+                           be_trade.PositionModify(m_positions[i].ticket, be_sl, 0);
+                        }
+
+                        LogPrint("[FileTP1] Partial close 50%: ticket=", m_positions[i].ticket,
+                                 " @ ", DoubleToString(cur_price, 2), " | SL→BE");
+                     }
+                  }
+               }
+            }
+
+            // Check TP2 hit (close remaining)
+            if(m_positions[i].tp0_closed && m_positions[i].tp2 > 0)
+            {
+               bool tp2_hit = (m_positions[i].direction == SIGNAL_LONG && cur_price >= m_positions[i].tp2) ||
+                              (m_positions[i].direction == SIGNAL_SHORT && cur_price <= m_positions[i].tp2);
+               if(tp2_hit)
+               {
+                  ClosePosition(m_positions[i].ticket, "FILE_TP2_FULL_CLOSE");
+                  LogPrint("[FileTP2] Full close: ticket=", m_positions[i].ticket,
+                           " @ ", DoubleToString(cur_price, 2));
+               }
+            }
+
+            // Update MAE/MFE for file positions
+            double risk_dist_f = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
+            if(risk_dist_f > 0)
+            {
+               double adverse = 0, favorable = 0;
+               if(m_positions[i].direction == SIGNAL_LONG)
+               { adverse = m_positions[i].entry_price - cur_price; favorable = cur_price - m_positions[i].entry_price; }
+               else
+               { adverse = cur_price - m_positions[i].entry_price; favorable = m_positions[i].entry_price - cur_price; }
+               if(adverse > 0 && adverse > m_positions[i].mae) m_positions[i].mae = adverse;
+               if(favorable > 0 && favorable > m_positions[i].mfe) m_positions[i].mfe = favorable;
+            }
+
+            continue;  // Skip ALL internal management (TP cascade, trailing, exits)
+         }
+
          // Use the position's exit profile when available; fall back to global inputs
          // for legacy positions that predate adaptive exit assignment.
          double tp0_distance = (m_positions[i].exit_tp0_distance > 0.0) ? m_positions[i].exit_tp0_distance : InpTP0Distance;

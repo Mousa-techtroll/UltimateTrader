@@ -1617,50 +1617,7 @@ void OnTick()
          }
       }
 
-      //--- 2b. Independent file signal check (BOTH mode — runs separately from orchestrator)
-      if(InpSignalSource == SIGNAL_SOURCE_BOTH && g_fileEntry != NULL &&
-         !g_riskMonitor.IsTradingHalted() && g_riskMonitor.CanTrade() &&
-         g_posCoordinator.GetPositionCount() < InpMaxPositions)
-      {
-         EntrySignal fileSignal = g_fileEntry.CheckForEntrySignal();
-         if(fileSignal.valid)
-         {
-            // Apply file signal risk if not specified in CSV
-            if(fileSignal.riskPercent <= 0)
-               fileSignal.riskPercent = InpFileSignalRiskPct;
-
-            fileSignal.audit_origin = "FILE_INDEPENDENT";
-
-            Print("[FileSignal] Independent execution: ", fileSignal.comment,
-                  " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
-                  " | Quality=", EnumToString(fileSignal.setupQuality),
-                  " | Risk=", DoubleToString(fileSignal.riskPercent, 2), "%");
-
-            SPosition filePos = g_tradeOrchestrator.ExecuteSignal(fileSignal);
-            if(filePos.ticket > 0)
-            {
-               filePos.stage = STAGE_INITIAL;
-               filePos.original_lots = filePos.lot_size;
-               filePos.remaining_lots = filePos.lot_size;
-               filePos.stage_label = "INITIAL";
-               filePos.original_sl = filePos.stop_loss;
-               filePos.original_tp1 = filePos.tp1;
-               filePos.signal_id = fileSignal.signal_id;
-               filePos.engine_name = "FileSignal";
-               filePos.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
-               filePos.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
-               filePos.entry_regime = (int)g_marketContext.GetCurrentRegime();
-               filePos.confirmation_used = false;
-
-               g_posCoordinator.AddPosition(filePos);
-               g_riskMonitor.IncrementTradesToday();
-               g_riskMonitor.RecordExecutionSuccess();
-
-               Print("[FileSignal] Executed: ticket=", filePos.ticket,
-                     " | Pattern signals will ALSO fire independently this bar");
-            }
-         }
-      }
+      // File signal check moved outside isNewBar gate (runs every tick)
 
       //--- 3. Check for new signals (if not halted)
       if(!g_riskMonitor.IsTradingHalted() && g_riskMonitor.CanTrade())
@@ -2079,6 +2036,50 @@ void OnTick()
                         " | Lots=", orphan.lot_size);
                }
             }
+         }
+      }
+   }
+
+   //=== FILE SIGNAL CHECK (every tick — position limit applies, no daily/loss halt) ===
+   if((InpSignalSource == SIGNAL_SOURCE_BOTH || InpSignalSource == SIGNAL_SOURCE_FILE) &&
+      g_fileEntry != NULL &&
+      g_posCoordinator.GetPositionCount() < InpMaxPositions)
+   {
+      EntrySignal fileSignal = g_fileEntry.CheckForEntrySignal();
+      if(fileSignal.valid)
+      {
+         // File signals use their own fixed risk, NOT the EA's quality-tier risk
+         fileSignal.riskPercent = InpFileSignalRiskPct;  // Always use file risk (default 0.8%)
+
+         fileSignal.audit_origin = "FILE_INDEPENDENT";
+
+         Print("[FileSignal] Executing: ", fileSignal.comment,
+               " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
+               " | Quality=", EnumToString(fileSignal.setupQuality),
+               " | Risk=", DoubleToString(fileSignal.riskPercent, 2), "%");
+
+         SPosition filePos = g_tradeOrchestrator.ExecuteSignal(fileSignal);
+         if(filePos.ticket > 0)
+         {
+            filePos.stage = STAGE_INITIAL;
+            filePos.original_lots = filePos.lot_size;
+            filePos.remaining_lots = filePos.lot_size;
+            filePos.stage_label = "INITIAL";
+            filePos.original_sl = filePos.stop_loss;
+            filePos.original_tp1 = filePos.tp1;
+            filePos.signal_id = fileSignal.signal_id;
+            filePos.engine_name = "FileSignal";
+            filePos.signal_source = SIGNAL_SOURCE_FILE;
+            filePos.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+            filePos.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
+            filePos.entry_regime = (int)g_marketContext.GetCurrentRegime();
+            filePos.confirmation_used = false;
+
+            g_posCoordinator.AddPosition(filePos);
+            g_riskMonitor.IncrementTradesToday();
+            g_riskMonitor.RecordExecutionSuccess();
+
+            Print("[FileSignal] Executed: ticket=", filePos.ticket);
          }
       }
    }

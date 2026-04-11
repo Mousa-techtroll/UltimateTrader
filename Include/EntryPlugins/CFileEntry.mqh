@@ -67,6 +67,75 @@ private:
    FileTradeData     m_trades[];
    int               m_magicCounter;
 
+   // Dedup: persistent set of executed signal keys (survives file reloads)
+   string            m_executedKeys[];
+   int               m_executedCount;
+
+   //--- EET timezone offset: GMT+2 winter, GMT+3 summer (EU DST rules)
+   //    Most forex brokers (IC Markets, Vantage, etc.) use this timezone
+   //    DST: last Sunday of March → GMT+3, last Sunday of October → GMT+2
+   int GetEETOffset(datetime dt)
+   {
+      MqlDateTime mdt;
+      TimeToStruct(dt, mdt);
+      int month = mdt.mon;
+
+      // Clear months: Apr-Sep = summer (GMT+3), Nov-Feb = winter (GMT+2)
+      if(month >= 4 && month <= 9) return 3;
+      if(month >= 11 || month <= 2) return 2;
+
+      // March: summer starts on last Sunday
+      if(month == 3)
+      {
+         int last_sun = 31;
+         for(int d = 31; d >= 25; d--)
+         {
+            MqlDateTime tmp; tmp.year = mdt.year; tmp.mon = 3; tmp.day = d;
+            tmp.hour = 0; tmp.min = 0; tmp.sec = 0;
+            datetime t = StructToTime(tmp);
+            TimeToStruct(t, tmp);
+            if(tmp.day_of_week == 0) { last_sun = d; break; }
+         }
+         return (mdt.day >= last_sun) ? 3 : 2;
+      }
+
+      // October: winter starts on last Sunday
+      if(month == 10)
+      {
+         int last_sun = 31;
+         for(int d = 31; d >= 25; d--)
+         {
+            MqlDateTime tmp; tmp.year = mdt.year; tmp.mon = 10; tmp.day = d;
+            tmp.hour = 0; tmp.min = 0; tmp.sec = 0;
+            datetime t = StructToTime(tmp);
+            TimeToStruct(t, tmp);
+            if(tmp.day_of_week == 0) { last_sun = d; break; }
+         }
+         return (mdt.day >= last_sun) ? 2 : 3;
+      }
+
+      return 2;
+   }
+
+   string BuildSignalKey(datetime time, string action, double entry)
+   {
+      return TimeToString(time, TIME_DATE|TIME_MINUTES) + "|" + action + "|" + DoubleToString(entry, 2);
+   }
+
+   bool IsAlreadyExecuted(string key)
+   {
+      for(int i = 0; i < m_executedCount; i++)
+         if(m_executedKeys[i] == key) return true;
+      return false;
+   }
+
+   void MarkExecuted(string key)
+   {
+      ArrayResize(m_executedKeys, m_executedCount + 1);
+      m_executedKeys[m_executedCount] = key;
+      m_executedCount++;
+   }
+
    //+------------------------------------------------------------------+
    //| Check if path is absolute                                         |
    //+------------------------------------------------------------------+
@@ -110,30 +179,202 @@ private:
    //+------------------------------------------------------------------+
    //| Validate parsed trade data                                        |
    //+------------------------------------------------------------------+
-   bool ValidateTrade(FileTradeData &trade)
+   //--- Helper: get current H1 ATR value
+   //    Uses persistent handle — DO NOT release (shared with other components)
+   int m_atr_handle;
+
+   double GetCurrentATR(string symbol)
    {
-      if(trade.Symbol == "")
-         return false;
+      if(m_atr_handle == INVALID_HANDLE)
+         m_atr_handle = iATR(symbol, PERIOD_H1, 14);
+      if(m_atr_handle == INVALID_HANDLE) return 0;
+      double buf[];
+      if(CopyBuffer(m_atr_handle, 0, 0, 1, buf) > 0 && buf[0] > 0)
+         return buf[0];
+      return 0;
+   }
 
-      if(trade.Action != "BUY" && trade.Action != "SELL")
-         return false;
+   //--- Smart SL/TP: swing-based SL with tight bounds, scalp-realistic TPs
+   void CalcATRLevels(string symbol, string action, double entry,
+                      double atr, double &sl, double &tp1, double &tp2)
+   {
+      int digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
+      double sl_dist = 0;
 
-      // Validate SL direction
-      if(trade.EntryPrice > 0 && trade.StopLoss > 0)
+      // --- STEP 1: Find structural SL from recent swing (no buffer) ---
+      int lookback = 5;
+      if(action == "BUY")
       {
-         if(trade.Action == "BUY" && trade.StopLoss >= trade.EntryPrice)
-            return false;
-         if(trade.Action == "SELL" && trade.StopLoss <= trade.EntryPrice)
-            return false;
+         int lowest_bar = iLowest(symbol, PERIOD_H1, MODE_LOW, lookback, 1);
+         if(lowest_bar >= 0)
+         {
+            double swing_low = iLow(symbol, PERIOD_H1, lowest_bar);
+            sl = NormalizeDouble(swing_low, digits);
+            sl_dist = entry - sl;
+         }
+      }
+      else
+      {
+         int highest_bar = iHighest(symbol, PERIOD_H1, MODE_HIGH, lookback, 1);
+         if(highest_bar >= 0)
+         {
+            double swing_high = iHigh(symbol, PERIOD_H1, highest_bar);
+            sl = NormalizeDouble(swing_high, digits);
+            sl_dist = sl - entry;
+         }
       }
 
-      // Validate TP direction
-      if(trade.EntryPrice > 0 && trade.TakeProfit1 > 0)
+      // --- STEP 2: Tight bounds matching scalp signal profile ---
+      double min_sl = atr * 0.2;   // Floor: ~$5 for gold
+      double max_sl = atr * 0.5;   // Ceiling: ~$12-15 for gold (matches CSV avg)
+
+      if(sl_dist < min_sl || sl_dist <= 0)
       {
-         if(trade.Action == "BUY" && trade.TakeProfit1 <= trade.EntryPrice)
+         sl_dist = min_sl;
+         if(action == "BUY") sl = NormalizeDouble(entry - sl_dist, digits);
+         else                sl = NormalizeDouble(entry + sl_dist, digits);
+      }
+      else if(sl_dist > max_sl)
+      {
+         sl_dist = max_sl;
+         if(action == "BUY") sl = NormalizeDouble(entry - sl_dist, digits);
+         else                sl = NormalizeDouble(entry + sl_dist, digits);
+      }
+
+      // --- STEP 3: Scalp-realistic TPs ---
+      // Data: 71.6% of trades reach 0.5R, 46.6% reach 1.0R, only 16.3% reach 1.5R
+      double tp1_dist = sl_dist * 0.5;   // 0.5R — captures 71.6% of moves
+      double tp2_dist = sl_dist * 1.0;   // 1.0R — captures 46.6% of moves
+
+      if(action == "BUY")
+      { tp1 = NormalizeDouble(entry + tp1_dist, digits); tp2 = NormalizeDouble(entry + tp2_dist, digits); }
+      else
+      { tp1 = NormalizeDouble(entry - tp1_dist, digits); tp2 = NormalizeDouble(entry - tp2_dist, digits); }
+
+      Print("[CFileEntry] SmartLevels: ", action, " @ ", DoubleToString(entry, digits),
+            " | SL=", DoubleToString(sl, digits), " ($", DoubleToString(sl_dist, 1),
+            " = ", DoubleToString(sl_dist/atr, 2), "xATR)",
+            " | TP1=$", DoubleToString(tp1_dist, 1), " (0.5R)",
+            " TP2=$", DoubleToString(tp2_dist, 1), " (1.0R)");
+   }
+
+   //--- Helper: check if SL is valid for direction
+   bool IsSLValid(string action, double entry, double sl)
+   {
+      if(entry <= 0 || sl <= 0) return false;
+      if(action == "BUY" && sl >= entry) return false;
+      if(action == "SELL" && sl <= entry) return false;
+      return true;
+   }
+
+   //--- Helper: check if TP is valid for direction
+   bool IsTPValid(string action, double entry, double tp)
+   {
+      if(entry <= 0 || tp <= 0) return false;
+      if(action == "BUY" && tp <= entry) return false;
+      if(action == "SELL" && tp >= entry) return false;
+      return true;
+   }
+
+   bool ValidateTrade(FileTradeData &trade)
+   {
+      if(trade.Symbol == "") return false;
+      if(trade.Action != "BUY" && trade.Action != "SELL") return false;
+
+      // Price sanity: reject typos (>3x or <0.3x current price)
+      if(trade.EntryPrice > 0)
+      {
+         double bid = SymbolInfoDouble(trade.Symbol, SYMBOL_BID);
+         if(bid > 0)
+         {
+            double ratio = trade.EntryPrice / bid;
+            if(ratio > 3.0 || ratio < 0.3)
+            {
+               Print("[CFileEntry] REJECT price sanity: Entry=", DoubleToString(trade.EntryPrice, 2),
+                     " vs bid=", DoubleToString(bid, 2), " (ratio=", DoubleToString(ratio, 2), ")");
+               return false;
+            }
+         }
+      }
+
+      if(trade.EntryPrice <= 0) return false;
+
+      double atr = GetCurrentATR(trade.Symbol);
+      double calc_sl = 0, calc_tp1 = 0, calc_tp2 = 0;
+      if(atr > 0)
+         CalcATRLevels(trade.Symbol, trade.Action, trade.EntryPrice, atr, calc_sl, calc_tp1, calc_tp2);
+
+      // ========================================================
+      // MODE: BEST_EFFORT — ignore CSV SL/TP, EA calculates all
+      // ========================================================
+      if(InpFileSignalMode == FILE_MODE_BEST_EFFORT)
+      {
+         if(atr <= 0) return false;  // Can't calculate without ATR
+
+         trade.StopLoss = calc_sl;
+         trade.TakeProfit1 = calc_tp1;
+         trade.TakeProfit2 = calc_tp2;
+         trade.TakeProfit3 = 0;
+
+         Print("[CFileEntry] BEST_EFFORT: ", trade.Action, " @ ", DoubleToString(trade.EntryPrice, 2),
+               " | ATR=", DoubleToString(atr, 2),
+               " SL=", DoubleToString(trade.StopLoss, 2),
+               " TP1=", DoubleToString(trade.TakeProfit1, 2),
+               " TP2=", DoubleToString(trade.TakeProfit2, 2));
+      }
+      // ========================================================
+      // MODE: OPPORTUNISTIC — use CSV when valid, auto-fill gaps
+      // ========================================================
+      else if(InpFileSignalMode == FILE_MODE_OPPORTUNISTIC)
+      {
+         // SL: use CSV if valid, otherwise auto-fill
+         if(!IsSLValid(trade.Action, trade.EntryPrice, trade.StopLoss))
+         {
+            if(atr > 0)
+            {
+               trade.StopLoss = calc_sl;
+               Print("[CFileEntry] OPPORTUNISTIC auto-SL: ", DoubleToString(trade.StopLoss, 2),
+                     " (3x ATR=", DoubleToString(atr * 3.0, 2), ")");
+            }
+            else
+               return false;  // No ATR, can't fix
+         }
+
+         // TP1: use CSV if valid, otherwise auto-fill
+         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit1))
+         {
+            if(atr > 0)
+            {
+               trade.TakeProfit1 = calc_tp1;
+               Print("[CFileEntry] OPPORTUNISTIC auto-TP1: ", DoubleToString(trade.TakeProfit1, 2));
+            }
+            // TP1 missing is OK — EA can calculate defaults
+         }
+
+         // TP2: use CSV if valid, otherwise auto-fill
+         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit2))
+         {
+            if(atr > 0)
+               trade.TakeProfit2 = calc_tp2;
+         }
+      }
+      // ========================================================
+      // MODE: STRICT — use CSV exactly, reject if invalid
+      // ========================================================
+      else // FILE_MODE_STRICT
+      {
+         if(!IsSLValid(trade.Action, trade.EntryPrice, trade.StopLoss))
+         {
+            Print("[CFileEntry] STRICT reject: invalid SL=", DoubleToString(trade.StopLoss, 2),
+                  " for ", trade.Action, " @ ", DoubleToString(trade.EntryPrice, 2));
             return false;
-         if(trade.Action == "SELL" && trade.TakeProfit1 >= trade.EntryPrice)
-            return false;
+         }
+
+         // Clear bad TPs (let EA calc defaults) but don't reject
+         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit1))
+            trade.TakeProfit1 = 0;
+         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit2))
+            trade.TakeProfit2 = 0;
       }
 
       // Risk percentage bounds
@@ -164,14 +405,17 @@ private:
       if(partCount == 0)
          return false;
 
-      // Parse fields
+      // Parse fields — CSV time is GMT, auto-convert to server time
       if(partCount >= 1 && parts[0] != "")
       {
          datetime parsedTime = StringToTime(parts[0]);
          if(parsedTime == 0)
             parsedTime = StringToTime(parts[0] + " 00:00");
          if(parsedTime != 0)
-            trade.Time = parsedTime + 3600;  // +1 hour buffer
+         {
+            int offset = GetEETOffset(parsedTime);
+            trade.Time = parsedTime + offset * 3600;
+         }
       }
 
       if(partCount >= 2 && parts[1] != "")
@@ -260,18 +504,24 @@ private:
          return false;
       }
 
-      // Read lines
+      // Rebuild trade list from file (dedup handled by m_executedKeys)
+      ArrayResize(m_trades, 0);
+
       while(!FileIsEnding(fileHandle))
       {
          string line = FileReadString(fileHandle);
 
-         // Skip empty lines and headers
          if(line == "" || StringFind(line, "Date") == 0 || StringFind(line, "#") == 0)
             continue;
 
          FileTradeData trade;
          if(ParseTradeLine(line, trade))
          {
+            // Mark already-executed trades using persistent key set
+            string key = BuildSignalKey(trade.Time, trade.Action, trade.EntryPrice);
+            if(IsAlreadyExecuted(key))
+               trade.Executed = true;
+
             int size = ArraySize(m_trades);
             ArrayResize(m_trades, size + 1);
             m_trades[size] = trade;
@@ -293,7 +543,18 @@ private:
          return false;
 
       datetime currentTime = TimeCurrent();
-      return (currentTime >= trade.Time && currentTime <= trade.Time + m_timeTolerance);
+
+      // Signal must not be in the future
+      if(currentTime < trade.Time)
+         return false;
+
+      // Signal must not be too old (tolerance window)
+      // With H1 bars, tolerance must span at least 1 full bar (3600s)
+      // to guarantee the signal is seen on the next bar check
+      if(currentTime > trade.Time + m_timeTolerance)
+         return false;
+
+      return true;
    }
 
 public:
@@ -311,6 +572,8 @@ public:
       m_fileCheckInterval = fileCheckInterval;
       m_lastFileCheck = 0;
       m_magicCounter = 10000;
+      m_atr_handle = INVALID_HANDLE;
+      m_executedCount = 0;
    }
 
    virtual string GetName() override    { return "FileEntry"; }
@@ -454,12 +717,15 @@ public:
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
-            // Mark as executed
+            // Mark as executed — both on array AND in persistent key set
             m_trades[i].Executed = true;
+            string exec_key = BuildSignalKey(m_trades[i].Time, m_trades[i].Action, m_trades[i].EntryPrice);
+            MarkExecuted(exec_key);
 
             Print("CFileEntry: SIGNAL READY | ", signal.symbol, " ", signal.action,
                   " @ ", signal.entryPrice, " SL=", signal.stopLoss,
-                  " TP1=", signal.takeProfit1, " Risk=", signal.riskPercent, "%");
+                  " TP1=", signal.takeProfit1, " Risk=", signal.riskPercent,
+                  "% | Key=", exec_key, " | Executed: ", m_executedCount, " total");
             return signal;
          }
       }
