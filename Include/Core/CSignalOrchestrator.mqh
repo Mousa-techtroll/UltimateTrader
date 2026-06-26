@@ -629,8 +629,31 @@ public:
          //   - Confidence scoring (still applied below)
          if(sig_type == SIGNAL_SHORT)
          {
+            // Phase 3.5 / fix 3.6: HTF-uptrend SHORT veto for ROUTED ENGINE shorts.
+            // The central guard against negative-expectancy gold shorts re-entering
+            // through the multi-strategy engines. Mirrors CTrendContinuationEngine::
+            // IsUptrendActive() EXACTLY: an HTF uptrend is H4 OR D1 bullish AND price
+            // above the 200MA. We reject an engine SHORT taken INTO that uptrend.
+            // Hard-ON for production (no disable input). SCOPING: gated on
+            // is_engine (== signal.routed_engine, true ONLY when InpEnableMultiStrategy
+            // wired the scorer/router) — NOT raw major_engine!=ENGINE_NONE, which would
+            // also veto the LIVE legacy Expansion/Session/Liquidity engines' shorts on
+            // production and change behavior. Legacy/standalone short behavior is
+            // untouched (is_engine is constant-false on the default .set). This does
+            // NOT re-enable the full short validator (that would zero ALL shorts = a
+            // logic cut); the ATR-min check below still governs every other short.
+            bool htf_uptrend = ((h4_trend == TREND_BULLISH) || (daily_trend == TREND_BULLISH)) &&
+                               m_context.IsPriceAboveMA200();
+            if(is_engine && htf_uptrend)
+            {
+               reject_reason = "HTF_UPTREND_SHORT_VETO";
+               LogPrint(">>> Engine SHORT REJECTED: HTF uptrend veto (H4=", EnumToString(h4_trend),
+                        " D1=", EnumToString(daily_trend), " price>MA200)");
+               WriteShortDiag("  >>> REJECTED: HTF_UPTREND_SHORT_VETO (routed engine short into uptrend | H4=" +
+                              EnumToString(h4_trend) + " D1=" + EnumToString(daily_trend) + ")");
+            }
             // Only apply ATR minimum check for shorts
-            if(current_atr >= m_tf_min_atr)
+            else if(current_atr >= m_tf_min_atr)
                validated = true;
             else
             {
