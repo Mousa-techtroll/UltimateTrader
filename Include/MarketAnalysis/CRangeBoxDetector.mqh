@@ -166,7 +166,10 @@ public:
       }
 
       // 3. Width stability: compute box 10 bars ago, check change < 35%
-      if(m_box_lookback + 10 <= 100)  // Ensure enough data
+      //    Guard: the older-box reads start at shift 11 and span m_box_lookback
+      //    bars, so require (11 + m_box_lookback) closed H1 bars to exist.
+      //    (Was a constant-true tautology: m_box_lookback + 10 <= 100.)
+      if(Bars(_Symbol, PERIOD_H1) >= m_box_lookback + 11)  // Ensure enough data
       {
          double high_old[], low_old[];
          ArraySetAsSeries(high_old, true);
