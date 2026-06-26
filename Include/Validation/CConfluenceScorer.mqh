@@ -21,6 +21,33 @@
 #include "../MarketAnalysis/IMarketContext.mqh"
 
 //+------------------------------------------------------------------+
+//| SScoreAxes — 2.4-GATE per-signal axis breakdown (ADDITIVE).      |
+//| Captures each of the 7 orthogonal axes' awarded points + the raw |
+//| total, for the GATE tier-threshold derivation log. This is a     |
+//| pure telemetry out-struct; it does NOT participate in the tier   |
+//| decision and is inert on the production path (the 3-arg Score()  |
+//| overload fills a throwaway instance, so production scoring is     |
+//| byte-identical whether or not the GATE logging is compiled in).  |
+//+------------------------------------------------------------------+
+struct SScoreAxes
+{
+   int ax1_htfdraw;    // 0-1  HTF draw alignment
+   int ax2_premdisc;   // 0-2  premium/discount location
+   int ax3_entryzone;  // 0-2  OB / FVG entry-zone quality
+   int ax4_sweep;      // 0-1  sweep + inducement (structure shift)
+   int ax5_confirm;    // 0-1  confirmation candle
+   int ax6_flow;       // 0-1  flow / SMC-confluence proxy
+   int ax7_killzone;   // 0-1  expansion/breakout killzone
+   int raw_score;      // 0-9  sum of the seven axes (== out_score)
+
+   void Init()
+   {
+      ax1_htfdraw  = 0; ax2_premdisc = 0; ax3_entryzone = 0; ax4_sweep = 0;
+      ax5_confirm  = 0; ax6_flow     = 0; ax7_killzone  = 0; raw_score = 0;
+   }
+};
+
+//+------------------------------------------------------------------+
 //| CConfluenceScorer                                                |
 //+------------------------------------------------------------------+
 class CConfluenceScorer
@@ -78,10 +105,27 @@ public:
    //| Returns the tier; out_score carries the 0-10 point total.        |
    //| HARD GATE: if there is no L3 spine (sweep + structure shift),    |
    //| returns SETUP_NONE and out_score = 0 regardless of context.      |
+   //|                                                                  |
+   //| Production 3-arg overload: delegates to the axis-capturing       |
+   //| overload with a throwaway breakdown struct → identical result.   |
    //+------------------------------------------------------------------+
    ENUM_SETUP_QUALITY Score(const EntrySignal &signal, IMarketContext *ctx, int &out_score)
    {
+      SScoreAxes axes_discard;
+      return Score(signal, ctx, out_score, axes_discard);
+   }
+
+   //+------------------------------------------------------------------+
+   //| 2.4-GATE axis-capturing overload (ADDITIVE).                     |
+   //| Identical scoring math to the 3-arg form, but ALSO writes each   |
+   //| axis's awarded points into out_axes for the GATE derivation log. |
+   //| out_axes is pure telemetry — it never affects the tier returned. |
+   //+------------------------------------------------------------------+
+   ENUM_SETUP_QUALITY Score(const EntrySignal &signal, IMarketContext *ctx, int &out_score,
+                            SScoreAxes &out_axes)
+   {
       out_score = 0;
+      out_axes.Init();
       if(ctx == NULL)
          return SETUP_NONE;
 
@@ -135,7 +179,10 @@ public:
       //     now backed by the DE-CORRELATED D1 IPDA dealing range.
       double draw = ctx.GetDrawOnLiquidity(dir);
       if(draw > 0)
+      {
          points += 1;                                   // a draw exists in our direction
+         out_axes.ax1_htfdraw = 1;
+      }
 
       // (2) Premium / discount location (0-2): longs in discount, shorts in
       //     premium. Phase 2.4 — this is now the SOLE location axis, and it is
@@ -145,25 +192,28 @@ public:
       double price = signal.entryPrice;
       if(price > 0)
       {
-         if(dir == SIGNAL_LONG && ctx.IsInDiscount(price))  points += 2;
-         else if(dir == SIGNAL_SHORT && ctx.IsInPremium(price)) points += 2;
+         if(dir == SIGNAL_LONG && ctx.IsInDiscount(price))      { points += 2; out_axes.ax2_premdisc = 2; }
+         else if(dir == SIGNAL_SHORT && ctx.IsInPremium(price)) { points += 2; out_axes.ax2_premdisc = 2; }
       }
 
       // (3) Entry-zone quality (0-2): inside a same-direction OB / FVG.
       if(dir == SIGNAL_LONG)
       {
-         if(ctx.IsInBullishOrderBlock()) points += 2;
-         else if(ctx.IsInBullishFVG())   points += 1;
+         if(ctx.IsInBullishOrderBlock())    { points += 2; out_axes.ax3_entryzone = 2; }
+         else if(ctx.IsInBullishFVG())      { points += 1; out_axes.ax3_entryzone = 1; }
       }
       else
       {
-         if(ctx.IsInBearishOrderBlock()) points += 2;
-         else if(ctx.IsInBearishFVG())   points += 1;
+         if(ctx.IsInBearishOrderBlock())    { points += 2; out_axes.ax3_entryzone = 2; }
+         else if(ctx.IsInBearishFVG())      { points += 1; out_axes.ax3_entryzone = 1; }
       }
 
       // (4) Sweep + inducement (0-1): the structure shift confirms a sweep was reclaimed.
       if(structure_shift)
+      {
          points += 1;
+         out_axes.ax4_sweep = 1;
+      }
 
       // ==================== TRIGGER axes (3) ====================
 
@@ -171,11 +221,17 @@ public:
       //     separate confirmation bar (its trigger already confirmed) OR a
       //     confirming structure shift is present.
       if(!signal.requiresConfirmation || structure_shift)
+      {
          points += 1;
+         out_axes.ax5_confirm = 1;
+      }
 
       // (6) Flow / volume proxy (0-1): SMC confluence score in our direction.
       if(ctx.GetSMCConfluenceScore(dir) > 0)
+      {
          points += 1;
+         out_axes.ax6_flow = 1;
+      }
 
       // (7) Killzone timing (0-1): Phase 2.3 — award ONLY for a real
       //     EXPANSION / BREAKOUT engine_mode (a measured displacement/break),
@@ -190,10 +246,14 @@ public:
                              || signal.engine_mode == MODE_INSTITUTIONAL_CANDLE
                              || signal.engine_mode == MODE_PANIC_MOMENTUM);
       if(expansion_mode)
+      {
          points += 1;
+         out_axes.ax7_killzone = 1;
+      }
 
       if(points > 10) points = 10;
       out_score = points;
+      out_axes.raw_score = points;
 
       // ---- Tier mapping (LIVE configured thresholds) ----
       if(points >= m_points_aplus) return SETUP_A_PLUS;

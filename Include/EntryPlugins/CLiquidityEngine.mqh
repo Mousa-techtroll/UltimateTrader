@@ -483,6 +483,10 @@ public:
 private:
    void EvaluateModeKill(int idx)
    {
+      // 2.4-GATE: per-mode auto-disable held OFF when min_trades<=0 (set via
+      // SetModeKillParams(0,0) under InpEnableMultiStrategy). Inert on production
+      // (default min_trades=15>0).
+      if(m_mode_kill_min_trades <= 0) return;
       if(m_mode_perf[idx].auto_disabled) return;
       int trades = m_mode_perf[idx].trades;
       double pf = m_mode_perf[idx].pf;

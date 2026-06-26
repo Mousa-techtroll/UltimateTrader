@@ -222,7 +222,11 @@ private:
          // Flag so the orchestrator honors this engine's scorer tier; NULL on legacy path.
          signal.routed_engine = true;
          int pts = 0;
-         ENUM_SETUP_QUALITY tier = m_scorer.Score(signal, m_context, pts);
+         SScoreAxes axes;
+         ENUM_SETUP_QUALITY tier = m_scorer.Score(signal, m_context, pts, axes);
+         // 2.4-GATE: log the full axis breakdown for EVERY scored signal
+         // (incl. SETUP_NONE) BEFORE the hard-gate drop. No-op when unwired.
+         EmitGateScore(signal, tier, pts, axes);
          if(tier == SETUP_NONE)
             return false;   // scorer hard-gate rejected the spine/location
          signal.setupQuality = tier;

@@ -594,16 +594,26 @@ private:
          // m_scorer is NULL → routed_engine stays false → legacy evaluator path.
          signal.routed_engine = true;
          int out_score = 0;
-         signal.setupQuality = m_scorer.Score(signal, m_context, out_score);
+         SScoreAxes axes;
+         ENUM_SETUP_QUALITY tier = m_scorer.Score(signal, m_context, out_score, axes);
+         signal.setupQuality = tier;
          // Keep qualityScore informative for any score-based diagnostics; the
          // orchestrator re-derives the ranking score from the evaluator/tier.
          if(out_score > 0)
             signal.qualityScore = out_score;
+         // 2.4-GATE: log the full axis breakdown for EVERY scored signal
+         // (incl. SETUP_NONE) inside the scoring block. No-op when unwired.
+         EmitGateScore(signal, tier, out_score, axes);
       }
    }
 
    void EvaluateModeKill(int idx)
    {
+      // 2.4-GATE: per-mode auto-disable held OFF when min_trades<=0 (set via
+      // SetModeKillParams(0,0) under InpEnableMultiStrategy for the derivation
+      // run, so a transient early drawdown cannot shrink the population we are
+      // characterizing). Inert on production (default min_trades=15>0).
+      if(m_mode_kill_min_trades <= 0) return;
       if(m_mode_perf[idx].auto_disabled) return;
       int trades = m_mode_perf[idx].trades;
       double pf = m_mode_perf[idx].pf;

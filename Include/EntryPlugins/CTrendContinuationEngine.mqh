@@ -196,10 +196,14 @@ private:
          // Flag so the orchestrator honors this engine's scorer tier; NULL on legacy path.
          candidate.routed_engine = true;
          int out_score = 0;
-         ENUM_SETUP_QUALITY tier = m_scorer.Score(candidate, m_context, out_score);
+         SScoreAxes axes;
+         ENUM_SETUP_QUALITY tier = m_scorer.Score(candidate, m_context, out_score, axes);
          candidate.setupQuality = tier;
          candidate.qualityScore = out_score;
          candidate.valid        = (tier != SETUP_NONE);
+         // 2.4-GATE: log the full axis breakdown for EVERY scored signal
+         // (incl. SETUP_NONE) BEFORE the valid-drop. No-op when unwired.
+         EmitGateScore(candidate, tier, out_score, axes);
       }
       else
       {

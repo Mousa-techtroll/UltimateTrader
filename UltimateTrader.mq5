@@ -921,6 +921,31 @@ int OnInit()
    g_signalOrchestrator.SetSkipHours2(InpSkipStartHour2, InpSkipEndHour2);
    g_signalOrchestrator.SetTradeLogger(g_tradeLogger);
 
+   //----------------------------------------------------------------
+   // 2.4-GATE: wire the per-axis GATE score log into the four routed
+   // engines. Gated by InpEnableMultiStrategy so it is wired ONLY when
+   // the engines exist (otherwise the engine pointers are NULL and the
+   // block is skipped). On the production .set (engines OFF) the gate
+   // logger is never set → LogGateScore never fires → byte-identical.
+   //----------------------------------------------------------------
+   if(InpEnableMultiStrategy)
+   {
+      if(g_trendContEngine != NULL)     g_trendContEngine.SetGateLogger(g_tradeLogger);
+      if(g_reversalSweepEngine != NULL) g_reversalSweepEngine.SetGateLogger(g_tradeLogger);
+      if(g_engineRange != NULL)         g_engineRange.SetGateLogger(g_tradeLogger);
+      if(g_expansionEngine != NULL)     g_expansionEngine.SetGateLogger(g_tradeLogger);
+
+      // 2.4-GATE: hold per-mode auto-disable OFF for the derivation run so a
+      // transient early drawdown cannot silently shrink the population we are
+      // characterizing (binding design §2.1). min_trades<=0 disables the
+      // auto-kill at the top of each engine's EvaluateModeKill(). This is a
+      // GATE-only call (under InpEnableMultiStrategy); production never reaches
+      // it, so the legacy 15/0.9 auto-disable behavior is byte-identical off.
+      if(g_expansionEngine != NULL)  g_expansionEngine.SetModeKillParams(0, 0.0);
+      if(g_liquidityEngine != NULL)  g_liquidityEngine.SetModeKillParams(0, 0.0);
+      if(g_sessionEngine != NULL)    g_sessionEngine.SetModeKillParams(0, 0.0);
+   }
+
    // CTradeOrchestrator: new constructor with full params
    g_tradeOrchestrator = new CTradeOrchestrator(
       g_tradeExecutor, g_riskStrategy, g_adaptiveTP, g_marketContext,

@@ -16,6 +16,9 @@
 #property version   "1.30"
 #property strict
 
+#ifndef ULTIMATETRADER_CTRADELOGGER_MQH
+#define ULTIMATETRADER_CTRADELOGGER_MQH
+
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
 #include "../Common/Utils.mqh"
@@ -88,6 +91,12 @@ private:
    int      m_candidate_csv_handle;
    string   m_risk_csv_filename;
    int      m_risk_csv_handle;
+
+   // 2.4-GATE: per-signal axis-breakdown ledger (engines-ON derivation only).
+   // Written INSIDE each engine's scoring block for EVERY scored signal —
+   // including the SETUP_NONE / raw-low drops the Candidates ledger never sees.
+   string   m_gate_csv_filename;
+   int      m_gate_csv_handle;
 
    // Structured log file for system events
    string   m_log_filename;
@@ -310,6 +319,8 @@ public:
       m_candidate_csv_handle = INVALID_HANDLE;
       m_risk_csv_filename = "";
       m_risk_csv_handle = INVALID_HANDLE;
+      m_gate_csv_filename = "";
+      m_gate_csv_handle = INVALID_HANDLE;
       m_log_filename = "";
       m_log_handle = INVALID_HANDLE;
       m_min_log_level = min_level;
@@ -1014,6 +1025,62 @@ public:
    }
 
    //+------------------------------------------------------------------+
+   //| 2.4-GATE: per-signal axis-breakdown ledger.                      |
+   //| Fired INSIDE each engine's scoring block for EVERY scored signal |
+   //| (including SETUP_NONE / raw-low drops that never reach the       |
+   //| Candidates ledger). The file is created LAZILY on the first call |
+   //| so it never appears on the production path (engines OFF →        |
+   //| this method is never invoked → no GateScores file, byte-identity |
+   //| preserved). SignalID written here = BarTime|EngineName|Side, the |
+   //| 3-part prefix of the orchestrator's BarTime|Plugin|Side|seq, so  |
+   //| it joins to TradeEvents.SignalID by prefix for the realized R.   |
+   //+------------------------------------------------------------------+
+   void LogGateScore(string signal_id, datetime bar_time, string side,
+                     string engine_name, ENUM_ENGINE_MODE engine_mode,
+                     int raw_score, ENUM_SETUP_QUALITY tier,
+                     int ax1, int ax2, int ax3, int ax4,
+                     int ax5, int ax6, int ax7,
+                     bool is_news_day, bool htf_short_veto_applied)
+   {
+      // Lazy create on first call (keeps the production path file-side-effect free)
+      if(m_gate_csv_handle == INVALID_HANDLE)
+      {
+         MqlDateTime dt;
+         TimeToStruct(TimeCurrent(), dt);
+         m_gate_csv_filename = StringFormat("UltTrader_GateScores_%s_%04d%02d%02d_%02d%02d.csv",
+                                            _Symbol, dt.year, dt.mon, dt.day, dt.hour, dt.min);
+         m_gate_csv_handle = FileOpen(m_gate_csv_filename, FILE_WRITE | FILE_CSV | FILE_COMMON, ',');
+         if(m_gate_csv_handle == INVALID_HANDLE)
+         {
+            LogPrint("WARNING: Could not create GATE score file: ", m_gate_csv_filename);
+            return;
+         }
+         FileWrite(m_gate_csv_handle,
+                   "SignalID", "BarTime", "Side", "EngineName", "EngineMode",
+                   "RawScore", "Tier",
+                   "Ax1_HTFDraw", "Ax2_PremDisc", "Ax3_EntryZone", "Ax4_Sweep",
+                   "Ax5_Confirm", "Ax6_Flow", "Ax7_Killzone",
+                   "IsNewsDay", "HTFShortVetoApplied");
+         LogPrint("CTradeLogger: GATE score file created: ", m_gate_csv_filename);
+      }
+
+      FileWrite(m_gate_csv_handle,
+                SanitizeCSV(signal_id),
+                TimeToString(bar_time, TIME_DATE | TIME_MINUTES),
+                side,
+                SanitizeCSV(engine_name),
+                EnumToString(engine_mode),
+                IntegerToString(raw_score),
+                EnumToString(tier),
+                IntegerToString(ax1), IntegerToString(ax2), IntegerToString(ax3),
+                IntegerToString(ax4), IntegerToString(ax5), IntegerToString(ax6),
+                IntegerToString(ax7),
+                is_news_day ? "YES" : "NO",
+                htf_short_veto_applied ? "YES" : "NO");
+      FileFlush(m_gate_csv_handle);
+   }
+
+   //+------------------------------------------------------------------+
    //| Track 0: Log risk decision ledger                                 |
    //+------------------------------------------------------------------+
    void LogRiskDecision(string signal_id, string plugin_name, string pattern,
@@ -1621,6 +1688,14 @@ public:
          LogPrint("CTradeLogger: Risk audit file closed: ", m_risk_csv_filename);
       }
 
+      // 2.4-GATE: only ever opened on the engines-ON derivation path (lazy)
+      if(m_gate_csv_handle != INVALID_HANDLE)
+      {
+         FileClose(m_gate_csv_handle);
+         m_gate_csv_handle = INVALID_HANDLE;
+         LogPrint("CTradeLogger: GATE score file closed: ", m_gate_csv_filename);
+      }
+
       if(m_log_handle != INVALID_HANDLE)
       {
          FileClose(m_log_handle);
@@ -1638,3 +1713,5 @@ public:
       Close();
    }
 };
+
+#endif // ULTIMATETRADER_CTRADELOGGER_MQH

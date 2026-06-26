@@ -170,9 +170,13 @@ private:
       // scorer tier; on the legacy path m_scorer is NULL → routed_engine stays false.
       signal.routed_engine = true;
       int score = 0;
-      ENUM_SETUP_QUALITY tier = m_scorer.Score(signal, m_context, score);
+      SScoreAxes axes;
+      ENUM_SETUP_QUALITY tier = m_scorer.Score(signal, m_context, score, axes);
       signal.setupQuality = tier;
       signal.qualityScore = score;
+      // 2.4-GATE: log the full axis breakdown for EVERY scored signal
+      // (incl. SETUP_NONE) BEFORE the valid-drop. No-op when unwired.
+      EmitGateScore(signal, tier, score, axes);
       if(tier == SETUP_NONE)
          signal.valid = false;     // no spine / below B tier -> drop
    }
