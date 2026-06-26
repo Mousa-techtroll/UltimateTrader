@@ -383,15 +383,20 @@ private:
       double atr_buffer[];
       ArraySetAsSeries(atr_buffer, true);
 
-      if(CopyBuffer(m_handle_atr_h1, 0, 0, m_history_size, atr_buffer) > 0)
+      // FIX 1.7: divide by the REALIZED CopyBuffer count, not a fixed m_history_size.
+      // On a short read (warmup), the old loop ran the full m_history_size and summed
+      // zero-padded cells, biasing m_atr_average low. Use the realized count (CMomentumFilter
+      // idiom). Steady-state (got == m_history_size) is identical to the old behavior.
+      int got = CopyBuffer(m_handle_atr_h1, 0, 0, m_history_size, atr_buffer);
+      if(got > 0)
       {
          double sum = 0;
-         for(int i = 0; i < m_history_size; i++)
+         for(int i = 0; i < got; i++)
          {
             m_atr_history[i] = atr_buffer[i];
             sum += atr_buffer[i];
          }
-         m_atr_average = sum / m_history_size;
+         m_atr_average = sum / got;
       }
    }
 
