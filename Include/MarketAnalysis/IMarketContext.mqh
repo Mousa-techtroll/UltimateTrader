@@ -70,6 +70,8 @@ public:
 
    //--- SMC / Structure
    virtual ENUM_BOS_TYPE        GetRecentBOS()           { return BOS_NONE; }
+   // Phase 2.2: most-recent closed-bar BOS/CHoCH timestamp (scorer freshness gate).
+   virtual datetime             GetRecentBOSTime()       { return 0; }
 
    //--- Price Action Data
    virtual double               GetSwingHigh()           { return 0; }

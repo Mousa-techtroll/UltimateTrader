@@ -650,6 +650,10 @@ public:
    int GetFVGCount() { return m_bullish_fvg_count + m_bearish_fvg_count; }
    ENUM_BOS_TYPE GetLastBOS() { return m_last_bos; }
    ENUM_BOS_TYPE GetLastCHoCH() { return m_last_choch; }
+   // Phase 2.2: closed-bar timestamps of the last BOS/CHoCH (freshness anchors,
+   // stamped iTime(_Symbol,PERIOD_H1,1) at the break sites — see Phase 1.2).
+   datetime GetLastBOSTime() { return m_last_bos_time; }
+   datetime GetLastCHoCHTime() { return m_last_choch_time; }
 
    //+------------------------------------------------------------------+
    //| Detect Change of Character (CHoCH)                               |

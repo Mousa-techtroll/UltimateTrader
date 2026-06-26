@@ -33,6 +33,12 @@ private:
    int      m_points_bplus;
    int      m_points_b;
 
+   // Phase 2.2: BOS/CHoCH freshness window (H1 bars). The L3 spine accepts a
+   // structure shift only when it is BOTH recent (within this many closed H1
+   // bars) AND directionally aligned with the signal. Default 8 (stok binding;
+   // floor 6 / cap 18). The {4,6,8,12} per-engine avg-R sweep happens in Iter 3.
+   int      m_bos_freshness_bars;
+
 public:
    CConfluenceScorer()
    {
@@ -40,15 +46,19 @@ public:
       m_points_a     = 7;
       m_points_bplus = 6;
       m_points_b     = 7;
+      m_bos_freshness_bars = 8;
    }
 
    // Phase C wires the live Inp* point thresholds here.
-   void Configure(int points_aplus, int points_a, int points_bplus, int points_b)
+   // bos_freshness_bars: Phase 2.2 spine freshness window (default 8 if omitted).
+   void Configure(int points_aplus, int points_a, int points_bplus, int points_b,
+                  int bos_freshness_bars = 8)
    {
       m_points_aplus = points_aplus;
       m_points_a     = points_a;
       m_points_bplus = points_bplus;
       m_points_b     = points_b;
+      m_bos_freshness_bars = bos_freshness_bars;
    }
 
    //+------------------------------------------------------------------+
@@ -73,8 +83,22 @@ public:
       // The engine signals a spine by setting engine_confluence > 0 (its
       // internal sweep+MSS detection) OR by a confirming recent BOS/CHoCH.
       // No spine => no trade, for any engine.
+      //
+      // Phase 2.2: the BOS/CHoCH spine is no longer a latched "ever happened"
+      // state. A structure shift only counts as a spine when it is BOTH:
+      //   (a) FRESH  — within m_bos_freshness_bars closed H1 bars of now, and
+      //   (b) DIRECTIONAL — aligned with the signal direction
+      //                     (LONG: BOS/CHOCH_BULLISH; SHORT: BOS/CHOCH_BEARISH).
+      // GetRecentBOS() / GetRecentBOSTime() stay raw for other readers.
       ENUM_BOS_TYPE bos = ctx.GetRecentBOS();
-      bool structure_shift = (bos != BOS_NONE);
+      bool bos_dir_match = (dir == SIGNAL_LONG)
+                              ? (bos == BOS_BULLISH || bos == CHOCH_BULLISH)
+                              : (bos == BOS_BEARISH || bos == CHOCH_BEARISH);
+      datetime bos_time = ctx.GetRecentBOSTime();
+      bool bos_fresh = (bos_time > 0)
+                       && ((TimeCurrent() - bos_time)
+                              <= (long)m_bos_freshness_bars * PeriodSeconds(PERIOD_H1));
+      bool structure_shift = (bos != BOS_NONE) && bos_dir_match && bos_fresh;
       bool engine_spine    = (signal.engine_confluence > 0);
       if(!structure_shift && !engine_spine)
          return SETUP_NONE;   // no spine

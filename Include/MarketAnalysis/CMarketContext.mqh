@@ -705,6 +705,17 @@ public:
       return m_smc_order_blocks.GetLastCHoCH();
    }
 
+   // Phase 2.2: most-recent of the BOS / CHoCH closed-bar timestamps. Both are
+   // stamped iTime(_Symbol,PERIOD_H1,1) at their break sites (Phase 1.2). The
+   // scorer's freshness gate uses the newest structural event of either kind.
+   virtual datetime GetRecentBOSTime() override
+   {
+      if(m_smc_order_blocks == NULL) return 0;
+      datetime t_bos   = m_smc_order_blocks.GetLastBOSTime();
+      datetime t_choch = m_smc_order_blocks.GetLastCHoCHTime();
+      return (t_bos > t_choch) ? t_bos : t_choch;
+   }
+
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign) ---
 
    // Dealing range = the cached HTF swing high/low (reuses existing swing detection).
