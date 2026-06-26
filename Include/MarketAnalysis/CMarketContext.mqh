@@ -66,6 +66,11 @@ private:
    //--- Cached H1 MA200 handle and values for IMarketContext
    int                       m_handle_ma200_h1;
    double                    m_ma200_value;
+   //--- Directional default used when MA200 data is unavailable.
+   //    TRUE for the gold profile (preserves the realized warmup long bias);
+   //    set FALSE for symbols/history-gapped feeds where a no-data bullish
+   //    assumption would be unsafe.
+   bool                      m_ma200_default_bullish;
 
    //--- Cached swing high/low
    double                    m_swing_high;
@@ -142,6 +147,7 @@ public:
       m_last_h1_bar       = 0;
       m_handle_ma200_h1   = INVALID_HANDLE;
       m_ma200_value       = 0;
+      m_ma200_default_bullish = true;   // gold profile default; preserves warmup long bias
       m_swing_high        = 0;
       m_swing_low         = 0;
    }
@@ -444,10 +450,19 @@ public:
       return m_ma200_value;
    }
 
+   //--- True only when the cached MA200 holds a usable (positive) value.
+   bool IsMA200Available() const
+   {
+      return (m_ma200_value > 0);
+   }
+
    virtual bool IsPriceAboveMA200()
    {
-      // NOTE: Returns true if MA200 data unavailable (defaults to bullish bias for gold)
-      if(m_ma200_value <= 0) return true;
+      // No MA200 data yet (warmup / history-gapped feed): fall back to the
+      // configurable directional default instead of a hardcoded bullish bias.
+      // Gold profile keeps m_ma200_default_bullish = true (byte-identical to
+      // the prior `return true`); other symbols can opt out of that assumption.
+      if(!IsMA200Available()) return m_ma200_default_bullish;
       double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
       return (bid > m_ma200_value);
    }
