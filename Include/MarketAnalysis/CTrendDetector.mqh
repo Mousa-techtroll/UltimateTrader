@@ -140,23 +140,27 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
    ArraySetAsSeries(close, true);
    
    // Copy data
-   if(CopyBuffer(handle_fast, 0, 0, 3, ma_fast) <= 0 ||
-      CopyBuffer(handle_slow, 0, 0, 3, ma_slow) <= 0 ||
-      CopyClose(_Symbol, tf, 0, 3, close) <= 0)
+   // FIX 1.3: require at least 2 bars so the CLOSED-bar index [1] is always valid
+   // (guard short reads on the first ticks after init).
+   if(CopyBuffer(handle_fast, 0, 0, 3, ma_fast) < 2 ||
+      CopyBuffer(handle_slow, 0, 0, 3, ma_slow) < 2 ||
+      CopyClose(_Symbol, tf, 0, 3, close) < 2)
    {
       return false;
    }
    
    // Store MA values
-   trend_data.ma_fast = ma_fast[0];
-   trend_data.ma_slow = ma_slow[0];
-   
+   // FIX 1.3: read CLOSED bar [1] (not the forming bar [0]) so trend DIRECTION
+   // is computed on a bar whose OHLC is final (removes intrabar repaint).
+   trend_data.ma_fast = ma_fast[1];
+   trend_data.ma_slow = ma_slow[1];
+
    // Analyze MA position
-   bool fast_above_slow = ma_fast[0] > ma_slow[0];
-   bool price_above_fast = close[0] > ma_fast[0];
-   bool price_below_fast = close[0] < ma_fast[0];
-   bool price_above_slow = close[0] > ma_slow[0];
-   bool price_below_slow = close[0] < ma_slow[0];
+   bool fast_above_slow = ma_fast[1] > ma_slow[1];
+   bool price_above_fast = close[1] > ma_fast[1];
+   bool price_below_fast = close[1] < ma_fast[1];
+   bool price_above_slow = close[1] > ma_slow[1];
+   bool price_below_slow = close[1] < ma_slow[1];
 
    // Detect swing structure (optional - not required)
    trend_data.making_hh = DetectHigherHighs(tf);
@@ -169,25 +173,25 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
    if(price_above_fast && price_above_slow)
    {
       trend_data.direction = TREND_BULLISH;
-      LogPrint(tf, " BULLISH: Price=", close[0], " > MA_Fast=", ma_fast[0], " & > MA_Slow=", ma_slow[0]);
+      LogPrint(tf, " BULLISH: Price=", close[1], " > MA_Fast=", ma_fast[1], " & > MA_Slow=", ma_slow[1]);
    }
    // BEARISH: Price below both MAs OR price below fast AND making lower lows
    else if(price_below_fast && price_below_slow)
    {
       trend_data.direction = TREND_BEARISH;
-      LogPrint(tf, " BEARISH: Price=", close[0], " < MA_Fast=", ma_fast[0], " & < MA_Slow=", ma_slow[0]);
+      LogPrint(tf, " BEARISH: Price=", close[1], " < MA_Fast=", ma_fast[1], " & < MA_Slow=", ma_slow[1]);
    }
    // EARLY BEARISH: Price broke below fast MA (early warning even if slow MA still above)
    else if(price_below_fast && fast_above_slow && trend_data.making_ll)
    {
       trend_data.direction = TREND_BEARISH;
-      LogPrint(tf, " EARLY BEARISH: Price=", close[0], " broke below Fast MA=", ma_fast[0], " + making lower lows");
+      LogPrint(tf, " EARLY BEARISH: Price=", close[1], " broke below Fast MA=", ma_fast[1], " + making lower lows");
    }
    // EARLY BULLISH: Price broke above fast MA (early warning even if slow MA still below)
    else if(price_above_fast && !fast_above_slow && trend_data.making_hh)
    {
       trend_data.direction = TREND_BULLISH;
-      LogPrint(tf, " EARLY BULLISH: Price=", close[0], " broke above Fast MA=", ma_fast[0], " + making higher highs");
+      LogPrint(tf, " EARLY BULLISH: Price=", close[1], " broke above Fast MA=", ma_fast[1], " + making higher highs");
    }
    else
    {
@@ -297,10 +301,14 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
       double atr[];
       ArraySetAsSeries(atr, true);
 
-      if(atr_handle != INVALID_HANDLE && CopyBuffer(atr_handle, 0, 0, 1, atr) > 0)
+      // FIX 1.3: copy 2 ATR bars and use the CLOSED-bar value atr[1] so the ATR
+      // index MATCHES the MA index used for ma_separation (trend.ma_fast/ma_slow
+      // are now read from closed bar [1] in UpdateTimeframe). Index mismatch would
+      // desync trend STRENGTH from trend DIRECTION.
+      if(atr_handle != INVALID_HANDLE && CopyBuffer(atr_handle, 0, 0, 2, atr) >= 2)
       {
-         if(atr[0] > 0)
-            strength += MathMin((ma_separation / atr[0]) * 0.4, 0.4);
+         if(atr[1] > 0)
+            strength += MathMin((ma_separation / atr[1]) * 0.4, 0.4);
       }
       
       // Factor 2: Swing structure (30%)
