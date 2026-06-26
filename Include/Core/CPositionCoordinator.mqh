@@ -2595,8 +2595,13 @@ private:
       if(m_trade_logger != NULL)
          m_trade_logger.LogTradeExit(m_positions[index], profit, exit_price, exit_time);
 
+      // Fix 4.1: the consecutive-loss scaler must see the TOTAL trade PnL
+      // (runner profit + realized partials), not the runner leg alone. A trade
+      // that banked TP1/TP2 then closed its runner red is a NET WINNER and must
+      // NOT increment the loss streak / de-risk the book. Aligns with EC v3.
+      double total_trade_pnl = profit + m_positions[index].partial_realized_pnl;
       if(m_quality_risk_strategy != NULL)
-         m_quality_risk_strategy.RecordTradeResult(profit);
+         m_quality_risk_strategy.RecordTradeResult(total_trade_pnl);
 
       // DISABLED: Mode result tracking was added by analyst (Bug 3 fix) but activates
       // engine-internal mode auto-kill (PF<0.9 after 15 trades → disable mode).
@@ -2619,7 +2624,6 @@ private:
       if(m_trade_logger != NULL)
       {
          double risk_dollars_strat = CalculatePositionRiskDollars(m_positions[index]);
-         double total_trade_pnl = profit + m_positions[index].partial_realized_pnl;
          double r_mult_strat = (risk_dollars_strat > 0) ? total_trade_pnl / risk_dollars_strat : 0;
          m_trade_logger.RecordStrategyTrade(
             m_positions[index].pattern_name, total_trade_pnl, r_mult_strat);
@@ -3017,13 +3021,18 @@ private:
          if(m_trade_logger != NULL)
             m_trade_logger.LogTradeExit(m_positions[i], profit, exit_price, exit_time);
 
-         if(m_quality_risk_strategy != NULL)
-            m_quality_risk_strategy.RecordTradeResult(profit);
-
          double risk_dollars = CalculatePositionRiskDollars(m_positions[i]);
          double total_trade_pnl = profit + m_positions[i].partial_realized_pnl;
          double total_r_multiple = (risk_dollars > 0) ? total_trade_pnl / risk_dollars : 0;
          double runner_r_multiple = (risk_dollars > 0) ? profit / risk_dollars : 0;
+
+         // Fix 4.1: feed the consecutive-loss scaler the TOTAL trade PnL
+         // (runner + realized partials), not the runner leg. A banked-then-red
+         // trade is a NET WINNER and must not de-risk the book. RemovePosition is
+         // below, so m_positions[i] is still valid. runner_r_multiple stays the
+         // runner leg for per-mode RecordModeResult (separate, intentional).
+         if(m_quality_risk_strategy != NULL)
+            m_quality_risk_strategy.RecordTradeResult(total_trade_pnl);
 
          if(m_trade_logger != NULL)
             m_trade_logger.RecordStrategyTrade(
