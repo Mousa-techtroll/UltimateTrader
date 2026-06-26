@@ -158,6 +158,10 @@ private:
    void ScoreSignal(EntrySignal &signal)
    {
       if(m_scorer == NULL) return;  // unscored engines still pass through evaluator path
+      // Fix 2.1 (Option 2): reached only when scorer non-NULL ⟺ router-wired
+      // (InpEnableMultiStrategy). Flag so the orchestrator honors this engine's
+      // scorer tier; on the legacy path m_scorer is NULL → routed_engine stays false.
+      signal.routed_engine = true;
       int score = 0;
       ENUM_SETUP_QUALITY tier = m_scorer.Score(signal, m_context, score);
       signal.setupQuality = tier;

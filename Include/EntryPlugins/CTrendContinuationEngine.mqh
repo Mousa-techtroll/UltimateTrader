@@ -171,6 +171,9 @@ private:
       // Score via the shared orthogonal-axis scorer
       if(m_scorer != NULL)
       {
+         // Fix 2.1 (Option 2): non-NULL scorer ⟺ router-wired (InpEnableMultiStrategy).
+         // Flag so the orchestrator honors this engine's scorer tier; NULL on legacy path.
+         candidate.routed_engine = true;
          int out_score = 0;
          ENUM_SETUP_QUALITY tier = m_scorer.Score(candidate, m_context, out_score);
          candidate.setupQuality = tier;

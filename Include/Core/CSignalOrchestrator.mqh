@@ -550,6 +550,21 @@ public:
                   signal.action, " | ", signal.comment);
          signal.plugin_name = m_entry_plugins[i].GetName();
 
+         // Fix 2.1 (Option 2, stok-binding): identify ROUTER-WIRED engine signals.
+         // We key off signal.routed_engine — set true ONLY inside an engine's
+         // if(m_scorer != NULL) scoring block, and SetScorer is called ONLY under
+         // InpEnableMultiStrategy. We must NOT gate on raw major_engine: the
+         // production .set registers CExpansionEngine/CSessionEngine/CLiquidityEngine
+         // as LEGACY plugins (InpEnable*Engine, independent of InpEnableMultiStrategy)
+         // that still stamp major_engine but have m_scorer==NULL, so their
+         // setupQuality is the uninitialized SETUP_NONE — honoring THAT would
+         // silently cut 3 live engines. routed_engine is the correct discriminator:
+         // a routed engine honors its own CConfluenceScorer tier/weight; every
+         // legacy/pattern/file signal (and legacy-registered engines on m_scorer==NULL)
+         // keeps the byte-identical legacy evaluator path. Engine-scorer consumption
+         // is thus exercised only when the router is on (Iter 3).
+         bool is_engine = signal.routed_engine;
+
          // Fix 1: make the signal's own requiresConfirmation flag authoritative.
          // The struct field now defaults to true (see EntrySignal::Init), so a
          // plugin that never touches it inherits "needs confirmation" — preserving
@@ -577,7 +592,13 @@ public:
          signal.audit_origin = signal.requiresConfirmation ? "PENDING" : "IMMEDIATE";
          signal.base_risk_pct = 0;
          signal.session_risk_multiplier = 1.0;
-         signal.regime_risk_multiplier = 1.0;
+         // Fix 2.1: only reset regime_risk_multiplier for NON-engine signals.
+         // For non-engine this is byte-identical to the prior unconditional reset.
+         // For engine signals, preserve the router activation weight the engine
+         // stamped onto regime_risk_multiplier (CTradeOrchestrator applies it at
+         // exec_signal.riskPercent *= regime_risk_multiplier).
+         if(!is_engine)
+            signal.regime_risk_multiplier = 1.0;
 
          // SHORT DIAGNOSTIC: Log every SHORT signal to file
          if(sig_type == SIGNAL_SHORT)
@@ -688,10 +709,20 @@ public:
             }
          }
 
-         // Score quality
-         ENUM_SETUP_QUALITY quality = m_evaluator.EvaluateSetupQuality(
-            daily_trend, h4_trend, regime, macro_score, signal.comment,
-            isBearRegime, sig_type);
+         // Score quality.
+         // Fix 2.1: ENGINE signals are scored ONCE by the engine's own
+         // CConfluenceScorer (orthogonal-axis), which stamped signal.setupQuality
+         // + signal.qualityScore (0-10) before this loop. HONOR that tier instead
+         // of overwriting it with the legacy comment-token evaluator. NON-engine
+         // (legacy/pattern/file) signals take the unchanged legacy evaluator path,
+         // keeping that path byte-identical to the prior build.
+         ENUM_SETUP_QUALITY quality;
+         if(is_engine)
+            quality = signal.setupQuality;          // engine scorer tier (already computed)
+         else
+            quality = m_evaluator.EvaluateSetupQuality(
+               daily_trend, h4_trend, regime, macro_score, signal.comment,
+               isBearRegime, sig_type);
 
          if(quality == SETUP_NONE)
          {
@@ -718,9 +749,14 @@ public:
          // risk strategy's ApplyShortProtection(), causing 0.5 x 0.5 = 0.25x effective risk
          double risk_pct = m_evaluator.GetRiskForQuality(quality, signal.comment);
 
-         // Populate the signal with Stack17 quality data
+         // Populate the signal with Stack17 quality data.
+         // Fix 2.1: for ENGINE signals keep the engine scorer's native 0-10
+         // qualityScore (used for ranking) — do NOT replace it with the legacy
+         // bucketed GetQualityScore(quality) {10/7/5/3}. setupQuality is already
+         // == quality for engines (no-op). NON-engine path unchanged.
          signal.setupQuality = quality;
-         signal.qualityScore = m_evaluator.GetQualityScore(quality);
+         if(!is_engine)
+            signal.qualityScore = m_evaluator.GetQualityScore(quality);
          signal.riskPercent = risk_pct;
          signal.base_risk_pct = risk_pct;
          signal.regimeAtSignal = regime;
@@ -765,6 +801,13 @@ public:
             best_signal.engine_confluence = signal.engine_confluence;
             best_signal.engine_mode    = signal.engine_mode;
             best_signal.day_type       = signal.day_type;
+            // Fix 2.1 (also fix 5.12): carry the major_engine tag into the
+            // best-signal copy so the engine identity survives ranking and is
+            // available downstream (is_engine, telemetry, SPosition.major_engine).
+            best_signal.major_engine   = signal.major_engine;
+            // Fix 2.1 (Option 2): preserve the router-wired flag across the
+            // field-by-field copy so the honored-scorer routing survives ranking.
+            best_signal.routed_engine  = signal.routed_engine;
 
             best_quality_score = signal.qualityScore;
             best_sig_type = sig_type;

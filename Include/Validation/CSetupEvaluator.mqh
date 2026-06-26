@@ -197,6 +197,11 @@ public:
       // Multi-strategy fix: also match "Liquidity Sweep" (with space) — the
       // standalone plugin emits that string and was earning 0 here against the
       // spaceless "LiquiditySweep" token (verified comment-token starvation).
+      // Fix 2.1: snapshot points before the cascade so we can WARN when an
+      // ENGINE comment reaches this legacy evaluator and matches NO Factor-4
+      // token (would be silently starved at 0). Every Factor-4 branch awards
+      // >=1, so an unchanged total after the cascade means "no token matched".
+      int points_before_factor4 = points;
       if(StringFind(pattern, "LiquiditySweep") >= 0 || StringFind(pattern, "Liquidity Sweep") >= 0 ||
          StringFind(pattern, "Displacement") >= 0)
          points += 2;
@@ -237,6 +242,29 @@ public:
          points += 2;
       else if(StringFind(pattern, "Panic Momentum") >= 0)
          points += 2;
+
+      // Fix 2.1: diagnostic WARN — an ENGINE comment reached this legacy
+      // comment-token evaluator and matched NO Factor-4 branch (so it would be
+      // starved at 0 points here). After fix 2.1 engine signals are scored by
+      // their own CConfluenceScorer and should NOT consume this overload; a hit
+      // here flags a starved/renamed engine token (e.g. a new MODE_* spelling)
+      // that still needs its own Factor-4 branch. Pure diagnostic — no scoring
+      // change (LogPrint is off the trade-decision path).
+      if(points == points_before_factor4)
+      {
+         if(StringFind(pattern, "OB Retest") >= 0 || StringFind(pattern, "FVG Mitigation") >= 0 ||
+            StringFind(pattern, "SFP") >= 0 || StringFind(pattern, "Silver Bullet") >= 0 ||
+            StringFind(pattern, "London Close Rev") >= 0 || StringFind(pattern, "Compression") >= 0 ||
+            StringFind(pattern, "Institutional Candle") >= 0 || StringFind(pattern, "Panic Momentum") >= 0 ||
+            StringFind(pattern, "FailedBreak") >= 0 || StringFind(pattern, "Failed Break") >= 0 ||
+            StringFind(pattern, "Rubber Band") >= 0 || StringFind(pattern, "Displacement") >= 0 ||
+            StringFind(pattern, "Mitigation") >= 0)
+         {
+            LogPrint(">>> WARN [Fix 2.1]: engine comment '", pattern,
+                     "' matched NO Factor-4 token in the legacy evaluator (scored 0 here). ",
+                     "Add a Factor-4 branch for this engine token, or confirm it is scored by CConfluenceScorer.");
+         }
+      }
 
       // Factor 5: Choppiness Index regime confirmation (±1 point)
       // CI < 40 = strong trend (directionally efficient), CI > 60 = choppy (random)

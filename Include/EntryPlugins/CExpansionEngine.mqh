@@ -588,6 +588,11 @@ private:
       // engine_confluence > 0, so the gate passes on a real expansion.
       if(m_scorer != NULL)
       {
+         // Fix 2.1 (Option 2): a non-NULL scorer means this engine is router-wired
+         // (SetScorer is only called under InpEnableMultiStrategy). Flag it so the
+         // orchestrator HONORS this engine's own scorer tier. On the legacy path
+         // m_scorer is NULL → routed_engine stays false → legacy evaluator path.
+         signal.routed_engine = true;
          int out_score = 0;
          signal.setupQuality = m_scorer.Score(signal, m_context, out_score);
          // Keep qualityScore informative for any score-based diagnostics; the

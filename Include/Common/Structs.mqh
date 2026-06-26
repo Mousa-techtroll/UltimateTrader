@@ -546,6 +546,12 @@ struct EntrySignal
    ENUM_ENGINE_MODE    engine_mode;          // Which engine mode generated this
    ENUM_DAY_TYPE       day_type;             // Day classification at signal time
    ENUM_MAJOR_ENGINE   major_engine;         // Which major engine produced this (multi-strategy)
+   bool                routed_engine;        // Fix 2.1 (Option 2): true ONLY when a router-wired
+                                             // engine scored this via its (non-NULL) CConfluenceScorer
+                                             // (i.e. under InpEnableMultiStrategy). The orchestrator's
+                                             // is_engine gate keys off THIS, never raw major_engine —
+                                             // legacy-registered major engines (m_scorer==NULL) keep
+                                             // the byte-identical legacy evaluator path.
 
    void Init()
    {
@@ -578,6 +584,7 @@ struct EntrySignal
       engine_mode = MODE_NONE;
       day_type = DAY_TREND;
       major_engine = ENGINE_NONE;
+      routed_engine = false;
    }
 
    // Validate the signal data (from AICoder V1 CEntryStrategy)
