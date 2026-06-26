@@ -118,13 +118,24 @@ public:
    //+------------------------------------------------------------------+
    void Update()
    {
-      // Early exit: both DXY and VIX unavailable — force neutral
+      // Both DXY and VIX unavailable — use the price-based fallback (D1 EMA200 +
+      // H4 EMA slope) instead of forcing neutral. Derives bias via the same ±2
+      // thresholds as the real path below. If the fallback handles are also
+      // unavailable, AnalyzePriceFallback() returns 0 (degrades to neutral).
       if(!m_dxy_available && !m_vix_available)
       {
-         m_macro_data.bias_score = 0;
-         m_macro_data.bias = BIAS_NEUTRAL;
-         m_mode = MACRO_MODE_NEUTRAL_FALLBACK;
-         LogPrint("CMacroBias: DXY/VIX unavailable — score forced to 0 (NEUTRAL_FALLBACK)");
+         int fallback_score = AnalyzePriceFallback();
+         m_macro_data.bias_score = fallback_score;
+         m_mode = MACRO_MODE_PRICE_FALLBACK;
+
+         // Determine bias (same ±2 thresholds as the real DXY/VIX path)
+         if(fallback_score >= 2)
+            m_macro_data.bias = BIAS_BULLISH;
+         else if(fallback_score <= -2)
+            m_macro_data.bias = BIAS_BEARISH;
+         else
+            m_macro_data.bias = BIAS_NEUTRAL;
+
          m_macro_data.last_update = TimeCurrent();
          return;
       }
@@ -259,10 +270,14 @@ private:
    //+------------------------------------------------------------------+
    //| Price-based fallback macro score (when DXY/VIX missing)         |
    //+------------------------------------------------------------------+
-   // NOTE: This method is currently unreachable. The Update() early-return
-   // forces NEUTRAL when both DXY and VIX are unavailable. When only one
-   // is missing, the individual Analyze methods handle it. Kept for potential
-   // future use if a price-based fallback is desired for partial data scenarios.
+   // Wired from Update() when BOTH DXY and VIX are unavailable (fix 1.10).
+   // Derives a -2..+2 macro proxy from the symbol's own structure: price vs
+   // D1 EMA200 and H4 EMA(20)/EMA(50) slope. Returns 0 if the handles are not
+   // ready (degrades to neutral). EMA reads use the CLOSED bar [1] (no
+   // intrabar repaint); the price-vs-200 test intentionally uses the LIVE BID
+   // (current realized price is the honest "where are we now vs the 200" test —
+   // a deliberate, documented front-run, consistent with CCrashDetector's
+   // closed-baseline + live-trigger split from fix 1.8).
    int AnalyzePriceFallback()
    {
       if (m_handle_price_d1_ema200 == INVALID_HANDLE || m_handle_price_h4_fast == INVALID_HANDLE || m_handle_price_h4_slow == INVALID_HANDLE)
@@ -273,15 +288,17 @@ private:
       ArraySetAsSeries(ema_fast, true);
       ArraySetAsSeries(ema_slow, true);
 
-      if (CopyBuffer(m_handle_price_d1_ema200, 0, 0, 1, ema200_d1) <= 0 ||
-          CopyBuffer(m_handle_price_h4_fast, 0, 0, 2, ema_fast) < 2 ||
-          CopyBuffer(m_handle_price_h4_slow, 0, 0, 2, ema_slow) < 2)
+      // Copy 2 bars and read the CLOSED bar [1] (avoid the forming bar [0]);
+      // H4 slope compares closed bar [1] vs prior closed bar [2] → copy 3.
+      if (CopyBuffer(m_handle_price_d1_ema200, 0, 0, 2, ema200_d1) < 2 ||
+          CopyBuffer(m_handle_price_h4_fast, 0, 0, 3, ema_fast) < 3 ||
+          CopyBuffer(m_handle_price_h4_slow, 0, 0, 3, ema_slow) < 3)
          return 0;
 
-      double current_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      bool above_200 = current_price > ema200_d1[0];
-      bool h4_up = ema_fast[0] > ema_slow[0] && ema_fast[0] > ema_fast[1];
-      bool h4_down = ema_fast[0] < ema_slow[0] && ema_fast[0] < ema_fast[1];
+      double current_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);   // live BID (documented front-run)
+      bool above_200 = current_price > ema200_d1[1];                  // vs CLOSED D1 EMA200
+      bool h4_up = ema_fast[1] > ema_slow[1] && ema_fast[1] > ema_fast[2];   // closed-bar slope
+      bool h4_down = ema_fast[1] < ema_slow[1] && ema_fast[1] < ema_fast[2];
 
       int price_score = 0;
       if (above_200 && h4_up)

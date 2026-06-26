@@ -224,7 +224,8 @@ enum ENUM_SYMBOL_PROFILE
 enum ENUM_MACRO_MODE
 {
    MACRO_MODE_REAL,              // Real DXY/VIX data available
-   MACRO_MODE_NEUTRAL_FALLBACK   // No DXY/VIX — forced neutral
+   MACRO_MODE_NEUTRAL_FALLBACK,  // No DXY/VIX — forced neutral (legacy; superseded by price fallback)
+   MACRO_MODE_PRICE_FALLBACK     // No DXY/VIX — price-based fallback (D1 EMA200 + H4 EMA slope)
 };
 
 //+------------------------------------------------------------------+

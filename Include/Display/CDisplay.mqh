@@ -105,7 +105,12 @@ public:
       if(m_context != NULL)
       {
          ENUM_MACRO_MODE macro_mode = m_context.GetMacroMode();
-         macro_mode_str = (macro_mode == MACRO_MODE_NEUTRAL_FALLBACK) ? "NEUTRAL_FALLBACK" : "REAL";
+         if(macro_mode == MACRO_MODE_NEUTRAL_FALLBACK)
+            macro_mode_str = "NEUTRAL_FALLBACK";
+         else if(macro_mode == MACRO_MODE_PRICE_FALLBACK)
+            macro_mode_str = "PRICE_FALLBACK";
+         else
+            macro_mode_str = "REAL";
       }
       display += StringFormat("Macro: %+d (%s) | RSI: %.1f | ATR: %.1f\n",
                               macro_score, macro_mode_str, rsi, atr);
