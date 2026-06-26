@@ -130,29 +130,34 @@ public:
             ArraySetAsSeries(close, true);
 
             // Copy indicator data
-            if(CopyBuffer(m_handle_adx, 0, 0, 3, adx) <= 0 ||
-               CopyBuffer(m_handle_atr, 0, 0, 50, atr) <= 0 ||
-               CopyBuffer(m_handle_bb, 1, 0, 3, bb_upper) <= 0 ||
-               CopyBuffer(m_handle_bb, 2, 0, 3, bb_lower) <= 0 ||
-               CopyClose(_Symbol, PERIOD_H4, 0, 1, close) <= 0)
+            // Fix 1.4: read the CLOSED bar [1] (not the forming bar [0]); counts bumped so [1] is valid.
+            // Fix 1.5: capture realized ATR count (51 so atr[1..50] = 50 CLOSED bars), divide by realized count.
+            int atr_got = CopyBuffer(m_handle_atr, 0, 0, 51, atr);
+            if(CopyBuffer(m_handle_adx, 0, 0, 4, adx) < 2 ||
+               atr_got < 2 ||
+               CopyBuffer(m_handle_bb, 1, 0, 4, bb_upper) < 2 ||
+               CopyBuffer(m_handle_bb, 2, 0, 4, bb_lower) < 2 ||
+               CopyClose(_Symbol, PERIOD_H4, 0, 2, close) < 2)
             {
                   LogPrint("ERROR: Failed to copy regime data");
                   return;
             }
 
-            // Store values
-            m_regime_data.adx_value = adx[0];
-            m_regime_data.atr_current = atr[0];
+            // Store values (closed bar [1])
+            m_regime_data.adx_value = adx[1];
+            m_regime_data.atr_current = atr[1];
 
-            // Calculate ATR average
+            // Calculate ATR average over CLOSED bars (realized-count, no fixed-50 OOB / zero-pad).
+            // Sum atr[1..MathMin(50,atr_got-1)], divide by the realized count (CMomentumFilter idiom).
             double atr_sum = 0;
-            for(int i = 0; i < 50; i++)
+            int atr_count = MathMin(50, atr_got - 1);
+            for(int i = 1; i <= atr_count; i++)
                   atr_sum += atr[i];
-            m_regime_data.atr_average = atr_sum / 50;
+            m_regime_data.atr_average = (atr_count > 0) ? (atr_sum / atr_count) : m_regime_data.atr_current;
 
-            // Calculate BB width
-            double bb_width = bb_upper[0] - bb_lower[0];
-            m_regime_data.bb_width = (bb_width / close[0]) * 100;
+            // Calculate BB width (closed bar [1])
+            double bb_width = bb_upper[1] - bb_lower[1];
+            m_regime_data.bb_width = (bb_width / close[1]) * 100;
 
             // Detect volatility expansion with 2-bar confirmation to reduce flickering
             bool raw_expanding = (m_regime_data.atr_current > m_regime_data.atr_average * 1.3);
