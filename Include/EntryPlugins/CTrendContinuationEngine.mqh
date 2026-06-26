@@ -40,7 +40,7 @@ private:
    double            m_zone_sl_atr_buffer;   // ATR multiple buffered below zone/swing low
    double            m_min_sl_points;        // Minimum SL distance (points)
    double            m_rr_fallback;          // Fallback R:R when no draw/resistance found
-   double            m_swing_lookback;       // (unused placeholder kept for symmetry)
+   int               m_swing_lookback;       // CLOSED H1 bars [1..N] scanned for the conservative zone_low SL anchor
    ENUM_TIMEFRAMES   m_timeframe;
 
    // Indicator handles (engine-owned)
@@ -112,9 +112,30 @@ private:
       if(entry <= 0)
          return signal;
 
-      // Structural SL: below the bullish zone / recent swing low, ATR-buffered.
+      // Structural SL anchor: the MORE CONSERVATIVE (lower) of the interface swing
+      // low and the lowest CLOSED H1 low over m_swing_lookback bars [1..N]. The
+      // wider anchor protects the runner from a deeper structural sweep; the
+      // m_min_sl_points floor below still rejects an over-tight SL.
       double swing_low = (m_context != NULL) ? m_context.GetSwingLow() : 0;
-      double zone_low  = swing_low;   // best available structural anchor on the interface
+      double zone_low  = swing_low;
+
+      // Lowest CLOSED bar low over [1..m_swing_lookback] (start_pos 1 → never the
+      // forming bar [0]; T1 closed-bar convention).
+      double lows[];
+      ArraySetAsSeries(lows, true);
+      int got = CopyLow(_Symbol, m_timeframe, 1, m_swing_lookback, lows);
+      if(got > 0)
+      {
+         double lookback_low = lows[0];
+         for(int i = 1; i < got; i++)
+            if(lows[i] < lookback_low)
+               lookback_low = lows[i];
+
+         // Take the MORE CONSERVATIVE (lower) anchor. If the interface swing is
+         // unavailable (<=0), the lookback low stands alone.
+         if(lookback_low > 0 && (zone_low <= 0 || lookback_low < zone_low))
+            zone_low = lookback_low;
+      }
 
       double atr_buf = MathMax(atr_closed * m_zone_sl_atr_buffer, m_min_sl_points * _Point);
       double sl;
@@ -197,6 +218,7 @@ public:
                             double zone_sl_atr_buffer = 0.5,
                             double min_sl = 100.0,
                             double rr_fallback = 2.0,
+                            int swing_lookback = 10,
                             ENUM_TIMEFRAMES tf = PERIOD_H1)
    {
       m_engine_id          = ENGINE_TREND_CONT;
@@ -204,7 +226,7 @@ public:
       m_zone_sl_atr_buffer = zone_sl_atr_buffer;
       m_min_sl_points      = min_sl;
       m_rr_fallback        = rr_fallback;
-      m_swing_lookback     = 20;
+      m_swing_lookback     = (swing_lookback > 0) ? swing_lookback : 10;
       m_timeframe          = tf;
       m_handle_atr         = INVALID_HANDLE;
       m_pullback           = NULL;

@@ -727,7 +727,9 @@ int OnInit()
       g_regimeRouter.Initialize(GetPointer(g_marketContext));
 
       // Engine 1: Trend-Continuation (context set by RegisterEntryPlugin)
-      g_trendContEngine = new CTrendContinuationEngine();
+      // Phase 3.4: InpTrendSwingLookback (default 10) drives the zone_low SL anchor.
+      g_trendContEngine = new CTrendContinuationEngine(14, 0.5, 100.0, 2.0,
+                                                       InpTrendSwingLookback, PERIOD_H1);
       g_trendContEngine.SetScorer(g_confluenceScorer);
       RegisterEntryPlugin(g_trendContEngine, InpEnableEngineTrend);
       g_regimeRouter.RegisterEngine(g_trendContEngine);
