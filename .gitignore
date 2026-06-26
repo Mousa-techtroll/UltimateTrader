@@ -1,0 +1,8 @@
+# Bulk runtime logs, market data, and generated reports — kept on disk, NOT versioned in git.
+Logs/
+GoldHistory/
+Reports/
+*.log
+
+# Machine-local Claude Code settings
+.claude/settings.local.json

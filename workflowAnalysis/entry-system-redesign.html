@@ -1,0 +1,625 @@
+<title>UltimateTrader — Entry System Concept Audit & Redesign</title>
+<meta name="description" content="A first-principles, market-structure evaluation of the UltimateTrader EA's XAUUSD entry strategies, and a top-down confluence redesign.">
+<style>
+  :root{
+    --ink:#16140f;            /* near-black, biased warm toward gold */
+    --panel:#1e1b15;
+    --panel-2:#23201a;
+    --hair:#3a352a;
+    --hair-soft:#2c2820;
+    --bone:#d8d2c4;           /* warm body text */
+    --bone-dim:#a59e8c;
+    --bone-faint:#7d765f;
+    --gold:#c9a44c;           /* muted accent */
+    --gold-bright:#e6c46a;
+    --gold-deep:#8c7330;
+    --green:#7bbf7b;          /* edge is real */
+    --green-bg:#1c2a1c;
+    --amber:#d7a23f;          /* mixed / conditional */
+    --amber-bg:#2c2516;
+    --red:#cf7361;            /* folklore / weak */
+    --red-bg:#2c1a16;
+    --blue:#7fa9c9;           /* informational */
+    --maxw:74ch;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 700px at 78% -8%, rgba(201,164,76,.10), transparent 60%),
+      radial-gradient(900px 600px at -5% 12%, rgba(201,164,76,.05), transparent 55%),
+      var(--ink);
+    color:var(--bone);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:17px;
+    line-height:1.62;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 24px 120px}
+  .prose{max-width:var(--maxw)}
+
+  /* ---- type ---- */
+  h1,h2,h3,h4{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;font-weight:600;line-height:1.16;text-wrap:balance;color:#f0ead9;letter-spacing:-.01em}
+  h2{font-size:1.85rem;margin:0 0 .35em}
+  h3{font-size:1.28rem;margin:2.4em 0 .5em;color:var(--gold-bright)}
+  h4{font-size:1.04rem;margin:1.6em 0 .35em;color:#ece5d3;font-weight:600}
+  p{margin:0 0 1.05em}
+  a{color:var(--gold-bright);text-decoration:none;border-bottom:1px solid var(--gold-deep)}
+  strong{color:#f2ecdc;font-weight:600}
+  em{color:var(--bone)}
+  code,.mono{font-family:ui-monospace,"SF Mono",SFMono-Regular,"Cascadia Code",Menlo,Consolas,monospace;font-size:.86em}
+  code{background:var(--panel-2);border:1px solid var(--hair-soft);border-radius:4px;padding:.06em .38em;color:#e8dcb6}
+  .num{font-variant-numeric:tabular-nums}
+  .eyebrow{font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin:0 0 .9em}
+
+  /* ---- header ---- */
+  header.hero{padding:88px 0 34px;border-bottom:1px solid var(--hair)}
+  .kicker{display:inline-flex;align-items:center;gap:.7ch;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:700;border:1px solid var(--hair);border-radius:999px;padding:.4em 1em;background:rgba(201,164,76,.05)}
+  .kicker .dot{width:6px;height:6px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 8px var(--gold)}
+  header.hero h1{font-size:clamp(2.1rem,4.6vw,3.35rem);margin:.6em 0 .3em;letter-spacing:-.02em}
+  .dek{font-size:1.18rem;color:var(--bone-dim);max-width:62ch;line-height:1.5}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px 26px;margin-top:26px;font-size:.82rem;color:var(--bone-faint)}
+  .meta-row b{color:var(--bone-dim);font-weight:600}
+
+  /* ---- section scaffolding ---- */
+  section{padding-top:54px}
+  .sec-no{font-family:ui-monospace,monospace;font-size:.8rem;color:var(--gold-deep);letter-spacing:.1em}
+  hr.div{border:0;border-top:1px solid var(--hair);margin:0}
+
+  /* ---- callouts ---- */
+  .lede{font-size:1.16rem;line-height:1.56;color:#e7e0cf;border-left:3px solid var(--gold);padding:2px 0 2px 20px;margin:0 0 1.6em}
+  .callout{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:20px 22px;margin:1.6em 0}
+  .callout p:last-child{margin-bottom:0}
+  .callout.warn{border-left:3px solid var(--amber)}
+  .callout.bad{border-left:3px solid var(--red)}
+  .callout.good{border-left:3px solid var(--green)}
+  .callout .tag{display:block;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;margin-bottom:.5em}
+  .callout.warn .tag{color:var(--amber)}
+  .callout.bad .tag{color:var(--red)}
+  .callout.good .tag{color:var(--green)}
+
+  /* ---- grade cards ---- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;margin:1.6em 0}
+  .card{background:var(--panel);border:1px solid var(--hair);border-radius:12px;padding:18px 18px 16px;display:flex;flex-direction:column;gap:0;position:relative;overflow:hidden}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grade-c,var(--hair))}
+  .card.g-real{--grade-c:var(--green)}
+  .card.g-cond{--grade-c:var(--amber)}
+  .card.g-weak{--grade-c:var(--red)}
+  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:.55em}
+  .card h4{margin:0;font-size:1.02rem;line-height:1.25}
+  .card .src{font-size:.7rem;color:var(--bone-faint);font-family:ui-monospace,monospace;margin-top:.25em}
+  .grade{flex:0 0 auto;font-family:ui-monospace,monospace;font-weight:700;font-size:.95rem;border-radius:7px;padding:.28em .6em;border:1px solid;white-space:nowrap}
+  .grade.real{color:var(--green);border-color:#3c5c3c;background:var(--green-bg)}
+  .grade.cond{color:var(--amber);border-color:#5a4a22;background:var(--amber-bg)}
+  .grade.weak{color:var(--red);border-color:#5a2c24;background:var(--red-bg)}
+  .card p{font-size:.92rem;line-height:1.5;color:var(--bone-dim);margin:0 0 .7em}
+  .card .verdict{font-size:.82rem;color:var(--bone);margin-top:auto;padding-top:.7em;border-top:1px solid var(--hair-soft)}
+  .card .verdict b{color:var(--grade-c)}
+
+  /* ---- tables ---- */
+  .table-scroll{overflow-x:auto;margin:1.5em 0;border:1px solid var(--hair);border-radius:12px;background:var(--panel)}
+  table{border-collapse:collapse;width:100%;font-size:.88rem;min-width:560px}
+  caption{caption-side:top;text-align:left;font-size:.78rem;color:var(--bone-faint);letter-spacing:.04em;padding:14px 16px 0}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--hair-soft);vertical-align:top}
+  thead th{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);font-weight:700;border-bottom:1px solid var(--hair);background:var(--panel-2)}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:rgba(201,164,76,.035)}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;font-family:ui-monospace,monospace}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;padding:.15em .6em;border-radius:6px;font-family:ui-monospace,monospace;border:1px solid}
+  .pill.real{color:var(--green);border-color:#3c5c3c;background:var(--green-bg)}
+  .pill.cond{color:var(--amber);border-color:#5a4a22;background:var(--amber-bg)}
+  .pill.weak{color:var(--red);border-color:#5a2c24;background:var(--red-bg)}
+
+  /* ---- step / framework ---- */
+  .layers{display:flex;flex-direction:column;gap:0;margin:1.6em 0;counter-reset:layer}
+  .layer{position:relative;display:grid;grid-template-columns:54px 1fr;gap:20px;padding:22px 0;border-bottom:1px solid var(--hair-soft)}
+  .layer:last-child{border-bottom:0}
+  .layer .lnum{counter-increment:layer;font-family:ui-monospace,monospace;font-size:1.5rem;color:var(--gold-deep);font-weight:700;line-height:1}
+  .layer .lnum::before{content:"L" counter(layer)}
+  .layer h4{margin:0 0 .4em}
+  .layer p{margin:0 0 .6em;color:var(--bone-dim);font-size:.96rem}
+  .layer .tf{display:inline-block;font-family:ui-monospace,monospace;font-size:.72rem;color:var(--gold);border:1px solid var(--hair);border-radius:5px;padding:.1em .55em;margin-left:.5ch}
+  .gates{display:flex;flex-wrap:wrap;gap:8px;margin-top:.4em}
+  .gate{font-size:.78rem;font-family:ui-monospace,monospace;color:var(--bone);background:var(--panel-2);border:1px solid var(--hair-soft);border-radius:6px;padding:.25em .6em}
+
+  /* ---- setup blocks ---- */
+  .setup{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--hair);border-radius:12px;padding:22px 24px;margin:1.4em 0}
+  .setup h4{margin-top:0}
+  .setup dl{display:grid;grid-template-columns:max-content 1fr;gap:6px 18px;margin:.8em 0 0;font-size:.92rem}
+  .setup dt{color:var(--gold);font-weight:600;font-size:.8rem;letter-spacing:.04em;text-transform:uppercase;padding-top:.15em}
+  .setup dd{margin:0;color:var(--bone)}
+  .setup dd .mono{color:#e8dcb6}
+
+  ul.clean{list-style:none;padding:0;margin:1.1em 0}
+  ul.clean>li{position:relative;padding-left:22px;margin:0 0 .7em;color:var(--bone-dim)}
+  ul.clean>li::before{content:"";position:absolute;left:2px;top:.62em;width:7px;height:7px;border:1px solid var(--gold);transform:rotate(45deg)}
+  ul.clean>li strong{color:var(--bone)}
+
+  .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--hair-soft);border:1px solid var(--hair-soft);border-radius:10px;overflow:hidden;margin:1.5em 0}
+  .kv .cell{background:var(--panel);padding:16px 18px}
+  .kv .k{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--bone-faint);margin-bottom:.3em}
+  .kv .v{font-family:ui-monospace,monospace;font-size:1.35rem;color:var(--gold-bright);font-weight:600}
+  .kv .v small{font-size:.7rem;color:var(--bone-dim);font-weight:400;letter-spacing:0}
+
+  footer{margin-top:70px;padding-top:28px;border-top:1px solid var(--hair);font-size:.82rem;color:var(--bone-faint)}
+  footer code{font-size:.82rem}
+  .toc{display:flex;flex-wrap:wrap;gap:8px 10px;margin:30px 0 0}
+  .toc a{font-size:.8rem;color:var(--bone-dim);border:1px solid var(--hair);border-bottom:1px solid var(--hair);border-radius:999px;padding:.35em .9em;background:var(--panel)}
+  .toc a:hover{color:var(--gold-bright);border-color:var(--gold-deep)}
+  .scar{color:var(--red)}
+  .qq{color:var(--gold-bright);font-weight:600}
+  ::selection{background:rgba(201,164,76,.28);color:#fff}
+  :focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
+  @media (max-width:640px){
+    body{font-size:16px}
+    .wrap{padding:0 18px 90px}
+    header.hero{padding:60px 0 28px}
+    .layer{grid-template-columns:1fr;gap:6px}
+    .setup dl{grid-template-columns:1fr;gap:2px 0}
+    .setup dt{margin-top:.7em}
+  }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="kicker"><span class="dot"></span>Entry System — Concept Audit</span>
+  <h1>Is there an edge here, or just a metal that went up?</h1>
+  <p class="dek">A first-principles evaluation of UltimateTrader's live XAUUSD entry strategies — judged purely on market structure, not on the EA's own backtest. Then a top-down, confluence-stacked redesign mapped onto the existing plugin architecture.</p>
+  <div class="meta-row">
+    <span><b>Instrument</b> XAUUSD+ spot · 1 pt = 0.01 · $1 = 100 pts</span>
+    <span><b>Primary TF</b> H1</span>
+    <span><b>Basis</b> market knowledge only — backtest set aside</span>
+    <span><b>Date</b> 2026-06-26</span>
+  </div>
+  <nav class="toc" aria-label="contents">
+    <a href="#thesis">Thesis</a>
+    <a href="#grades">Concept grades</a>
+    <a href="#system">System critique</a>
+    <a href="#redesign">Redesign blueprint</a>
+    <a href="#scoring">Scoring model</a>
+    <a href="#mapping">Plugin mapping</a>
+    <a href="#setups">Example setups</a>
+    <a href="#verdict">Verdict</a>
+    <a href="#caveats">Caveats</a>
+  </nav>
+</header>
+
+<!-- ============================ THESIS ============================ -->
+<section id="thesis">
+  <p class="eyebrow"><span class="sec-no">00 /</span> &nbsp;The thesis</p>
+  <h2>The honest summary, up front</h2>
+  <p class="lede">The current entry system is a <strong>bag of independent single-bar triggers</strong> — engulfings, pin bars, MA crosses, band fades — bolted to trend filters and sorted by a quality score. Most of those triggers are <em>low-information events</em>. Several are genuinely sound; a few are folklore. But the system's real problem isn't any one pattern. It's that the patterns are <strong>not independent</strong> — almost all of them are restatements of "buy strength in an uptrend," so stacking them produces correlation, not confluence.</p>
+  <p>On a secularly bullish, high-volatility metal, "buy strength, filtered by a higher-timeframe uptrend" is a structurally real edge — gold's drift is up and momentum persists. That is not nothing. But it is a <em>thin, regime-dependent</em> edge that any of these triggers would express on its own, and the multiplicity of triggers mostly adds turnover and variance, not signal. The system survives because the underlying drift is real, not because the triggers each carry information.</p>
+  <p>The redesign keeps gold's one durable truth — <span class="qq">long bias, momentum continuation, sweep-and-reclaim of liquidity</span> — and rebuilds entries as a <strong>single top-down confluence stack</strong>: HTF draw on liquidity and premium/discount → session timing → liquidity sweep + structure shift → entry from a discount OB/FVG → confirmation. The naive triggers don't get deleted; they get <strong>demoted to confirmation candles inside that stack</strong>, where a bare engulfing finally means something. Net: fewer trades, higher average information per trade, an explicit and falsifiable confluence score.</p>
+  <div class="callout warn">
+    <span class="tag">Ground rule for this document</span>
+    <p>Every grade below is a judgment of the <strong>trading concept on gold</strong> — its theoretical edge from market structure — not of the MQL5 implementation and explicitly <strong>not</strong> of the EA's backtest P&amp;L. Where I say a concept is weak, I mean the <em>idea</em> carries little information before context is added, regardless of how it happened to perform in-sample.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ GRADES ============================ -->
+<section id="grades">
+  <p class="eyebrow"><span class="sec-no">01 /</span> &nbsp;Per-strategy concept grades</p>
+  <h2>Each live trigger as a trading idea</h2>
+  <p class="prose">Grades are <span class="pill real">EDGE&nbsp;REAL</span> (structural logic that holds on gold), <span class="pill cond">CONDITIONAL</span> (real only when gated by context the trigger itself doesn't supply), and <span class="pill weak">THIN / FOLKLORE</span> (a low-information event or a fade fighting the metal's drift). The recurring sin is <strong>standalone use of a context-free trigger</strong>.</p>
+
+  <div class="cards">
+
+    <div class="card g-cond">
+      <div class="card-top">
+        <div><h4>Bullish Engulfing</h4><div class="src">CEngulfingEntry · H1 + H4 trend</div></div>
+        <span class="grade cond">C+</span>
+      </div>
+      <p>A closed-bar engulf with ATR-significance and a dual-timeframe trend filter is the <em>respectable</em> end of candle triggers — the ATR gate kills the noise bars, and aligning with H1+H4 trend means you're buying strength in an uptrend, which gold rewards. But an engulfing is still a <strong>2-bar momentum print with no liquidity anchor</strong>. It fires equally at a swing high (chasing) and at a discount pullback (good). It cannot tell those apart.</p>
+      <p class="verdict"><b>Verdict:</b> Real but context-blind. Keep as a <em>confirmation candle</em>, not a standalone entry. Most engulfings in an uptrend are simply "price went up."</p>
+    </div>
+
+    <div class="card g-real">
+      <div class="card-top">
+        <div><h4>Bullish Pin Bar</h4><div class="src">CPinBarEntry · lower-wick rejection · H1 + H4</div></div>
+        <span class="grade real">B</span>
+      </div>
+      <p>A lower-wick rejection is the cleanest candle proxy for what we actually want: <strong>price probed below, found no sellers, and got bought back</strong> — a micro sweep-and-reclaim. That is a liquidity event, not just momentum. On gold's uptrend, a pin off a discount level is the single most defensible bare candle. Its weakness is purely that it has no idea <em>what</em> it rejected from — a pin into thin air is worth far less than a pin off PDL or an H4 OB.</p>
+      <p class="verdict"><b>Verdict:</b> The best standalone trigger in the set. Becomes A-grade the moment you require it to reject off a mapped level.</p>
+    </div>
+
+    <div class="card g-weak">
+      <div class="card-top">
+        <div><h4>Bearish Pin Bar</h4><div class="src">CPinBarEntry · Asia-only / NY-blocked · immediate</div></div>
+        <span class="grade weak">C&minus;</span>
+      </div>
+      <p>Mechanically the mirror of the bullish pin, and the rejection logic is sound. The problem is <strong>direction on this instrument</strong>: a short is fighting gold's secular drift, and the "fix" — restricting it to Asia and blocking NY — is an admission that the concept only survives in the one session thin enough to mean-revert. That's not an edge; that's a curfew around a weak idea. Asian-range rejection is a real micro-structure, but counter-trend shorts on a bull metal are low-expectancy by construction.</p>
+      <p class="verdict"><b>Verdict:</b> Tolerable as a tiny, session-boxed mean-reversion scalp. Do not treat the session restriction as confluence.</p>
+    </div>
+
+    <div class="card g-weak">
+      <div class="card-top">
+        <div><h4>Bullish MA-Cross</h4><div class="src">CMACrossEntry · SMA10/21 · regime + H4 gated</div></div>
+        <span class="grade weak">C&minus;</span>
+      </div>
+      <p>An SMA10/21 cross is the textbook <strong>lagging, low-information trigger</strong>. By the time a fast/slow cross prints, the move it's "signalling" has largely happened; you're buying the middle of a leg with no liquidity context and a stop that has nowhere natural to sit. The regime + H4 gates are doing all the real work — they're just a trend filter — and the cross itself adds almost no information over "is price trending up." It will buy strength (fine on gold) but also buy directly into premium and into the back half of exhausted legs.</p>
+      <p class="verdict"><b>Verdict:</b> Folklore as a trigger; the gates carry it. Replace with structure-based continuation; at best keep as a coarse trend <em>filter</em>, not an entry.</p>
+    </div>
+
+    <div class="card g-cond">
+      <div class="card-top">
+        <div><h4>Rubber-Band Short</h4><div class="src">CExpansionEngine · D1 Death-Cross + H1 &gt;2&times;ATR fade</div></div>
+        <span class="grade cond">B&minus;</span>
+      </div>
+      <p>The most <em>thoughtful</em> counter-trend idea in the set. It doesn't blindly short the bull — it requires a confirmed <strong>D1 regime change (Death-Cross)</strong> and then fades a statistically extreme &gt;2&times;ATR H1 stretch. That is a real volatility-mean-reversion edge: extreme deviations on gold do snap back, and gating on a daily regime flip means you only fade when the macro tailwind has actually weakened. The risk is that gold's "extreme" extensions can extend further in a panic, and a 2&times;ATR fade has poor R if the stop must sit beyond the spike.</p>
+      <p class="verdict"><b>Verdict:</b> A legitimate, well-conditioned fade — the rare counter-trend concept that earns its place. Keep, but size small and respect the spike.</p>
+    </div>
+
+    <div class="card g-cond">
+      <div class="card-top">
+        <div><h4>S6 Failed-Break Reversal</h4><div class="src">CFailedBreakReversal · M15 snapback at PDH/PDL</div></div>
+        <span class="grade cond">B+</span>
+      </div>
+      <p>This is the system's <strong>most structurally honest concept</strong>. A stop-hunt snapback at PDH/PDL <em>is</em> a liquidity sweep + reclaim — the core ICT/SMC reversal mechanic, and the one thing that genuinely works on gold because PDH/PDL are real, magnetic liquidity pools. A break of yesterday's high/low that fails and reclaims traps breakout traders and fuels the reverse move. The only caveats: M15 timing can be early without an LTF structure shift to confirm, and a long off a swept PDL (discount) is far higher quality than a short off a swept PDH (premium, against the metal).</p>
+      <p class="verdict"><b>Verdict:</b> Closest to the redesign's target mechanic. This is the template the whole system should look more like.</p>
+    </div>
+
+    <div class="card g-cond">
+      <div class="card-top">
+        <div><h4>S3 Range-Edge Fade</h4><div class="src">CRangeEdgeFade · M15 sweep + reclaim + RSI</div></div>
+        <span class="grade cond">B&minus;</span>
+      </div>
+      <p>Sweep + reclaim of a range edge is the same sound mechanic as S6, scoped to intraday balance. When gold is genuinely rotational (balanced/Asian range), fading a swept edge that reclaims is a real edge, and the RSI filter is a crude exhaustion proxy. The hazard is <strong>regime misclassification</strong>: the identical setup that pays inside balance gets run over on a trend/expansion day, and RSI mean-reversion on a trending metal is notoriously fragile. Its quality is entirely contingent on a correct range/balance read.</p>
+      <p class="verdict"><b>Verdict:</b> Real <em>only</em> inside confirmed balance. Needs a hard day-type gate (range/volatile day) or it bleeds on trend days.</p>
+    </div>
+
+    <div class="card g-real">
+      <div class="card-top">
+        <div><h4>Volatility Breakout</h4><div class="src">CVolatilityBreakoutEntry · Donchian+Keltner+ADX+H4 EMA</div></div>
+        <span class="grade real">B</span>
+      </div>
+      <p>Channel breakout with a volatility-expansion and ADX confirm, aligned to H4 EMA, is a <strong>genuine momentum/expansion edge</strong> on gold — the metal trends hard and breakouts of consolidation do continue. The Keltner/ADX combo is a real attempt to separate true expansion from a false poke, which is the right question. Two structural weaknesses remain: breakouts buy at <em>premium</em> by definition (you're chasing the high), so R is worse than a pullback entry; and without a volume/spread sanity check the breakout bar can be a stop-run that immediately reverses.</p>
+      <p class="verdict"><b>Verdict:</b> Real expansion edge, correctly trend-aligned. Improve by demanding a retest entry (better R) or a tick-volume expansion confirm.</p>
+    </div>
+
+    <div class="card g-real">
+      <div class="card-top">
+        <div><h4>Displacement</h4><div class="src">CDisplacementEntry · sweep + 1.8&times;ATR body</div></div>
+        <span class="grade real">B+</span>
+      </div>
+      <p>This is the right idea executed correctly: a <strong>liquidity sweep followed by a displacement candle</strong> (1.8&times;ATR body) is the signature of institutional initiative — stops taken, then a violent expansion away. It encodes both the liquidity event <em>and</em> the order-flow follow-through in one trigger, which is exactly what a single candle trigger should aspire to. On gold this is high-information. Its only gap is that it fires on the displacement bar itself (premium-ish entry); the FVG that displacement creates is the higher-R re-entry.</p>
+      <p class="verdict"><b>Verdict:</b> Among the best concepts in the system. Should be a core pillar of the redesign, with FVG-mitigation re-entry layered on.</p>
+    </div>
+
+    <div class="card g-cond">
+      <div class="card-top">
+        <div><h4>Liq-Engine OB-Retest</h4><div class="src">CLiquidityEngine · OB retest + BOS/CHoCH</div></div>
+        <span class="grade cond">B</span>
+      </div>
+      <p>Order-block retest <em>after</em> a BOS/CHoCH is textbook-correct SMC and the entry that should pair with displacement: wait for structure to shift, then enter on the pullback into the originating OB. The mechanic is sound and gives a natural, tight stop (below the OB). The honest caveats are gold-specific: <strong>OBs on gold are noisy</strong>, and the concept is only as good as the OB-selection logic and whether an inducement was taken first. A retest without a prior sweep/inducement is just "buy the dip" with a fancy name.</p>
+      <p class="verdict"><b>Verdict:</b> Correct concept; quality hinges on demanding sweep/inducement before the OB. Core building block for the redesign's entry layer.</p>
+    </div>
+
+    <div class="card g-real">
+      <div class="card-top">
+        <div><h4>Liq-Engine Displacement</h4><div class="src">CLiquidityEngine · displacement mode</div></div>
+        <span class="grade real">B+</span>
+      </div>
+      <p>Same high-information mechanic as the standalone Displacement plugin, expressed inside the liquidity engine where it can share structure/OB context. Sweep → displacement is the cleanest single read of "smart money just moved," and keeping it engine-resident means it can be cross-checked against the engine's BOS/OB map. The duplication with the standalone <code>CDisplacementEntry</code> is a system-design smell (see next section), but the <em>concept</em> is first-rate.</p>
+      <p class="verdict"><b>Verdict:</b> Strong concept; consolidate the two displacement implementations so it isn't double-counted in ranking.</p>
+    </div>
+
+    <div class="card g-cond">
+      <div class="card-top">
+        <div><h4>IC Breakout</h4><div class="src">CExpansionEngine · institutional candle + consolidation BO</div></div>
+        <span class="grade cond">B&minus;</span>
+      </div>
+      <p>"Institutional candle then break of the consolidation it created" is a reasonable expansion-from-compression read — it's looking for the same initiative footprint as displacement, framed around a coil. The logic that a large directional candle marks a footprint worth following is sound. But "institutional candle" is a soft, easily-overfit definition, and like all breakouts it enters at premium. It overlaps heavily with both Displacement and Volatility Breakout, so much of its apparent contribution is the same expansion edge counted a third time.</p>
+      <p class="verdict"><b>Verdict:</b> A real expansion concept, but largely redundant with Displacement + Vol-Breakout. Merge, don't stack.</p>
+    </div>
+
+    <div class="card g-weak">
+      <div class="card-top">
+        <div><h4>File / CSV Signals</h4><div class="src">CFileEntry · external</div></div>
+        <span class="grade weak">n/a</span>
+      </div>
+      <p>Not a strategy — a transport. Its edge is entirely the edge of whatever external model writes the file, so it can't be graded as a concept. The design note: external signals should pass through the <strong>same confluence/quality gate</strong> as internal ones, or they become an un-vetted bypass around the whole risk and ranking apparatus. A pipe is fine; an ungated pipe is a hole.</p>
+      <p class="verdict"><b>Verdict:</b> Keep as an input channel; force it through the same validation pipeline as native signals.</p>
+    </div>
+
+  </div>
+
+  <div class="callout">
+    <p><strong>The pattern across the grades:</strong> the concepts that earn a real grade — <em>Displacement, S6 Failed-Break, Pin Bar, Liq-Engine OB-Retest</em> — are all the <strong>same family</strong>: liquidity event → reclaim/displacement → continuation. The thin ones — <em>MA-Cross, bare Engulfing, RSI fades</em> — are context-free triggers leaning entirely on the trend filter. The system already contains the seed of the right design; it just hasn't promoted it over the noise.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ SYSTEM ============================ -->
+<section id="system">
+  <p class="eyebrow"><span class="sec-no">02 /</span> &nbsp;System-level diagnosis</p>
+  <h2>"Many triggers + a filter + ranking" is not a confluence model</h2>
+
+  <p class="prose">Step back from the individual patterns and look at the architecture's <em>philosophy</em>. The system is: run ~13 independent detectors each bar, let each emit a candidate, score each <code>0–10</code>, and trade the best one. This is an <strong>ensemble of weak learners with a hard trend prior.</strong> There are three structural problems with it on gold.</p>
+
+  <h3>1. The triggers are correlated, so the ensemble doesn't diversify</h3>
+  <p class="prose">A real ensemble works because its members make <em>independent</em> errors. These don't. Bullish Engulfing, Bullish Pin Bar, Bullish MA-Cross, Volatility Breakout, Displacement, IC Breakout and both Liq-Engine modes are — on the long side — all firing on the same thing: <strong>upward momentum in an H1/H4 uptrend.</strong> They are seven names for "buy strength." When several of them light up the same bar, that is not seven confluences; it is one signal observed seven ways. Ranking by best-score then just picks whichever restatement happened to score highest — it doesn't reward genuine agreement across <em>independent</em> dimensions.</p>
+  <div class="callout bad">
+    <span class="tag">Core flaw — correlation masquerading as confluence</span>
+    <p>The redesign's central correction: confluence must be counted across <strong>orthogonal axes</strong> (HTF draw, premium/discount, structure shift, entry zone, timing, flow), and two signals on the <em>same</em> axis count once. Today, momentum is counted up to seven times and liquidity/structure context is barely counted at all.</p>
+  </div>
+
+  <h3>2. The system is context-blind at entry</h3>
+  <p class="prose">Almost every trigger answers "is something happening <em>now</em>?" Almost none answers "<em>where</em> in the bigger picture is it happening?" An engulfing or MA-cross fires the same whether price is at a discount pullback (high value) or extended into premium at a session high (low value, often the exhaustion). The H1/H4 trend filter tells you the wind direction; it tells you nothing about whether you're buying at a discount or chasing into a liquidity pool. <strong>The single biggest free edge available on gold — only buying in discount of the operative dealing range, only at or after a liquidity sweep — is structurally absent from most entries.</strong></p>
+
+  <h3>3. The quality score grades the trigger, not the trade's context</h3>
+  <p class="prose">An <code>0–10</code> score earned mostly by trigger-internal properties (engulf size, ADX level, ATR multiple) measures <em>how clean the pattern is</em>, not <em>how good the trade is</em>. A pristine engulfing into premium at a swept high can outscore a messy-but-perfectly-located pin off a swept PDL in discount with H4 OB confluence. The score is optimizing the wrong objective. It should be dominated by <strong>contextual confluence</strong> (location, liquidity, structure), with pattern cleanliness as a minor term.</p>
+
+  <h3>Why it "works" anyway — and why that's fragile</h3>
+  <p class="prose">It works because the prior is correct: gold trended up for the sample, momentum persisted, and "buy strength, filtered by uptrend, never short the bull" is a real if thin structural edge on this metal. The disabled list confirms this — everything that died (Bearish Engulfing, SFP, Silver Bullet, London Breakout, NY Continuation, FVG-mitigation, the short patterns) either fought the drift or imported a generic FX/index concept that gold's behavior doesn't honor. The survivors are the ones that ride the drift. <strong>That is a regime bet wearing thirteen costumes.</strong> The moment gold ranges hard or rolls over, an undiversified, context-blind long-momentum ensemble has nothing to fall back on, because every member was the same bet.</p>
+
+  <div class="callout warn">
+    <span class="tag">What the disabled list already tells us</span>
+    <p>The graveyard is a free lesson: on gold H1, imported textbook ICT/SMC time-window plays (Silver Bullet, London/NY session breakouts) and pure imbalance-fill logic (FVG-mitigation) have <strong>weak structural edge</strong>, while liquidity-sweep-and-reclaim and momentum-continuation <strong>do</strong>. The redesign must not swap one folklore (MA-cross) for another folklore (killzone clock). It keeps only the SMC primitives that have a structural reason to work on a high-vol secular-bull metal: <em>liquidity pools, sweeps, structure shifts, displacement, premium/discount</em> — and treats killzones as a <em>minor</em> timing tiebreaker, never a thesis.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ REDESIGN ============================ -->
+<section id="redesign">
+  <p class="eyebrow"><span class="sec-no">03 /</span> &nbsp;The redesign</p>
+  <h2>One top-down confluence stack, not thirteen triggers</h2>
+  <p class="prose">Replace "detect many patterns, rank the best" with "<strong>build one trade from the top down, and only fire when independent axes agree.</strong>" The triggers you already have don't disappear — they move to <em>Layer 5</em> as confirmation candles, where a bare engulfing finally carries information because everything above it has located the trade. This is a single conceptual engine — call it the <strong>Confluence Entry Engine</strong> — that walks five layers HTF→LTF and emits at most one signal per bar with a transparent, orthogonal score.</p>
+
+  <div class="layers">
+    <div class="layer">
+      <span class="lnum"></span>
+      <div>
+        <h4>HTF draw on liquidity &amp; premium/discount <span class="tf">D1 / H4</span></h4>
+        <p>Establish the bias the way a desk does: where is the <strong>next liquidity pool</strong> price is drawn toward (PDH/PDL, PWH/PWL, equal highs/lows, the unmitigated H4 swing), and mark the operative <strong>dealing range</strong> (clear swing low → swing high). Compute equilibrium (50%). <strong>Longs are only valid in the discount half; shorts only in premium.</strong> On gold the default lean is long and the draw is usually the next buy-side pool above — so the engine's resting state is "looking for a discount long toward the upside draw."</p>
+        <div class="gates">
+          <span class="gate">draw_on_liquidity = nearest untapped pool toward H4 trend</span>
+          <span class="gate">in_discount = price &lt; range_equilibrium (for longs)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <span class="lnum"></span>
+      <div>
+        <h4>Intermediate structure &amp; zone map <span class="tf">H4 / H1</span></h4>
+        <p>Confirm the bias is intact: is the most recent H1 structure a BOS (continuation) or a CHoCH against the leg (caution)? Map the actionable zones in the <em>discount</em>: H1/H4 bullish order blocks, displacement-origin FVGs, and the value reference (session/composite POC, VAL, nearest HVN below price acting as support / LVN that price will traverse fast). This layer answers "<em>which</em> price do we want to be filled at," not "should we be long."</p>
+        <div class="gates">
+          <span class="gate">structure = GetRecentBOS() continuation OR post-sweep reclaim</span>
+          <span class="gate">zone = discount OB / FVG / HVN-support below equilibrium</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <span class="lnum"></span>
+      <div>
+        <h4>Liquidity sweep + structure shift <span class="tf">M15 / M5</span></h4>
+        <p>This is the trade's <strong>reason to exist</strong> and the non-negotiable core. Require a <em>sweep</em> — price wicks through a mapped pool (PDL, range low, equal lows, the inducement below the OB) and closes back — <em>then</em> a confirming LTF shift (MSS/CHoCH in the trade direction, or a displacement leg away from the swept side). This is exactly the S6 / Displacement / Liq-Engine mechanic, promoted from one-of-thirteen to the mandatory spine. No sweep + shift, no trade — full stop.</p>
+        <div class="gates">
+          <span class="gate">sweep = wick through pool &amp; close back inside</span>
+          <span class="gate">shift = MSS/CHoCH or &ge;1.8&times;ATR displacement</span>
+          <span class="gate">inducement taken before zone (SMC)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <span class="lnum"></span>
+      <div>
+        <h4>Entry from the discount zone <span class="tf">M5 / M1</span></h4>
+        <p>Enter on the pullback <em>into</em> the zone identified at Layer 2, after the Layer 3 shift — OB mitigation, FVG fill, or OTE (0.62–0.79 retrace of the displacement leg, 0.705 the sweet spot) — provided it lands in discount. This is where you get the tight, structural stop and the asymmetric R that chasing breakouts never gives you. Entry <em>location</em> is chosen by structure; entry <em>timing</em> is the candle at Layer 5.</p>
+        <div class="gates">
+          <span class="gate">entry = OB mitigation / FVG fill / OTE 0.705</span>
+          <span class="gate">must be in discount of dealing range</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="layer">
+      <span class="lnum"></span>
+      <div>
+        <h4>Confirmation &amp; flow <span class="tf">M5 / M1</span></h4>
+        <p>The old triggers live here, demoted to their correct job: a <strong>bullish engulfing or pin-bar at the zone</strong> is now a high-information timing confirmation, because Layers 1–4 already established it's a discount long after a sweep into the draw. Add flow where it exists. <span class="scar">On spot XAUUSD there is <strong>no real volume, no CVD, no footprint, no DOM</strong> — only tick volume (a count of price updates, a proxy for activity).</span> So flow confirmation on gold = a tick-volume expansion on the confirmation candle and a volume-profile location check; <strong>true delta/CVD/absorption are only available on GC/MGC futures</strong>, which the engine can read as a correlated confirm if a futures feed is present.</p>
+        <div class="gates">
+          <span class="gate">confirm = pin/engulf at zone (was a standalone plugin)</span>
+          <span class="gate">tick-volume expansion ≥ X&times; median (proxy only)</span>
+          <span class="gate">optional: GC/MGC delta confirm if feed present</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout good">
+    <span class="tag">The reframe in one line</span>
+    <p>A bare engulfing is a coin-flip-with-a-trend-filter. The <em>same</em> engulfing, fired only when it confirms a reclaim of a swept PDL, inside an H1 bullish OB, in discount, with an MSS in its favor and the HTF draw above — is a high-probability trade. <strong>The redesign doesn't invent new triggers; it earns information by stacking orthogonal context underneath the triggers you already trust.</strong></p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ SCORING ============================ -->
+<section id="scoring">
+  <p class="eyebrow"><span class="sec-no">04 /</span> &nbsp;The confluence scoring model</p>
+  <h2>Score the trade's context, not the pattern's cleanliness</h2>
+  <p class="prose">Map the five-layer stack onto the existing <code>qualityScore (0–10)</code> and <code>ENUM_SETUP_QUALITY</code> tiers, but earn the points from <strong>orthogonal context axes</strong>. Each axis is counted once — two signals on the same axis (e.g. "engulfing" and "MA-cross," both momentum) do <em>not</em> both score. The mandatory spine (sweep + structure shift, Layer 3) is a <strong>gate, not a point source</strong>: no spine, the signal is never created.</p>
+
+  <div class="table-scroll">
+    <table>
+      <caption>Confluence axes → qualityScore. Max 10. Axes are orthogonal; same-axis duplicates count once.</caption>
+      <thead>
+        <tr><th>Axis</th><th>Layer</th><th class="num">Pts</th><th>Earns its points when…</th><th>Why it's independent</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>HTF draw alignment</strong></td><td>L1</td><td class="num">2</td><td>Trade direction points at a real untapped HTF pool (PDH/PWH for longs) and agrees with H4 trend.</td><td>Directional context — orthogonal to <em>where</em> and <em>how</em> you enter.</td></tr>
+        <tr><td><strong>Premium / discount</strong></td><td>L1</td><td class="num">2</td><td>Long entry sits in discount (&lt;50% of dealing range); deeper discount + OTE 0.705 = full points.</td><td>Location value — a different question from direction or momentum.</td></tr>
+        <tr><td><strong>Entry-zone quality</strong></td><td>L2/L4</td><td class="num">2</td><td>Fill is inside a real H1/H4 OB, a displacement FVG, or on an HVN support / unmitigated zone.</td><td>Zone precision — independent of whether a sweep occurred.</td></tr>
+        <tr><td><strong>Sweep + inducement</strong></td><td>L3</td><td class="num">1</td><td>A documented liquidity pool / inducement was swept and reclaimed before entry. <em>(Gate also required.)</em></td><td>Liquidity event — the thing momentum triggers ignore.</td></tr>
+        <tr><td><strong>Confirmation candle</strong></td><td>L5</td><td class="num">1</td><td>Pin/engulf with ATR-significance at the zone. <strong>The old standalone triggers, scoped to 1 pt.</strong></td><td>Timing — deliberately capped low so momentum can't dominate.</td></tr>
+        <tr><td><strong>Flow / volume confirm</strong></td><td>L5</td><td class="num">1</td><td>Tick-volume expansion on the confirm bar; <em>or</em> a GC/MGC delta/CVD confirm if a futures feed is present.</td><td>Participation — orthogonal to price geometry. <span class="scar">Spot = proxy only.</span></td></tr>
+        <tr><td><strong>Timing tiebreaker</strong></td><td>L1</td><td class="num">1</td><td>Inside a relevant killzone (NY AM, London open) <em>and</em> day-type permits. Minor, never a thesis.</td><td>Session context. Capped at 1 — gold's killzone edge is weak (see disabled list).</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h4>Tiering (matches <code>ENUM_SETUP_QUALITY</code> exactly)</h4>
+  <div class="table-scroll">
+    <table>
+      <caption>Score-to-tier mapping and the risk tier it should drive.</caption>
+      <thead>
+        <tr><th>Score</th><th>Tier</th><th>Composition required</th><th class="num">Risk</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="num">8–10</td><td><span class="pill real">SETUP_A_PLUS</span></td><td>Full spine + discount + zone + draw + confirm + flow. The complete top-down trade.</td><td class="num">1.5%</td></tr>
+        <tr><td class="num">6–7</td><td><span class="pill real">SETUP_A</span></td><td>Spine + (draw &amp; discount) + zone, missing one of flow/confirm/timing.</td><td class="num">1.0%</td></tr>
+        <tr><td class="num">4–5</td><td><span class="pill cond">SETUP_B_PLUS</span></td><td>Spine + zone OR discount, partial context. Acceptable but not premium.</td><td class="num">0.75%</td></tr>
+        <tr><td class="num">3</td><td><span class="pill cond">SETUP_B</span></td><td>Spine present, thin context (e.g. confirm + one axis). Marginal.</td><td class="num">0.6%</td></tr>
+        <tr><td class="num">&lt;3</td><td><span class="pill weak">SETUP_NONE</span></td><td>Rejected. <strong>No spine → never reaches scoring.</strong></td><td class="num">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <p><strong>Why this fixes the system flaw:</strong> momentum (confirmation candle) is capped at 1 point and counts once. Location and liquidity context — the axes the old system ignored — own 7 of the 10 points. A pristine engulfing into premium now scores ~1–2 (rejected); a modest pin off a swept PDL in discount, in an OB, toward the draw scores 7–9 (A / A+). <strong>The objective is finally the trade's context, not the candle's prettiness.</strong> Keep the existing <code>m_smc_min_confluence</code> gate (default 60) on <code>engine_confluence</code> as a second, independent SMC-structure check feeding the same signal.</p>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ MAPPING ============================ -->
+<section id="mapping">
+  <p class="eyebrow"><span class="sec-no">05 /</span> &nbsp;Plugin architecture mapping</p>
+  <h2>How mt5-developer would build it</h2>
+  <p class="prose">The good news from reading the architecture: <strong>almost all the context this redesign needs already exists on <code>IMarketContext</code>.</strong> It already exposes <code>GetH4TrendDirection()</code>, <code>GetRecentBOS()</code>, <code>GetSwingHigh()/GetSwingLow()</code>, <code>IsInBullishOrderBlock()</code>, <code>IsInBullishFVG()</code>, <code>GetNearestSMCSupport()</code>, <code>GetSMCConfluenceScore()</code>, <code>GetCurrentRSI()</code>, <code>GetChoppinessIndex()</code>, regime and macro bias. The redesign is therefore mostly a <strong>re-wiring and gating</strong> exercise, not a "build all-new analytics" exercise.</p>
+
+  <h3>The build, concretely</h3>
+  <ul class="clean">
+    <li><strong>New plugin: <code>CConfluenceEntry : public CEntryStrategy</code></strong> — the five-layer engine. Overrides <code>CheckForEntrySignal(symbol)</code>, walks L1→L5 using <code>IMarketContext</code> set via <code>SetContext()</code>, and returns one <code>EntrySignal</code> per bar or an invalid signal. <code>RequiresConfirmation()</code> returns <code>false</code> because confirmation is internalized at L5.</li>
+    <li><strong>Extend <code>IMarketContext</code> with the few genuinely-missing reads</strong> — the dealing-range equilibrium and premium/discount state, and the "draw on liquidity" pool. Suggested additions: <code>GetDealingRangeEquilibrium()</code>, <code>IsInDiscount()/IsInPremium()</code>, <code>GetDrawOnLiquidity(direction)</code>, <code>WasPoolSwept(price, lookback)</code>. Everything else reuses existing methods.</li>
+    <li><strong>Reuse, don't rebuild, the spine:</strong> Layer 3's sweep+shift is already implemented inside <code>CLiquidityEngine</code> (MODE_DISPLACEMENT, MODE_OB_RETEST) and <code>CFailedBreakReversal</code>. The Confluence engine should <em>call into</em> that detection rather than reimplement it — set <code>engine_mode = MODE_DISPLACEMENT</code> / <code>MODE_OB_RETEST</code> on the emitted signal so audit/telemetry stays coherent.</li>
+    <li><strong>Demote the standalone triggers to confirmation helpers.</strong> <code>CEngulfingEntry</code> and <code>CPinBarEntry</code> stop being top-level entry plugins and become L5 confirmation checks the Confluence engine queries (or are kept registered but their signals only validated when the engine has a live spine). This is the key behavioral change: a bare engulfing can no longer fire a trade by itself.</li>
+    <li><strong>Score on the orthogonal axes</strong> in the engine, writing <code>qualityScore</code>, <code>setupQuality</code>, <code>engine_confluence</code>, <code>day_type</code> and <code>engine_mode</code> on the <code>EntrySignal</code>. Populate <code>takeProfit1/2/3</code> from the liquidity targets (L1 draw, intermediate pools).</li>
+    <li><strong>Retire the redundant momentum plugins as independent entries:</strong> fold <code>CMACrossEntry</code>, <code>IC Breakout</code>, and one of the duplicated displacement paths into the engine or disable them — they're the same-axis restatements that create false confluence in ranking.</li>
+    <li><strong>Keep the proven specialists as gated co-plugins:</strong> the <strong>Rubber-Band Short</strong> (D1 death-cross fade) and <strong>S3 Range-Edge Fade</strong> are genuinely different theses (counter-trend vol-reversion; balance rotation) — keep them as separate plugins but hard-gate S3 to <code>day_type == DAY_RANGE</code> via the day-type classifier, and route both through the same scoring tiers.</li>
+    <li><strong>Route <code>CFileEntry</code> through the same validation pipeline</strong> so external signals are scored/tiered, not bypassed.</li>
+  </ul>
+
+  <div class="table-scroll">
+    <table>
+      <caption>Disposition of every current entry under the redesign.</caption>
+      <thead>
+        <tr><th>Current plugin / mode</th><th>Disposition</th><th>Where it lands</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Liq-Engine Displacement / OB-Retest</td><td><span class="pill real">PROMOTE</span></td><td>Becomes the Layer-3 spine the Confluence engine calls into.</td></tr>
+        <tr><td>Displacement (standalone)</td><td><span class="pill cond">MERGE</span></td><td>Consolidate with Liq-Engine displacement — one implementation, no double-count.</td></tr>
+        <tr><td>S6 Failed-Break Reversal</td><td><span class="pill real">PROMOTE</span></td><td>Its sweep-reclaim is a canonical Layer-3 spine; reuse as a sweep detector.</td></tr>
+        <tr><td>Bullish Pin Bar / Bullish Engulfing</td><td><span class="pill cond">DEMOTE</span></td><td>Layer-5 confirmation candles, capped at 1 pt. No standalone firing.</td></tr>
+        <tr><td>Bullish MA-Cross</td><td><span class="pill weak">RETIRE / FILTER</span></td><td>Drop as entry; at most a coarse trend filter input. Redundant axis.</td></tr>
+        <tr><td>IC Breakout</td><td><span class="pill weak">MERGE</span></td><td>Same expansion edge as Displacement/Vol-BO — fold in, don't stack.</td></tr>
+        <tr><td>Volatility Breakout</td><td><span class="pill cond">KEEP + IMPROVE</span></td><td>Keep as expansion path; prefer retest entry; route through scoring.</td></tr>
+        <tr><td>Rubber-Band Short</td><td><span class="pill real">KEEP</span></td><td>Distinct counter-trend vol-reversion thesis; size small, scored.</td></tr>
+        <tr><td>S3 Range-Edge Fade</td><td><span class="pill cond">KEEP + GATE</span></td><td>Hard-gate to DAY_RANGE; real only inside balance.</td></tr>
+        <tr><td>Bearish Pin Bar</td><td><span class="pill weak">DEMOTE</span></td><td>Tiny Asia-boxed scalp at best; not part of the core long stack.</td></tr>
+        <tr><td>File / CSV</td><td><span class="pill cond">KEEP + GATE</span></td><td>Route through same validation/scoring pipeline.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ SETUPS ============================ -->
+<section id="setups">
+  <p class="eyebrow"><span class="sec-no">06 /</span> &nbsp;Worked example setups</p>
+  <h2>What the engine actually fires</h2>
+  <p class="prose">Illustrative, with the per-point math made explicit for <code>XAUUSD+</code> (1 point = 0.01, $1 = 100 points). Prices are schematic, not live levels — the engine computes them from the live dealing range and swept pools.</p>
+
+  <div class="setup">
+    <h4>A+ Long — the full top-down trade</h4>
+    <dl>
+      <dt>Bias (L1)</dt><dd>H4 uptrend; draw on liquidity = buy-side above PWH. Price pulled into <strong>discount</strong> (below dealing-range equilibrium). <span class="mono">Long-only thesis intact.</span></dd>
+      <dt>Structure (L2)</dt><dd>H1 bullish OB sits in discount, just above PDL; an HVN below price reinforces it as support.</dd>
+      <dt>Spine (L3)</dt><dd>M15 sweeps <strong>PDL + the inducement low</strong> below the OB, closes back inside, then M5 prints an <strong>MSS</strong> up (CHoCH against the pullback leg).</dd>
+      <dt>Entry (L4)</dt><dd>Mitigation of the H1 OB / OTE 0.705 of the displacement leg, in discount. <span class="mono">Entry ≈ 3300.00</span></dd>
+      <dt>Confirm (L5)</dt><dd>M5 bullish engulfing at the OB <em>(the old plugin, now a 1-pt confirm)</em> + tick-volume expansion on the bar.</dd>
+      <dt>Stop</dt><dd>Below the swept low / OB origin — structural, not arbitrary. <span class="mono">SL ≈ 3294.00 → 600 points = $6.00 risk per 0.01-lot-equivalent.</span></dd>
+      <dt>Targets</dt><dd>TP1 = range equilibrium; TP2 = prior swing high; TP3 = PWH draw. <span class="mono">TP1 ≈ 3306 (1R), TP2 ≈ 3312 (2R), TP3 ≈ 3324 (4R).</span></dd>
+      <dt>Score</dt><dd>draw 2 + discount 2 + zone 2 + sweep 1 + confirm 1 + flow 1 = <strong>9 → A+ (1.5% risk)</strong>.</dd>
+    </dl>
+  </div>
+
+  <div class="setup">
+    <h4>B+ Long — partial context, still tradable</h4>
+    <dl>
+      <dt>Bias (L1)</dt><dd>H4 up, but price near equilibrium — discount is shallow (1 of 2 pts).</dd>
+      <dt>Spine (L3)</dt><dd>Clean M15 sweep of equal lows + M5 displacement leg up (spine satisfied — gate passes).</dd>
+      <dt>Entry (L4)</dt><dd>FVG fill from the displacement leg; no clean HTF OB at the level (zone partial).</dd>
+      <dt>Confirm (L5)</dt><dd>Pin bar at the FVG; tick volume average (no flow bonus).</dd>
+      <dt>Score</dt><dd>draw 2 + discount 1 + zone 1 + sweep 1 + confirm 1 = <strong>6 → A (1.0%)</strong>, or 4–5 → B+ if draw is ambiguous. Tradable, not premium.</dd>
+    </dl>
+  </div>
+
+  <div class="setup">
+    <h4>Rejected — the trade the old system would have taken</h4>
+    <dl>
+      <dt>Trigger</dt><dd>Pristine M15 bullish engulfing + MA10/21 cross up, ADX rising. <em>Old system: high score, fires.</em></dd>
+      <dt>Context</dt><dd>Price is in <strong>premium</strong> (above equilibrium), extended into a session high — i.e. <em>into</em> buy-side liquidity, not a discount sweep. No sweep-reclaim beneath; structure is a continuation chase.</dd>
+      <dt>Redesign verdict</dt><dd><strong>No Layer-3 spine in discount → no signal created.</strong> Engulfing + MA-cross are one axis (momentum, capped 1 pt) and the location is premium. Score &lt; 3 even if it reached scoring. <span class="scar">This is precisely the chase the old system rewarded and gold's drift bailed out.</span></dd>
+    </dl>
+  </div>
+</section>
+
+<hr class="div">
+
+<!-- ============================ VERDICT ============================ -->
+<section id="verdict">
+  <p class="eyebrow"><span class="sec-no">07 /</span> &nbsp;Verdict</p>
+  <h2>Redesign — but evolve the spine, don't burn the building</h2>
+  <p class="lede">The current system is <strong>not</strong> good enough as a <em>design</em>, even though it can be profitable as a <em>regime bet</em>. It is an undiversified, context-blind long-momentum ensemble whose members are correlated restatements of "buy strength," kept alive by gold's drift. That is fragile by construction. The redesign is warranted.</p>
+  <p class="prose">But this is an <strong>evolution, not a teardown</strong>. The system already contains the right primitives — Displacement, S6 Failed-Break, Liq-Engine OB-Retest, the Pin Bar — and the <code>IMarketContext</code> interface already exposes most of the structure data needed. The work is to (1) make liquidity-sweep + structure-shift the <em>mandatory spine</em>, (2) score the trade's <em>context</em> across orthogonal axes instead of the pattern's cleanliness, (3) demote the naive triggers to confirmation, and (4) retire the redundant momentum restatements so ranking stops double-counting one bet.</p>
+
+  <div class="kv">
+    <div class="cell"><div class="k">Trades / direction</div><div class="v">↓ fewer<small>higher info each</small></div></div>
+    <div class="cell"><div class="k">Edge source</div><div class="v">location<small>not momentum count</small></div></div>
+    <div class="cell"><div class="k">Score objective</div><div class="v">context<small>7 of 10 pts</small></div></div>
+    <div class="cell"><div class="k">Build effort</div><div class="v">re-wire<small>mostly existing reads</small></div></div>
+  </div>
+
+  <h4>Falsifiable validation plan (so this isn't just a prettier story)</h4>
+  <ul class="clean">
+    <li><strong>Symbol / TF:</strong> XAUUSD+ H1, full <span class="mono">2019–2026</span> sample, same as the existing baseline, so it's a true A/B against the current ensemble.</li>
+    <li><strong>Expected behavior:</strong> materially <em>fewer</em> trades (the spine gate is strict), higher average-R per trade, and — critically — <strong>resilience in the 2021 and 2022–2023 gold ranges / pullbacks</strong> where the current long-momentum bag should suffer most. That range/chop period is the real test, because that's where an undiversified drift-bet breaks.</li>
+    <li><strong>Kill criteria:</strong> disable the Confluence engine if, over 2019–2026, it shows <span class="mono">avg-R ≤ 0</span> or fails to beat the current ensemble's avg-R in the range sub-periods, or if &gt;80% of its signals collapse back onto a single axis (i.e. the orthogonality is illusory). Per-axis attribution should be logged so we can see <em>which</em> confluence is actually paying.</li>
+    <li><strong>Guard against re-folklore:</strong> if the killzone-timing axis (capped 1 pt) shows no positive attribution on gold — likely, given the disabled Silver Bullet / session-breakout history — drop it to 0 and redistribute. Don't keep an axis out of ICT loyalty.</li>
+  </ul>
+</section>
+
+<hr class="div">
+
+<!-- ============================ CAVEATS ============================ -->
+<section id="caveats">
+  <p class="eyebrow"><span class="sec-no">08 /</span> &nbsp;Honest caveats</p>
+  <h2>Where I'm uncertain, and what could break this</h2>
+  <ul class="clean">
+    <li><span class="scar"><strong>Spot gold has no real order-flow.</strong></span> CVD, delta, footprint and DOM <em>do not exist</em> on XAUUSD — only tick volume, a proxy for activity, not contracts traded. Every "flow" reference in the scoring model is either tick-volume (a weak proxy, worth only 1 pt for that reason) or an optional read from <strong>GC/MGC futures</strong> if a feed is present. Do not let anyone build a "CVD on gold" feature; it isn't there.</li>
+    <li><strong>OB/FVG selection on gold is noisy.</strong> The redesign assumes the zone-mapping (which OB, which FVG) is robust. On a high-vol metal that's a real engineering risk — a sloppy OB detector turns "discount OB entry" back into "buy the dip." The zone-quality axis is only as good as that detection.</li>
+    <li><strong>I'm respecting the graveyard, not ignoring it.</strong> The disabled list says imported ICT time-window plays and pure FVG-fill logic have weak edge on gold H1. The redesign deliberately keeps killzone timing minor and treats FVG only as a <em>displacement-origin re-entry</em> (momentum continuation), never as "gaps must fill" (which is the mitigation logic that failed). I am not swapping MA-cross folklore for killzone folklore.</li>
+    <li><strong>"No edge on gold H1 in this implementation" ≠ "no edge anywhere."</strong> Several disabled concepts (SFP, FVG-mitigation, session breakouts) work on other instruments/timeframes. This evaluation is scoped to XAUUSD H1; don't over-generalize the kills.</li>
+    <li><strong>Fewer, higher-quality trades raises variance per outcome.</strong> A strict spine gate means smaller sample and longer dry spells. The risk tiers and daily-loss / max-position limits must hold; resist the temptation to loosen the spine to "get more trades" — that's exactly how you'd rebuild the bag of naive triggers.</li>
+    <li><strong>This is an analysis and design document, not financial advice and not a built feature.</strong> Nothing here was compiled or backtested for this write-up — the validation plan above is the gate that decides whether the redesign actually carries the edge it argues for. Concept logic is necessary but not sufficient; the A/B test is the arbiter.</li>
+  </ul>
+</section>
+
+<footer>
+  <p><strong>UltimateTrader — Entry System Concept Audit &amp; Redesign.</strong> First-principles market-structure evaluation of the live XAUUSD entry strategies, deliberately independent of the EA's backtest P&amp;L. Maps onto <code>CEntryStrategy</code> plugins, <code>IMarketContext</code>, <code>EntrySignal</code> (<code>qualityScore</code> / <code>engine_confluence</code> / <code>setupQuality</code> / <code>engine_mode</code>) and the <code>ENUM_SETUP_QUALITY</code> tiers. Educational / analytical — not personalized financial advice.</p>
+</footer>
+
+</div>

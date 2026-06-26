@@ -1661,25 +1661,37 @@ public:
             continue;
          }
 
-         // FILE SIGNALS: use CSV TP levels as hard price targets, skip trailing
-         // The CSV SL is already set as the broker SL — just check TP hits
+         // FILE SIGNALS: structured TP ladder with optional runner + trailing
          if(m_positions[i].signal_source == SIGNAL_SOURCE_FILE)
          {
             double cur_price = PositionGetDouble(POSITION_PRICE_CURRENT);
+            string pos_symbol = PositionGetString(POSITION_SYMBOL);
+            if(pos_symbol == "") pos_symbol = _Symbol;
+            double min_lot = SymbolInfoDouble(pos_symbol, SYMBOL_VOLUME_MIN);
+            bool has_tp3 = (InpFileUseTP3 && m_positions[i].tp3 > 0);
 
-            // Check TP1 hit (close 50%)
+            // Determine split: 3-way if TP3 available, 2-way otherwise
+            // With TP3: 33% at TP1, 33% at TP2, 34% runner to TP3/trail
+            // Without:  50% at TP1, 50% at TP2
+            double tp1_pct = has_tp3 ? 0.33 : 0.50;
+            double tp2_pct = has_tp3 ? 0.50 : 1.00;  // % of REMAINING after TP1
+
+            // --- TP1: first partial close + SL to breakeven ---
             if(!m_positions[i].tp0_closed && m_positions[i].tp1 > 0)
             {
                bool tp1_hit = (m_positions[i].direction == SIGNAL_LONG && cur_price >= m_positions[i].tp1) ||
                               (m_positions[i].direction == SIGNAL_SHORT && cur_price <= m_positions[i].tp1);
                if(tp1_hit)
                {
-                  double close_lots = NormalizeDouble(m_positions[i].remaining_lots * 0.50, 2);
-                  double min_lot = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
-                  if(close_lots >= min_lot && m_positions[i].remaining_lots - close_lots >= min_lot)
+                  double close_lots = NormalizeLots(m_positions[i].remaining_lots * tp1_pct, pos_symbol);
+                  if(close_lots < min_lot) close_lots = min_lot;
+                  if(close_lots < min_lot || m_positions[i].remaining_lots - close_lots < min_lot)
+                     close_lots = m_positions[i].remaining_lots;  // Close all if can't split
+
+                  CTrade tp_trade;
+                  tp_trade.SetExpertMagicNumber(m_magic_number);
+                  if(close_lots < m_positions[i].remaining_lots)
                   {
-                     CTrade tp_trade;
-                     tp_trade.SetExpertMagicNumber(m_magic_number);
                      if(tp_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
                      {
                         m_positions[i].tp0_closed = true;
@@ -1687,35 +1699,141 @@ public:
                         m_positions[i].stage = STAGE_TP0_HIT;
                         m_positions[i].stage_label = "FILE_TP1";
 
-                        // Move SL to breakeven
+                        // SL to breakeven
                         double be_sl = m_positions[i].entry_price;
                         if((m_positions[i].direction == SIGNAL_LONG && be_sl > m_positions[i].stop_loss) ||
                            (m_positions[i].direction == SIGNAL_SHORT && be_sl < m_positions[i].stop_loss))
                         {
                            m_positions[i].stop_loss = be_sl;
                            m_positions[i].at_breakeven = true;
-                           CTrade be_trade;
-                           be_trade.SetExpertMagicNumber(m_magic_number);
-                           be_trade.PositionModify(m_positions[i].ticket, be_sl, 0);
+                           tp_trade.PositionModify(m_positions[i].ticket, be_sl, 0);
                         }
 
-                        LogPrint("[FileTP1] Partial close 50%: ticket=", m_positions[i].ticket,
-                                 " @ ", DoubleToString(cur_price, 2), " | SL→BE");
+                        LogPrint("[FileTP1] Close ", DoubleToString(tp1_pct*100, 0), "%: ticket=",
+                                 m_positions[i].ticket, " @ ", DoubleToString(cur_price, 2),
+                                 " | SL→BE | Remaining=", DoubleToString(m_positions[i].remaining_lots, 2),
+                                 has_tp3 ? " | Runner→TP3" : "");
                      }
+                  }
+                  else
+                  {
+                     // Can't split — close all at TP1
+                     ClosePosition(m_positions[i].ticket, "FILE_TP1_FULL");
+                     LogPrint("[FileTP1] Full close (min lot): ticket=", m_positions[i].ticket);
                   }
                }
             }
 
-            // Check TP2 hit (close remaining)
-            if(m_positions[i].tp0_closed && m_positions[i].tp2 > 0)
+            // --- TP2: second partial (or full if no TP3) ---
+            if(m_positions[i].tp0_closed && !m_positions[i].tp1_closed && m_positions[i].tp2 > 0)
             {
                bool tp2_hit = (m_positions[i].direction == SIGNAL_LONG && cur_price >= m_positions[i].tp2) ||
                               (m_positions[i].direction == SIGNAL_SHORT && cur_price <= m_positions[i].tp2);
                if(tp2_hit)
                {
-                  ClosePosition(m_positions[i].ticket, "FILE_TP2_FULL_CLOSE");
-                  LogPrint("[FileTP2] Full close: ticket=", m_positions[i].ticket,
+                  if(!has_tp3)
+                  {
+                     // No TP3: close everything at TP2
+                     ClosePosition(m_positions[i].ticket, "FILE_TP2_FULL");
+                     LogPrint("[FileTP2] Full close: ticket=", m_positions[i].ticket,
+                              " @ ", DoubleToString(cur_price, 2));
+                  }
+                  else
+                  {
+                     // Has TP3: close 50% of remaining, keep runner
+                     double close_lots = NormalizeLots(m_positions[i].remaining_lots * tp2_pct, pos_symbol);
+                     if(close_lots < min_lot) close_lots = min_lot;
+
+                     if(m_positions[i].remaining_lots - close_lots >= min_lot)
+                     {
+                        CTrade tp2_trade;
+                        tp2_trade.SetExpertMagicNumber(m_magic_number);
+                        if(tp2_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
+                        {
+                           m_positions[i].tp1_closed = true;
+                           m_positions[i].remaining_lots -= close_lots;
+                           m_positions[i].stage = STAGE_TP1_HIT;
+                           m_positions[i].stage_label = "FILE_TP2_RUNNER";
+
+                           // Move SL to TP1 level (lock profit)
+                           double trail_sl = m_positions[i].tp1;
+                           if((m_positions[i].direction == SIGNAL_LONG && trail_sl > m_positions[i].stop_loss) ||
+                              (m_positions[i].direction == SIGNAL_SHORT && trail_sl < m_positions[i].stop_loss))
+                           {
+                              m_positions[i].stop_loss = trail_sl;
+                              tp2_trade.PositionModify(m_positions[i].ticket, trail_sl, 0);
+                           }
+
+                           LogPrint("[FileTP2] Partial close, runner alive: ticket=",
+                                    m_positions[i].ticket, " @ ", DoubleToString(cur_price, 2),
+                                    " | SL→TP1(", DoubleToString(trail_sl, 2), ")",
+                                    " | Runner→TP3(", DoubleToString(m_positions[i].tp3, 2), ")");
+                        }
+                     }
+                     else
+                     {
+                        // Can't split further — close all at TP2
+                        ClosePosition(m_positions[i].ticket, "FILE_TP2_FULL");
+                        LogPrint("[FileTP2] Full close (min lot): ticket=", m_positions[i].ticket);
+                     }
+                  }
+               }
+            }
+
+            // --- TP3 / Runner: hard target or ATR trailing ---
+            if(m_positions[i].tp1_closed && has_tp3)
+            {
+               // Check TP3 hit — close everything
+               bool tp3_hit = (m_positions[i].direction == SIGNAL_LONG && cur_price >= m_positions[i].tp3) ||
+                              (m_positions[i].direction == SIGNAL_SHORT && cur_price <= m_positions[i].tp3);
+               if(tp3_hit)
+               {
+                  ClosePosition(m_positions[i].ticket, "FILE_TP3_RUNNER_HIT");
+                  LogPrint("[FileTP3] Runner target hit: ticket=", m_positions[i].ticket,
                            " @ ", DoubleToString(cur_price, 2));
+               }
+               // ATR trailing for runner (if enabled)
+               else if(InpFileTrailAfterTP2)
+               {
+                  double atr_val = 0;
+                  int atr_h = iATR(_Symbol, PERIOD_H1, 14);
+                  if(atr_h != INVALID_HANDLE)
+                  {
+                     double buf[];
+                     if(CopyBuffer(atr_h, 0, 0, 1, buf) > 0) atr_val = buf[0];
+                  }
+
+                  if(atr_val > 0)
+                  {
+                     double trail_dist = atr_val * 1.5;  // 1.5x ATR trailing (tighter than Chandelier 3x)
+                     double new_sl = 0;
+                     if(m_positions[i].direction == SIGNAL_LONG)
+                     {
+                        int hb = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, 5, 0);
+                        if(hb >= 0)
+                           new_sl = iHigh(_Symbol, PERIOD_H1, hb) - trail_dist;
+                     }
+                     else
+                     {
+                        int lb = iLowest(_Symbol, PERIOD_H1, MODE_LOW, 5, 0);
+                        if(lb >= 0)
+                           new_sl = iLow(_Symbol, PERIOD_H1, lb) + trail_dist;
+                     }
+
+                     // Only tighten, never loosen
+                     if(new_sl > 0)
+                     {
+                        bool is_better = (m_positions[i].direction == SIGNAL_LONG && new_sl > m_positions[i].stop_loss) ||
+                                         (m_positions[i].direction == SIGNAL_SHORT && new_sl < m_positions[i].stop_loss);
+                        if(is_better)
+                        {
+                           m_positions[i].stop_loss = new_sl;
+                           CTrade trail_trade;
+                           trail_trade.SetExpertMagicNumber(m_magic_number);
+                           trail_trade.PositionModify(m_positions[i].ticket, new_sl, 0);
+                        }
+                     }
+                  }
                }
             }
 
@@ -1732,7 +1850,98 @@ public:
                if(favorable > 0 && favorable > m_positions[i].mfe) m_positions[i].mfe = favorable;
             }
 
-            continue;  // Skip ALL internal management (TP cascade, trailing, exits)
+            // --- PART A: Trailing after TP1 ---
+            if(InpFileSignalTrailing && m_positions[i].tp0_closed)
+            {
+               // Both modes use the same ATR swing trail — configurable multiplier
+               // Mode 1 (Chandelier-style) and Mode 2 (basic) differ only in when they activate
+               // Mode 1: after TP1 | Mode 2: after TP2 only
+               bool trail_eligible = (InpFileSignalTrailingMode == 1) ||
+                                     (InpFileSignalTrailingMode == 2 && m_positions[i].tp1_closed);
+               if(trail_eligible)
+               {
+                  double atr_val = 0;
+                  int atr_h = iATR(_Symbol, PERIOD_H1, 14);
+                  if(atr_h != INVALID_HANDLE)
+                  {
+                     double buf[];
+                     if(CopyBuffer(atr_h, 0, 0, 1, buf) > 0) atr_val = buf[0];
+                  }
+                  if(atr_val > 0)
+                  {
+                     double trail_dist = atr_val * InpFileTrailATRMult;
+                     double new_sl = 0;
+                     if(m_positions[i].direction == SIGNAL_LONG)
+                     {
+                        int hb = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, 5, 0);
+                        if(hb >= 0) new_sl = iHigh(_Symbol, PERIOD_H1, hb) - trail_dist;
+                     }
+                     else
+                     {
+                        int lb = iLowest(_Symbol, PERIOD_H1, MODE_LOW, 5, 0);
+                        if(lb >= 0) new_sl = iLow(_Symbol, PERIOD_H1, lb) + trail_dist;
+                     }
+                     if(new_sl > 0)
+                     {
+                        bool is_better = (m_positions[i].direction == SIGNAL_LONG && new_sl > m_positions[i].stop_loss) ||
+                                         (m_positions[i].direction == SIGNAL_SHORT && new_sl < m_positions[i].stop_loss);
+                        if(is_better)
+                        {
+                           m_positions[i].stop_loss = new_sl;
+                           CTrade trail_trade;
+                           trail_trade.SetExpertMagicNumber(m_magic_number);
+                           trail_trade.PositionModify(m_positions[i].ticket, new_sl, 0);
+                        }
+                     }
+                  }
+               }
+            }
+
+            // --- PART B: Critical exit plugins for file signals ---
+            if(InpFileSignalExitPlugins)
+            {
+               string file_exit_reason = "";
+               for(int ep = 0; ep < m_exit_count; ep++)
+               {
+                  if(m_exit_plugins[ep] == NULL || !m_exit_plugins[ep].IsEnabled())
+                     continue;
+
+                  // Filter: only apply allowed plugins
+                  string plugin_name = m_exit_plugins[ep].GetName();
+                  bool allowed = false;
+
+                  // Always allowed: DailyLossHalt, WeekendClose, MaxAge
+                  if(StringFind(plugin_name, "DailyLoss") >= 0 ||
+                     StringFind(plugin_name, "Weekend") >= 0 ||
+                     StringFind(plugin_name, "MaxAge") >= 0)
+                     allowed = true;
+
+                  // Configurable: RegimeAware
+                  if(InpFileSignalRegimeExit && StringFind(plugin_name, "Regime") >= 0)
+                     allowed = true;
+
+                  if(!allowed) continue;
+
+                  ExitSignal exit_sig = m_exit_plugins[ep].CheckForExitSignal(m_positions[i].ticket);
+                  if(exit_sig.valid || exit_sig.shouldExit)
+                  {
+                     file_exit_reason = plugin_name + "_FileSignal";
+                     ClosePosition(m_positions[i].ticket, file_exit_reason);
+                     LogPrint("[FileExit] ", file_exit_reason, " | ticket=", m_positions[i].ticket);
+                     break;
+                  }
+               }
+            }
+
+            // Best-effort full management: if enabled, DON'T skip — fall through to pattern path
+            if(m_positions[i].best_effort_mode && InpBestEffortFullManagement)
+            {
+               // Fall through to normal pattern management below (no continue)
+            }
+            else
+            {
+               continue;  // Normal file signals: skip TP cascade and other pattern-only systems
+            }
          }
 
          // Use the position's exit profile when available; fall back to global inputs

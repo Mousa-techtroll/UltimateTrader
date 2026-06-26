@@ -690,6 +690,85 @@ public:
       return m_smc_order_blocks.GetLastCHoCH();
    }
 
+   //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign) ---
+
+   // Dealing range = the cached HTF swing high/low (reuses existing swing detection).
+   virtual double GetDealingRangeHigh() override { return m_swing_high; }
+   virtual double GetDealingRangeLow()  override { return m_swing_low; }
+
+   // Equilibrium = midpoint of the dealing range.
+   virtual double GetEquilibrium() override
+   {
+      if(m_swing_high <= 0 || m_swing_low <= 0 || m_swing_high <= m_swing_low)
+         return 0;
+      return (m_swing_high + m_swing_low) * 0.5;
+   }
+
+   virtual bool IsInDiscount(double price) override
+   {
+      double eq = GetEquilibrium();
+      if(eq <= 0) return false;
+      return (price < eq);   // below equilibrium = discount (buy zone)
+   }
+
+   virtual bool IsInPremium(double price) override
+   {
+      double eq = GetEquilibrium();
+      if(eq <= 0) return false;
+      return (price > eq);   // above equilibrium = premium (sell zone)
+   }
+
+   // Draw on liquidity = the nearest un-swept higher-timeframe pool in the
+   // signal direction: for longs, the nearest buy-side pool ABOVE price
+   // (prior day/week high); for shorts, the nearest sell-side pool BELOW
+   // price (prior day/week low). Uses COMPLETED HTF bars (shift 1).
+   virtual double GetDrawOnLiquidity(ENUM_SIGNAL_TYPE direction) override
+   {
+      double price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double pdh = iHigh(_Symbol, PERIOD_D1, 1);
+      double pdl = iLow(_Symbol,  PERIOD_D1, 1);
+      double pwh = iHigh(_Symbol, PERIOD_W1, 1);
+      double pwl = iLow(_Symbol,  PERIOD_W1, 1);
+
+      if(direction == SIGNAL_LONG)
+      {
+         // nearest pool ABOVE price (un-swept buy-side liquidity)
+         double draw = 0;
+         if(pdh > price)                       draw = pdh;
+         if(pwh > price && (draw == 0 || pwh < draw)) draw = pwh;
+         return draw;   // 0 if both pools already taken
+      }
+      else if(direction == SIGNAL_SHORT)
+      {
+         // nearest pool BELOW price (un-swept sell-side liquidity)
+         double draw = 0;
+         if(pdl > 0 && pdl < price)            draw = pdl;
+         if(pwl > 0 && pwl < price && (draw == 0 || pwl > draw)) draw = pwl;
+         return draw;
+      }
+      return 0;
+   }
+
+   // Day-type: CMarketContext has no dedicated day classifier, so synthesize
+   // from the regime/volatility/choppiness primitives it already computes.
+   // (DAY_DATA requires a news calendar and is not derivable here — the
+   // engines/router gate news days separately via their own day-type source.)
+   virtual ENUM_DAY_TYPE GetDayType() override
+   {
+      ENUM_VOLATILITY_REGIME vol = GetVolatilityRegime();
+      if(vol == VOL_EXTREME || vol == VOL_HIGH)
+         return DAY_VOLATILE;
+
+      ENUM_REGIME_TYPE regime = GetCurrentRegime();
+      if(regime == REGIME_TRENDING)
+         return DAY_TREND;
+      if(regime == REGIME_RANGING || regime == REGIME_CHOPPY)
+         return DAY_RANGE;
+
+      // Fallback: high choppiness => range, otherwise trend
+      return (GetChoppinessIndex() > 55.0) ? DAY_RANGE : DAY_TREND;
+   }
+
 private:
    //+------------------------------------------------------------------+
    //| Update cached MA200 value                                         |

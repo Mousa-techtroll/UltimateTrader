@@ -138,8 +138,14 @@ public:
 
       double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
+      // Fix 4: relax the over-conjuncted gate. The original trigger required ALL of
+      // {valid box} AND {outer edge} AND {RSI extreme} AND {2-bar sweep+reclaim} AND
+      // {reward>=2R} simultaneously and fired 0 times. We keep the box validity (the
+      // SL/target geometry depends on it) and the sweep+reclaim + reward gates intact,
+      // but loosen the {edge AND RSI} conjunction to {edge OR RSI}: a genuine sweep+
+      // reclaim at the floor only needs ONE confirming context, not both.
       // --- LONG at range floor: sweep below + reclaim ---
-      if(m_range_box.IsInLowerEdge(bid) && rsi < m_rsi_oversold)
+      if(m_range_box.IsInLowerEdge(bid) || rsi < m_rsi_oversold)
       {
          // Check for sweep: M15 low pierced below box_low (within sweep tolerance)
          for(int s = 0; s < 2; s++)
@@ -179,7 +185,8 @@ public:
       }
 
       // --- SHORT at range ceiling: sweep above + reclaim ---
-      if(m_range_box.IsInUpperEdge(bid) && rsi > m_rsi_overbought)
+      // Fix 4: same relaxation as the LONG side — {edge OR RSI} instead of {edge AND RSI}.
+      if(m_range_box.IsInUpperEdge(bid) || rsi > m_rsi_overbought)
       {
          for(int s = 0; s < 2; s++)
          {

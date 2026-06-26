@@ -8,21 +8,37 @@
 #property strict
 
 #include "../PluginSystem/CEntryStrategy.mqh"
+#include "../PluginSystem/CMajorStrategyEngine.mqh"   // Multi-strategy: engine (4) base
 #include "../PluginSystem/IMarketContext.mqh"
+#include "../Validation/CConfluenceScorer.mqh"        // Multi-strategy: orthogonal-axis scorer
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
+// Multi-strategy: composed expansion sub-strategies (read-only reuse)
+#include "CVolatilityBreakoutEntry.mqh"
+#include "CSessionBreakoutEntry.mqh"
 
 //+------------------------------------------------------------------+
 //| CExpansionEngine - Multi-mode expansion entry strategy            |
-//| Mode 1: Panic Momentum (Death Cross + Rubber Band)                |
+//| MAJOR ENGINE (4): Breakout / Expansion (trend-aligned, both dir). |
+//| Mode 1: Panic Momentum (Death Cross + Rubber Band) -- DEAD (Ph D) |
 //| Mode 2: Institutional Candle BO (stateful state machine)          |
 //| Mode 3: Compression Breakout (BB squeeze release)                 |
+//| Mode 4: Volatility Breakout (composed CVolatilityBreakoutEntry)   |
+//| Mode 5: Session Breakout (composed CSessionBreakoutEntry)         |
+//| Inherits m_context / m_scorer / m_activation_weight / m_engine_id |
+//| from CMajorStrategyEngine; the regime router sets the per-bar     |
+//| activation weight before the orchestrator polls.                  |
 //+------------------------------------------------------------------+
-class CExpansionEngine : public CEntryStrategy
+class CExpansionEngine : public CMajorStrategyEngine
 {
 private:
-   IMarketContext   *m_context;
+   // m_context, m_scorer, m_activation_weight, m_engine_id are inherited
+   // from CMajorStrategyEngine.
    ENUM_DAY_TYPE     m_day_type;
+
+   // Multi-strategy: composed expansion sub-strategies (owned by this engine)
+   CVolatilityBreakoutEntry *m_vol_breakout;
+   CSessionBreakoutEntry    *m_session_breakout;
 
    // Mode enable flags
    bool m_enable_inst_candle;
@@ -75,11 +91,16 @@ public:
                     int compression_min_bars = 3,
                     double min_sl = 100.0)
    {
-      m_context = context;
+      m_context = context;                 // inherited from CMajorStrategyEngine
+      m_engine_id = ENGINE_EXPANSION;       // major-engine identity (4)
       m_inst_candle_mult = inst_candle_mult;
       m_compression_min_bars = compression_min_bars;
       m_min_sl_points = min_sl;
       m_timeframe = PERIOD_H1;
+
+      // Multi-strategy: composed sub-strategies (created in Initialize())
+      m_vol_breakout     = NULL;
+      m_session_breakout = NULL;
 
       // Mode defaults
       m_enable_inst_candle = true;
@@ -128,9 +149,13 @@ public:
    virtual string GetVersion() override { return "1.00"; }
    virtual bool RequiresConfirmation() override { return false; }
    virtual string GetAuthor() override  { return "UltimateTrader"; }
-   virtual string GetDescription() override { return "Multi-mode expansion: Panic Momentum, ICB, Compression Breakout"; }
+   virtual string GetDescription() override { return "Multi-mode expansion: ICB, Compression, Vol-BO, Session-BO"; }
 
-   void SetContext(IMarketContext *context) { m_context = context; }
+   // Major engine (4) is trend-aligned but may fire either direction.
+   virtual ENUM_SIGNAL_TYPE PermittedDirections() override { return SIGNAL_NONE; }
+
+   // SetContext is inherited from CMajorStrategyEngine (sets m_context); we
+   // propagate to the composed sub-strategies in Initialize().
    // Sprint 4G: Allow EA-wide min SL to override engine default
    void SetMinSLPoints(double pts) { m_min_sl_points = pts; }
    void SetDayType(ENUM_DAY_TYPE dt)
@@ -216,7 +241,11 @@ public:
       return report;
    }
 
-   int GetEngineId() { return 2; }
+   // Telemetry engine id (legacy persistence key). NOTE: distinct from the
+   // base CMajorStrategyEngine::GetEngineId() which returns ENUM_MAJOR_ENGINE
+   // (ENGINE_EXPANSION) for the regime router. This one keys the persisted
+   // mode-performance file and MUST stay == 2 to remain compatible.
+   int GetTelemetryEngineId() { return 2; }
 
    int GetModePerformanceCount() { return m_mode_perf_count; }
 
@@ -226,7 +255,7 @@ public:
       ArrayResize(out, count);
       for(int i = 0; i < count; i++)
       {
-         out[i].engine_id = GetEngineId();
+         out[i].engine_id = GetTelemetryEngineId();
          out[i].mode_id = (int)m_mode_perf[i].mode;
          out[i].trades = m_mode_perf[i].trades;
          out[i].wins = m_mode_perf[i].wins;
@@ -249,7 +278,7 @@ public:
    {
       for(int i = 0; i < count; i++)
       {
-         if(in[i].engine_id != GetEngineId()) continue;
+         if(in[i].engine_id != GetTelemetryEngineId()) continue;
          for(int j = 0; j < m_mode_perf_count; j++)
          {
             if((int)m_mode_perf[j].mode == in[i].mode_id)
@@ -279,11 +308,10 @@ public:
    //+------------------------------------------------------------------+
    //| ConfigureModes - set mode enables and parameters                  |
    //+------------------------------------------------------------------+
-   void ConfigureModes(bool panic_always_on, bool inst_candle, bool compression,
+   void ConfigureModes(bool inst_candle, bool compression,
                        double ic_mult, int comp_min_bars)
    {
-      // Panic Momentum is always checked when bear regime is active,
-      // so panic_always_on is accepted but has no gate flag
+      // Phase D: Panic Momentum removed; first param (panic_always_on) dropped.
       m_enable_inst_candle = inst_candle;
       m_enable_compression = compression;
       m_inst_candle_mult = ic_mult;
@@ -335,11 +363,44 @@ public:
          return false;
       }
 
+      // ---- Multi-strategy: composed expansion sub-strategies ----
+      // Vol-Breakout (Donchian/Keltner) and Session-BO (Asian-range) are wired
+      // as additional cascade modes. They own their own handles/SL/TP. If a
+      // sub-strategy fails to initialize we log and continue (the engine's
+      // native modes remain functional) rather than failing the whole engine.
+      m_vol_breakout = new CVolatilityBreakoutEntry(m_context);
+      if(m_vol_breakout != NULL)
+      {
+         m_vol_breakout.SetContext(m_context);
+         if(!m_vol_breakout.Initialize())
+         {
+            Print("CExpansionEngine: WARN composed Vol-Breakout init failed: ",
+                  m_vol_breakout.GetLastError(), " (disabling that mode)");
+            delete m_vol_breakout;
+            m_vol_breakout = NULL;
+         }
+      }
+
+      m_session_breakout = new CSessionBreakoutEntry(m_context);
+      if(m_session_breakout != NULL)
+      {
+         m_session_breakout.SetContext(m_context);
+         if(!m_session_breakout.Initialize())
+         {
+            Print("CExpansionEngine: WARN composed Session-BO init failed: ",
+                  m_session_breakout.GetLastError(), " (disabling that mode)");
+            delete m_session_breakout;
+            m_session_breakout = NULL;
+         }
+      }
+
       m_isInitialized = true;
       Print("CExpansionEngine initialized on ", _Symbol, " ", EnumToString(m_timeframe),
             " | IC_mult=", m_inst_candle_mult,
             " CompMinBars=", m_compression_min_bars,
-            " MinSL=", m_min_sl_points);
+            " MinSL=", m_min_sl_points,
+            " | composed: VolBO=", (m_vol_breakout != NULL ? "on" : "off"),
+            " SessionBO=", (m_session_breakout != NULL ? "on" : "off"));
       return true;
    }
 
@@ -352,6 +413,11 @@ public:
       if(m_handle_bb != INVALID_HANDLE)            { IndicatorRelease(m_handle_bb);            m_handle_bb = INVALID_HANDLE; }
       if(m_handle_keltner_ema != INVALID_HANDLE)   { IndicatorRelease(m_handle_keltner_ema);   m_handle_keltner_ema = INVALID_HANDLE; }
       if(m_handle_keltner_atr != INVALID_HANDLE)   { IndicatorRelease(m_handle_keltner_atr);   m_handle_keltner_atr = INVALID_HANDLE; }
+
+      // Multi-strategy: tear down composed sub-strategies (release their handles)
+      if(m_vol_breakout != NULL)     { m_vol_breakout.Deinitialize();     delete m_vol_breakout;     m_vol_breakout = NULL; }
+      if(m_session_breakout != NULL) { m_session_breakout.Deinitialize(); delete m_session_breakout; m_session_breakout = NULL; }
+
       m_isInitialized = false;
    }
 
@@ -374,6 +440,12 @@ public:
       EntrySignal signal;
       signal.Init();
 
+      // ---- Multi-strategy major-engine gate ----
+      // The regime router sets m_isEnabled (via SetActivationWeight) each bar.
+      // A muted engine self-suppresses so it never reaches orchestrator ranking.
+      if(!m_isEnabled)
+         return signal;
+
       if(!m_isInitialized || m_context == NULL)
          return signal;
 
@@ -387,18 +459,8 @@ public:
 
       UpdateATRHistory(atr);
 
-      // TEST 6: Panic Momentum disabled (PF 0.47/0.21 in 2023, pure loser)
-      if(false && m_context.IsBearRegimeActive() && !IsModeDisabled(MODE_PANIC_MOMENTUM))
-      {
-         signal = CheckPanicMomentum(atr);
-         if(signal.valid)
-         {
-            // v3.2: MAE efficiency entry quality penalty
-            if(GetModeTrades(MODE_PANIC_MOMENTUM) >= 10 && GetModeMAEEfficiency(MODE_PANIC_MOMENTUM) < 0.3)
-               signal.qualityScore = MathMax(0, signal.qualityScore - 3);
-            return signal;
-         }
-      }
+      // Phase D: Panic Momentum mode removed (was dead if(false); PF 0.47/0.21,
+      // pure loser). Cascade now begins at Institutional Candle BO.
 
       // Priority 2: Institutional Candle BO (stateful - always process state machine)
       if(m_enable_inst_candle && !IsModeDisabled(MODE_INSTITUTIONAL_CANDLE))
@@ -409,6 +471,7 @@ public:
             // v3.2: MAE efficiency entry quality penalty
             if(GetModeTrades(MODE_INSTITUTIONAL_CANDLE) >= 10 && GetModeMAEEfficiency(MODE_INSTITUTIONAL_CANDLE) < 0.3)
                signal.qualityScore = MathMax(0, signal.qualityScore - 3);
+            TagAndScore(signal);
             return signal;
          }
       }
@@ -422,7 +485,51 @@ public:
             // v3.2: MAE efficiency entry quality penalty
             if(GetModeTrades(MODE_COMPRESSION_BO) >= 10 && GetModeMAEEfficiency(MODE_COMPRESSION_BO) < 0.3)
                signal.qualityScore = MathMax(0, signal.qualityScore - 3);
+            TagAndScore(signal);
             return signal;
+         }
+      }
+
+      // ---- Multi-strategy composed modes (v1: additional cascade slots) ----
+      // Regime gate: only when volatility is expanding (Factor-4 expansion regime).
+      // The sub-strategies do their own trend-alignment (GetH4TrendDirection) and
+      // SL/TP; here we only gate by expansion context and re-tag the output.
+      // TODO(PhaseB+): deeper tuning -- per-mode confluence, killzone weighting,
+      //                de-dupe vs Compression/IC, dedicated ENUM_ENGINE_MODE values.
+      if(IsExpansionContext())
+      {
+         // Priority 4: Volatility Breakout (Donchian/Keltner)
+         if(m_vol_breakout != NULL)
+         {
+            signal = m_vol_breakout.CheckForEntrySignal();
+            if(signal.valid)
+            {
+               // Composed sub-strategy doesn't set engine_mode; tag it as a
+               // compression/volatility breakout (closest existing enum mode).
+               signal.engine_mode = MODE_COMPRESSION_BO;
+               // Vol breakout (Donchian + Keltner + ADX) is a confirmed expansion
+               // spine; ensure engine_confluence > 0 so the scorer gate passes.
+               if(signal.engine_confluence <= 0)
+                  signal.engine_confluence = 70;
+               signal.requiresConfirmation = false;  // breakout-retest = immediate
+               TagAndScore(signal);
+               return signal;
+            }
+         }
+
+         // Priority 5: Session Breakout (Asian-range day reset)
+         if(m_session_breakout != NULL)
+         {
+            signal = m_session_breakout.CheckForEntrySignal();
+            if(signal.valid)
+            {
+               signal.engine_mode = MODE_LONDON_BREAKOUT;  // session breakout
+               if(signal.engine_confluence <= 0)
+                  signal.engine_confluence = 65;
+               signal.requiresConfirmation = false;
+               TagAndScore(signal);
+               return signal;
+            }
          }
       }
 
@@ -430,6 +537,66 @@ public:
    }
 
 private:
+   //+------------------------------------------------------------------+
+   //| Expansion regime gate for the composed sub-strategies.            |
+   //| Acts when volatility is expanding AND the H4 trend is directional |
+   //| (trend-aligned expansion). The sub-strategies enforce the precise |
+   //| long/short alignment internally; this is the coarse engine gate.  |
+   //+------------------------------------------------------------------+
+   bool IsExpansionContext()
+   {
+      if(m_context == NULL) return false;
+
+      bool vol_expanding = m_context.IsVolatilityExpanding() ||
+                           (m_context.GetVolatilityRegime() == VOL_HIGH ||
+                            m_context.GetVolatilityRegime() == VOL_EXTREME);
+      if(!vol_expanding)
+         return false;
+
+      // Trend-aligned: require a non-neutral H4 trend so we are not breaking
+      // out into a balance/chop. Either direction is permitted (engine (4)).
+      ENUM_TREND_DIRECTION h4 = m_context.GetH4TrendDirection();
+      return (h4 == TREND_BULLISH || h4 == TREND_BEARISH);
+   }
+
+   //+------------------------------------------------------------------+
+   //| Major-engine tagging + orthogonal-axis scoring.                   |
+   //| Stamps the major-engine identity, the router's activation weight  |
+   //| onto regime_risk_multiplier, the engine's day_type, and (if a     |
+   //| scorer is wired) maps the orthogonal confluence axes onto          |
+   //| setupQuality. engine_confluence/requiresConfirmation are set by    |
+   //| each mode before this is called.                                  |
+   //+------------------------------------------------------------------+
+   void TagAndScore(EntrySignal &signal)
+   {
+      if(!signal.valid) return;
+
+      signal.major_engine = m_engine_id;                     // ENGINE_EXPANSION
+      // Router weight -> risk plumbing. Only stamp when the router actually set
+      // a positive weight; otherwise keep EntrySignal.Init()'s 1.0 default so a
+      // legacy (no-router) registration does not zero out risk sizing.
+      if(m_activation_weight > 0.0)
+         signal.regime_risk_multiplier = m_activation_weight;
+      if(m_context != NULL)
+         signal.day_type = m_context.GetDayType();
+      else
+         signal.day_type = m_day_type;
+
+      // Orthogonal-axis scoring (set setupQuality from the shared scorer).
+      // The scorer's L3 hard gate requires a spine (engine_confluence > 0 OR a
+      // recent BOS/CHoCH); our expansion-from-compression modes set
+      // engine_confluence > 0, so the gate passes on a real expansion.
+      if(m_scorer != NULL)
+      {
+         int out_score = 0;
+         signal.setupQuality = m_scorer.Score(signal, m_context, out_score);
+         // Keep qualityScore informative for any score-based diagnostics; the
+         // orchestrator re-derives the ranking score from the evaluator/tier.
+         if(out_score > 0)
+            signal.qualityScore = out_score;
+      }
+   }
+
    void EvaluateModeKill(int idx)
    {
       if(m_mode_perf[idx].auto_disabled) return;
@@ -478,84 +645,8 @@ private:
    }
 
    //+------------------------------------------------------------------+
-   //| CheckPanicMomentum                                                |
-   //| Conditions:                                                       |
-   //|   - Death Cross active (IsBearRegimeActive)                       |
-   //|   - Rubber Band signal (price overextended above EMA21)           |
-   //|   - ADX > 18                                                      |
-   //|   - SELL only                                                     |
+   //| CheckPanicMomentum — REMOVED in Phase D (dead concept, never fired).|
    //+------------------------------------------------------------------+
-   EntrySignal CheckPanicMomentum(double atr)
-   {
-      EntrySignal signal;
-      signal.Init();
-
-      // Must have Death Cross + Rubber Band overextension
-      if(!m_context.IsBearRegimeActive())
-         return signal;
-
-      if(!m_context.IsRubberBandSignal())
-         return signal;
-
-      // ADX filter: need directional momentum
-      double adx = m_context.GetADX();
-      if(adx <= 18.0)
-         return signal;
-
-      // SELL only in panic momentum
-      double entry = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-      // SL: entry + atr * 1.5, widen to 2.0 if VOL_EXTREME
-      double sl_mult = 1.5;
-      if(m_context.GetVolatilityRegime() == VOL_EXTREME)
-         sl_mult = 2.0;
-      double sl = entry + atr * sl_mult;
-
-      // Enforce minimum SL distance (ATR-derived with 50pt floor)
-      double min_sl_distance = GetATRThreshold(atr, 0.50, 50.0, 200.0);
-      if((sl - entry) < min_sl_distance)
-         sl = entry + min_sl_distance;
-
-      // TP: Use swing low from context as dynamic target, or entry - atr * 2.0 if no swing data
-      double swing_low = m_context.GetSwingLow();
-      double tp;
-      if(swing_low > 0 && swing_low < entry)
-         tp = swing_low;
-      else
-         tp = entry - atr * 2.0;
-
-      // Validate R:R
-      double risk = sl - entry;
-      double reward = entry - tp;
-      double rr = (risk > 0) ? reward / risk : 0;
-
-      signal.valid = true;
-      signal.symbol = _Symbol;
-      signal.action = "SELL";
-      signal.entryPrice = entry;
-      signal.stopLoss = sl;
-      signal.takeProfit1 = tp;
-      signal.patternType = PATTERN_PANIC_MOMENTUM;
-      signal.qualityScore = 80;
-      signal.riskReward = rr;
-      signal.comment = "Panic Momentum (Death Cross + Rubber Band)";
-      signal.source = SIGNAL_SOURCE_PATTERN;
-      signal.engine_mode = MODE_PANIC_MOMENTUM;
-      signal.engine_confluence = 85;  // Death Cross + Rubber Band = high confidence
-      signal.day_type = m_day_type;
-      if(m_context != NULL)
-         signal.regimeAtSignal = m_context.GetCurrentRegime();
-
-      // Phase 2: Mid-range location penalty
-      signal.qualityScore += GetLocationPenalty();
-      signal.engine_confluence += GetLocationPenalty() * 5;
-
-      Print("CExpansionEngine: PANIC MOMENTUM SELL | Entry=", entry,
-            " SL=", sl, " TP=", tp,
-            " | ADX=", adx, " ATR=", atr,
-            " | SL_mult=", sl_mult, " R:R=", DoubleToString(rr, 2));
-      return signal;
-   }
 
    //+------------------------------------------------------------------+
    //| CheckInstitutionalCandleBO                                        |

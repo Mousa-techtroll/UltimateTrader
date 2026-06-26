@@ -183,9 +183,16 @@ if((InpSignalSource == BOTH || FILE) && g_fileEntry != NULL && positions < MaxPo
 **Bypassed:** Daily trade limit, daily loss halt.
 **Applied:** Position limit (InpMaxPositions = 5, shared with pattern signals).
 
-### Risk Override
+### Risk: Fixed or CSV-Provided
 
-Risk is **always** forced to `InpFileSignalRiskPct` (0.8%) before ExecuteSignal. CSV risk field and quality-tier system are bypassed.
+Two modes controlled by `InpFileUseCSVRisk`:
+
+| Mode | Behavior |
+|------|----------|
+| `InpFileUseCSVRisk = false` (default) | Risk forced to `InpFileSignalRiskPct` (0.8%) for all signals |
+| `InpFileUseCSVRisk = true` | Uses CSV RiskPct, clamped to 0.4%-1.2% range |
+
+In CSV-risk mode, the provider's conviction level is preserved but bounded to prevent extreme sizing.
 
 ### ExecuteSignal Processing Chain
 
@@ -208,36 +215,82 @@ Position stamped with `signal_source = SIGNAL_SOURCE_FILE`, which triggers the s
 
 ## Section 7: Position Management for File Signals
 
-### Complete Lifecycle
+### Two Lifecycles: With and Without TP3
 
+The management path depends on whether TP3 is available in the CSV and `InpFileUseTP3` is enabled.
+
+**With TP3 (3-way split + runner):**
 ```
-Entry --> TP1 hit (50% close + SL to BE) --> TP2 hit (full close)
-                                          \-> SL hit at BE (partial profit)
-      \-> SL hit (full loss at original SL)
+Entry → TP1 (close 33%, SL→BE)
+      → TP2 (close 50% of remaining, SL→TP1 price)
+      → TP3 (close runner) OR ATR trailing catches it
+      → SL hit at any stage
 ```
 
-### TP1: Hard Price Target
+**Without TP3 (2-way split, legacy):**
+```
+Entry → TP1 (close 50%, SL→BE)
+      → TP2 (close all)
+      → SL hit at any stage
+```
+
+### Split Percentages
+
+| Stage | With TP3 | Without TP3 |
+|-------|----------|-------------|
+| TP1 | 33% of original | 50% of original |
+| TP2 | 50% of remaining (~33% original) | 100% of remaining |
+| Runner | 34% of original → TP3 or trail | N/A |
+
+### TP1: First Partial + Breakeven
 
 - Checked as absolute price level (not R-multiple)
-- 50% of remaining lots closed
+- Partial close at tp1_pct (33% or 50%)
 - SL moved to breakeven (entry price)
-- Stage set to FILE_TP1
+- Stage: FILE_TP1
 
-### TP2: Full Close
+### TP2: Second Partial or Full Close
 
-- Only checked after TP1 hit
-- Closes 100% of remaining lots
-- Position fully closed
+**With TP3:** Closes 50% of remaining lots. SL moved to TP1 price (locks profit). Stage: FILE_TP2_RUNNER. Runner continues toward TP3.
 
-### After TP1 if TP2 Never Reached
+**Without TP3:** Closes 100% of remaining. Position fully closed.
 
-Position sits at breakeven indefinitely. No trailing, no time limit, no exit plugin. Resolves only when TP2 is hit or price returns to breakeven.
+### TP3: Runner Target
+
+Only active when `InpFileUseTP3 = true` AND CSV provides TP3 > 0.
+
+- Runner portion (~34% of original) aims for TP3 as hard price target
+- If TP3 hit: full close, stage FILE_TP3_RUNNER_HIT
+- The runner is risk-free: SL is locked at TP1 price (guaranteed profit)
+
+### ATR Trailing for Runner (after TP2)
+
+When `InpFileTrailAfterTP2 = true`, the runner gets adaptive trailing:
+
+- Uses 1.5x ATR on H1 (tighter than the EA's Chandelier 3.0x)
+- Trailing SL = highest high (5-bar) - 1.5x ATR [LONG]
+- Only tightens, never loosens
+- Independent of the EA's Chandelier system
+- Runs until TP3 hit or trailing SL hit
+
+This means the runner has TWO exit mechanisms:
+1. Hard target at TP3 (if price reaches it)
+2. ATR trailing stop (if price reverses before TP3)
+
+### SL Escalation Summary
+
+| After | SL Position | Locked Profit |
+|-------|------------|---------------|
+| Entry | Original CSV SL | None |
+| TP1 hit | Entry price (breakeven) | Zero risk |
+| TP2 hit | TP1 price | TP1 distance locked |
+| Runner trailing | Dynamic (1.5x ATR from swing) | Grows with trend |
 
 ### What Is Skipped (the `continue` statement)
 
-File positions skip ALL internal systems:
+File positions skip ALL internal EA systems:
 - TP cascade (R-multiple TP0/TP1/TP2)
-- Chandelier trailing
+- Chandelier trailing (3.0x ATR -- replaced by 1.5x ATR for runner only)
 - Early invalidation
 - Smart runner exit
 - Universal stall
@@ -255,7 +308,7 @@ File positions skip ALL internal systems:
 | Limit | Value | Source |
 |-------|-------|--------|
 | Max concurrent positions | 5 | InpMaxPositions (shared with patterns) |
-| Fixed risk per trade | 0.8% | InpFileSignalRiskPct |
+| Risk per trade | 0.8% fixed or 0.4-1.2% CSV | InpFileSignalRiskPct / InpFileUseCSVRisk |
 | Signal expiry | 600s (10 min) | InpSignalTimeTolerance |
 | File re-read interval | 60s | InpFileCheckInterval |
 | EC v3 drawdown control | Dynamic | Continuous multiplier |
@@ -263,6 +316,7 @@ File positions skip ALL internal systems:
 | Broker minimum stop | ~$1+ | SYMBOL_TRADE_STOPS_LEVEL |
 | Price sanity | 0.3x-3.0x bid | Rejects typos |
 | Dedup | Persistent key set | Same signal never executes twice |
+| CSV risk clamp | 0.4%-1.2% | When InpFileUseCSVRisk=true |
 
 ### Bypassed Limits
 
@@ -290,6 +344,9 @@ File positions skip ALL internal systems:
 | InpFileSignalSkipRegime | bool | true | Bypass regime compatibility check |
 | InpFileSignalSkipConfirmation | bool | true | Skip confirmation candle delay |
 | InpFileSignalMode | enum | OPPORTUNISTIC | STRICT / OPPORTUNISTIC / BEST_EFFORT |
+| InpFileUseTP3 | bool | true | Use CSV TP3 as runner target (3-way split) |
+| InpFileTrailAfterTP2 | bool | true | ATR trailing (1.5x) for runner after TP2 |
+| InpFileUseCSVRisk | bool | false | Use CSV RiskPct (clamped 0.4-1.2%) vs fixed |
 | InpBrokerGMTOffset | int | 3 | Fallback GMT offset (only used if GetEETOffset fails) |
 
 ---
@@ -310,15 +367,16 @@ File signals run **independently** on every tick (not through orchestrator). Pat
 ## Section 11: Known Limitations
 
 1. **Best-effort SL bounds calibrated for BearBull scalps** -- 0.2x-0.5x ATR may not match all signal providers
-2. **No per-signal risk from CSV** -- RiskPct field ignored, always uses InpFileSignalRiskPct
-3. **No TP3 support in position management** -- only TP1 (50% close) and TP2 (full close) are used
-4. **No trailing after TP1** -- position sits at breakeven, may miss further gains. No Chandelier, no adaptive SL.
+2. ~~No per-signal risk from CSV~~ **RESOLVED:** `InpFileUseCSVRisk=true` uses CSV risk (clamped 0.4-1.2%)
+3. ~~No TP3 support~~ **RESOLVED:** `InpFileUseTP3=true` enables 3-way split with TP3 runner target
+4. ~~No trailing after TP1~~ **RESOLVED:** `InpFileTrailAfterTP2=true` enables 1.5x ATR trailing for runner
 5. **Weekend close DOES fire** -- CloseAllPositions at top of ManageOpenPositions closes file positions before Friday end
-6. **MaxAge exit skipped** -- positions can live indefinitely between TP1 and TP2
+6. **MaxAge exit skipped** -- runner positions can live indefinitely (until TP3 or trailing SL hit)
 7. **Dedup key collision** -- two different signals with same time+action+entry (within $0.01) are deduped as one
 8. **File signals DO affect EC v3** -- closed file trades feed R-multiples into the equity curve controller
 9. **Position limit shared** -- 5 max applies to pattern + file combined
 10. **Counter-trend 200 EMA can halve file signal risk** -- may unexpectedly reduce sizing
+11. **Runner ATR handle not persistent** -- the runner trailing creates an iATR handle per tick check (low impact in practice, handle is cached by MT5)
 
 ---
 
@@ -333,8 +391,9 @@ File signals run **independently** on every tick (not through orchestrator). Pat
 | Counter-trend 200 EMA | Yes | 0.5x if against D1 trend |
 | Spread gate | Yes | Via ExecuteSignal |
 | Entry sanity (SL vs spread) | Yes | SL must be >= 3x spread |
-| Chandelier trailing | No | Skipped by `continue` |
-| TP cascade (R-multiples) | No | Replaced by hard price TP1/TP2 |
+| Chandelier trailing (3x ATR) | No | Skipped by `continue` |
+| Runner ATR trailing (1.5x) | Yes (after TP2) | Only for runner portion when InpFileTrailAfterTP2=true |
+| TP cascade (R-multiples) | No | Replaced by hard price TP1/TP2/TP3 ladder |
 | Exit plugins | No | All skipped by `continue` |
 | Anti-stall | No | Skipped |
 | EC v3 R-recording | Yes | Closed file trades update equity curve EMAs |

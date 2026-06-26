@@ -281,6 +281,46 @@ private:
       if(trade.Symbol == "") return false;
       if(trade.Action != "BUY" && trade.Action != "SELL") return false;
 
+      // Symbol handling: normalize aliases then validate
+      if(trade.Symbol == "")
+         trade.Symbol = _Symbol;
+
+      // Normalize symbol aliases (CSV providers use different names)
+      string sym = trade.Symbol;
+      StringToUpper(sym);
+      StringTrimLeft(sym); StringTrimRight(sym);
+
+      if(sym == "XAUUSD" || sym == "GOLD" || sym == "XAUUSD+")
+         trade.Symbol = "XAUUSD+";
+      else if(sym == "US30" || sym == "US30+" || sym == "DJ30+")
+         trade.Symbol = "DJ30";
+      else if(sym == "US500" || sym == "US500+")
+         trade.Symbol = "SP500";
+      else if(sym == "USA100" || sym == "USA100+" || sym == "NAS100+" || sym == "USATECH" || sym == "USATECH+")
+         trade.Symbol = "NAS100";
+      else if(sym == "BTCUSD+" || sym == "BTCUSD")
+         trade.Symbol = "BTCUSD";
+      // else: keep original symbol as-is
+
+      // Try to select the symbol in Market Watch (required for trading)
+      if(!SymbolSelect(trade.Symbol, true))
+      {
+         // Try with/without "+" suffix
+         string alt = trade.Symbol;
+         if(StringFind(alt, "+") >= 0)
+            StringReplace(alt, "+", "");
+         else
+            alt = alt + "+";
+
+         if(SymbolSelect(alt, true))
+            trade.Symbol = alt;
+         else
+         {
+            Print("[CFileEntry] Symbol not available: ", trade.Symbol, " (also tried ", alt, ")");
+            return false;
+         }
+      }
+
       // Price sanity: reject typos (>3x or <0.3x current price)
       if(trade.EntryPrice > 0)
       {
@@ -299,10 +339,15 @@ private:
 
       if(trade.EntryPrice <= 0) return false;
 
-      double atr = GetCurrentATR(trade.Symbol);
+      // Only calculate ATR levels if needed (OPPORTUNISTIC or BEST_EFFORT mode)
+      double atr = 0;
       double calc_sl = 0, calc_tp1 = 0, calc_tp2 = 0;
-      if(atr > 0)
-         CalcATRLevels(trade.Symbol, trade.Action, trade.EntryPrice, atr, calc_sl, calc_tp1, calc_tp2);
+      if(InpFileSignalMode != FILE_MODE_STRICT)
+      {
+         atr = GetCurrentATR(trade.Symbol);
+         if(atr > 0)
+            CalcATRLevels(trade.Symbol, trade.Action, trade.EntryPrice, atr, calc_sl, calc_tp1, calc_tp2);
+      }
 
       // ========================================================
       // MODE: BEST_EFFORT — ignore CSV SL/TP, EA calculates all

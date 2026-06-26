@@ -17,13 +17,28 @@ input ENUM_SYMBOL_PROFILE InpSymbolProfile = SYMBOL_PROFILE_XAUUSD; // Symbol pr
 input group "══════ SIGNAL SOURCE ══════"
 input ENUM_SIGNAL_SOURCE InpSignalSource = SIGNAL_SOURCE_BOTH;     // Signal source: PATTERN=engine only, FILE=CSV only, BOTH=engine+CSV
 input string InpSignalFile = "telegram_signals.csv";               // CSV signal file path (in MQL5/Files/)
-input double InpSignalTimeTolerance = 600;                         // Signal execution window (seconds) — 600=10min max signal validity
+input double InpSignalTimeTolerance = 600;                         // Signal time window (seconds) — reject if older than this
+input double InpFileMaxSlippagePct = 0.2;                          // Max slippage as % of CSV entry price (0.2% = $10 gold, $98 DJ30, $50 NAS)
 input int    InpFileCheckInterval = 60;                            // File re-read interval (seconds) — how often EA checks for new signals
 input ENUM_SETUP_QUALITY InpFileSignalQuality = SETUP_A;           // File signal quality tier (A+=highest priority, B=lowest)
 input double InpFileSignalRiskPct = 0.8;                           // File signal default risk % (when CSV has 0 or missing)
 input bool   InpFileSignalSkipRegime = true;                       // File signals bypass regime filter (execute in any market state)
 input bool   InpFileSignalSkipConfirmation = true;                 // File signals skip confirmation candle (execute immediately)
 input ENUM_FILE_SIGNAL_MODE InpFileSignalMode = FILE_MODE_OPPORTUNISTIC; // CSV parse mode: Strict/Opportunistic/BestEffort
+input bool   InpFileUseTP3 = true;              // Use TP3 from CSV as runner target (3-way split)
+input bool   InpFileTrailAfterTP2 = true;       // Enable ATR trailing for runner after TP2
+input bool   InpFileUseCSVRisk = false;         // Use CSV RiskPct (clamped) instead of fixed
+input double InpFileCSVRiskMin = 0.4;          // CSV risk floor % (when InpFileUseCSVRisk=true)
+input double InpFileCSVRiskMax = 1.2;          // CSV risk ceiling % (when InpFileUseCSVRisk=true)
+input double InpFileMaxRiskPerTrade = 2.0;     // Hard cap % per trade for CSV signals (separate from pattern cap)
+input bool   InpFileSignalTrailing = true;     // File Signals: Enable EA trailing after TP1
+input int    InpFileSignalTrailingMode = 1;    // File Signals: 0=No trail, 1=Chandelier, 2=ATR basic
+input double InpFileTrailATRMult = 1.0;        // File Signals: ATR multiplier for trailing (default 1.0, Chandelier uses 3.0)
+input bool   InpFileSignalExitPlugins = true;  // File Signals: Apply critical exits (DailyLoss, Weekend, MaxAge)
+input bool   InpFileSignalRegimeExit = false;  // File Signals: Apply regime-aware exit
+input bool   InpBestEffortFullManagement = true; // Best-Effort: Use full EA management (trailing + exits)
+input ENUM_FILE_LOT_MODE InpFileLotMode = FILE_LOT_RISK_PERCENT; // Lot sizing: RiskPercent / Fixed / CSVRisk
+input double InpFileFixedLots = 0.05;          // Fixed lot size (when InpFileLotMode=Fixed)
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
@@ -215,10 +230,8 @@ input int    InpPinBarHighLookback = 20;        // Pin Bar: lookback bars for re
 input double InpPinBarProximityPct = 1.0;       // Pin Bar: block if within X% of high
 input bool   InpEnableLiquiditySweep = false;// Enable Liquidity Sweep (DISABLED: engine SFP mode replaces this)
 input bool   InpEnableMACross = true;        // Enable MA Cross (baseline)
-input bool   InpEnableBBMeanReversion = false;// BB MR DISABLED: -1.1R/10 trades, never positive
 input bool   InpEnableRangeBox = true;       // Enable Range Box
 input bool   InpEnableFalseBreakout = true;  // Enable False Breakout Fade (baseline)
-input bool   InpEnableSupportBounce = false; // Enable Support Bounce (disabled pending validation)
 
 //--- Group 18: PATTERN SCORES (backtested 2023-2025)
 input group "══════ PATTERN SCORE ADJUSTMENTS ══════"
@@ -237,7 +250,6 @@ input int    InpScoreBearPinBar = 15;        // Bearish Pin Bar score (wired: wa
 input int    InpScoreBearMACross = 18;       // Bearish MA Cross score (wired: was hardcoded as 18)
 input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score
 input int    InpScoreBearLiqSweep = 38;      // Bearish Liquidity Sweep score (wired: was hardcoded as 38)
-input int    InpScoreSupportBounce = 35;     // Support Bounce score
 
 //--- Group 19: MARKET REGIME FILTERS
 input group "══════ MARKET REGIME FILTERS ══════"
@@ -346,7 +358,7 @@ input double InpExecQualityReduceThresh = 0.50;                // Halve risk bel
 
 //--- Group 37a: PULLBACK CONTINUATION ENGINE
 input group "══════ PULLBACK CONTINUATION ENGINE ══════"
-input bool   InpEnablePullbackCont = false;                    // Pullback Cont DISABLED: -0.5R/38 trades, no edge
+input bool   InpEnablePullbackCont = true;                     // Fix 5: ENABLED for re-test on v18/v19 core (was -0.5R/38 trades on prior core)
 input int    InpPBCLookbackBars = 20;                          // Lookback for swing extreme
 input int    InpPBCMinPullbackBars = 2;                        // Min pullback duration (bars)
 input int    InpPBCMaxPullbackBars = 10;                       // Max pullback duration (bars)
@@ -480,3 +492,11 @@ input double             InpRunnerTrailLockStepR1 = 0.50;         // Broker trai
 input double             InpRunnerTrailLockStepR2 = 0.75;         // Broker trail step once locked profit is 2R+
 input double             InpRunnerTrailBarCloseMinStepR = 0.25;   // Minimum locked-R improvement for H1 cadence sends
 input int                InpRunnerBrokerTrailCooldownBars = 1;    // Minimum H1 bars between runner broker trail sends
+
+//--- Group 46: MULTI-STRATEGY ENGINES (regime router + 4 major engines)
+input group "══════ MULTI-STRATEGY ENGINES ══════"
+input bool   InpEnableMultiStrategy   = false;   // Master gate (OFF = today's behavior; ON activates router + engines)
+input bool   InpEnableEngineTrend     = false;   // Engine 1: Trend-Continuation
+input bool   InpEnableEngineReversal  = false;   // Engine 2: Reversal / Sweep
+input bool   InpEnableEngineRange     = false;   // Engine 3: Range / Mean-Reversion
+input bool   InpEnableEngineExpansion = false;   // Engine 4: Breakout / Expansion (router-driven; legacy reg unchanged)

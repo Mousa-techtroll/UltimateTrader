@@ -149,12 +149,15 @@ public:
          return signal;
 
       // Get ATR for stop loss
+      // Fix 6: use the CLOSED bar (shift 1) for SL-sizing ATR, matching the
+      // candlestick plugins' atr_buf[1] convention. The forming bar (shift 0)
+      // gave a non-deterministic, partially-formed ATR for stop sizing.
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
-      if(CopyBuffer(m_handle_atr, 0, 0, 1, atr_buf) < 1)
+      if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_buf) < 2)
          return signal;
 
-      double atr = atr_buf[0];
+      double atr = atr_buf[1];
 
       // Determine trend bias
       ENUM_TREND_DIRECTION trend_bias = TREND_NEUTRAL;
@@ -210,44 +213,8 @@ public:
          }
       }
 
-      // =============================================================
-      // BEARISH MA CROSS: Fast crossed below slow on bar[1]
-      // bar[2]: fast >= slow (before cross)
-      // bar[1]: fast < slow  (after cross)
-      // =============================================================
-      // TEST 2: Bearish MA Cross disabled (PF 0.59, -$722 over 2yr). Bullish kept.
-      if(false && (trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL))
-      {
-         if(ma_fast[2] >= ma_slow[2] && ma_fast[1] < ma_slow[1])
-         {
-            double entry = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-
-            double sl_mult = m_atr_sl_multiplier * m_ma_cross_sl_factor;
-            double stop_buffer = MathMax(atr * sl_mult, m_min_sl_points * _Point);
-            double sl = entry + stop_buffer;
-
-            double tp = entry - (sl - entry) * m_rr_target;
-
-            signal.valid = true;
-            signal.symbol = _Symbol;
-            signal.action = "SELL";
-            signal.entryPrice = entry;
-            signal.stopLoss = sl;
-            signal.takeProfit1 = tp;
-            signal.patternType = PATTERN_MA_CROSS_ANOMALY;
-            signal.qualityScore = InpScoreBearMACross;
-            signal.riskReward = m_rr_target;
-            signal.comment = "Bearish MA Cross";
-            signal.source = SIGNAL_SOURCE_PATTERN;
-            if(m_context != NULL)
-               signal.regimeAtSignal = m_context.GetCurrentRegime();
-
-            Print("CMACrossEntry: BEARISH MA CROSS | Entry=", entry, " SL=", sl, " TP=", tp,
-                  " | Fast[2]=", ma_fast[2], " Slow[2]=", ma_slow[2],
-                  " Fast[1]=", ma_fast[1], " Slow[1]=", ma_slow[1]);
-            return signal;
-         }
-      }
+      // BEARISH MA CROSS: REMOVED in Phase D (was dead if(false); PF 0.59,
+      // -$722 over 2yr — lagging counter-trend on a bull metal). Bullish kept.
 
       return signal;
    }

@@ -1127,6 +1127,13 @@ private:
       double close = iClose(_Symbol, PERIOD_H1, 0);
       datetime now = TimeCurrent();
 
+      // Fix 3: wick/dip tolerance on OB invalidation. An OB-retest REQUIRES price
+      // to dip back into the zone; invalidating the instant any H1 candle closes
+      // just past the zone edge means the very dip that should trigger a retest
+      // self-kills the zone. Only invalidate when the close clears the edge by a
+      // small buffer so a normal retest wick/dip does not destroy the zone.
+      double ob_buffer = GetCurrentATR() * 0.1;
+
       // Check bullish OBs - touch tracking + mitigation
       for(int i = 0; i < m_bullish_ob_count; i++)
       {
@@ -1141,8 +1148,9 @@ private:
                m_bullish_obs[i].last_touch_time = now;
                m_bullish_obs[i].strength = MathMin(100, m_bullish_obs[i].strength + InpSMCTouchStrengthBoost);
             }
-            // Mitigation: price closed below zone
-            if(close < m_bullish_obs[i].bottom)
+            // Mitigation: price closed below zone (Fix 3: + buffer so a retest dip
+            // doesn't self-invalidate the zone)
+            if(close < m_bullish_obs[i].bottom - ob_buffer)
             {
                m_bullish_obs[i].is_valid = false;
                LogPrint("SMC: Bullish OB INVALIDATED at ", m_bullish_obs[i].bottom);
@@ -1163,7 +1171,7 @@ private:
                m_bearish_obs[i].last_touch_time = now;
                m_bearish_obs[i].strength = MathMin(100, m_bearish_obs[i].strength + InpSMCTouchStrengthBoost);
             }
-            if(close > m_bearish_obs[i].top)
+            if(close > m_bearish_obs[i].top + ob_buffer)  // Fix 3: + buffer (mirror of bullish side)
             {
                m_bearish_obs[i].is_valid = false;
                LogPrint("SMC: Bearish OB INVALIDATED at ", m_bearish_obs[i].top);

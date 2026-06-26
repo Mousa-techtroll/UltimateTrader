@@ -89,6 +89,7 @@ struct SPosition
    double               original_sl;        // Original SL at entry (never modified)
    double               tp1;                // Take profit 1
    double               tp2;                // Take profit 2
+   double               tp3;                // Take profit 3 (runner target for file signals)
    double               original_tp1;       // Original TP1 at entry
    bool                 tp1_closed;         // TP1 hit?
    bool                 tp2_closed;         // TP2 hit?
@@ -101,6 +102,7 @@ struct SPosition
 
    // From AICoder V1 integration
    ENUM_SIGNAL_SOURCE   signal_source;      // Where this signal came from
+   bool                 best_effort_mode;   // True if EA calculated SL/TP (not from CSV)
 
    // Phase 0.1: Persistence state machine
    ENUM_POSITION_STAGE  stage;              // Current position stage
@@ -129,6 +131,7 @@ struct SPosition
    ENUM_ENGINE_MODE     engine_mode;        // Engine mode at signal time
    ENUM_DAY_TYPE        day_type;           // Day classification at signal time
    int                  engine_confluence;  // Engine confidence 0-100
+   ENUM_MAJOR_ENGINE    major_engine;       // Which major engine produced this (multi-strategy)
 
    // R-milestone tracking (Phase 1 forensic)
    bool   reached_050r;          // Did MFE reach 0.5R?
@@ -195,10 +198,10 @@ struct SPosition
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
       lot_size = 0; entry_price = 0; stop_loss = 0; original_sl = 0;
-      tp1 = 0; tp2 = 0; original_tp1 = 0;
+      tp1 = 0; tp2 = 0; tp3 = 0; original_tp1 = 0;
       tp1_closed = false; tp2_closed = false; open_time = 0;
       setup_quality = SETUP_NONE; pattern_name = ""; signal_id = ""; initial_risk_pct = 0;
-      at_breakeven = false; signal_source = SIGNAL_SOURCE_PATTERN;
+      at_breakeven = false; signal_source = SIGNAL_SOURCE_PATTERN; best_effort_mode = false;
       stage = STAGE_INITIAL; original_lots = 0; remaining_lots = 0;
       trailing_mode = 0; entry_regime = 0; stage_label = "";
       mae = 0; mfe = 0; entry_spread = 0; entry_slippage = 0;
@@ -206,6 +209,7 @@ struct SPosition
       requested_entry_price = 0; executed_entry_price = 0;
       entry_balance = 0; entry_equity = 0; entry_risk_amount = 0;
       engine_name = ""; engine_mode = MODE_NONE; day_type = DAY_TREND;
+      major_engine = ENGINE_NONE;
       engine_confluence = 0;
       reached_050r = false; reached_100r = false;
       peak_r_before_be = 0; be_before_tp1 = false;
@@ -541,6 +545,7 @@ struct EntrySignal
    int                 engine_confluence;    // 0-100, engine-internal confidence
    ENUM_ENGINE_MODE    engine_mode;          // Which engine mode generated this
    ENUM_DAY_TYPE       day_type;             // Day classification at signal time
+   ENUM_MAJOR_ENGINE   major_engine;         // Which major engine produced this (multi-strategy)
 
    void Init()
    {
@@ -567,11 +572,12 @@ struct EntrySignal
       qualityScore = 0;
       riskReward = 0;
       regimeAtSignal = REGIME_UNKNOWN;
-      requiresConfirmation = false;
+      requiresConfirmation = true;   // Fix 1: default to "needs confirmation"; plugins explicitly clear it to opt out
       source = SIGNAL_SOURCE_PATTERN;
       engine_confluence = 0;
       engine_mode = MODE_NONE;
       day_type = DAY_TREND;
+      major_engine = ENGINE_NONE;
    }
 
    // Validate the signal data (from AICoder V1 CEntryStrategy)

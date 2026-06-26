@@ -1,0 +1,557 @@
+{
+  "base_pnl": 7456.4,
+  "scenario_rows": [
+    {
+      "Scenario": "Disable Bearish Pin Bar outside Asia",
+      "Category": "entry_filter",
+      "TradesRemoved": 0,
+      "RemovedPnL": 0,
+      "NewPnL": 7456.4,
+      "Delta": 0,
+      "Rationale": "Bearish Pin Bar is strongly positive in Asia and materially negative in London/NewYork."
+    },
+    {
+      "Scenario": "Disable Bullish MA Cross in NewYork",
+      "Category": "entry_filter",
+      "TradesRemoved": 2,
+      "RemovedPnL": 86.25,
+      "NewPnL": 7370.15,
+      "Delta": -86.25,
+      "Rationale": "Bullish MA Cross is consistently better in Asia/London than NewYork."
+    },
+    {
+      "Scenario": "Disable Rubber Band Short B+",
+      "Category": "entry_filter",
+      "TradesRemoved": 0,
+      "RemovedPnL": 0,
+      "NewPnL": 7456.4,
+      "Delta": 0,
+      "Rationale": "Rubber Band Short loses money in B+ quality; A/A+ are the profitable subsets."
+    },
+    {
+      "Scenario": "Disable Bullish Pin Bar outside TRENDING regime",
+      "Category": "entry_filter",
+      "TradesRemoved": 7,
+      "RemovedPnL": 140.54,
+      "NewPnL": 7315.86,
+      "Delta": -140.54,
+      "Rationale": "Bullish Pin Bar is positive in trending conditions and negative outside them."
+    },
+    {
+      "Scenario": "Disable longs after >1.5% 72h rise",
+      "Category": "entry_filter",
+      "TradesRemoved": 20,
+      "RemovedPnL": -275.47,
+      "NewPnL": 7731.87,
+      "Delta": 275.47,
+      "Rationale": "The current long book loses money when entering after very strong 72h upside extension."
+    },
+    {
+      "Scenario": "Combined robust entry filters",
+      "Category": "entry_filter_combo",
+      "TradesRemoved": 9,
+      "RemovedPnL": 226.79,
+      "NewPnL": 7229.61,
+      "Delta": -226.79,
+      "Rationale": "Combines the four most robust pattern/session/regime filters."
+    },
+    {
+      "Scenario": "Recover 10% of strong-trade missed move",
+      "Category": "exit_management",
+      "TradesRemoved": 99,
+      "RemovedPnL": 0.0,
+      "NewPnL": 9825.74,
+      "Delta": 2369.34,
+      "Rationale": "Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits."
+    },
+    {
+      "Scenario": "Recover 15% of strong-trade missed move",
+      "Category": "exit_management",
+      "TradesRemoved": 99,
+      "RemovedPnL": 0.0,
+      "NewPnL": 11010.41,
+      "Delta": 3554.01,
+      "Rationale": "Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits."
+    },
+    {
+      "Scenario": "Recover 20% of strong-trade missed move",
+      "Category": "exit_management",
+      "TradesRemoved": 99,
+      "RemovedPnL": 0.0,
+      "NewPnL": 12195.08,
+      "Delta": 4738.68,
+      "Rationale": "Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits."
+    },
+    {
+      "Scenario": "Recover 25% of strong-trade missed move",
+      "Category": "exit_management",
+      "TradesRemoved": 99,
+      "RemovedPnL": 0.0,
+      "NewPnL": 13379.76,
+      "Delta": 5923.36,
+      "Rationale": "Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits."
+    }
+  ],
+  "pattern_rows": [
+    {
+      "Pattern": "Bearish Pin Bar",
+      "Dimension": "Session",
+      "Bucket": "ASIA",
+      "Trades": 82,
+      "NetPnL": 2333.59,
+      "AvgPnL": 28.46,
+      "WinRatePct": 53.7,
+      "BadEntryPct": 23.2,
+      "BadExitPct": 34.1
+    },
+    {
+      "Pattern": "Bearish Pin Bar",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A_PLUS",
+      "Trades": 47,
+      "NetPnL": 903.52,
+      "AvgPnL": 19.22,
+      "WinRatePct": 51.1,
+      "BadEntryPct": 23.4,
+      "BadExitPct": 36.2
+    },
+    {
+      "Pattern": "Bearish Pin Bar",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_B_PLUS",
+      "Trades": 14,
+      "NetPnL": 444.72,
+      "AvgPnL": 31.77,
+      "WinRatePct": 57.1,
+      "BadEntryPct": 35.7,
+      "BadExitPct": 28.6
+    },
+    {
+      "Pattern": "Bearish Pin Bar",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A",
+      "Trades": 21,
+      "NetPnL": 985.35,
+      "AvgPnL": 46.92,
+      "WinRatePct": 57.1,
+      "BadEntryPct": 14.3,
+      "BadExitPct": 33.3
+    },
+    {
+      "Pattern": "Bearish Pin Bar",
+      "Dimension": "Regime",
+      "Bucket": "TRENDING",
+      "Trades": 73,
+      "NetPnL": 2071.48,
+      "AvgPnL": 28.38,
+      "WinRatePct": 52.1,
+      "BadEntryPct": 26.0,
+      "BadExitPct": 34.2
+    },
+    {
+      "Pattern": "Bearish Pin Bar",
+      "Dimension": "Regime",
+      "Bucket": "VOLATILE",
+      "Trades": 9,
+      "NetPnL": 262.11,
+      "AvgPnL": 29.12,
+      "WinRatePct": 66.7,
+      "BadEntryPct": 0.0,
+      "BadExitPct": 33.3
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "ASIA",
+      "Trades": 21,
+      "NetPnL": 409.34,
+      "AvgPnL": 19.49,
+      "WinRatePct": 47.6,
+      "BadEntryPct": 4.8,
+      "BadExitPct": 33.3
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "LONDON",
+      "Trades": 44,
+      "NetPnL": 281.02,
+      "AvgPnL": 6.39,
+      "WinRatePct": 38.6,
+      "BadEntryPct": 25.0,
+      "BadExitPct": 40.9
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "NEWYORK",
+      "Trades": 68,
+      "NetPnL": 1570.69,
+      "AvgPnL": 23.1,
+      "WinRatePct": 57.4,
+      "BadEntryPct": 22.1,
+      "BadExitPct": 32.4
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A_PLUS",
+      "Trades": 91,
+      "NetPnL": 1728.63,
+      "AvgPnL": 19.0,
+      "WinRatePct": 50.5,
+      "BadEntryPct": 16.5,
+      "BadExitPct": 33.0
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A",
+      "Trades": 35,
+      "NetPnL": 413.5,
+      "AvgPnL": 11.81,
+      "WinRatePct": 45.7,
+      "BadEntryPct": 31.4,
+      "BadExitPct": 42.9
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_B_PLUS",
+      "Trades": 7,
+      "NetPnL": 118.92,
+      "AvgPnL": 16.99,
+      "WinRatePct": 57.1,
+      "BadEntryPct": 14.3,
+      "BadExitPct": 28.6
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "TRENDING",
+      "Trades": 131,
+      "NetPnL": 2129.78,
+      "AvgPnL": 16.26,
+      "WinRatePct": 48.9,
+      "BadEntryPct": 20.6,
+      "BadExitPct": 35.1
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "RANGING",
+      "Trades": 1,
+      "NetPnL": 56.08,
+      "AvgPnL": 56.08,
+      "WinRatePct": 100.0,
+      "BadEntryPct": 0.0,
+      "BadExitPct": 100.0
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "VOLATILE",
+      "Trades": 1,
+      "NetPnL": 75.19,
+      "AvgPnL": 75.19,
+      "WinRatePct": 100.0,
+      "BadEntryPct": 0.0,
+      "BadExitPct": 0.0
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "NEWYORK",
+      "Trades": 61,
+      "NetPnL": -45.47,
+      "AvgPnL": -0.75,
+      "WinRatePct": 42.6,
+      "BadEntryPct": 29.5,
+      "BadExitPct": 36.1
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "LONDON",
+      "Trades": 22,
+      "NetPnL": 732.4,
+      "AvgPnL": 33.29,
+      "WinRatePct": 45.5,
+      "BadEntryPct": 36.4,
+      "BadExitPct": 36.4
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "ASIA",
+      "Trades": 21,
+      "NetPnL": 812.49,
+      "AvgPnL": 38.69,
+      "WinRatePct": 52.4,
+      "BadEntryPct": 23.8,
+      "BadExitPct": 28.6
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A",
+      "Trades": 26,
+      "NetPnL": 101.5,
+      "AvgPnL": 3.9,
+      "WinRatePct": 34.6,
+      "BadEntryPct": 34.6,
+      "BadExitPct": 46.2
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A_PLUS",
+      "Trades": 69,
+      "NetPnL": 1627.7,
+      "AvgPnL": 23.59,
+      "WinRatePct": 53.6,
+      "BadEntryPct": 26.1,
+      "BadExitPct": 31.9
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_B_PLUS",
+      "Trades": 9,
+      "NetPnL": -229.78,
+      "AvgPnL": -25.53,
+      "WinRatePct": 11.1,
+      "BadEntryPct": 44.4,
+      "BadExitPct": 22.2
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "TRENDING",
+      "Trades": 97,
+      "NetPnL": 1358.88,
+      "AvgPnL": 14.01,
+      "WinRatePct": 44.3,
+      "BadEntryPct": 28.9,
+      "BadExitPct": 36.1
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "VOLATILE",
+      "Trades": 5,
+      "NetPnL": 222.3,
+      "AvgPnL": 44.46,
+      "WinRatePct": 80.0,
+      "BadEntryPct": 20.0,
+      "BadExitPct": 20.0
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "RANGING",
+      "Trades": 2,
+      "NetPnL": -81.76,
+      "AvgPnL": -40.88,
+      "WinRatePct": 0.0,
+      "BadEntryPct": 100.0,
+      "BadExitPct": 0.0
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Session",
+      "Bucket": "LONDON",
+      "Trades": 30,
+      "NetPnL": 54.78,
+      "AvgPnL": 1.83,
+      "WinRatePct": 50.0,
+      "BadEntryPct": 50.0,
+      "BadExitPct": 26.7
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Session",
+      "Bucket": "ASIA",
+      "Trades": 10,
+      "NetPnL": 198.07,
+      "AvgPnL": 19.81,
+      "WinRatePct": 60.0,
+      "BadEntryPct": 10.0,
+      "BadExitPct": 20.0
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Session",
+      "Bucket": "NEWYORK",
+      "Trades": 47,
+      "NetPnL": 129.85,
+      "AvgPnL": 2.76,
+      "WinRatePct": 44.7,
+      "BadEntryPct": 53.2,
+      "BadExitPct": 38.3
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A",
+      "Trades": 23,
+      "NetPnL": 137.55,
+      "AvgPnL": 5.98,
+      "WinRatePct": 47.8,
+      "BadEntryPct": 52.2,
+      "BadExitPct": 26.1
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A_PLUS",
+      "Trades": 64,
+      "NetPnL": 245.15,
+      "AvgPnL": 3.83,
+      "WinRatePct": 48.4,
+      "BadEntryPct": 45.3,
+      "BadExitPct": 34.4
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Regime",
+      "Bucket": "TRENDING",
+      "Trades": 84,
+      "NetPnL": 336.54,
+      "AvgPnL": 4.01,
+      "WinRatePct": 47.6,
+      "BadEntryPct": 47.6,
+      "BadExitPct": 32.1
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "Dimension": "Regime",
+      "Bucket": "RANGING",
+      "Trades": 3,
+      "NetPnL": 46.16,
+      "AvgPnL": 15.39,
+      "WinRatePct": 66.7,
+      "BadEntryPct": 33.3,
+      "BadExitPct": 33.3
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "ASIA",
+      "Trades": 13,
+      "NetPnL": 200.39,
+      "AvgPnL": 15.41,
+      "WinRatePct": 46.2,
+      "BadEntryPct": 30.8,
+      "BadExitPct": 53.8
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "LONDON",
+      "Trades": 9,
+      "NetPnL": 608.76,
+      "AvgPnL": 67.64,
+      "WinRatePct": 66.7,
+      "BadEntryPct": 22.2,
+      "BadExitPct": 33.3
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Session",
+      "Bucket": "NEWYORK",
+      "Trades": 2,
+      "NetPnL": 86.25,
+      "AvgPnL": 43.12,
+      "WinRatePct": 50.0,
+      "BadEntryPct": 0.0,
+      "BadExitPct": 0.0
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_B_PLUS",
+      "Trades": 6,
+      "NetPnL": -75.15,
+      "AvgPnL": -12.53,
+      "WinRatePct": 33.3,
+      "BadEntryPct": 50.0,
+      "BadExitPct": 33.3
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A_PLUS",
+      "Trades": 7,
+      "NetPnL": 462.87,
+      "AvgPnL": 66.12,
+      "WinRatePct": 71.4,
+      "BadEntryPct": 0.0,
+      "BadExitPct": 14.3
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Quality",
+      "Bucket": "SETUP_A",
+      "Trades": 11,
+      "NetPnL": 507.68,
+      "AvgPnL": 46.15,
+      "WinRatePct": 54.5,
+      "BadEntryPct": 27.3,
+      "BadExitPct": 63.6
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "Dimension": "Regime",
+      "Bucket": "TRENDING",
+      "Trades": 24,
+      "NetPnL": 895.4,
+      "AvgPnL": 37.31,
+      "WinRatePct": 54.2,
+      "BadEntryPct": 25.0,
+      "BadExitPct": 41.7
+    }
+  ],
+  "exit_rows": [
+    {
+      "Pattern": "Bearish Pin Bar",
+      "StrongBadExitTrades": 21,
+      "Opportunity24hMoney": 7189.34,
+      "RealizedPnLOnThoseTrades": 1195.21,
+      "AvgMissedR24h": 3.54,
+      "MainExitIssues": "trailing_stop_too_tight:12|take_profit_too_close:6|breakeven_exit_too_early:2|premature_exit:1"
+    },
+    {
+      "Pattern": "Bullish Engulfing (Confirmed)",
+      "StrongBadExitTrades": 26,
+      "Opportunity24hMoney": 6712.55,
+      "RealizedPnLOnThoseTrades": 1313.97,
+      "AvgMissedR24h": 3.01,
+      "MainExitIssues": "trailing_stop_too_tight:13|breakeven_exit_too_early:12|premature_exit:1"
+    },
+    {
+      "Pattern": "Bullish Pin Bar (Confirmed)",
+      "StrongBadExitTrades": 22,
+      "Opportunity24hMoney": 5255.28,
+      "RealizedPnLOnThoseTrades": 893.24,
+      "AvgMissedR24h": 2.71,
+      "MainExitIssues": "trailing_stop_too_tight:10|breakeven_exit_too_early:8|premature_exit:3|take_profit_too_close:1"
+    },
+    {
+      "Pattern": "Rubber Band Short (Death Cross)",
+      "StrongBadExitTrades": 17,
+      "Opportunity24hMoney": 2359.75,
+      "RealizedPnLOnThoseTrades": 268.89,
+      "AvgMissedR24h": 4.02,
+      "MainExitIssues": "trailing_stop_too_tight:17"
+    },
+    {
+      "Pattern": "Bullish MA Cross (Confirmed)",
+      "StrongBadExitTrades": 7,
+      "Opportunity24hMoney": 1346.44,
+      "RealizedPnLOnThoseTrades": 641.99,
+      "AvgMissedR24h": 2.1,
+      "MainExitIssues": "trailing_stop_too_tight:4|breakeven_exit_too_early:3"
+    }
+  ]
+}

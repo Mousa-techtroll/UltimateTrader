@@ -1439,10 +1439,10 @@ private:
       // Different validations based on order type
       if(IsMarketOrderType(orderType))
       {
-         // For market orders, we need valid SL/TP
-         if(stopLoss <= 0 || takeProfit <= 0)
+         // For market orders, SL is required. TP is optional (0 = no broker TP, internal management)
+         if(stopLoss <= 0)
          {
-            result.message = "Invalid SL/TP for market order execution";
+            result.message = "Invalid SL for market order execution";
             Log.Error(result.message);
             return false;
          }

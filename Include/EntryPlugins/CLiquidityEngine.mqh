@@ -366,11 +366,15 @@ public:
          return signal;
 
       //--- Get ATR value
+      // Fix 6: use the CLOSED bar (shift 1) for determinism in SL sizing and all
+      // ATR-derived thresholds, matching the candlestick plugins' atr_buf[1]
+      // convention. The buffer already copies 2 bars; was reading the forming
+      // bar at index [0].
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
       if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_buf) < 2)
          return signal;
-      double atr = atr_buf[0];
+      double atr = atr_buf[1];
       if(atr <= 0)
          return signal;
 

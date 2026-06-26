@@ -1,0 +1,11 @@
+Scenario,Category,TradesRemoved,RemovedPnL,NewPnL,Delta,Rationale
+Disable Bearish Pin Bar outside Asia,entry_filter,0,0,7456.4,0,Bearish Pin Bar is strongly positive in Asia and materially negative in London/NewYork.
+Disable Bullish MA Cross in NewYork,entry_filter,2,86.25,7370.15,-86.25,Bullish MA Cross is consistently better in Asia/London than NewYork.
+Disable Rubber Band Short B+,entry_filter,0,0,7456.4,0,Rubber Band Short loses money in B+ quality; A/A+ are the profitable subsets.
+Disable Bullish Pin Bar outside TRENDING regime,entry_filter,7,140.54,7315.86,-140.54,Bullish Pin Bar is positive in trending conditions and negative outside them.
+Disable longs after >1.5% 72h rise,entry_filter,20,-275.47,7731.87,275.47,The current long book loses money when entering after very strong 72h upside extension.
+Combined robust entry filters,entry_filter_combo,9,226.79,7229.61,-226.79,Combines the four most robust pattern/session/regime filters.
+Recover 10% of strong-trade missed move,exit_management,99,0.0,9825.74,2369.34,Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits.
+Recover 15% of strong-trade missed move,exit_management,99,0.0,11010.41,3554.01,Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits.
+Recover 20% of strong-trade missed move,exit_management,99,0.0,12195.08,4738.68,Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits.
+Recover 25% of strong-trade missed move,exit_management,99,0.0,13379.76,5923.36,Only applies to strong-followthrough trades currently cut by trailing/BE/TP exits.

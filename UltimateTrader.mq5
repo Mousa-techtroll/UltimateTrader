@@ -38,13 +38,13 @@
 #include "Include/PluginSystem/CExitStrategy.mqh"
 #include "Include/PluginSystem/CRiskStrategy.mqh"
 #include "Include/PluginSystem/CTrailingStrategy.mqh"
+#include "Include/PluginSystem/CMajorStrategyEngine.mqh"   // Multi-strategy: major-engine base (Phase A foundation)
 
 // Entry Plugins (11 + 2 new Phase 3.4 strategies)
 #include "Include/EntryPlugins/CEngulfingEntry.mqh"
 #include "Include/EntryPlugins/CPinBarEntry.mqh"
 #include "Include/EntryPlugins/CLiquiditySweepEntry.mqh"
 #include "Include/EntryPlugins/CMACrossEntry.mqh"
-#include "Include/EntryPlugins/CBBMeanReversionEntry.mqh"
 #include "Include/EntryPlugins/CRangeBoxEntry.mqh"
 #include "Include/EntryPlugins/CFalseBreakoutFadeEntry.mqh"
 #include "Include/EntryPlugins/CRangeEdgeFade.mqh"
@@ -52,7 +52,6 @@
 #include "Include/MarketAnalysis/CRangeBoxDetector.mqh"
 #include "Include/EntryPlugins/CVolatilityBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CCrashBreakoutEntry.mqh"
-#include "Include/EntryPlugins/CSupportBounceEntry.mqh"
 #include "Include/EntryPlugins/CFileEntry.mqh"
 #include "Include/EntryPlugins/CDisplacementEntry.mqh"
 #include "Include/EntryPlugins/CSessionBreakoutEntry.mqh"
@@ -63,6 +62,11 @@
 #include "Include/EntryPlugins/CSessionEngine.mqh"
 #include "Include/EntryPlugins/CExpansionEngine.mqh"
 #include "Include/EntryPlugins/CPullbackContinuationEngine.mqh"
+
+// Multi-strategy: the three NEW major engines (engine 4 = CExpansionEngine above)
+#include "Include/EntryPlugins/CTrendContinuationEngine.mqh"
+#include "Include/EntryPlugins/CReversalSweepEngine.mqh"
+#include "Include/EntryPlugins/CRangeReversionEngine.mqh"
 
 // Exit Plugins
 #include "Include/ExitPlugins/CRegimeAwareExit.mqh"
@@ -83,6 +87,7 @@
 
 // Core Orchestration
 #include "Include/Core/CMarketStateManager.mqh"
+#include "Include/Core/CRegimeRouter.mqh"   // Multi-strategy: regime router (Phase A foundation; not instantiated yet)
 #include "Include/Core/CSignalOrchestrator.mqh"
 #include "Include/Core/CTradeOrchestrator.mqh"
 #include "Include/Core/CPositionCoordinator.mqh"
@@ -93,6 +98,7 @@
 #include "Include/Core/CEquityCurveRiskController.mqh"
 
 // Validation
+#include "Include/Validation/CConfluenceScorer.mqh"   // Multi-strategy: orthogonal-axis scorer (Phase A foundation)
 #include "Include/Validation/CSignalValidator.mqh"
 #include "Include/Validation/CSetupEvaluator.mqh"
 #include "Include/Validation/CMarketFilters.mqh"
@@ -125,7 +131,6 @@ CEngulfingEntry        *g_engulfingEntry     = NULL;
 CPinBarEntry           *g_pinBarEntry        = NULL;
 CLiquiditySweepEntry   *g_liqSweepEntry      = NULL;
 CMACrossEntry          *g_maCrossEntry       = NULL;
-CBBMeanReversionEntry  *g_bbMREntry          = NULL;
 CRangeBoxEntry         *g_rangeBoxEntry      = NULL;
 CFalseBreakoutFadeEntry *g_fbfEntry          = NULL;
 CRangeEdgeFade         *g_rangeEdgeFade      = NULL;
@@ -133,7 +138,6 @@ CFailedBreakReversal   *g_failedBreakRev     = NULL;
 CRangeBoxDetector      *g_rangeBoxDetector   = NULL;
 CVolatilityBreakoutEntry *g_volBreakoutEntry = NULL;
 CCrashBreakoutEntry    *g_crashEntry         = NULL;
-CSupportBounceEntry    *g_supportBounceEntry = NULL;
 CFileEntry             *g_fileEntry          = NULL;
 CDisplacementEntry     *g_displacementEntry  = NULL;
 CSessionBreakoutEntry  *g_sessionBreakout    = NULL;
@@ -144,6 +148,15 @@ CLiquidityEngine       *g_liquidityEngine    = NULL;
 CSessionEngine         *g_sessionEngine      = NULL;
 CExpansionEngine       *g_expansionEngine    = NULL;
 CPullbackContinuationEngine *g_pullbackEngine = NULL;
+
+// Multi-strategy: scorer, regime router, and the three NEW major engines
+// (engine 4 = the existing g_expansionEngine above). All NULL unless
+// InpEnableMultiStrategy is on, so default behavior is unchanged.
+CConfluenceScorer        *g_confluenceScorer    = NULL;
+CRegimeRouter            *g_regimeRouter         = NULL;
+CTrendContinuationEngine *g_trendContEngine      = NULL;
+CReversalSweepEngine     *g_reversalSweepEngine  = NULL;
+CRangeReversionEngine    *g_engineRange          = NULL;
 
 // Entry plugin array for orchestrator
 CEntryStrategy         *g_entryPlugins[];
@@ -571,12 +584,11 @@ int OnInit()
    RegisterEntryPlugin(g_maCrossEntry,    InpEnableMACross && register_patterns);
 
    // Mean Reversion patterns
-   g_bbMREntry         = new CBBMeanReversionEntry();
+   // Phase D: CBBMeanReversionEntry + CSupportBounceEntry removed (silent by
+   // default; superseded by engine 3 reimplementation). RangeBox + FBF kept.
    g_rangeBoxEntry     = new CRangeBoxEntry();
    g_fbfEntry          = new CFalseBreakoutFadeEntry();
-   g_supportBounceEntry = new CSupportBounceEntry(NULL);
 
-   RegisterEntryPlugin(g_bbMREntry,       InpEnableBBMeanReversion && register_patterns);
 
    // S3/S6 Option B-lite: when enabled, S3/S6 replace RangeBox + FalseBreakout
    // BB Mean Reversion stays for comparison
@@ -607,7 +619,7 @@ int OnInit()
       RegisterEntryPlugin(g_fbfEntry,        InpEnableFalseBreakout);
    }
 
-   RegisterEntryPlugin(g_supportBounceEntry, InpEnableSupportBounce && register_patterns);
+   // Phase D: CSupportBounceEntry registration removed (silent by default; superseded by engine 3).
 
    // Volatility Breakout
    g_volBreakoutEntry  = new CVolatilityBreakoutEntry(NULL,
@@ -625,16 +637,12 @@ int OnInit()
    RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
 
    // File-based signals (if enabled)
-   // In BOTH mode: file signals run INDEPENDENTLY (not through orchestrator)
-   // so both file and pattern signals can execute on the same bar.
-   // In FILE-only mode: registered as plugin (no pattern competition).
+   // File signals ALWAYS run independently (never through orchestrator).
+   // The orchestrator applies regime/trend/confidence/SMC gates that are wrong for external signals.
    if(InpSignalSource == SIGNAL_SOURCE_FILE || InpSignalSource == SIGNAL_SOURCE_BOTH)
    {
       g_fileEntry = new CFileEntry(NULL, InpSignalFile, (int)InpSignalTimeTolerance, InpFileCheckInterval);
-      if(InpSignalSource == SIGNAL_SOURCE_FILE)
-         RegisterEntryPlugin(g_fileEntry, true);  // FILE only — runs through orchestrator
-      else
-         g_fileEntry.Initialize();  // BOTH — initialized but NOT registered, runs separately
+      g_fileEntry.Initialize();  // Independent path — bypasses all orchestrator validation
    }
 
    // Phase 3.4: New entry plugins
@@ -678,7 +686,7 @@ int OnInit()
    if(InpEnableExpansionEngine && register_patterns)
    {
       g_expansionEngine = new CExpansionEngine(GetPointer(g_marketContext), InpInstCandleMult, InpCompressionMinBars, g_scaledMinSLPoints);  // Sprint 4G: pass EA-wide min SL
-      g_expansionEngine.ConfigureModes(true, InpExpInstitutionalCandle, InpExpCompressionBO, InpInstCandleMult, InpCompressionMinBars);
+      g_expansionEngine.ConfigureModes(InpExpInstitutionalCandle, InpExpCompressionBO, InpInstCandleMult, InpCompressionMinBars);
       RegisterEntryPlugin(g_expansionEngine, true);
    }
 
@@ -697,6 +705,51 @@ int OnInit()
          InpPBCEnableMultiCycle, InpPBCCycleCooldownBars,
          InpPBCMaxCyclesPerTrend, InpPBCRearmMinPullbackATR,
          InpPBCRearmMinBars, InpPBCTrendResetBars);
+   }
+
+   //================================================================
+   // MULTI-STRATEGY: scorer + regime router + four major engines.
+   // Entirely gated by InpEnableMultiStrategy (default false) so the
+   // registered-plugin set and OnTick path are byte-identical to today
+   // when off. Placed AFTER all legacy registrations so g_expansionEngine
+   // already exists, and BEFORE the orchestrator consumes g_entryPlugins[].
+   //================================================================
+   if(InpEnableMultiStrategy)
+   {
+      g_confluenceScorer = new CConfluenceScorer();
+      g_confluenceScorer.Configure(InpPointsAPlusSetup, InpPointsASetup,
+                                   InpPointsBPlusSetup, InpPointsBSetup);
+
+      g_regimeRouter = new CRegimeRouter();
+      g_regimeRouter.Initialize(GetPointer(g_marketContext));
+
+      // Engine 1: Trend-Continuation (context set by RegisterEntryPlugin)
+      g_trendContEngine = new CTrendContinuationEngine();
+      g_trendContEngine.SetScorer(g_confluenceScorer);
+      RegisterEntryPlugin(g_trendContEngine, InpEnableEngineTrend);
+      g_regimeRouter.RegisterEngine(g_trendContEngine);
+
+      // Engine 2: Reversal / Sweep
+      g_reversalSweepEngine = new CReversalSweepEngine(GetPointer(g_marketContext), 14, 0.5, PERIOD_H1);
+      g_reversalSweepEngine.SetScorer(g_confluenceScorer);
+      RegisterEntryPlugin(g_reversalSweepEngine, InpEnableEngineReversal);
+      g_regimeRouter.RegisterEngine(g_reversalSweepEngine);
+
+      // Engine 3: Range / Mean-Reversion
+      g_engineRange = new CRangeReversionEngine(GetPointer(g_marketContext));
+      g_engineRange.SetScorer(g_confluenceScorer);
+      RegisterEntryPlugin(g_engineRange, InpEnableEngineRange);
+      g_regimeRouter.RegisterEngine(g_engineRange);
+
+      // Engine 4 = the EXISTING g_expansionEngine. Do NOT re-create or
+      // re-register it; its legacy registration/gate stays untouched so
+      // default behavior is preserved. Additively wire it to the router
+      // only when multi-strategy is on.
+      if(g_expansionEngine != NULL)
+      {
+         g_expansionEngine.SetScorer(g_confluenceScorer);
+         g_regimeRouter.RegisterEngine(g_expansionEngine);
+      }
    }
 
    Print("[Init] Entry Plugins: ", g_entryPluginCount, " registered (incl. engines)");
@@ -1208,7 +1261,6 @@ void OnDeinit(const int reason)
    if(g_pinBarEntry != NULL)       { g_pinBarEntry.Deinitialize(); delete g_pinBarEntry; }
    if(g_liqSweepEntry != NULL)     { g_liqSweepEntry.Deinitialize(); delete g_liqSweepEntry; }
    if(g_maCrossEntry != NULL)      { g_maCrossEntry.Deinitialize(); delete g_maCrossEntry; }
-   if(g_bbMREntry != NULL)         { g_bbMREntry.Deinitialize(); delete g_bbMREntry; }
    if(g_rangeBoxEntry != NULL)     { g_rangeBoxEntry.Deinitialize(); delete g_rangeBoxEntry; }
    if(g_fbfEntry != NULL)          { g_fbfEntry.Deinitialize(); delete g_fbfEntry; }
    if(g_rangeEdgeFade != NULL)     { g_rangeEdgeFade.Deinitialize(); delete g_rangeEdgeFade; }
@@ -1216,7 +1268,6 @@ void OnDeinit(const int reason)
    if(g_rangeBoxDetector != NULL)  { g_rangeBoxDetector.Deinit(); delete g_rangeBoxDetector; }
    if(g_volBreakoutEntry != NULL)  { g_volBreakoutEntry.Deinitialize(); delete g_volBreakoutEntry; }
    if(g_crashEntry != NULL)        { g_crashEntry.Deinitialize(); delete g_crashEntry; }
-   if(g_supportBounceEntry != NULL){ g_supportBounceEntry.Deinitialize(); delete g_supportBounceEntry; }
    if(g_fileEntry != NULL)         { g_fileEntry.Deinitialize(); delete g_fileEntry; }
    if(g_displacementEntry != NULL) { g_displacementEntry.Deinitialize(); delete g_displacementEntry; }
    if(g_sessionBreakout != NULL)   { g_sessionBreakout.Deinitialize(); delete g_sessionBreakout; }
@@ -1227,6 +1278,14 @@ void OnDeinit(const int reason)
    if(g_sessionEngine != NULL)    { g_sessionEngine.Deinitialize(); delete g_sessionEngine; g_sessionEngine = NULL; }
    if(g_expansionEngine != NULL)  { g_expansionEngine.Deinitialize(); delete g_expansionEngine; g_expansionEngine = NULL; }
    if(g_pullbackEngine != NULL)   { g_pullbackEngine.Deinitialize(); delete g_pullbackEngine; g_pullbackEngine = NULL; }
+
+   //--- Multi-strategy teardown (reverse creation order: engines, router, scorer).
+   //--- g_expansionEngine teardown stays above (engine 4 is the existing class).
+   if(g_engineRange != NULL)         { g_engineRange.Deinitialize(); delete g_engineRange; g_engineRange = NULL; }
+   if(g_reversalSweepEngine != NULL) { g_reversalSweepEngine.Deinitialize(); delete g_reversalSweepEngine; g_reversalSweepEngine = NULL; }
+   if(g_trendContEngine != NULL)     { g_trendContEngine.Deinitialize(); delete g_trendContEngine; g_trendContEngine = NULL; }
+   if(g_regimeRouter != NULL)        { g_regimeRouter.Deinitialize(); delete g_regimeRouter; g_regimeRouter = NULL; }
+   if(g_confluenceScorer != NULL)    { delete g_confluenceScorer; g_confluenceScorer = NULL; }
 
    //--- Layer 2: Validation
    if(g_signalValidator != NULL) { delete g_signalValidator; }
@@ -1352,6 +1411,12 @@ void OnTick()
       //--- 1a. Update shared range box detector (S3/S6)
       if(g_rangeBoxDetector != NULL)
          g_rangeBoxDetector.Update();
+
+      //--- 1a-multi. Regime router: set per-engine activation weights for this
+      //--- bar BEFORE signal generation. Gated by the master flag, so when off
+      //--- the OnTick path is byte-identical to today.
+      if(InpEnableMultiStrategy && g_regimeRouter != NULL)
+         g_regimeRouter.UpdateActivation();
 
       //--- 1b. Process breakout probation (before new signals so S6 can override failures)
       if(InpEnableBreakoutProbation && g_breakoutProbation.active)
@@ -2040,24 +2105,50 @@ void OnTick()
       }
    }
 
-   //=== FILE SIGNAL CHECK (every tick — position limit applies, no daily/loss halt) ===
+   //=== FILE SIGNAL CHECK (every tick — position limit + daily halt enforced) ===
    if((InpSignalSource == SIGNAL_SOURCE_BOTH || InpSignalSource == SIGNAL_SOURCE_FILE) &&
       g_fileEntry != NULL &&
-      g_posCoordinator.GetPositionCount() < InpMaxPositions)
+      g_posCoordinator.GetPositionCount() < InpMaxPositions &&
+      !g_riskMonitor.IsTradingHalted())
    {
       EntrySignal fileSignal = g_fileEntry.CheckForEntrySignal();
       if(fileSignal.valid)
       {
-         // File signals use their own fixed risk, NOT the EA's quality-tier risk
-         fileSignal.riskPercent = InpFileSignalRiskPct;  // Always use file risk (default 0.8%)
-
+         // File signal lot sizing mode
          fileSignal.audit_origin = "FILE_INDEPENDENT";
 
-         Print("[FileSignal] Executing: ", fileSignal.comment,
-               " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
-               " | Quality=", EnumToString(fileSignal.setupQuality),
-               " | Risk=", DoubleToString(fileSignal.riskPercent, 2), "%");
+         if(InpFileLotMode == FILE_LOT_FIXED)
+         {
+            // Fixed lots: bypass risk calculation entirely
+            fileSignal.riskPercent = 0;  // Signal to ExecuteSignal that lots are pre-set
 
+            Print("[FileSignal] Fixed lots: ", fileSignal.comment,
+                  " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
+                  " | Lots=", DoubleToString(InpFileFixedLots, 2));
+
+            // Execute with fixed lots (handled below after ExecuteSignal)
+         }
+         else if(InpFileLotMode == FILE_LOT_CSV_RISK && fileSignal.riskPercent > 0)
+         {
+            // Use CSV risk, clamped
+            fileSignal.riskPercent = MathMax(InpFileCSVRiskMin, MathMin(InpFileCSVRiskMax, fileSignal.riskPercent));
+
+            Print("[FileSignal] CSV risk: ", fileSignal.comment,
+                  " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
+                  " | Risk=", DoubleToString(fileSignal.riskPercent, 2), "%");
+         }
+         else
+         {
+            // Default: fixed risk percent
+            fileSignal.riskPercent = InpFileSignalRiskPct;
+
+            Print("[FileSignal] Risk%: ", fileSignal.comment,
+                  " | ", fileSignal.action, " @ ", fileSignal.entryPrice,
+                  " | Risk=", DoubleToString(fileSignal.riskPercent, 2), "%");
+         }
+
+         // For fixed lots: set a high risk% so ExecuteSignal calculates a large lot,
+         // then we'll cap it to InpFileFixedLots after execution
          SPosition filePos = g_tradeOrchestrator.ExecuteSignal(fileSignal);
          if(filePos.ticket > 0)
          {
@@ -2067,9 +2158,11 @@ void OnTick()
             filePos.stage_label = "INITIAL";
             filePos.original_sl = filePos.stop_loss;
             filePos.original_tp1 = filePos.tp1;
+            filePos.tp3 = fileSignal.takeProfit3;  // CSV TP3 for runner target
             filePos.signal_id = fileSignal.signal_id;
             filePos.engine_name = "FileSignal";
             filePos.signal_source = SIGNAL_SOURCE_FILE;
+            filePos.best_effort_mode = (InpFileSignalMode == FILE_MODE_BEST_EFFORT);
             filePos.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
             filePos.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
             filePos.entry_regime = (int)g_marketContext.GetCurrentRegime();

@@ -13,6 +13,7 @@
 #include "../Common/Structs.mqh"
 #include "../Common/Utils.mqh"
 #include "../MarketAnalysis/IMarketContext.mqh"
+#include "CConfluenceScorer.mqh"   // Multi-strategy: orthogonal-axis scorer (for the engine overload)
 
 //+------------------------------------------------------------------+
 //| CSetupEvaluator - Evaluates setup quality and calculates risk    |
@@ -193,7 +194,11 @@ public:
          points += 1;  // Neutral macro fallback
 
       // Factor 4: Pattern quality (0-2 points)
-      if(StringFind(pattern, "LiquiditySweep") >= 0 || StringFind(pattern, "Displacement") >= 0)
+      // Multi-strategy fix: also match "Liquidity Sweep" (with space) — the
+      // standalone plugin emits that string and was earning 0 here against the
+      // spaceless "LiquiditySweep" token (verified comment-token starvation).
+      if(StringFind(pattern, "LiquiditySweep") >= 0 || StringFind(pattern, "Liquidity Sweep") >= 0 ||
+         StringFind(pattern, "Displacement") >= 0)
          points += 2;
       else if(StringFind(pattern, "Engulfing") >= 0 || StringFind(pattern, "Pin") >= 0)
          points += 1;
@@ -206,6 +211,11 @@ public:
       else if(StringFind(pattern, "Volatility Breakout") >= 0)
          points += 2;
       else if(StringFind(pattern, "Asian Breakout") >= 0 || StringFind(pattern, "London Continuation") >= 0)
+         points += 2;
+      // Multi-strategy fix: previously-starved tokens (no Factor-4 branch existed).
+      else if(StringFind(pattern, "Support Bounce") >= 0 || StringFind(pattern, "Resistance Bounce") >= 0)
+         points += 1;
+      else if(StringFind(pattern, "False Breakout") >= 0)
          points += 2;
 
       // Phase 5: Engine-native pattern scoring
@@ -330,5 +340,26 @@ public:
          case SETUP_B:      return 3;
          default:           return 0;
       }
+   }
+
+   //+------------------------------------------------------------------+
+   //| Multi-strategy OVERLOAD: orthogonal-axis scoring for the four    |
+   //| major engines. Delegates to CConfluenceScorer using THIS         |
+   //| evaluator's live point thresholds. The legacy scalar             |
+   //| EvaluateSetupQuality(...) above is left untouched.               |
+   //| out_score returns the 0-10 axis total.                           |
+   //+------------------------------------------------------------------+
+   ENUM_SETUP_QUALITY EvaluateSetupQuality(const EntrySignal &signal, IMarketContext *ctx, int &out_score)
+   {
+      CConfluenceScorer scorer;
+      scorer.Configure(m_points_aplus, m_points_a, m_points_bplus, m_points_b);
+      return scorer.Score(signal, ctx, out_score);
+   }
+
+   // Convenience overload without the out_score out-param.
+   ENUM_SETUP_QUALITY EvaluateSetupQuality(const EntrySignal &signal, IMarketContext *ctx)
+   {
+      int score = 0;
+      return EvaluateSetupQuality(signal, ctx, score);
    }
 };

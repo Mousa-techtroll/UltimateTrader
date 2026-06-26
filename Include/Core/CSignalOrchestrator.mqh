@@ -550,6 +550,19 @@ public:
                   signal.action, " | ", signal.comment);
          signal.plugin_name = m_entry_plugins[i].GetName();
 
+         // Fix 1: make the signal's own requiresConfirmation flag authoritative.
+         // The struct field now defaults to true (see EntrySignal::Init), so a
+         // plugin that never touches it inherits "needs confirmation" — preserving
+         // the legacy behavior of candlestick/trend plugins (Engulfing/PinBar/
+         // MACross/LiquiditySweep). The field is combined with the plugin-level
+         // RequiresConfirmation() virtual (base = true; Expansion/Session override
+         // to false) so EITHER mechanism can opt a signal out of confirmation.
+         // Plugins that explicitly clear the field at creation (S6/S3, and the
+         // File plugin when InpFileSignalSkipConfirmation is set) now execute
+         // immediately as designed instead of being force-delayed a bar.
+         signal.requiresConfirmation = signal.requiresConfirmation &&
+                                       m_entry_plugins[i].RequiresConfirmation();
+
          // Determine signal type
          ENUM_SIGNAL_TYPE sig_type = SIGNAL_NONE;
          if(signal.action == "BUY" || signal.action == "buy")
@@ -788,11 +801,16 @@ public:
                      best_signal.base_risk_pct, best_signal.requiresConfirmation, true);
 
       // Confirmation candle logic — applied to the winner only
-      // Sprint fix: SHORT signals skip confirmation. In a bullish market, the
-      // confirmation bar after a bearish signal almost always bounces up, making
-      // confirmation impossible. 79 of 80 passing shorts were blocked by this.
-      // Protection: quality scoring + 0.5x risk multiplier + SMC confluence.
-      bool skip_confirmation = best_is_mr || (best_sig_type == SIGNAL_SHORT);
+      // Fix 1: honor the winner's own requiresConfirmation flag. Signals that
+      // explicitly opted out (S6/S3 snapback stabilizers, File when configured,
+      // Expansion/Session engines via RequiresConfirmation()=false) now execute
+      // immediately as intended instead of being force-delayed a full bar.
+      // SHORT signals still skip confirmation: in a bullish market the confirmation
+      // bar after a bearish signal almost always bounces up, making confirmation
+      // impossible (79 of 80 passing shorts were blocked). MR patterns also skip.
+      // Protection for the bypass: quality scoring + 0.5x risk multiplier + SMC.
+      bool skip_confirmation = !best_signal.requiresConfirmation ||
+                               best_is_mr || (best_sig_type == SIGNAL_SHORT);
       if(m_enable_confirmation && !skip_confirmation)
       {
          StorePendingSignal(best_signal, best_sig_type, best_pat_type, best_quality,

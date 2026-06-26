@@ -76,6 +76,17 @@ public:
    virtual double               GetSwingLow()            { return 0; }
    virtual double               GetCurrentRSI()          { return 50; }
 
+   //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign)
+   virtual double               GetDealingRangeHigh()    { return 0; }
+   virtual double               GetDealingRangeLow()     { return 0; }
+   virtual double               GetEquilibrium()         { return 0; }   // 50% of dealing range
+   virtual bool                 IsInDiscount(double price) { return false; } // price below equilibrium
+   virtual bool                 IsInPremium(double price)  { return false; } // price above equilibrium
+   //--- L1 Location: draw on liquidity (next pool price is drawn toward, by direction)
+   virtual double               GetDrawOnLiquidity(ENUM_SIGNAL_TYPE direction) { return 0; }
+   //--- Day-type accessor (so the router need not duplicate the classifier)
+   virtual ENUM_DAY_TYPE        GetDayType()             { return DAY_TREND; }
+
    //--- Convenience aliases (for plugins using shorthand names)
    ENUM_TREND_DIRECTION         GetDailyTrend()          { return GetTrendDirection(); }
    ENUM_TREND_DIRECTION         GetH4Trend()             { return GetH4TrendDirection(); }

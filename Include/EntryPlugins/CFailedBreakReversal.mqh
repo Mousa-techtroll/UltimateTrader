@@ -139,6 +139,16 @@ public:
             double lower_wick = MathMin(m15_open[s], m15_close[s]) - m15_low[s];
             if(lower_wick / candle_range < 0.35) continue;
 
+            // Fix 2: require genuine REJECTION of the swept level, not a candle that
+            // merely closed near its low while the level kept breaking (continuation).
+            // 14/21 S6 losers had MFE<0.3R — the level broke and price ran on.
+            // (a) The rejection wick beyond the swept level must exceed the body:
+            //     the portion of the lower wick that pierced BELOW the level must be
+            //     larger than the candle body — proof the level was rejected, not lost.
+            double body = MathAbs(m15_close[s] - m15_open[s]);
+            double wick_below_level = level - m15_low[s];  // how far the wick pierced past the level
+            if(wick_below_level <= body) continue;
+
             // H4 FIX: Reclaim check uses correct bar indices
             // m15_close[0] = shift 1 (last completed), m15_close[1] = shift 2
             bool reclaimed = false;
@@ -149,10 +159,13 @@ public:
 
             // H4 FIX: Confirmation uses last completed bar (shift 1 = index 0)
             double confirm_close = m15_close[0];  // H4 FIX: was [1] (shift 2, stale)
-            if(confirm_close <= level) continue;
+            // Fix 2 (b): require the close to RECLAIM the level by a margin, not a
+            // hairline tag — closing back above the level by at least 0.10*ATR_M15.
+            if(confirm_close <= level + 0.10 * atr_m15) continue;
 
-            // Snapback not already exhausted: price hasn't traveled > 1 ATR_M15 from level
-            if(confirm_close - level > 1.0 * atr_m15) continue;
+            // Fix 2 (c): snapback not already exhausted — tightened from 1.0 to
+            // 0.75*ATR_M15 so we only enter while the reversal still has room.
+            if(confirm_close - level > 0.75 * atr_m15) continue;
 
             // Valid S6 long reversal
             signal.valid = true;
@@ -190,6 +203,13 @@ public:
             double upper_wick = m15_high[s] - MathMax(m15_open[s], m15_close[s]);
             if(upper_wick / candle_range < 0.35) continue;
 
+            // Fix 2: mirror of the LONG-side rejection tightening. The wick that
+            // pierced ABOVE the swept level must exceed the candle body (rejection,
+            // not continuation).
+            double body = MathAbs(m15_close[s] - m15_open[s]);
+            double wick_above_level = m15_high[s] - level;
+            if(wick_above_level <= body) continue;
+
             // H4 FIX: correct bar indices for SHORT reclaim
             bool reclaimed = false;
             if(m15_close[s] < level) reclaimed = true;
@@ -198,8 +218,10 @@ public:
             if(!reclaimed) continue;
 
             double confirm_close = m15_close[0];  // H4 FIX: was [1] (stale)
-            if(confirm_close >= level) continue;
-            if(level - confirm_close > 1.0 * atr_m15) continue;
+            // Fix 2: reclaim back below the level by a margin, and tighten the
+            // exhaustion tolerance from 1.0 to 0.75*ATR_M15.
+            if(confirm_close >= level - 0.10 * atr_m15) continue;
+            if(level - confirm_close > 0.75 * atr_m15) continue;
 
             signal.valid = true;
             signal.symbol = _Symbol;  // H5 FIX: was missing

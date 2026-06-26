@@ -1,0 +1,6 @@
+Scenario,Type,TradesAffected,ModeledPnLUplift,ModeledRUplift,Assumption
+Entry Pack A: extension filter + countertrend-short block + BMACross B+ block,entry,45,768.42,16.64,Remove the three highest-confidence toxic entry slices.
+Exit Pack A: recover 10% of top-5 strong bad-exit buckets,exit,64,1394.3,0.0,Improve BE/trailing/TP handling only enough to recover 10% of the measured missed-move pool.
+Exit Pack B: recover 15% of top-5 strong bad-exit buckets,exit,64,2091.45,0.0,"Same as Exit Pack A, but with a stronger management improvement."
+Combined A: Entry Pack A + Exit Pack A,combined,109,2162.72,16.64,Highest-confidence entry cleanup plus modest exit recovery.
+Combined B: Entry Pack A + Exit Pack B,combined,109,2859.87,16.64,Highest-confidence entry cleanup plus stronger exit recovery.

@@ -1,0 +1,5 @@
+ManagementIssue,ExitIssue,Trades,RealizedPnL,RealizedR,MissedR24h,AvgExitScore24h
+trailing,trailing_stop_too_tight,109,774.61,11.88,287.76,17.6
+none,premature_exit,20,-1658.71,-18.91,62.45,15.3
+breakeven,breakeven_exit_too_early,28,2214.11,26.84,60.48,18.0
+none,take_profit_too_close,7,694.5,8.2,26.46,13.2

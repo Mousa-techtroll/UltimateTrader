@@ -206,25 +206,73 @@ public:
       double counter_trend_multiplier = 1.0;
       string risk_reason = "";
 
+      // Use signal's symbol for file signals (multi-symbol CSV support)
+      string trade_symbol = (signal.source == SIGNAL_SOURCE_FILE && signal.symbol != "") ?
+                            signal.symbol : _Symbol;
+
       double entry_price = (sig_type == SIGNAL_LONG) ?
-                           SymbolInfoDouble(_Symbol, SYMBOL_ASK) :
-                           SymbolInfoDouble(_Symbol, SYMBOL_BID);
+                           SymbolInfoDouble(trade_symbol, SYMBOL_ASK) :
+                           SymbolInfoDouble(trade_symbol, SYMBOL_BID);
 
       double sl = signal.stopLoss;
       double risk_distance = MathAbs(entry_price - sl);
 
-      // Enforce minimum stop distance (broker rejects SL too close to price)
-      double min_stop_dist = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL) * _Point;
-      if(min_stop_dist < 1.0) min_stop_dist = 1.0;  // At least $1 for gold
-      if(risk_distance > 0 && risk_distance < min_stop_dist)
+      // FILE SIGNALS: reject if market moved too far from CSV entry (percentage-based)
+      if(signal.source == SIGNAL_SOURCE_FILE && signal.entryPrice > 0 && InpFileMaxSlippagePct > 0)
       {
-         // Widen SL to meet broker minimum
+         double slippage = MathAbs(entry_price - signal.entryPrice);
+         double max_slip = signal.entryPrice * InpFileMaxSlippagePct / 100.0;
+
+         if(slippage > max_slip)
+         {
+            double slip_pct = slippage / signal.entryPrice * 100.0;
+            int sym_digits = (int)SymbolInfoInteger(trade_symbol, SYMBOL_DIGITS);
+            LogPrint("[FileSlippage] REJECT: ", trade_symbol,
+                     " market ", DoubleToString(entry_price, sym_digits),
+                     " moved $", DoubleToString(slippage, 2),
+                     " (", DoubleToString(slip_pct, 3), "%)",
+                     " from CSV entry ", DoubleToString(signal.entryPrice, sym_digits),
+                     " (max ", DoubleToString(InpFileMaxSlippagePct, 2), "% = $",
+                     DoubleToString(max_slip, 2), ")");
+            LogRiskAudit(signal, sig_type, requested_risk_pct,
+                         false, false, StringFormat("SLIPPAGE_%.2f%%>%.2f%%", slip_pct, InpFileMaxSlippagePct),
+                         adjusted_risk_pct, false,
+                         false, 1.0, final_risk_pct, 0, 0,
+                         "REJECT_SLIPPAGE_EXCEEDED");
+            return position;
+         }
+      }
+
+      // FILE SIGNALS: use CSV entry-to-SL distance for lot sizing, not current price
+      // Prevents lot explosion when current price drifts near CSV SL
+      if(signal.source == SIGNAL_SOURCE_FILE && signal.entryPrice > 0)
+      {
+         double csv_risk_dist = MathAbs(signal.entryPrice - sl);
+         if(csv_risk_dist > risk_distance && csv_risk_dist > 0)
+         {
+            risk_distance = csv_risk_dist;  // Use the INTENDED risk, not the accidental tight one
+            LogPrint("[FileRisk] Using CSV risk distance $", DoubleToString(csv_risk_dist, 2),
+                     " (CSV entry=", DoubleToString(signal.entryPrice, 2),
+                     " vs market=", DoubleToString(entry_price, 2), ")");
+         }
+      }
+
+      // Enforce minimum stop distance (broker rejects SL too close to price)
+      double sym_point = SymbolInfoDouble(trade_symbol, SYMBOL_POINT);
+      if(sym_point <= 0) sym_point = _Point;
+      double min_stop_dist = SymbolInfoInteger(trade_symbol, SYMBOL_TRADE_STOPS_LEVEL) * sym_point;
+      if(min_stop_dist < sym_point * 10) min_stop_dist = sym_point * 10;  // Min 10 points for any symbol
+      if(MathAbs(entry_price - sl) < min_stop_dist)
+      {
+         // Widen SL to meet broker minimum (for the BROKER order, not for lot sizing)
          if(sig_type == SIGNAL_LONG)
             sl = entry_price - min_stop_dist;
          else
             sl = entry_price + min_stop_dist;
-         risk_distance = min_stop_dist;
          signal.stopLoss = sl;
+         // Don't override risk_distance for file signals — keep CSV-based distance for sizing
+         if(signal.source != SIGNAL_SOURCE_FILE)
+            risk_distance = min_stop_dist;
       }
 
       if(risk_distance <= 0)
@@ -242,9 +290,22 @@ public:
       double tp1 = signal.takeProfit1;
       double tp2 = signal.takeProfit2;
 
-      if(tp1 == 0 || tp2 == 0)
+      // Only fill MISSING TPs — never overwrite provided ones
+      if(tp1 == 0 && tp2 == 0)
       {
          CalculateDefaultTPs(sig_type, entry_price, risk_distance, tp1, tp2);
+      }
+      else if(tp1 == 0 && tp2 != 0)
+      {
+         // TP2 exists but TP1 missing — calculate TP1 only
+         double sign = (sig_type == SIGNAL_LONG) ? 1.0 : -1.0;
+         tp1 = entry_price + sign * risk_distance * m_tp1_distance;
+      }
+      else if(tp1 != 0 && tp2 == 0)
+      {
+         // TP1 exists but TP2 missing — calculate TP2 only
+         double sign = (sig_type == SIGNAL_LONG) ? 1.0 : -1.0;
+         tp2 = entry_price + sign * risk_distance * m_tp2_distance;
       }
 
       // R:R validation — skipped entirely for file signals (external source, not our quality call)
@@ -350,12 +411,14 @@ public:
                   "% (x", DoubleToString(InpShortRiskMultiplier, 2), ")");
       }
 
-      // Hard cap: prevent regime+ATR stacking from creating outsized positions
-      if(signal.riskPercent > InpMaxRiskPerTrade)
+      // Hard cap: separate caps for file signals vs pattern signals
+      double cap = (signal.source == SIGNAL_SOURCE_FILE) ? InpFileMaxRiskPerTrade : InpMaxRiskPerTrade;
+      if(signal.riskPercent > cap)
       {
          LogPrint("[RiskCap] ", DoubleToString(signal.riskPercent, 2),
-                  "% -> ", DoubleToString(InpMaxRiskPerTrade, 2), "%");
-         signal.riskPercent = InpMaxRiskPerTrade;
+                  "% -> ", DoubleToString(cap, 2), "%",
+                  (signal.source == SIGNAL_SOURCE_FILE) ? " (file cap)" : "");
+         signal.riskPercent = cap;
       }
 
       // Calculate risk via CRiskStrategy plugin
@@ -367,7 +430,7 @@ public:
 
          // Sprint 4H: Use signal-aware path so risk strategy gets real quality/pattern data
          RiskResult risk_result = m_risk_strategy.CalculatePositionSizeFromSignal(
-            _Symbol, signal.action, entry_price, sl, tp1, risk_pct, signal);
+            trade_symbol, signal.action, entry_price, sl, tp1, risk_pct, signal);
 
          risk_reason = risk_result.reason;
          margin = risk_result.margin;
@@ -382,13 +445,23 @@ public:
          }
       }
 
+      // Lot calculation: fixed lots for file signals, or risk-based fallback
+      if(lot_size <= 0 && signal.source == SIGNAL_SOURCE_FILE && InpFileLotMode == FILE_LOT_FIXED)
+      {
+         // Fixed lot mode: use InpFileFixedLots directly
+         fallback_sizing_used = true;
+         lot_size = NormalizeLots(InpFileFixedLots, trade_symbol);
+         adjusted_risk_pct = risk_pct;
+         final_risk_pct = risk_pct;
+         LogPrint("[FileLot] Fixed: ", DoubleToString(lot_size, 2), " lots");
+      }
       // Fallback lot calculation if risk strategy didn't provide
-      if(lot_size <= 0 && risk_pct > 0)
+      else if(lot_size <= 0 && risk_pct > 0)
       {
          fallback_sizing_used = true;
 
-         double tick_value = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
-         double tick_size = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+         double tick_value = SymbolInfoDouble(trade_symbol, SYMBOL_TRADE_TICK_VALUE);
+         double tick_size = SymbolInfoDouble(trade_symbol, SYMBOL_TRADE_TICK_SIZE);
          double balance = AccountInfoDouble(ACCOUNT_BALANCE);
 
          if(tick_value > 0 && tick_size > 0 && risk_distance > 0)
@@ -396,7 +469,7 @@ public:
             double risk_amount = balance * risk_pct / 100.0;
             double risk_in_ticks = risk_distance / tick_size;
             lot_size = risk_amount / (risk_in_ticks * tick_value);
-            lot_size = NormalizeLots(lot_size);
+            lot_size = NormalizeLots(lot_size, trade_symbol);
          }
 
          adjusted_risk_pct = risk_pct;
@@ -414,8 +487,8 @@ public:
          return position;
       }
 
-      // Counter-trend risk reduction via 200 EMA
-      if(m_use_daily_200ema && m_context != NULL)
+      // Counter-trend risk reduction via 200 EMA (skip for file signals)
+      if(m_use_daily_200ema && m_context != NULL && signal.source != SIGNAL_SOURCE_FILE)
       {
          double ma200 = m_context.GetMA200Value();
          if(ma200 > 0)
@@ -431,15 +504,15 @@ public:
                LogPrint(">>> RISK ALERT: Counter-trend trade against 200 EMA. Risk reduced to ",
                         DoubleToString(risk_pct, 2), "%");
                // Recalculate lot size with reduced risk
-               double tick_value = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
-               double tick_size = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+               double tick_value = SymbolInfoDouble(trade_symbol, SYMBOL_TRADE_TICK_VALUE);
+               double tick_size = SymbolInfoDouble(trade_symbol, SYMBOL_TRADE_TICK_SIZE);
                double balance = AccountInfoDouble(ACCOUNT_BALANCE);
                if(tick_value > 0 && tick_size > 0 && risk_distance > 0)
                {
                   double risk_amount = balance * risk_pct / 100.0;
                   double risk_in_ticks = risk_distance / tick_size;
                   double resized = risk_amount / (risk_in_ticks * tick_value);
-                  resized = NormalizeLots(resized);
+                  resized = NormalizeLots(resized, trade_symbol);
                   if(resized > 0) lot_size = resized;
                }
             }
@@ -473,11 +546,54 @@ public:
 
       if(m_executor != NULL)
       {
-         // Sprint 2A: Pass tp1 to broker as safety net (executor rejects TP=0).
-         // The coordinator's TP1/TP2 partial close logic fires at R-thresholds
-         // BEFORE the broker TP is hit, managing exits internally.
+         // File signals: set broker TP to the HIGHEST available target (TP3 > TP2 > TP1)
+         // Broker TP acts as safety net / final exit. Internal management handles partials at TP1/TP2.
+         double broker_tp = tp1;
+         if(signal.source == SIGNAL_SOURCE_FILE)
+         {
+            // Use highest TP as broker safety net
+            if(signal.takeProfit3 > 0)
+               broker_tp = signal.takeProfit3;
+            else if(tp2 > 0)
+               broker_tp = tp2;
+            else if(tp1 > 0)
+               broker_tp = tp1;
+            else
+               broker_tp = 0;
+
+            // Check if TP is already past market (signal was profitable before execution)
+            bool tp_invalid = false;
+            if(sig_type == SIGNAL_LONG && tp1 > 0 && tp1 <= entry_price)
+               tp_invalid = true;
+            if(sig_type == SIGNAL_SHORT && tp1 > 0 && tp1 >= entry_price)
+               tp_invalid = true;
+
+            // Also check SL: if price moved past SL, skip the trade entirely
+            bool sl_invalid = false;
+            if(sig_type == SIGNAL_LONG && sl >= entry_price)
+               sl_invalid = true;
+            if(sig_type == SIGNAL_SHORT && sl <= entry_price)
+               sl_invalid = true;
+
+            if(sl_invalid)
+            {
+               LogPrint("[FileSignal] SKIP: price already past SL (",
+                        DoubleToString(sl, _Digits), " vs market ",
+                        DoubleToString(entry_price, _Digits), ")");
+               return position;
+            }
+
+            if(tp_invalid)
+            {
+               broker_tp = 0;  // Send without broker TP — internal TP management handles it
+               LogPrint("[FileSignal] TP1 past market price — sending without broker TP (",
+                        DoubleToString(tp1, _Digits), " vs market ",
+                        DoubleToString(entry_price, _Digits), ")");
+            }
+         }
+
          exec_result = m_executor.ExecuteTradeWithRetries(
-            _Symbol, signal.action, lot_size, entry_price, sl, tp1,
+            trade_symbol, signal.action, lot_size, entry_price, sl, broker_tp,
             m_magic_number, signal.comment);
       }
 

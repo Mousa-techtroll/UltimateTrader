@@ -125,6 +125,13 @@ enum ENUM_FILE_SIGNAL_MODE
    FILE_MODE_BEST_EFFORT     // Best-effort: ignore CSV SL/TP, EA calculates all from ATR
 };
 
+enum ENUM_FILE_LOT_MODE
+{
+   FILE_LOT_RISK_PERCENT,    // Risk %: lot from balance * risk% / SL_distance (default)
+   FILE_LOT_FIXED,           // Fixed: always use InpFileFixedLots
+   FILE_LOT_CSV_RISK         // CSV risk: use CSV RiskPct (clamped) for lot calculation
+};
+
 //+------------------------------------------------------------------+
 //| Health Status Enumeration (from AICoder V1)                      |
 //+------------------------------------------------------------------+
@@ -282,6 +289,20 @@ enum ENUM_ENGINE_MODE
    MODE_COMPRESSION_BO,
    MODE_INSTITUTIONAL_CANDLE,
    MODE_PANIC_MOMENTUM
+};
+
+//+------------------------------------------------------------------+
+//| Major-Strategy Engine Identity (Multi-Strategy redesign)         |
+//| Identifies which of the four major engines produced a signal,    |
+//| for router weighting and per-engine attribution.                 |
+//+------------------------------------------------------------------+
+enum ENUM_MAJOR_ENGINE
+{
+   ENGINE_NONE,
+   ENGINE_TREND_CONT,        // (1) Trend-Continuation
+   ENGINE_REVERSAL_SWEEP,    // (2) Reversal / Sweep
+   ENGINE_RANGE_REVERSION,   // (3) Range / Mean-Reversion
+   ENGINE_EXPANSION          // (4) Breakout / Expansion
 };
 
 #endif // ULTIMATETRADER_ENUMS_MQH

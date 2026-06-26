@@ -1,0 +1,352 @@
+<title>XAUUSD Strategy Evaluation — UltimateTrader</title>
+<meta name="description" content="stok's profitability and implementation-logic evaluation of the UltimateTrader entry strategies for gold, reconciled against the 789-trade v15 backtest log.">
+
+<style>
+  :root{
+    --paper:#F5F4F0; --surface:#FFFFFF; --surface-2:#FBFAF7;
+    --ink:#16181D; --body:#40444B; --muted:#8A8E96; --hair:#E5E3DC; --hair-strong:#D8D5CB;
+    --gold:#A77F2E; --gold-soft:#C6A24A;
+    --pos:#155D3A; --pos-bg:#E7F1EB; --warn:#8A5E0E; --warn-bg:#F7EED7;
+    --neg:#962B25; --neg-bg:#F6E4E2; --neu:#565B63; --neu-bg:#ECEDEF;
+    --serif:"Iowan Old Style",Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  .page{background:var(--paper);color:var(--body);font-family:var(--sans);
+    font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased;padding:0 20px 96px;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  .prose{max-width:760px;}
+  h1,h2,h3{font-family:var(--serif);color:var(--ink);text-wrap:balance;font-weight:600;}
+  a{color:var(--gold);text-underline-offset:2px;}
+  a:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px;}
+
+  /* Masthead */
+  .mast{padding:60px 0 26px;border-bottom:2px solid var(--ink);position:relative;}
+  .mast::after{content:"";position:absolute;left:0;bottom:-2px;width:132px;height:2px;background:var(--gold);}
+  .eyebrow{font:600 12px/1 var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0 0 18px;}
+  h1{font-size:clamp(30px,4.6vw,46px);line-height:1.04;letter-spacing:-.012em;margin:0 0 16px;}
+  .standfirst{font-size:18px;line-height:1.5;color:var(--body);max-width:680px;margin:0;}
+  .metastrip{display:flex;flex-wrap:wrap;gap:6px 22px;margin-top:26px;font:500 12.5px/1.5 var(--sans);color:var(--muted);}
+  .metastrip b{color:var(--ink);font-weight:600;}
+  .metastrip .mono{font-family:var(--mono);}
+
+  /* Stat tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--hair);
+    border:1px solid var(--hair);margin:38px 0 14px;border-radius:8px;overflow:hidden;}
+  .tile{background:var(--surface);padding:18px 20px;}
+  .tile .k{font:600 11px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 9px;}
+  .tile .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:23px;color:var(--ink);font-weight:600;letter-spacing:-.01em;}
+  .tile .v.up{color:var(--pos);}
+  .tile .sub{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .sessions{font-size:12.5px;color:var(--muted);margin:2px 0 0;}
+  .sessions b{color:var(--ink);font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:600;}
+
+  /* Section */
+  section{margin-top:54px;}
+  .sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:6px;}
+  .sec-num{font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:600;letter-spacing:.04em;flex:none;
+    padding-top:3px;}
+  h2{font-size:25px;line-height:1.12;letter-spacing:-.01em;margin:0;}
+  .sec-sub{color:var(--muted);font-size:14px;margin:4px 0 24px;max-width:720px;}
+
+  /* Scorecard table */
+  .tablewrap{overflow-x:auto;border:1px solid var(--hair-strong);border-radius:10px;background:var(--surface);}
+  table{border-collapse:collapse;width:100%;min-width:760px;font-size:13.5px;}
+  thead th{background:var(--surface-2);font:600 11px/1.3 var(--sans);letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);text-align:left;padding:12px 14px;border-bottom:1px solid var(--hair-strong);white-space:nowrap;}
+  thead th.r,td.r{text-align:right;}
+  tbody td{padding:12px 14px;border-bottom:1px solid var(--hair);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  .grp td{background:var(--surface-2);font:600 11px/1 var(--sans);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--gold);padding:10px 14px;border-bottom:1px solid var(--hair-strong);border-top:1px solid var(--hair-strong);}
+  .strat{color:var(--ink);font-weight:600;}
+  .strat .plug{display:block;font:400 11px/1.3 var(--mono);color:var(--muted);margin-top:2px;}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);}
+  .num.up{color:var(--pos);} .num.dn{color:var(--neg);} .num.dim{color:var(--muted);}
+
+  .chip{display:inline-block;font:600 11px/1.35 var(--sans);letter-spacing:.01em;padding:3px 8px;border-radius:4px;white-space:nowrap;}
+  .pos{background:var(--pos-bg);color:var(--pos);}
+  .warn{background:var(--warn-bg);color:var(--warn);}
+  .neg{background:var(--neg-bg);color:var(--neg);}
+  .neu{background:var(--neu-bg);color:var(--neu);}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:baseline;}
+  .dot.on{background:var(--pos);} .dot.off{background:var(--neu);}
+  .stcell{font:600 12px/1 var(--sans);color:var(--ink);white-space:nowrap;}
+  .stcell .q{display:block;font:400 11px/1.3 var(--sans);color:var(--muted);margin-top:3px;white-space:normal;}
+
+  /* Prose */
+  .prose h3{font-size:18px;margin:34px 0 8px;letter-spacing:-.005em;}
+  .prose h3:first-child{margin-top:8px;}
+  .prose p{margin:0 0 14px;}
+  .prose ul{margin:0 0 16px;padding-left:0;list-style:none;}
+  .prose li{position:relative;padding-left:20px;margin:0 0 11px;}
+  .prose li::before{content:"";position:absolute;left:2px;top:9px;width:6px;height:6px;border-radius:1px;
+    background:var(--gold);transform:rotate(45deg);}
+  .prose strong{color:var(--ink);font-weight:600;}
+  .lede{font-size:15px;color:var(--body);border-left:2px solid var(--gold);padding:2px 0 2px 18px;margin:0 0 22px;
+    background:linear-gradient(90deg,rgba(167,127,46,.05),transparent 70%);}
+  .vk{font-weight:700;}
+  .vk.keep{color:var(--pos);} .vk.cut{color:var(--neg);} .vk.test{color:var(--warn);} .vk.inert{color:var(--neu);}
+
+  /* Callout cards */
+  .cards{display:grid;gap:14px;margin:18px 0 8px;}
+  .card{background:var(--surface);border:1px solid var(--hair-strong);border-radius:10px;padding:18px 20px;
+    border-left:3px solid var(--gold);}
+  .card.bad{border-left-color:var(--neg);}
+  .card.warn{border-left-color:var(--warn);}
+  .card h4{font:600 14px/1.3 var(--sans);color:var(--ink);margin:0 0 6px;}
+  .card p{margin:0;font-size:13.5px;color:var(--body);}
+  .card .tag{font:600 10.5px/1 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 9px;}
+
+  /* Fixes panel */
+  .fixes{background:var(--ink);color:#E7E5DF;border-radius:12px;padding:28px 30px;margin-top:22px;}
+  .fixes h3{color:#fff;font-family:var(--serif);font-size:19px;margin:0 0 4px;}
+  .fixes .intro{color:#A9ADB4;font-size:13px;margin:0 0 20px;}
+  .fixrow{display:flex;gap:16px;padding:15px 0;border-top:1px solid #2C2F36;}
+  .fixrow:first-of-type{border-top:none;}
+  .fixn{font-family:var(--mono);font-size:13px;color:var(--gold-soft);font-weight:600;flex:none;width:24px;padding-top:1px;}
+  .fixbody{flex:1;}
+  .fixbody .t{color:#fff;font-weight:600;font-size:14px;}
+  .fixbody .d{color:#B6BAC1;font-size:13px;margin-top:3px;}
+  .lvl{font:600 10px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:4px;flex:none;height:fit-content;margin-top:1px;}
+  .lvl.hi{background:rgba(178,58,51,.22);color:#F0A6A0;}
+  .lvl.med{background:rgba(198,162,74,.20);color:#E3C887;}
+  .lvl.lo{background:rgba(105,112,121,.28);color:#C2C6CC;}
+
+  .note{font-size:12.5px;color:var(--muted);border-top:1px solid var(--hair);margin-top:46px;padding-top:18px;}
+  .note b{color:var(--body);}
+  @media (max-width:560px){ .mast{padding-top:40px} h1{font-size:30px} .sec-num{display:none} }
+</style>
+
+<div class="page">
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">UltimateTrader · Gold Strategy Research Note</p>
+    <h1>XAUUSD Entry-Strategy Evaluation</h1>
+    <p class="standfirst">How the live strategy set actually performs on gold — and how good the code behind it really is. Two evaluations by <strong>stok</strong>, every figure reconciled live against the 789-trade <span style="font-family:var(--mono)">v15</span> backtest log, implementation facts verified in source by <strong>mt5-developer</strong>.</p>
+    <div class="metastrip">
+      <span>Symbol <b class="mono">XAUUSD+</b></span>
+      <span>Primary TF <b class="mono">H1</b></span>
+      <span>Basis <b class="mono">all_trades_v15.csv</b></span>
+      <span>Window <b class="mono">2019.01–2025.12</b></span>
+      <span>Config <b>SYMBOL_PROFILE_XAUUSD · Source=BOTH</b></span>
+    </div>
+  </header>
+
+  <div class="tiles">
+    <div class="tile"><p class="k">Net result</p><div class="v up">+118.07<span style="font-size:14px">R</span></div><div class="sub">+$10,768 on $10k</div></div>
+    <div class="tile"><p class="k">Profit factor</p><div class="v">1.45</div><div class="sub">gross win ÷ loss</div></div>
+    <div class="tile"><p class="k">Win rate</p><div class="v">45.1%</div><div class="sub">positive-expectancy</div></div>
+    <div class="tile"><p class="k">Closed trades</p><div class="v">789</div><div class="sub">7 strategies fired</div></div>
+    <div class="tile"><p class="k">Edge source</p><div class="v" style="font-size:18px">~90%</div><div class="sub">from 3 long patterns</div></div>
+  </div>
+  <p class="sessions">Session split — NY <b>+52.8R</b> · PF 1.42 (370) &nbsp;|&nbsp; Asia <b>+41.8R</b> · PF 1.63 (221, richest/trade) &nbsp;|&nbsp; London <b>+23.5R</b> · PF 1.35 (198). All three positive.</p>
+
+  <!-- SCORECARD -->
+  <section>
+    <div class="sec-head"><span class="sec-num">00</span><h2>Scorecard</h2></div>
+    <p class="sec-sub">Profitability tier and implementation grade for every strategy. Only the first seven fired in <span style="font-family:var(--mono)">v15</span>; the “inert” block is enabled in config but produced zero trades. Disabled strategies and their verdicts follow in Evaluation&nbsp;1.</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Strategy</th><th>Status</th><th class="r">Trades</th><th class="r">PF</th>
+            <th class="r">Net R</th><th class="r">Avg R</th><th>Profit verdict</th><th>Impl grade</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="grp"><td colspan="8">Keep-core — the long edge (~90% of profit)</td></tr>
+          <tr>
+            <td class="strat">Bullish Engulfing<span class="plug">CEngulfingEntry · H1+H4</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">274</td><td class="r num up">1.49</td><td class="r num up">+42.78</td><td class="r num up">+0.156</td>
+            <td><span class="chip pos">Keep · the system</span></td><td><span class="chip pos">Solid</span></td>
+          </tr>
+          <tr>
+            <td class="strat">Bullish Pin Bar<span class="plug">CPinBarEntry · H1+H4</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">227</td><td class="r num up">1.27</td><td class="r num up">+22.85</td><td class="r num up">+0.101</td>
+            <td><span class="chip pos">Keep</span></td><td><span class="chip pos">Solid</span></td>
+          </tr>
+          <tr>
+            <td class="strat">Bullish MA-Cross<span class="plug">CMACrossEntry · H1+H4 · NY-blocked</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">49</td><td class="r num up">2.37</td><td class="r num up">+15.20</td><td class="r num up">+0.310</td>
+            <td><span class="chip pos">Keep · best/trade</span></td><td><span class="chip pos">Solid</span></td>
+          </tr>
+          <tr class="grp"><td colspan="8">Short-side keepers — the diversifier</td></tr>
+          <tr>
+            <td class="strat">Bearish Pin Bar<span class="plug">CPinBarEntry · Asia-only, NY-blocked</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">94</td><td class="r num up">1.87</td><td class="r num up">+23.12</td><td class="r num up">+0.246</td>
+            <td><span class="chip pos">Keep · top edge/trade</span></td><td><span class="chip pos">Solid</span></td>
+          </tr>
+          <tr>
+            <td class="strat">Rubber-Band Short<span class="plug">CCrashBreakoutEntry · H1+D1</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">104</td><td class="r num up">1.32</td><td class="r num up">+13.35</td><td class="r num up">+0.128</td>
+            <td><span class="chip warn">Keep · regime hedge</span></td><td><span class="chip warn">Adequate</span></td>
+          </tr>
+          <tr class="grp"><td colspan="8">Cut-or-prove</td></tr>
+          <tr>
+            <td class="strat">S6 Failed-Break (long)<span class="plug">CFailedBreakReversal · M15+H1+D1</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">37</td><td class="r num dn">0.78</td><td class="r num dn">−1.65</td><td class="r num dn">−0.045</td>
+            <td><span class="chip neg">Lean cut / fix</span></td><td><span class="chip neg">Weak</span></td>
+          </tr>
+          <tr>
+            <td class="strat">IC Breakout<span class="plug">CExpansionEngine · H1</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num">4</td><td class="r num dim">n=4</td><td class="r num up">+2.42</td><td class="r num dim">—</td>
+            <td><span class="chip neu">Unproven</span></td><td><span class="chip warn">Adequate</span></td>
+          </tr>
+          <tr class="grp"><td colspan="8">Inert — enabled, zero trades in v15 (no diversification delivered)</td></tr>
+          <tr>
+            <td class="strat">S3 Range-Edge Fade<span class="plug">CRangeEdgeFade · M15+H1+D1</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num dim">0</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td>
+            <td><span class="chip neu">Inert · over-gated</span></td><td><span class="chip warn">Adequate*</span></td>
+          </tr>
+          <tr>
+            <td class="strat">Liq-Engine OB-Retest<span class="plug">CLiquidityEngine · H1</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num dim">0</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td>
+            <td><span class="chip neu">Inert</span></td><td><span class="chip neg">Flawed</span></td>
+          </tr>
+          <tr>
+            <td class="strat">Volatility Breakout<span class="plug">CVolatilityBreakoutEntry · H1+H4</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num dim">0</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td>
+            <td><span class="chip neu">Inert · gated off</span></td><td><span class="chip warn">Adequate*</span></td>
+          </tr>
+          <tr>
+            <td class="strat">Displacement + Liq-Displacement<span class="plug">CDisplacementEntry / CLiquidityEngine · H1+H4</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num dim">0</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td>
+            <td><span class="chip neu">Inert · starved + dup</span></td><td><span class="chip warn">Adequate*</span></td>
+          </tr>
+          <tr>
+            <td class="strat">File / CSV signals<span class="plug">CFileEntry · external source</span></td>
+            <td><span class="dot on"></span><span class="stcell">ON</span></td>
+            <td class="r num dim">0</td><td class="r num dim">—</td><td class="r num dim">—</td><td class="r num dim">—</td>
+            <td><span class="chip neu">Source, not edge</span></td><td><span class="chip pos">Solid</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="sessions" style="margin-top:10px">* Sound code, deliberately or effectively dormant — graded on logic, not outcomes. See Evaluation&nbsp;2.</p>
+  </section>
+
+  <!-- EVAL 1 -->
+  <section class="prose">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Profitability &amp; success on gold</h2></div>
+    <p class="sec-sub">Verdicts anchored to the v15 trade log first, then mt5-developer’s source facts; the superseded older “audit E” window is discounted. No ICT/SMC restatement double-counted.</p>
+
+    <p class="lede">The live mix is the <strong>right edge for gold</strong> — a long-biased trend/momentum core plus two tightly-gated short diversifiers. The defects are narrow: one live loser left on, a swarm of inert “ON” strategies that add nothing, and a missing trend-pullback long whose cut rests on stale data.</p>
+
+    <h3>What the CSV actually proves</h3>
+    <p>Only <strong>7 strategies fired</strong> in v15. The R-edges and rank order are stable across both the CSV and STRATEGIES.md (the doc’s larger $-figures are an older window). Every live long is positive; the only net-negative live strategy is S6.</p>
+
+    <h3>Keep-core — the long edge</h3>
+    <ul>
+      <li><strong>Bullish Engulfing</strong> — <span class="vk keep">KEEP.</span> The workhorse: 274 trades, PF 1.49, +42.78R. Highest total R, healthy expectancy at volume. <em>This is the system.</em> Confidence high.</li>
+      <li><strong>Bullish MA-Cross</strong> — <span class="vk keep">KEEP, scale-aware.</span> Best quality-per-trade in the book (PF 2.37, +0.310 avgR, 51% WR) but only 49 trades / 7yr. Rare and high-value — <em>do not widen it chasing frequency</em>; that historically dilutes the edge.</li>
+      <li><strong>Bullish Pin Bar</strong> — <span class="vk keep">KEEP.</span> 227 trades, PF 1.27. Lowest per-trade edge of the longs but real and high-volume; the marginal core contributor.</li>
+    </ul>
+
+    <h3>Short-side keepers — the diversifier</h3>
+    <ul>
+      <li><strong>Bearish Pin Bar</strong> — <span class="vk keep">KEEP.</span> PF 1.87, 51.1% WR, +0.246 avgR — the single best per-trade edge of any live strategy, and a <em>short on a bull metal</em>. The Asia-only / NY-blocked window (~GMT 23:00–08:00, immediate fill, no confirmation) confines shorts to thin Asian liquidity where gold’s bid is weakest. The most under-appreciated strategy relative to its dollar rank.</li>
+      <li><strong>Rubber-Band Short</strong> — <span class="vk keep">KEEP as a regime hedge, eyes open.</span> PF 1.32, +13.35R — but 100% of trades are 2021–2023. Its D1 Death-Cross gate is rarely true on a secular-bull metal, so it contributed nothing in 2024–25 and won’t in the next leg up. Correctly built as dormant insurance; <em>don’t “fix” its silence.</em></li>
+    </ul>
+
+    <h3>Cut-or-prove</h3>
+    <ul>
+      <li><strong>S6 Failed-Break (long)</strong> — <span class="vk cut">LEAN CUT.</span> The only live net-loser (PF 0.78, −1.65R / 37 tr). Loser anatomy (confirmed live): 14/21 losers had MFE&lt;0.3R — the level broke and never snapped back, i.e. the filter is admitting <em>continuation</em> setups, not catching them. Compounded by a confirmation-routing bug that delays the intended fast snapback entry by a full bar (see Evaluation 2). Fix routing + tighten the exhaustion gate and re-test, or disable. Kill if PF&lt;1.0 after the fix.</li>
+      <li><strong>IC Breakout</strong> — <span class="vk inert">UNPROVEN.</span> n=4, “PF ∞” is noise. Leave on for optionality; not part of the edge.</li>
+    </ul>
+
+    <h3>The ghosts — inert “ON” strategies</h3>
+    <p>S3 Range-Edge Fade, Displacement (standalone), Volatility Breakout, both Liq-Engine modes, Range Box, False-Breakout Fade, Session Breakout, all Session-Engine modes are <strong>ON but fired 0 times</strong>. They cost nothing and contribute nothing — <em>not</em> diversification, just inert. They’re starved by their own gate stacks (detailed in Evaluation 2).</p>
+
+    <h3>Were the disabled strategies correctly cut?</h3>
+    <p><strong>Correctly disabled (high confidence):</strong> Bearish Engulfing (−35.3R / 660 tr), S6 Short (−8.9R), Bearish MA-Cross (PF 0.59), FVG-Mitigation (PF 0.56–0.61 — <em>“FVGs on gold H1 behave as momentum, not imbalance to fill”</em>, a genuine gold-specific finding), SFP (0% WR), Silver Bullet / London Breakout / NY Continuation (0% WR / −2.1R — killzone concepts have no edge in this H1 implementation), Panic Momentum (PF 0.47 — gold mean-reverts on velocity spikes, which is exactly why the Rubber-Band <em>fade</em> works and momentum-chase doesn’t).</p>
+    <ul>
+      <li><strong>Pullback Continuation</strong> — <span class="vk test">RE-TEST (highest value).</span> The −0.5R / 38-trade verdict is <em>proven stale</em>: it matches the v11 build exactly, measured before v18’s confirmation-routing / EC-v3 / SMC changes. A trend-pullback long is the single biggest <em>conceptual gap</em> in the live mix.</li>
+      <li><strong>Bearish Engulfing</strong> — <span class="vk test">RE-TEST to settle the conflict.</span> The −35.3R headline vs a +$1,062 reading in another era is the largest unexplained cross-source sign-flip. One clean v18 run; kill-criterion stays strict.</li>
+      <li><strong>BB Mean-Reversion / Compression BO</strong> — low-priority re-tests only; thin, conflicting samples (n=10), and band-fading on gold is genuinely fragile.</li>
+    </ul>
+
+    <h3>Portfolio read</h3>
+    <ul>
+      <li><strong>Concentration risk.</strong> ~90% of profit comes from 3 long patterns that are all H1, all trend-continuation, all “buy strength / buy the dip-rejection.” If gold shifts from trending-bull to a prolonged high-vol <em>range</em> (not a bear — a range), all three degrade together and nothing built for that environment fires.</li>
+      <li><strong>Redundancy.</strong> Bullish Engulfing and Bullish Pin Bar are near-kin (both H1 bullish-rejection candles, same regime/bias gates) — treat their combined +65R as ~1.3 strategies, not 2.</li>
+      <li><strong>Under-weighted.</strong> (a) a <em>working</em> range/mean-reversion tool — S3 and Range Box are meant to be this but are starved to zero; (b) a trend-pullback long — arguably gold’s highest-probability bull setup, currently disabled on stale data.</li>
+      <li><strong>Sizing.</strong> Don’t add risk — the B+ tier is barely breakeven, so if anything tighten toward A+/A. The EC-v3 tier model already scales correctly.</li>
+    </ul>
+  </section>
+
+  <!-- EVAL 2 -->
+  <section class="prose">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Implementation-logic quality</h2></div>
+    <p class="sec-sub">How faithfully the code captures each trading concept — separating concept fidelity from code execution. Grades: Solid / Adequate / Weak / Flawed.</p>
+
+    <h3>Cross-cutting findings</h3>
+    <div class="cards">
+      <div class="card bad">
+        <p class="tag">System-wide · highest leverage</p>
+        <h4>Confirmation-routing bug</h4>
+        <p>The orchestrator decides confirmation from <span style="font-family:var(--mono);font-size:12px">m_enable_confirmation &amp;&amp; !(best_is_mr || SHORT)</span> and <strong>ignores the signal’s own <span style="font-family:var(--mono);font-size:12px">requiresConfirmation</span> flag</strong>. Verified: S6 long sets it false yet ran the confirmation-candle path on 37/37 trades — the intended immediate mean-reversion snapback is delayed a full bar. The single highest-value code fix.</p>
+      </div>
+      <div class="card warn">
+        <p class="tag">Low severity · determinism</p>
+        <h4>Forming-bar ATR</h4>
+        <p>MA-Cross and the Liq-Engine read <span style="font-family:var(--mono);font-size:12px">atr_buf[0]</span> (forming H1 bar) for SL sizing while candlestick plugins use the closed <span style="font-family:var(--mono);font-size:12px">atr_buf[1]</span>. Usually benign on a new-bar gate, but non-deterministic intrabar and tester-vs-live divergent. Standardize to <span style="font-family:var(--mono);font-size:12px">[1]</span>.</p>
+      </div>
+      <div class="card">
+        <p class="tag">Record corrected</p>
+        <h4>No ranking bug · gold point-math clean</h4>
+        <p>The orchestrator discards plugin <span style="font-family:var(--mono);font-size:12px">qualityScore</span> and re-derives a uniform 0/3/5/7/10 tier, so all plugins rank on one scale — S3/S6 zero-fire is <em>trigger starvation, not suppression</em>. And XAUUSD+ point math (1pt = $0.01; 50/150pt buffers = 50c/$1.50) is correctly proportional to gold’s vol — no fixed-pip assumptions.</p>
+      </div>
+    </div>
+
+    <h3>Strategy-by-strategy</h3>
+    <ul>
+      <li><strong>Bullish Engulfing — <span class="vk keep">SOLID.</span></strong> Closed-bar engulf ≥0.8× prior body + body&gt;0.3×ATR significance filter (kills doji-engulfs on gold’s noisy H1), regime + H4-bias gated, structural SL. Best concept-code match in the system. No repaint.</li>
+      <li><strong>Bullish Pin Bar — <span class="vk keep">SOLID.</span></strong> Clean rejection definition (lower wick&gt;1.5× body, close upper 30%), H1+H4, structural SL. Only nit: near-redundant with Engulfing (a portfolio issue, not a code one).</li>
+      <li><strong>Bearish Pin Bar — <span class="vk keep">SOLID</span> — smartest-gated in the book.</strong> Faithful mirror logic + double session gate (Asia-only AND not-NY) + immediate fill (0/94 confirmed) — a model gold-aware short implementation.</li>
+      <li><strong>Bullish MA-Cross — <span class="vk keep">SOLID.</span></strong> SMA(10)/SMA(21) cross on closed bars, tightly regime/NY/H4 gated (explains the rarity + high PF). Note: file comment says “EMA” but it’s SMA — cosmetic mislabel, not a bug. Only risk: forming-bar ATR feeds lot size.</li>
+      <li><strong>Rubber-Band Short — <span class="vk test">ADEQUATE.</span></strong> Concept gold-correct (D1 Death-Cross + H1 overextension fade). Reads D1 EMA at shift 0 and tests live BID — an <em>intentional</em> front-run, no future look-ahead, but fill-model sensitive. <em>Backtest on real-tick modeling only.</em></li>
+      <li><strong>S6 Failed-Break (long) — <span class="vk cut">WEAK</span> — strong concept, broken execution.</strong> Victim of the routing bug (runs delayed) <em>and</em> the snapback-not-exhausted gate (≤1.0×ATR_M15) is too loose, admitting continuation losers. The clearest fix-then-prove case.</li>
+      <li><strong>S3 Range-Edge Fade — <span class="vk inert">ADEQUATE design, effectively DEAD.</span></strong> Exactly the range tool gold needs, but the trigger demands a near-impossible simultaneous conjunction (valid box AND outer-edge AND RSI extreme AND sweep+reclaim AND R≥2). Good logic strangled by over-confluence — relax to OR-of-subset to recover a testable sample.</li>
+      <li><strong>Liq-Engine OB-Retest — <span class="vk cut">FLAWED.</span></strong> Genuine contradiction: a bullish OB is invalidated the instant any H1 candle closes below its bottom, yet the retest <em>requires</em> price to dip back into the zone — the triggering dip self-invalidates the zone. Fix with a wick-tolerance on invalidation — but the repo’s broader “SMC zone-fill underperforms on gold” finding means prove it first.</li>
+      <li><strong>Volatility Breakout — <span class="vk inert">ADEQUATE / intentionally dead.</span></strong> Sound Donchian+Keltner+H4-EMA+ADX logic, gated REGIME_VOLATILE-only (“0 trades, intended”). Adding TRENDING made it fire but was reverted off the proven baseline. Fix is the gate, not the logic.</li>
+      <li><strong>Displacement + Liq-Displacement — <span class="vk inert">ADEQUATE / starved + duplicate.</span></strong> Faithful SMC displacement read; bottleneck is <span style="font-family:var(--mono);font-size:12px">liq_score≥2</span> demanding the sweep land on a D1/W1/strong-SMC level. The two are near-duplicate detectors on the same H1 bar.</li>
+      <li><strong>IC Breakout — <span class="vk inert">ADEQUATE / unproven.</span></strong> Clean two-state momentum machine with a real TP2; only 4 trades — sample is the problem, not the code.</li>
+      <li><strong>File / CSV signals — <span class="vk keep">SOLID</span> (as a source).</strong> Robust engineering: symbol-alias + GMT→EET DST handling, price-sanity, dedup, opportunistic SL/TP synthesis. Correctly excluded from edge analysis.</li>
+      <li><strong>Disabled set:</strong> FVG-Mitigation, SFP, Silver Bullet — code is fine, the <em>concept</em> is gold-wrong; correctly off. Pullback Continuation isn’t instantiated in v18, so its quality on the current core is <em>unknown</em> — worth re-instantiating to grade.</li>
+    </ul>
+  </section>
+
+  <!-- FIXES -->
+  <section class="prose" style="max-width:760px">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Highest-value fixes</h2></div>
+    <p class="sec-sub">Where a strong concept meets weak or broken code — ranked by leverage.</p>
+    <div class="fixes">
+      <h3>Fix in this order</h3>
+      <p class="intro">Each pairs a concrete code change with the edge it unlocks. mt5-developer can implement; re-test against the v18 core before trusting any number.</p>
+      <div class="fixrow"><span class="fixn">1</span><div class="fixbody"><div class="t">Confirmation routing → honor the signal’s own flag</div><div class="d">Mean-reversion winners (S6/S3) execute immediately as intended. Directly repairs S6’s negative edge; system-wide.</div></div><span class="lvl hi">High</span></div>
+      <div class="fixrow"><span class="fixn">2</span><div class="fixbody"><div class="t">S6 exhaustion filter → require real rejection, not mere reclaim</div><div class="d">Stops admitting MFE&lt;0.3R continuation losers. Pair with fix 1, then re-test 2019–2026; kill if PF&lt;1.0.</div></div><span class="lvl hi">High</span></div>
+      <div class="fixrow"><span class="fixn">3</span><div class="fixbody"><div class="t">OB-Retest → wick-tolerance on OB invalidation</div><div class="d">So a retest dip stops self-killing the zone. Only if SMC-on-gold is worth pursuing — the broader data doubts it.</div></div><span class="lvl med">Med</span></div>
+      <div class="fixrow"><span class="fixn">4</span><div class="fixbody"><div class="t">S3 gate stack → relax to OR-of-subset</div><div class="d">Recovers the range tool the portfolio is missing. Target 30–50 trades; keep if PF&gt;1.1.</div></div><span class="lvl med">Med</span></div>
+      <div class="fixrow"><span class="fixn">5</span><div class="fixbody"><div class="t">Re-test Pullback Continuation on v18</div><div class="d">Fills the biggest conceptual gap — a proven trend-pullback long. Verify it isn’t just re-firing on Engulfing’s bars.</div></div><span class="lvl med">Med</span></div>
+      <div class="fixrow"><span class="fixn">6</span><div class="fixbody"><div class="t">Standardize forming-bar ATR + real-tick Rubber-Band test</div><div class="d">Determinism hygiene: <span style="font-family:var(--mono);font-size:12px">atr_buf[1]</span> everywhere SL is sized; validate the front-run on real ticks.</div></div><span class="lvl lo">Low</span></div>
+    </div>
+  </section>
+
+  <p class="note"><b>Evidence &amp; caveats.</b> Primary source is <span style="font-family:var(--mono)">claude/all_trades_v15.csv</span> (789 closed trades, re-aggregated independently and matching the dossier to the cent). Where docs conflict, the v15 log wins, then mt5-developer’s source facts; the older “audit E” window is discounted as a different config era. STRATEGIES.md $-figures reflect an older/larger window but the same rank order and signs. Implementation claims are read-only, source-verified; the stok↔mt5-developer round resolved 9 open questions. Numbers describe the backtested v15 build, not a guarantee of forward performance.</p>
+
+</div>
+</div>

@@ -1,0 +1,9 @@
+Pattern,RunnerExitMode,Trades,PnL,TotalR,BadTradePct,AvgMissedR24h,AvgFollowthrough24h
+Bearish Pin Bar,RUNNER_EXIT_ENTRY_LOCKED,42,969.97,9.35,90.5,1.68,58.4
+Bearish Pin Bar,RUNNER_EXIT_STANDARD,40,1498.61,17.1,90.0,1.8,58.3
+Bullish Engulfing (Confirmed),RUNNER_EXIT_ENTRY_LOCKED,90,1686.48,19.92,87.8,1.55,58.4
+Bullish Engulfing (Confirmed),RUNNER_EXIT_STANDARD,43,588.5,8.11,90.7,1.37,53.8
+Bullish MA Cross (Confirmed),RUNNER_EXIT_ENTRY_LOCKED,18,932.4,9.65,88.9,1.77,67.2
+Bullish MA Cross (Confirmed),RUNNER_EXIT_STANDARD,6,-75.15,-1.14,100.0,0.85,44.9
+Bullish Pin Bar (Confirmed),RUNNER_EXIT_PROMOTED,11,1065.62,11.86,54.5,1.45,84.6
+Bullish Pin Bar (Confirmed),RUNNER_EXIT_STANDARD,93,436.94,4.32,93.5,1.33,49.5

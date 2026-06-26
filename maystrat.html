@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UltimateTrader EA — Strategy Index</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --bg-elev: #14181d;
+    --bg-card: #1a1f26;
+    --border: #2a313a;
+    --text: #e8ecf1;
+    --text-dim: #9aa3ad;
+    --text-mute: #6c7682;
+    --gold: #f5b800;
+    --gold-soft: #f5b80022;
+    --green: #4ade80;
+    --green-soft: #4ade8015;
+    --red: #f87171;
+    --red-soft: #f8717115;
+    --blue: #60a5fa;
+    --blue-soft: #60a5fa15;
+    --purple: #c084fc;
+    --orange: #fb923c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; scroll-padding-top: 70px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.65;
+    font-size: 15px;
+  }
+
+  /* Header */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(11, 13, 16, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-title {
+    font-weight: 600;
+    color: var(--gold);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  .topbar-meta {
+    font-size: 12px;
+    color: var(--text-mute);
+  }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(135deg, #1a1f26 0%, #0b0d10 100%);
+    padding: 80px 48px 60px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, var(--gold-soft) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-inner { max-width: 1100px; margin: 0 auto; position: relative; }
+  .hero-eyebrow {
+    display: inline-block;
+    color: var(--gold);
+    background: var(--gold-soft);
+    border: 1px solid var(--gold);
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: 48px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 0%, #f5b800 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 18px;
+    color: var(--text-dim);
+    max-width: 720px;
+    margin-bottom: 36px;
+  }
+  .hero-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    max-width: 900px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); border-color: var(--gold); }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* Layout with sticky TOC */
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 48px;
+  }
+  .toc {
+    position: sticky;
+    top: 80px;
+    align-self: start;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+  .toc-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-mute);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+  .toc a {
+    display: block;
+    padding: 6px 10px;
+    margin-left: -10px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: all 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .toc a:hover { color: var(--gold); background: var(--bg-card); }
+  .toc a.active { color: var(--gold); border-left-color: var(--gold); }
+
+  /* Content */
+  .content { min-width: 0; }
+  section { margin-bottom: 64px; scroll-margin-top: 80px; }
+  h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--border);
+    color: var(--text);
+  }
+  h2 .h-num {
+    color: var(--gold);
+    font-weight: 600;
+    margin-right: 12px;
+  }
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 32px 0 12px;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 8px;
+    color: var(--gold);
+  }
+  p { margin-bottom: 12px; color: var(--text-dim); }
+  ul, ol { margin: 12px 0 16px 24px; color: var(--text-dim); }
+  li { margin-bottom: 6px; }
+
+  /* Blockquote */
+  blockquote {
+    border-left: 3px solid var(--gold);
+    background: var(--gold-soft);
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  /* Code & inline code */
+  code {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", "Monaco", "Cascadia Code", monospace;
+    font-size: 0.88em;
+    color: var(--orange);
+  }
+  pre {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  pre code {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text);
+  }
+
+  /* Tables */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 16px 0 20px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-elev);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    background: var(--bg-card);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: sticky;
+    top: 0;
+  }
+  tr:last-child td { border-bottom: none; }
+  tbody tr { transition: background 0.15s; }
+  tbody tr:hover { background: var(--bg-card); }
+
+  /* Number formatting */
+  .pos { color: var(--green); font-weight: 600; }
+  .neg { color: var(--red); font-weight: 600; }
+  .neut { color: var(--text-dim); }
+  .mono { font-family: "SF Mono", monospace; font-size: 0.92em; }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+  .badge-active { background: var(--green-soft); color: var(--green); border: 1px solid var(--green); }
+  .badge-disabled { background: var(--red-soft); color: var(--red); border: 1px solid var(--red); }
+  .badge-mixed { background: #fb923c15; color: var(--orange); border: 1px solid var(--orange); }
+  .badge-pending { background: var(--blue-soft); color: var(--blue); border: 1px solid var(--blue); }
+  .badge-long { background: var(--green-soft); color: var(--green); padding: 1px 7px; font-size: 10px; }
+  .badge-short { background: var(--red-soft); color: var(--red); padding: 1px 7px; font-size: 10px; }
+  .badge-both { background: var(--blue-soft); color: var(--blue); padding: 1px 7px; font-size: 10px; }
+
+  /* Strategy cards in definitions */
+  .strat-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--gold);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .strat-card:hover { border-left-color: var(--green); transform: translateX(4px); }
+  .strat-card.disabled-card { border-left-color: var(--red); opacity: 0.85; }
+  .strat-card-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .strat-card-subtitle {
+    font-size: 13px;
+    color: var(--text-mute);
+    margin-bottom: 14px;
+    font-style: italic;
+  }
+  .strat-block { margin-bottom: 10px; }
+  .strat-block strong {
+    display: inline-block;
+    color: var(--gold);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 8px;
+  }
+
+  /* Glossary */
+  .glossary { background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+  .glossary table { font-size: 13px; }
+  .glossary th:first-child { width: 130px; color: var(--gold); }
+
+  /* Callout boxes */
+  .takeaway {
+    background: var(--blue-soft);
+    border-left: 3px solid var(--blue);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .takeaway strong { color: var(--blue); }
+
+  .danger {
+    background: var(--red-soft);
+    border-left: 3px solid var(--red);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .danger strong { color: var(--red); }
+
+  /* Rank trophies */
+  .rank-cell {
+    font-size: 16px;
+    text-align: center;
+    width: 50px;
+  }
+  .rank-1 { color: var(--gold); }
+  .rank-2 { color: #c0c0c0; }
+  .rank-3 { color: #cd7f32; }
+
+  /* Pattern family map */
+  .family-map {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    font-family: "SF Mono", monospace;
+    font-size: 13px;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .family-cat {
+    color: var(--gold);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+  }
+  .family-branch { color: var(--text-dim); }
+  .family-strat { color: var(--text); }
+  .family-note { color: var(--text-mute); font-style: italic; }
+
+  /* Profit bar visualization */
+  .profit-row { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+  .profit-label { width: 200px; font-size: 14px; }
+  .profit-bar-container { flex: 1; height: 24px; background: var(--bg-card); border-radius: 4px; position: relative; overflow: hidden; }
+  .profit-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--green) 0%, #22c55e 100%);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    color: #0b0d10;
+    font-weight: 700;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .profit-bar.neg { background: linear-gradient(90deg, var(--red) 0%, #dc2626 100%); }
+
+  /* Bottom summary */
+  .bottom-line {
+    background: linear-gradient(135deg, var(--bg-elev) 0%, var(--bg-card) 100%);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    padding: 32px;
+    margin: 32px 0;
+  }
+  .bottom-line h3 { color: var(--gold); margin-top: 0; }
+  .bottom-line ul { list-style: none; margin-left: 0; }
+  .bottom-line ul li {
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  .bottom-line ul li:last-child { border-bottom: none; }
+  .bottom-line .pct {
+    font-family: "SF Mono", monospace;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 60px;
+    text-align: right;
+  }
+  .bottom-line .pct.neg { color: var(--red); }
+  .bottom-line .pct.neut { color: var(--text-dim); }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 24px;
+    text-align: center;
+    color: var(--text-mute);
+    font-size: 13px;
+  }
+
+  /* Mobile */
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; padding: 32px 16px; }
+    .toc { display: none; }
+    .hero { padding: 48px 24px 36px; }
+    .hero h1 { font-size: 32px; }
+    .hero-sub { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-title">⚜ UltimateTrader EA</div>
+  <div class="topbar-meta">v18 · 2026-04-10 · Strategy Index</div>
+</header>
+
+<section class="hero">
+  <div class="hero-inner">
+    <span class="hero-eyebrow">Production State · v18</span>
+    <h1>Strategy Index</h1>
+    <p class="hero-sub">
+      A complete reference for every entry strategy in the UltimateTrader gold trading EA — what's active, what's disabled, what works, and why.
+    </p>
+    <div class="hero-stats">
+      <div class="stat-card">
+        <div class="stat-value">11</div>
+        <div class="stat-label">Active Plugins</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">16</div>
+        <div class="stat-label">Disabled</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">$27,394</div>
+        <div class="stat-label">Total PnL (2019–2026)</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">PF 1.58</div>
+        <div class="stat-label">Profit Factor</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">3.38%</div>
+        <div class="stat-label">Max Drawdown</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">4.91</div>
+        <div class="stat-label">Sharpe Ratio</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <nav class="toc">
+    <div class="toc-title">Contents</div>
+    <a href="#active">Active Strategies</a>
+    <a href="#tiers">Quality Tiers</a>
+    <a href="#disabled">Disabled Strategies</a>
+    <a href="#plugins">Plugin → Strategy Map</a>
+    <a href="#gates">Session & Pattern Gates</a>
+    <a href="#pipeline">Validation Pipeline</a>
+    <a href="#toggles">Toggle Summary</a>
+    <a href="#glossary">Glossary</a>
+    <a href="#definitions">Strategy Definitions</a>
+    <a href="#disabled-defs">Why Strategies Were Killed</a>
+    <a href="#families">Pattern Families</a>
+    <a href="#lessons">Four Lessons</a>
+    <a href="#rankings">📊 Rankings</a>
+    <a href="#bottom">Bottom Line</a>
+  </nav>
+
+  <main class="content">
+
+    <section id="active">
+      <h2><span class="h-num">01</span>Active Strategies</h2>
+      <p>Performance data from v18 production backtest (2019–2026). Strategies 6–14 are low-frequency and lack statistically significant sample sizes.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Strategy</th><th>Plugin Class</th><th>Dir</th><th class="mono">Trades</th><th class="mono">WR</th><th class="mono">Avg R</th><th class="mono">PnL ($)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>1</td><td>Bullish Engulfing</td><td><code>CEngulfingEntry</code></td><td><span class="badge-long">LONG</span></td><td class="mono">287</td><td class="mono">44%</td><td class="mono pos">+0.148</td><td class="mono pos">$9,585</td></tr>
+            <tr><td>2</td><td>Bullish Pin Bar</td><td><code>CPinBarEntry</code></td><td><span class="badge-long">LONG</span></td><td class="mono">247</td><td class="mono">42%</td><td class="mono pos">+0.091</td><td class="mono pos">$8,359</td></tr>
+            <tr><td>3</td><td>Bullish MA Cross</td><td><code>CMACrossEntry</code></td><td><span class="badge-long">LONG</span></td><td class="mono">58</td><td class="mono">52%</td><td class="mono pos">+0.360</td><td class="mono pos">$6,324</td></tr>
+            <tr><td>4</td><td>Bearish Pin Bar</td><td><code>CPinBarEntry</code></td><td><span class="badge-short">SHORT</span></td><td class="mono">181</td><td class="mono">43%</td><td class="mono pos">+0.066</td><td class="mono pos">$2,344</td></tr>
+            <tr><td>5</td><td>Rubber Band Short</td><td><code>CExpansionEngine</code></td><td><span class="badge-short">SHORT</span></td><td class="mono">96</td><td class="mono">49%</td><td class="mono pos">+0.130</td><td class="mono pos">$782</td></tr>
+            <tr><td>6</td><td>S3 Range Edge Fade</td><td><code>CRangeEdgeFade</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>7</td><td>S6 Failed Break (LONG)</td><td><code>CFailedBreakReversal</code></td><td><span class="badge-long">LONG</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>8</td><td>IC Breakout</td><td><code>CExpansionEngine</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>9</td><td>Range Box Entry</td><td><code>CRangeBoxEntry</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>10</td><td>Displacement Entry</td><td><code>CDisplacementEntry</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>11</td><td>Session Breakout</td><td><code>CSessionBreakoutEntry</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>12</td><td>Volatility Breakout</td><td><code>CVolatilityBreakoutEntry</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>13</td><td>Crash Breakout</td><td><code>CCrashBreakoutEntry</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+            <tr><td>14</td><td>False Breakout Fade</td><td><code>CFalseBreakoutFadeEntry</code></td><td><span class="badge-both">BOTH</span></td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tiers">
+      <h2><span class="h-num">02</span>Quality Tier Breakdown</h2>
+      <p>The EA evaluates every signal on a 0–10 point scale and assigns a quality tier. Higher tier = higher risk per trade.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Tier</th><th class="mono">Min Points</th><th class="mono">Risk %</th><th class="mono">Trades</th><th class="mono">Avg R</th><th class="mono">PnL ($)</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong style="color:var(--gold);">A+</strong></td><td class="mono">8</td><td class="mono">1.5%</td><td class="mono">544</td><td class="mono pos">+0.164</td><td class="mono pos">$22,263</td></tr>
+            <tr><td><strong>A</strong></td><td class="mono">7</td><td class="mono">1.0%</td><td class="mono">245</td><td class="mono pos">+0.107</td><td class="mono pos">$5,899</td></tr>
+            <tr><td><strong>B+</strong></td><td class="mono">6</td><td class="mono">0.75%</td><td class="mono">92</td><td class="mono neg">-0.026</td><td class="mono pos">$42</td></tr>
+            <tr><td><span class="text-mute">B</span></td><td class="mono">7 (= A, unreachable)</td><td class="mono">0.6%</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono neut">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="disabled">
+      <h2><span class="h-num">03</span>Disabled Strategies</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Strategy</th><th>Plugin Class</th><th>Enable Flag</th><th>Result</th><th>Reason</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bearish Engulfing</td><td><code>CEngulfingEntry</code></td><td class="mono">InpEnableBearishEngulfing = false</td><td class="neg">-35.3R / 660 trades, 37% WR</td><td>Confirmed dead in all conditions</td></tr>
+            <tr><td>Bearish MA Cross</td><td><code>CMACrossEntry</code></td><td class="mono">hardcoded score 0</td><td>never fires</td><td>Fights long-term gold uptrend</td></tr>
+            <tr><td>S6 Short</td><td><code>CFailedBreakReversal</code></td><td class="mono">g_profileEnableS6Short = false</td><td class="neg">-8.9R / 6 years</td><td>No structural short edge on gold</td></tr>
+            <tr><td>Pullback Continuation</td><td><code>CPullbackContinuationEngine</code></td><td class="mono">InpEnablePullbackCont = false</td><td class="neg">-0.5R / 38 trades</td><td>No edge. Multi-cycle re-entry also failed</td></tr>
+            <tr><td>BB Mean Reversion</td><td><code>CBBMeanReversionEntry</code></td><td class="mono">InpEnableBBMeanReversion = false</td><td class="neg">-1.1R / 10 trades</td><td>Never positive in any period</td></tr>
+            <tr><td>Liquidity Sweep (old)</td><td><code>CLiquiditySweepEntry</code></td><td class="mono">InpEnableLiquiditySweep = false</td><td class="neut">—</td><td>Replaced by Liquidity Engine SFP mode</td></tr>
+            <tr><td>Support Bounce</td><td><code>CSupportBounceEntry</code></td><td class="neut">—</td><td class="neut">—</td><td>Pending validation, never enabled</td></tr>
+            <tr><td>FVG Mitigation</td><td><code>CLiquidityEngine</code> (mode)</td><td>profile flag</td><td class="neg">PF 0.61</td><td>FVGs act as momentum, not imbalance, on gold H1</td></tr>
+            <tr><td>SFP (Swing Failure)</td><td><code>CLiquidityEngine</code> (mode)</td><td>profile flag</td><td class="neg">0% WR</td><td>Dead on arrival</td></tr>
+            <tr><td>Silver Bullet</td><td><code>CSessionEngine</code> (mode)</td><td>profile flag</td><td class="neg">-2.1R / 6 years</td><td>ICT magic-hours concept has no edge on gold</td></tr>
+            <tr><td>London Close Reversal</td><td><code>CSessionEngine</code> (mode)</td><td>profile flag</td><td class="neg">27% WR, -$229</td><td>Net negative</td></tr>
+            <tr><td>Compression Breakout</td><td><code>CExpansionEngine</code> (mode)</td><td>profile flag</td><td class="neg">PF 0.52, -$240</td><td>Inconsistent across periods</td></tr>
+            <tr><td>London Breakout</td><td><code>CSessionEngine</code> (mode)</td><td>profile flag</td><td class="neg">0% WR</td><td>Dead on arrival</td></tr>
+            <tr><td>NY Continuation</td><td><code>CSessionEngine</code> (mode)</td><td>profile flag</td><td class="neg">0% WR</td><td>Dead on arrival</td></tr>
+            <tr><td>Panic Momentum</td><td><code>CExpansionEngine</code> (mode)</td><td>hardcoded</td><td class="neg">PF 0.47</td><td>Hardcoded OFF</td></tr>
+            <tr><td>Range Box (old)</td><td><code>CRangeBoxEntry</code></td><td>low-frequency</td><td class="neut">—</td><td>Mostly replaced by S3 Range Edge Fade</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="plugins">
+      <h2><span class="h-num">04</span>Plugin File → Strategy Map</h2>
+      <p>Every <code>Include/EntryPlugins/*.mqh</code> file and what it implements.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Plugin File</th><th>Implements</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>CEngulfingEntry.mqh</code></td><td>Bullish Engulfing (#1) + Bearish Engulfing (disabled)</td><td><span class="badge badge-mixed">Mixed</span></td></tr>
+            <tr><td><code>CPinBarEntry.mqh</code></td><td>Bullish Pin Bar (#2) + Bearish Pin Bar (#4)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CMACrossEntry.mqh</code></td><td>Bullish MA Cross (#3); Bearish MA Cross hardcoded off</td><td><span class="badge badge-mixed">Mixed</span></td></tr>
+            <tr><td><code>CExpansionEngine.mqh</code></td><td>Rubber Band Short (#5), IC Breakout (#8); Panic Momentum + Compression BO disabled</td><td><span class="badge badge-mixed">Multi-mode</span></td></tr>
+            <tr><td><code>CRangeEdgeFade.mqh</code></td><td>S3 Range Edge Fade (#6)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CFailedBreakReversal.mqh</code></td><td>S6 Failed Break LONG (#7); SHORT disabled</td><td><span class="badge badge-mixed">Mixed</span></td></tr>
+            <tr><td><code>CRangeBoxEntry.mqh</code></td><td>Range Box Entry (#9)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CDisplacementEntry.mqh</code></td><td>Displacement Entry (#10)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CSessionBreakoutEntry.mqh</code></td><td>Session Breakout / Asian range (#11)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CVolatilityBreakoutEntry.mqh</code></td><td>Volatility Breakout (#12, Donchian + Keltner + ADX)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CCrashBreakoutEntry.mqh</code></td><td>Crash Breakout (#13, ATR/RSI 13–17 GMT)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CFalseBreakoutFadeEntry.mqh</code></td><td>False Breakout Fade (#14)</td><td><span class="badge badge-active">Active</span></td></tr>
+            <tr><td><code>CSessionEngine.mqh</code></td><td>Multi-mode: Asian Range, London BO, NY Continuation, Silver Bullet, London Close — most disabled</td><td><span class="badge badge-mixed">Engine</span></td></tr>
+            <tr><td><code>CLiquidityEngine.mqh</code></td><td>Multi-mode: Displacement, OB Retest, FVG Mitigation, SFP — most disabled</td><td><span class="badge badge-mixed">Engine</span></td></tr>
+            <tr><td><code>CLiquiditySweepEntry.mqh</code></td><td>Liquidity Sweep (old) — disabled</td><td><span class="badge badge-disabled">Disabled</span></td></tr>
+            <tr><td><code>CPullbackContinuationEngine.mqh</code></td><td>Pullback Continuation — disabled</td><td><span class="badge badge-disabled">Disabled</span></td></tr>
+            <tr><td><code>CBBMeanReversionEntry.mqh</code></td><td>BB Mean Reversion — disabled</td><td><span class="badge badge-disabled">Disabled</span></td></tr>
+            <tr><td><code>CSupportBounceEntry.mqh</code></td><td>Support Bounce — pending, never enabled</td><td><span class="badge badge-pending">Inactive</span></td></tr>
+            <tr><td><code>CFileEntry.mqh</code></td><td>CSV-file-driven external signals (signal source, not a strategy)</td><td><span class="badge badge-pending">Signal source</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="gates">
+      <h2><span class="h-num">05</span>Session &amp; Pattern Gates</h2>
+      <p>Constraints applied on top of the plugin's own logic:</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Strategy</th><th>Session Gate</th><th>Quality Gate</th><th>Other</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bullish Engulfing</td><td class="neut">—</td><td>quality ≥ regime threshold</td><td>1-bar confirmation candle</td></tr>
+            <tr><td>Bullish Pin Bar</td><td class="neut">—</td><td>quality ≥ regime threshold</td><td>1-bar confirmation candle</td></tr>
+            <tr><td>Bullish MA Cross</td><td>NY blocked (<code>g_profileBullMACrossBlockNY</code>)</td><td>quality ≥ regime threshold</td><td>1-bar confirmation candle</td></tr>
+            <tr><td>Bearish Pin Bar</td><td>NY blocked <em>or</em> Asia-only</td><td>quality ≥ threshold</td><td>SHORT bypass — no confirmation</td></tr>
+            <tr><td>Rubber Band Short</td><td class="neut">—</td><td>A+ only</td><td>ADX > 18; D1 Death Cross + price > EMA21 + 1.5 ATR</td></tr>
+            <tr><td>S3 Range Edge Fade</td><td class="neut">—</td><td class="neut">—</td><td>Anti-stall 5/8 M15 bars; mean-reversion bypass</td></tr>
+            <tr><td>S6 Failed Break</td><td>LONG only</td><td class="neut">—</td><td>Anti-stall 5/8 M15 bars; mean-reversion bypass</td></tr>
+            <tr><td>Crash Breakout</td><td>13–17 GMT only</td><td class="neut">—</td><td>ATR spike + RSI</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="pipeline">
+      <h2><span class="h-num">06</span>Signal Validation Pipeline</h2>
+      <p>All entry signals flow through these stages:</p>
+      <ol>
+        <li><strong>Trend/Regime validation</strong> — D1/H4 trend, regime check (LONG only)</li>
+        <li><strong>Volume/Spread validation</strong> — breakout patterns only</li>
+        <li><strong>SMC Confluence scoring</strong> — order block, min 40/100 (LONG only)</li>
+        <li><strong>Pattern Confidence</strong> — ATR/ADX/MA analysis, min 40/100 (LONG only)</li>
+        <li><strong>Quality evaluation</strong> — point scoring → tier (all signals)</li>
+        <li><strong>Signal ranking</strong> — best quality score wins per bar</li>
+        <li><strong>Confirmation candle</strong> — 1-bar delay (trend patterns only)</li>
+      </ol>
+      <div class="takeaway">
+        <strong>Bypasses:</strong> SHORT signals skip the full validator (ATR minimum only). S3 / S6 mean-reversion execute immediately without confirmation candle.
+      </div>
+    </section>
+
+    <section id="toggles">
+      <h2><span class="h-num">07</span>Strategy Toggle Summary</h2>
+      <pre><code><span style="color:var(--green);">ACTIVE (11 plugins):</span>
+  Engulfing, PinBar, MACross, RangeBox, FalseBreakout,
+  Displacement, SessionBreakout, VolBreakout, CrashDetector,
+  S3 (RangeEdgeFade), S6 (FailedBreakReversal LONG only)
+
+<span style="color:var(--red);">DISABLED (9 strategies):</span>
+  Bearish Engulfing, S6 Short, BB Mean Reversion, Pullback Continuation,
+  Liquidity Sweep (old), FVG Mitigation, SFP, Silver Bullet, London Close
+
+<span style="color:var(--text-mute);">HARDCODED OFF / DEAD ON ARRIVAL:</span>
+  Bearish MA Cross, Panic Momentum, London Breakout, NY Continuation</code></pre>
+    </section>
+
+    <section id="glossary">
+      <h2><span class="h-num">08</span>Glossary — Jargon Decoded</h2>
+      <p>Plain-English definitions for the terms used in this document.</p>
+      <div class="glossary">
+        <div class="table-wrap" style="border:none;">
+          <table>
+            <thead><tr><th>Term</th><th>What it means</th></tr></thead>
+            <tbody>
+              <tr><td><strong>ATR</strong></td><td>Average True Range — how much price typically moves per bar. Used to size stops and detect "big" candles.</td></tr>
+              <tr><td><strong>RSI</strong></td><td>Relative Strength Index (0–100). Below 30 = oversold, above 70 = overbought.</td></tr>
+              <tr><td><strong>ADX</strong></td><td>Average Directional Index — how strong a trend is. Above 25 = strong trend.</td></tr>
+              <tr><td><strong>EMA / MA</strong></td><td>Exponential / Moving Average of price. EMA21 = average of last 21 bars.</td></tr>
+              <tr><td><strong>D1 / H4 / H1 / M15</strong></td><td>Daily / 4-hour / 1-hour / 15-minute timeframe.</td></tr>
+              <tr><td><strong>Long / Short</strong></td><td>Long = buy expecting price up. Short = sell expecting price down.</td></tr>
+              <tr><td><strong>SL / TP</strong></td><td>Stop Loss (exit if wrong) / Take Profit (exit if right).</td></tr>
+              <tr><td><strong>R / R-multiple</strong></td><td>Risk unit. +1R = made 1× what you risked. -1R = lost what you risked.</td></tr>
+              <tr><td><strong>PF</strong></td><td>Profit Factor: gross wins ÷ gross losses. &gt; 1 is profitable.</td></tr>
+              <tr><td><strong>WR</strong></td><td>Win Rate: % of trades that closed profitable.</td></tr>
+              <tr><td><strong>Order Block (OB)</strong></td><td>Where institutions placed large orders — visible as a strong candle that started a big move.</td></tr>
+              <tr><td><strong>FVG</strong></td><td>Fair Value Gap — a 3-candle pattern with a price "gap" between bars, often filled later.</td></tr>
+              <tr><td><strong>Liquidity Sweep</strong></td><td>Price briefly pokes past a known level to trigger stops, then reverses.</td></tr>
+              <tr><td><strong>Death Cross</strong></td><td>EMA50 crosses below EMA200 on Daily — classic long-term bear signal.</td></tr>
+              <tr><td><strong>Session</strong></td><td>Time blocks: Asia (overnight, quiet), London (active EU hours), NY (most volatile).</td></tr>
+              <tr><td><strong>Confirmation candle</strong></td><td>1-bar delay before entry — wait for next candle to confirm the signal didn't fail immediately.</td></tr>
+              <tr><td><strong>Mean reversion</strong></td><td>"Price goes too far → it'll come back." Opposite of trend-following.</td></tr>
+              <tr><td><strong>Setup quality</strong></td><td>Point-based score (A+, A, B+) deciding how much to risk. A+ trades risk 1.5%, B+ risk 0.75%.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="definitions">
+      <h2><span class="h-num">09</span>Strategy Definitions — Active</h2>
+      <p>Plain-English explanations of what each strategy actually does in the market.</p>
+
+      <div class="strat-card">
+        <div class="strat-card-title">1. Bullish Engulfing — "Buyers just overwhelmed sellers"</div>
+        <div class="strat-card-subtitle">CEngulfingEntry · LONG · 287 trades · 44% WR · +$9,585</div>
+        <div class="strat-block"><strong>What you see</strong> A small red (down) candle, immediately followed by a large green (up) candle whose body is bigger than the previous red one's body — it "swallows" it.</div>
+        <div class="strat-block"><strong>Why it works</strong> Sellers were in control, then buyers showed up in such force that they erased the previous bar's selling in a single hour. That's often the first sign of a real reversal.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Long-only (gold's upward bias). Waits one bar after the engulfing pattern (confirmation) before entering, to filter fakeouts.</div>
+        <div class="takeaway">Biggest dollar contributor in the entire system. ~36% of total profit.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">2. Bullish Pin Bar — "Price tried to drop and got rejected"</div>
+        <div class="strat-card-subtitle">CPinBarEntry · LONG · 247 trades · 42% WR · +$8,359</div>
+        <div class="strat-block"><strong>What you see</strong> A single candle with a tiny body near the top and a very long wick (tail) sticking down. Wick ≥ 2× body size.</div>
+        <div class="strat-block"><strong>Why it works</strong> Sellers pushed price way down during the hour — but buyers stepped in aggressively and bought it all back up. The long wick is the visual fingerprint of that rejection.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Long only, with 1-bar confirmation. Longer wick relative to body = stronger signal.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">3. Bullish MA Cross — "Trend just flipped from down to up"</div>
+        <div class="strat-card-subtitle">CMACrossEntry · LONG · 58 trades · 52% WR · +$6,324</div>
+        <div class="strat-block"><strong>What you see</strong> The faster moving average (10-period) crosses upward through the slower one (21-period).</div>
+        <div class="strat-block"><strong>Why it works</strong> When short-term trend crosses above long-term trend, recent buying is stronger than recent selling — momentum has shifted.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Long-only, <strong>blocked during NY session</strong> (late-day mean reversion frequently traps trend signals). Bearish MA Cross is hardcoded off.</div>
+        <div class="takeaway">Highest <strong>R per trade</strong> of any strategy at +0.360 R. Rare (~10/year) but high value.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">4. Bearish Pin Bar — "Price tried to rally and got rejected"</div>
+        <div class="strat-card-subtitle">CPinBarEntry · SHORT · 181 trades · 43% WR · +$2,344</div>
+        <div class="strat-block"><strong>What you see</strong> Mirror of the bullish pin bar — tiny body near the bottom, long upper wick.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Short-only. NY session blocked (NY pin shorts lose -1.9R aggregate). Asia + London allowed. Executes immediately — no confirmation candle (gold's bias makes short windows brief).</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">5. Rubber Band Short (Death Cross) — "Stretched too far up in a downtrend"</div>
+        <div class="strat-card-subtitle">CExpansionEngine · SHORT · 96 trades · 49% WR · +$782</div>
+        <div class="strat-block"><strong>What you see</strong> Daily Death Cross active (EMA50 &lt; EMA200), and H1 price has just bounced more than 1.5× ATR above EMA21. Like a rubber band stretched too far.</div>
+        <div class="strat-block"><strong>Why it works</strong> Dead-cat bounces in bear regimes are sellable. When the corrective rally stretches too far from trend, mean-reversion kicks in.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Requires D1 Death Cross + price stretched + ADX &gt; 18 + <strong>A+ quality only</strong>. B+ versions lose -3.3R / 19 trades.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">6. S3 Range Edge Fade — "Fade the breakout, it's fake"</div>
+        <div class="strat-card-subtitle">CRangeEdgeFade · BOTH directions</div>
+        <div class="strat-block"><strong>What you see</strong> Price bouncing inside a horizontal range (30-bar Donchian box). Suddenly it pokes outside, then immediately snaps back inside.</div>
+        <div class="strat-block"><strong>Why it works</strong> False breakouts are very common — large traders push price past obvious levels to trigger stops, then reverse. This strategy fades those failures.</div>
+        <div class="strat-block"><strong>Trade management</strong> Anti-stall: 5 M15 bars no progress → cut 50%. 8 bars → close fully.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">7. S6 Failed Break Reversal — "Stop hunt → snap back"</div>
+        <div class="strat-card-subtitle">CFailedBreakReversal · LONG only</div>
+        <div class="strat-block"><strong>What you see</strong> Price spikes sharply past a known level (PDH/PDL, Weekly H/L, Asia H/L), then immediately snaps back the other way.</div>
+        <div class="strat-block"><strong>Why it works</strong> Textbook "stop hunt" — institutions push past obvious stop clusters to harvest liquidity, then the original move resumes.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> LONG only. Short side disabled (-8.9R / 6 years — gold's upward bias means failed breaks down are just normal pullbacks).</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">8. IC Breakout (Institutional Candle) — "A whale just showed up"</div>
+        <div class="strat-card-subtitle">CExpansionEngine · BOTH directions</div>
+        <div class="strat-block"><strong>What you see</strong> A huge candle (body ≥ 1.8× ATR), then 2–5 quiet consolidation bars inside its range, then a breakout in the IC's direction.</div>
+        <div class="strat-block"><strong>Why it works</strong> A candle that large was likely caused by institutional activity. The consolidation is the market digesting; the breakout signals continued accumulation.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">9. Range Box Entry — "Trade the box breakout"</div>
+        <div class="strat-card-subtitle">CRangeBoxEntry · BOTH directions · low frequency</div>
+        <div class="strat-block"><strong>What you see</strong> Price consolidates in a clear box, then breaks out with conviction.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Active but mostly replaced by S3 Range Edge Fade in practice — fading the false break tends to win more often on gold than the breakout play itself.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">10. Displacement Entry — "Sweep + sharp directional move"</div>
+        <div class="strat-card-subtitle">CDisplacementEntry · BOTH directions</div>
+        <div class="strat-block"><strong>What you see</strong> Price sweeps a liquidity level, then immediately prints a displacement candle (body ≥ 1.8× ATR) in the new direction.</div>
+        <div class="strat-block"><strong>Why it works</strong> SMC pattern. The sweep grabs stops; the displacement reveals where big money is going. The two events together are stronger than either alone.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">11. Session Breakout — "Asian range breakout"</div>
+        <div class="strat-card-subtitle">CSessionBreakoutEntry · BOTH directions</div>
+        <div class="strat-block"><strong>What you see</strong> During Asia (overnight), gold trades in a tight range. London open (~03:00 EST) breaks it decisively.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Identifies Asia range high/low, waits for breakout, then waits for a <strong>retest</strong> of the breakout level before entering (filters fakeouts).</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">12. Volatility Breakout — "Channel breakout with momentum"</div>
+        <div class="strat-card-subtitle">CVolatilityBreakoutEntry · BOTH directions</div>
+        <div class="strat-block"><strong>What you see</strong> Price breaks above the upper Donchian channel <strong>and</strong> outside the Keltner envelope, with ADX &gt; 25.</div>
+        <div class="strat-block"><strong>Why it works</strong> Two different channel types must agree (reduces false signals). ADX filter ensures real trend strength, not just a random spike.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">13. Crash Breakout — "Panic move during NY hours"</div>
+        <div class="strat-card-subtitle">CCrashBreakoutEntry · BOTH directions · 13–17 GMT only</div>
+        <div class="strat-block"><strong>What you see</strong> Sharp ATR spike + RSI in an extreme zone, during 13:00–17:00 GMT (NY open through mid-session).</div>
+        <div class="strat-block"><strong>Why it works</strong> Gold's news-driven panic moves at NY open. This strategy is built to participate — but only during the hours when they actually happen.</div>
+      </div>
+
+      <div class="strat-card">
+        <div class="strat-card-title">14. False Breakout Fade — "Trade against the failed breakout"</div>
+        <div class="strat-card-subtitle">CFalseBreakoutFadeEntry · BOTH directions</div>
+        <div class="strat-block"><strong>What you see</strong> Price breaks a level, fails to follow through, and reverses.</div>
+        <div class="strat-block"><strong>How the EA trades it</strong> Same concept as S3 but applied more broadly. Mostly superseded by S3 in practice.</div>
+      </div>
+    </section>
+
+    <section id="disabled-defs">
+      <h2><span class="h-num">10</span>Why Strategies Were Killed</h2>
+      <p>The disabled list is longer than the active list. Here's the story behind each kill:</p>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 Bearish Engulfing</div>
+        <div class="strat-block"><strong>What it did</strong> Mirror of #1, but shorting on big red candles engulfing prior green.</div>
+        <div class="danger"><strong>Result:</strong> Lost -35.3R across 660 trades, 37% WR. Gold's long-term uptrend steamrolled every "bearish reversal" pattern. <strong>The single biggest improvement to the system came from turning this off.</strong></div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 Bearish MA Cross</div>
+        <div class="strat-block"><strong>What it did</strong> Fast MA crosses below slow MA → sell signal.</div>
+        <div class="strat-block">Hardcoded off. Fights gold's secular uptrend. Even "perfect" crosses tend to resume up before the trade can profit.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 S6 Short</div>
+        <div class="strat-block"><strong>What it did</strong> Failed-break reversal going short.</div>
+        <div class="strat-block">-8.9R over 6 years. Failed breaks <em>downside</em> on gold are usually just normal pullbacks, not stop hunts. The structural asymmetry only works long.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 Pullback Continuation</div>
+        <div class="strat-block"><strong>What it did</strong> Buy the dip in an uptrend / sell the rally in a downtrend.</div>
+        <div class="strat-block">-0.5R / 38 trades. Even the multi-cycle re-entry variant failed. Gold's pullbacks don't have a clean enough structure for systematic entry.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 BB Mean Reversion</div>
+        <div class="strat-block"><strong>What it did</strong> Buy/sell at Bollinger Band extremes.</div>
+        <div class="strat-block">-1.1R / 10 trades. Never positive in any test period. Bollinger Bands on gold expand too aggressively to fade.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 FVG Mitigation</div>
+        <div class="strat-block"><strong>What it did</strong> Trade when price returned to fill a Fair Value Gap.</div>
+        <div class="strat-block">PF 0.61 — consistent loser. <strong>Forensics revealed FVGs on gold H1 act as momentum signals (price keeps going) not imbalance signals (price returns to fill).</strong> The entire premise was wrong for this market.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 SFP (Swing Failure)</div>
+        <div class="strat-block"><strong>What it did</strong> Trade when a swing high/low fails to hold.</div>
+        <div class="strat-block">0% win rate in 5.5 months. Dead on arrival.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 Silver Bullet</div>
+        <div class="strat-block"><strong>What it did</strong> ICT concept — trade specific 1-hour windows (e.g. 10–11 AM NY).</div>
+        <div class="strat-block">-2.1R over 6 years. The "magic hours" concept has no measurable edge on gold.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 London Close Reversal</div>
+        <div class="strat-block">27% WR, -$229 net. Pattern exists visually but isn't systematically tradeable.</div>
+      </div>
+
+      <div class="strat-card disabled-card">
+        <div class="strat-card-title">💀 Compression Breakout · Panic Momentum · London BO · NY Continuation</div>
+        <div class="strat-block">Various PFs &lt; 1 and 0% WRs. All either inconsistent or dead on arrival. Compression BO (PF 0.52), Panic Momentum (PF 0.47), London BO (0% WR), NY Continuation (0% WR).</div>
+      </div>
+    </section>
+
+    <section id="families">
+      <h2><span class="h-num">11</span>Pattern Family Map</h2>
+      <p>Strategies grouped by underlying market thesis:</p>
+      <div class="family-map">
+<span class="family-cat">TREND CONTINUATION</span> <span class="family-note">(longs only on gold)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Bullish Engulfing</span>       <span class="family-note">(candlestick reversal → continuation)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Bullish Pin Bar</span>         <span class="family-note">(rejection → continuation)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Bullish MA Cross</span>        <span class="family-note">(momentum shift)</span>
+  <span class="family-branch">└──</span> <span class="family-strat">Session Breakout</span>        <span class="family-note">(volatility expansion)</span>
+
+<span class="family-cat">REVERSAL / MEAN REVERSION</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Bearish Pin Bar</span>         <span class="family-note">(top fade)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Rubber Band Short</span>       <span class="family-note">(overextension fade in bear regime)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">S3 Range Edge Fade</span>      <span class="family-note">(fade false break of range)</span>
+  <span class="family-branch">└──</span> <span class="family-strat">S6 Failed Break Reversal</span> <span class="family-note">(fade failed structural break, long-only)</span>
+
+<span class="family-cat">BREAKOUT / MOMENTUM</span>
+  <span class="family-branch">├──</span> <span class="family-strat">IC Breakout</span>             <span class="family-note">(institutional candle → continuation)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Range Box Entry</span>         <span class="family-note">(consolidation → expansion)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Displacement Entry</span>      <span class="family-note">(sweep + sharp move)</span>
+  <span class="family-branch">├──</span> <span class="family-strat">Volatility Breakout</span>     <span class="family-note">(channel + ADX)</span>
+  <span class="family-branch">└──</span> <span class="family-strat">Crash Breakout</span>          <span class="family-note">(volatility spike, NY hours only)</span>
+      </div>
+    </section>
+
+    <section id="lessons">
+      <h2><span class="h-num">12</span>The Four Lessons</h2>
+      <p>Meta-takeaways from every disabled strategy:</p>
+      <div class="takeaway">
+        <strong>1. Gold's long-term uptrend punishes short-side trend strategies.</strong><br>
+        Killed Bearish Engulfing, Bearish MA Cross, S6 Short, Panic Momentum.
+      </div>
+      <div class="takeaway">
+        <strong>2. ICT/SMC concepts (FVG, SFP, Silver Bullet) don't have a measurable edge on gold H1.</strong><br>
+        They work in theory; they don't survive in backtests.
+      </div>
+      <div class="takeaway">
+        <strong>3. Pullback and mean-reversion strategies need extremely clean structure.</strong><br>
+        Gold has too much noise for systematic dip-buying or band-fading to work.
+      </div>
+      <div class="takeaway">
+        <strong>4. Trailing stops are sacred — never modify them.</strong><br>
+        Every attempt to "improve" exits (5 separate A/B tests in v17–v18) made the system worse. The optimal Chandelier 3.0× ATR setting was found empirically and is locked.
+      </div>
+    </section>
+
+    <section id="rankings">
+      <h2><span class="h-num">13</span>Strategy Rankings — v18 Backtest Results</h2>
+      <blockquote>Period: 2019–2026. Source: <code>EA_STRATEGY_ANALYSIS.md</code> + <code>docs/02-Strategies.md</code>. Only the top-5 active strategies have statistically significant sample sizes.</blockquote>
+
+      <h3>🏆 Ranking 1 — By Total Dollar Contribution</h3>
+      <p>The "who pays the bills" view.</p>
+      <div class="profit-row"><div class="profit-label">🥇 Bullish Engulfing</div><div class="profit-bar-container"><div class="profit-bar" style="width:100%;">$9,585 · 36%</div></div></div>
+      <div class="profit-row"><div class="profit-label">🥈 Bullish Pin Bar</div><div class="profit-bar-container"><div class="profit-bar" style="width:87%;">$8,359 · 31%</div></div></div>
+      <div class="profit-row"><div class="profit-label">🥉 Bullish MA Cross</div><div class="profit-bar-container"><div class="profit-bar" style="width:66%;">$6,324 · 24%</div></div></div>
+      <div class="profit-row"><div class="profit-label">4. Bearish Pin Bar</div><div class="profit-bar-container"><div class="profit-bar" style="width:24%;">$2,344 · 9%</div></div></div>
+      <div class="profit-row"><div class="profit-label">5. Rubber Band Short</div><div class="profit-bar-container"><div class="profit-bar" style="width:8%;">$782 · 3%</div></div></div>
+      <div class="takeaway"><strong>Takeaway:</strong> Three long-side strategies generate ~90% of all profit. The short side contributes small but real positive expectancy.</div>
+
+      <h3>🎯 Ranking 2 — By Quality Per Trade (Avg R)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="rank-cell">#</th><th>Strategy</th><th class="mono">Avg R/trade</th><th class="mono">Trades</th><th>Interpretation</th></tr></thead>
+          <tbody>
+            <tr><td class="rank-cell rank-1">🥇</td><td>Bullish MA Cross</td><td class="mono pos"><strong>+0.360</strong></td><td class="mono">58</td><td>Highest R/trade — rare but high-value setup</td></tr>
+            <tr><td class="rank-cell rank-2">🥈</td><td>Bullish Engulfing</td><td class="mono pos">+0.148</td><td class="mono">287</td><td>Solid expectancy at high volume</td></tr>
+            <tr><td class="rank-cell rank-3">🥉</td><td>Rubber Band Short</td><td class="mono pos">+0.130</td><td class="mono">96</td><td>Best short-side R/trade</td></tr>
+            <tr><td class="rank-cell">4</td><td>Bullish Pin Bar</td><td class="mono pos">+0.091</td><td class="mono">247</td><td>Modest R but reliable volume</td></tr>
+            <tr><td class="rank-cell">5</td><td>Bearish Pin Bar</td><td class="mono pos">+0.066</td><td class="mono">181</td><td>Marginal — gold's bias caps short R</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="takeaway"><strong>Takeaway:</strong> MA Cross is the highest-quality signal, but only fires ~10×/year. Engulfing is the workhorse — high volume <em>and</em> respectable R.</div>
+
+      <h3>📈 Ranking 3 — By Win Rate</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="rank-cell">#</th><th>Strategy</th><th class="mono">WR</th><th class="mono">Trades</th></tr></thead>
+          <tbody>
+            <tr><td class="rank-cell rank-1">🥇</td><td>Bullish MA Cross</td><td class="mono pos">52%</td><td class="mono">58</td></tr>
+            <tr><td class="rank-cell rank-2">🥈</td><td>Rubber Band Short</td><td class="mono">49%</td><td class="mono">96</td></tr>
+            <tr><td class="rank-cell rank-3">🥉</td><td>Bullish Engulfing</td><td class="mono">44%</td><td class="mono">287</td></tr>
+            <tr><td class="rank-cell">4</td><td>Bearish Pin Bar</td><td class="mono">43%</td><td class="mono">181</td></tr>
+            <tr><td class="rank-cell">5</td><td>Bullish Pin Bar</td><td class="mono">42%</td><td class="mono">247</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="takeaway"><strong>Takeaway:</strong> Only MA Cross wins &gt;50% of trades. The system is profitable through <strong>positive expectancy</strong> (winners much larger than losers), not high win rate.</div>
+
+      <h3>⚖️ Ranking 4 — Composite Score (PnL × Avg R × WR)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="rank-cell">#</th><th>Strategy</th><th class="mono">Score</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td class="rank-cell rank-1">🥇</td><td><strong>Bullish Engulfing</strong></td><td class="mono pos">100</td><td>Top PnL + healthy R + healthy WR — the most balanced</td></tr>
+            <tr><td class="rank-cell rank-2">🥈</td><td>Bullish MA Cross</td><td class="mono pos">85</td><td>Crushes on R and WR, sample-limited PnL</td></tr>
+            <tr><td class="rank-cell rank-3">🥉</td><td>Bullish Pin Bar</td><td class="mono pos">53</td><td>High PnL, modest R</td></tr>
+            <tr><td class="rank-cell">4</td><td>Bearish Pin Bar</td><td class="mono">13</td><td>Useful diversification, low conviction</td></tr>
+            <tr><td class="rank-cell">5</td><td>Rubber Band Short</td><td class="mono">6</td><td>Specialized bear-regime tool, small contribution</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>💎 Ranking 5 — By Quality Tier Performance</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="rank-cell">#</th><th>Tier</th><th class="mono">Trades</th><th class="mono">Avg R</th><th class="mono">PnL ($)</th><th class="mono">Risk %</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td class="rank-cell rank-1">🥇</td><td><strong style="color:var(--gold);">A+</strong></td><td class="mono">544</td><td class="mono pos">+0.164</td><td class="mono pos">$22,263</td><td class="mono">1.5%</td><td>Workhorse tier — does most of the lifting</td></tr>
+            <tr><td class="rank-cell rank-2">🥈</td><td><strong>A</strong></td><td class="mono">245</td><td class="mono pos">+0.107</td><td class="mono pos">$5,899</td><td class="mono">1.0%</td><td>Profitable, lower expectancy</td></tr>
+            <tr><td class="rank-cell rank-3">🥉</td><td><strong>B+</strong></td><td class="mono">92</td><td class="mono neg">-0.026</td><td class="mono">$42</td><td class="mono">0.75%</td><td>Marginal — barely breakeven</td></tr>
+            <tr><td class="rank-cell">—</td><td>B</td><td class="mono neut">0</td><td class="mono neut">—</td><td class="mono neut">—</td><td class="mono">0.6%</td><td>Threshold set unreachable on purpose</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="takeaway"><strong>Takeaway:</strong> A+ trades earn ~4× the expectancy of B+ trades. The B threshold is deliberately set equal to A so B-tier trades never fire (they're too low conviction).</div>
+
+      <h3>💀 Ranking 6 — Disabled Strategies by Cost (worst first)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th class="rank-cell">#</th><th>Strategy</th><th>Damage</th><th>Why it failed</th></tr></thead>
+          <tbody>
+            <tr><td class="rank-cell">💀1</td><td>Bearish Engulfing</td><td class="neg">-35.3R / 660 trades, 37% WR</td><td>Confirmed dead in all conditions</td></tr>
+            <tr><td class="rank-cell">💀2</td><td>S6 Short</td><td class="neg">-8.9R / 6 years</td><td>No structural short edge on gold</td></tr>
+            <tr><td class="rank-cell">💀3</td><td>Silver Bullet</td><td class="neg">-2.1R / 6 years</td><td>ICT magic-hours has no edge</td></tr>
+            <tr><td class="rank-cell">4</td><td>BB Mean Reversion</td><td class="neg">-1.1R / 10 trades</td><td>Never positive in any period</td></tr>
+            <tr><td class="rank-cell">5</td><td>Pullback Continuation</td><td class="neg">-0.5R / 38 trades</td><td>Even multi-cycle variant failed</td></tr>
+            <tr><td class="rank-cell">6</td><td>London Close Reversal</td><td class="neg">27% WR, -$229</td><td>Not systematically tradeable</td></tr>
+            <tr><td class="rank-cell">7</td><td>Compression Breakout</td><td class="neg">PF 0.52, -$240</td><td>Inconsistent across periods</td></tr>
+            <tr><td class="rank-cell">8</td><td>FVG Mitigation</td><td class="neg">PF 0.61</td><td>FVGs are momentum, not imbalance, on gold</td></tr>
+            <tr><td class="rank-cell">9</td><td>Panic Momentum</td><td class="neg">PF 0.47</td><td>Gold mean-reverts on velocity spikes</td></tr>
+            <tr><td class="rank-cell">—</td><td>Bearish MA Cross</td><td class="neut">hardcoded off</td><td>Fights gold's secular uptrend</td></tr>
+            <tr><td class="rank-cell">—</td><td>SFP / London BO / NY Continuation</td><td class="neg">0% WR</td><td>Dead on arrival</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="danger"><strong>The biggest single win in EA history:</strong> Disabling Bearish Engulfing. That one decision recovered ~$1,300+ in net profit and flipped the bad-year aggregate from -15.82R to +16.08R.</div>
+    </section>
+
+    <section id="bottom">
+      <h2><span class="h-num">14</span>Bottom Line</h2>
+      <div class="bottom-line">
+        <h3>Where Profit Actually Comes From</h3>
+        <ul>
+          <li><span>3 long strategies (Engulfing + Pin Bar + MA Cross)</span><span class="pct">~90%</span></li>
+          <li><span>2 short strategies (Bearish Pin Bar + Rubber Band Short)</span><span class="pct">~10%</span></li>
+          <li><span>8 low-frequency (S3, S6, IC, RangeBox, Displacement, Session BO, Vol BO, Crash BO, False BO)</span><span class="pct neut">~0%</span></li>
+          <li><span>16 disabled strategies (would actively destroy the system)</span><span class="pct neg">NEGATIVE</span></li>
+        </ul>
+      </div>
+      <p>The system is fundamentally a <strong style="color:var(--gold);">long-biased gold trend-following EA</strong> with a few specialized short tools and a portfolio of small-sample experiments kept around for diversification.</p>
+      <div class="takeaway" style="font-size:16px;">
+        <strong>The disabled list is longer than the active list — the EA's strength is what it refuses to do.</strong>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <p>UltimateTrader EA Strategy Index · v18 (2026-04-10) · Generated from <code>STRATEGIES.md</code></p>
+  <p style="margin-top:8px;">Canonical source documents: <code>docs/00-Overview.md</code>, <code>docs/02-Strategies.md</code>, <code>EA_STRATEGY_ANALYSIS.md</code></p>
+</footer>
+
+<script>
+  // Highlight active TOC link based on scroll position
+  const links = document.querySelectorAll('.toc a');
+  const sections = document.querySelectorAll('section[id]');
+  function onScroll() {
+    let current = '';
+    sections.forEach(s => {
+      const rect = s.getBoundingClientRect();
+      if (rect.top < 120) current = s.id;
+    });
+    links.forEach(l => {
+      l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+</script>
+
+</body>
+</html>

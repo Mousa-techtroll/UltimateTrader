@@ -1,0 +1,21 @@
+Pattern,ExitIssue,Trades,RealizedPnL,RealizedR,MissedR24h,Opportunity24hMoney,Recovery10Pct,Recovery15Pct,AvgEntryFollowthrough24h,AvgExitScore24h,MainManagementModes,MainRunnerModes
+Bullish Engulfing (Confirmed),trailing_stop_too_tight,12,590.01,6.83,42.12,3655.27,365.53,548.29,83.5,12.8,trailing:12,RUNNER_EXIT_ENTRY_LOCKED:8|RUNNER_EXIT_STANDARD:4
+Bearish Pin Bar,trailing_stop_too_tight,11,614.32,6.42,35.32,3453.99,345.4,518.1,85.5,16.1,trailing:11,RUNNER_EXIT_STANDARD:7|RUNNER_EXIT_ENTRY_LOCKED:4
+Rubber Band Short (Death Cross),trailing_stop_too_tight,19,359.05,8.56,75.04,2650.46,265.05,397.57,83.4,13.1,trailing:19,RUNNER_EXIT_STANDARD:19
+Bullish Engulfing (Confirmed),breakeven_exit_too_early,12,846.61,10.48,26.98,2225.1,222.51,333.76,87.1,21.5,breakeven:12,RUNNER_EXIT_STANDARD:6|RUNNER_EXIT_ENTRY_LOCKED:6
+Bullish Pin Bar (Confirmed),trailing_stop_too_tight,10,270.47,2.92,22.04,1958.2,195.82,293.73,84.2,13.7,trailing:10,RUNNER_EXIT_STANDARD:9|RUNNER_EXIT_PROMOTED:1
+Bearish Pin Bar,take_profit_too_close,6,580.1,7.03,21.84,1935.36,193.54,290.3,91.3,15.2,none:6,RUNNER_EXIT_STANDARD:3|RUNNER_EXIT_ENTRY_LOCKED:3
+Bullish Pin Bar (Confirmed),breakeven_exit_too_early,8,768.51,9.06,19.7,1686.95,168.7,253.04,82.6,11.6,breakeven:8,RUNNER_EXIT_STANDARD:6|RUNNER_EXIT_PROMOTED:2
+Bearish Pin Bar,premature_exit,1,-113.68,-1.0,11.81,1346.93,134.69,202.04,84.5,0.2,none:1,RUNNER_EXIT_ENTRY_LOCKED:1
+Bullish Pin Bar (Confirmed),premature_exit,3,-260.14,-2.94,13.17,1159.1,115.91,173.86,70.1,6.2,none:3,RUNNER_EXIT_STANDARD:3
+Bullish MA Cross (Confirmed),trailing_stop_too_tight,4,411.51,4.16,10.59,993.97,99.4,149.1,87.3,20.3,trailing:4,RUNNER_EXIT_ENTRY_LOCKED:3|RUNNER_EXIT_STANDARD:1
+Bullish Engulfing (Confirmed),premature_exit,1,-94.3,-1.0,6.18,585.64,58.56,87.85,79.1,5.4,none:1,RUNNER_EXIT_ENTRY_LOCKED:1
+Bullish Pin Bar (Confirmed),take_profit_too_close,1,114.4,1.17,4.61,452.36,45.24,67.85,100.0,0.6,none:1,RUNNER_EXIT_STANDARD:1
+Bullish MA Cross (Confirmed),breakeven_exit_too_early,3,230.48,2.63,4.11,353.23,35.32,52.98,90.5,18.8,breakeven:3,RUNNER_EXIT_ENTRY_LOCKED:2|RUNNER_EXIT_STANDARD:1
+Bearish Pin Bar,breakeven_exit_too_early,2,145.12,2.3,3.7,248.18,24.82,37.23,98.4,27.6,breakeven:2,RUNNER_EXIT_ENTRY_LOCKED:2
+IC Breakout Long,breakeven_exit_too_early,1,21.31,0.24,2.64,233.06,23.31,34.96,80.7,17.4,breakeven:1,RUNNER_EXIT_STANDARD:1
+BB Mean Reversion Short,trailing_stop_too_tight,1,37.85,0.96,4.35,171.09,17.11,25.66,92.1,11.9,trailing:1,RUNNER_EXIT_STANDARD:1
+Pullback Continuation LONG (PB=1.7xATR; 3 bars; C1) (Confirmed),trailing_stop_too_tight,1,21.46,0.27,1.86,146.91,14.69,22.04,84.7,21.1,trailing:1,RUNNER_EXIT_STANDARD:1
+Pullback Continuation SHORT (PB=1.3xATR; 4 bars; C1),trailing_stop_too_tight,1,104.75,1.06,1.14,112.79,11.28,16.92,91.0,17.3,trailing:1,RUNNER_EXIT_STANDARD:1
+Pullback Continuation SHORT (PB=1.5xATR; 8 bars; C1),trailing_stop_too_tight,1,-9.35,-0.14,1.29,84.27,8.43,12.64,70.5,17.9,trailing:1,RUNNER_EXIT_STANDARD:1
+Pullback Continuation SHORT (PB=1.5xATR; 4 bars; C1),trailing_stop_too_tight,1,7.93,0.13,1.41,83.03,8.3,12.45,76.6,16.1,trailing:1,RUNNER_EXIT_STANDARD:1
