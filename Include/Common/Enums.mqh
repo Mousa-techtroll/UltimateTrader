@@ -289,7 +289,14 @@ enum ENUM_ENGINE_MODE
    MODE_LONDON_CLOSE,
    MODE_COMPRESSION_BO,
    MODE_INSTITUTIONAL_CANDLE,
-   MODE_PANIC_MOMENTUM
+   MODE_PANIC_MOMENTUM,
+   // Fix 3.4: split the CReversalSweepEngine sub-edges into their own buckets so
+   // per-mode auto-disable + the orchestrator GATE can attribute them separately
+   // (the +0.130R rubber-band short must NOT share a bucket with the 0%-WR SFP).
+   // APPENDED AT THE END so the existing ordinals (0..MODE_PANIC_MOMENTUM=11) are
+   // NOT renumbered — persisted/serialized PersistedModePerformance.mode_id stays valid.
+   MODE_RUBBER_BAND,           // (12) rubber-band death-cross momentum short (Path 3)
+   MODE_FAILED_BREAK           // (13) S6 failed-break reversal (Path 1)
 };
 
 //+------------------------------------------------------------------+

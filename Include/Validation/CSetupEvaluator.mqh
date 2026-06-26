@@ -232,6 +232,15 @@ public:
          points += 2;
       else if(StringFind(pattern, "SFP") >= 0)
          points += 1;
+      // Fix 3.4 (stok Option-b): NO Factor-4 branch for 'FailedBreak' / 'Rubber Band'
+      // here. This legacy comment-token overload is invoked ONLY for non-engine
+      // signals (CSignalOrchestrator:723; routed engines use signal.setupQuality at
+      // :721 and never reach this code), so a branch here would NOT feed the engine/
+      // GATE path — it would only un-starve the LIVE legacy standalone S6
+      // (CFailedBreakReversal) and Crash/Rubber-Band (CCrashBreakoutEntry) plugins on
+      // production, promoting the marginal-loser S6 ahead of its own Iter-6/6.9 kill-
+      // gate. That un-starving is DEFERRED to Iter-6/6.9 (own kill-criteria), NOT here.
+      // The WARN below still lists these tokens diagnostically.
       else if(StringFind(pattern, "Silver Bullet") >= 0)
          points += 2;
       else if(StringFind(pattern, "London Close Rev") >= 0)

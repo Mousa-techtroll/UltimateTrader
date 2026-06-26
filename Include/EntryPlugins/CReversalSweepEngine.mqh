@@ -362,14 +362,16 @@ public:
       if(m_box_detector != NULL) m_box_detector.Update();
 
       // ---------- Path 1: S6 Failed-Break Reversal ----------
+      // Fix 3.4: own bucket — MODE_FAILED_BREAK / 'FailedBreak' (was MODE_SFP/'SFP').
       if(m_s6 != NULL && m_s6.IsInitialized())
       {
          EntrySignal raw = m_s6.CheckForEntrySignal();
-         if(raw.valid && AdoptSignal(raw, MODE_SFP, "SFP"))
+         if(raw.valid && AdoptSignal(raw, MODE_FAILED_BREAK, "FailedBreak"))
             return raw;
       }
 
       // ---------- Path 2: standalone Liquidity Sweep ----------
+      // Fix 3.4: genuine liquidity sweep keeps MODE_SFP / 'LiquiditySweep'.
       if(m_liqSweep != NULL && m_liqSweep.IsInitialized())
       {
          EntrySignal raw = m_liqSweep.CheckForEntrySignal();
@@ -379,11 +381,15 @@ public:
 
       // ---------- Path 3: Rubber-Band death-cross short ----------
       // Gated to confirmed bear regime / rubber-band conditions on context.
+      // Fix 3.4: own bucket — MODE_RUBBER_BAND / 'Rubber Band' (spaced spelling,
+      // matches the orchestrator A/A+ Rubber-Band gate's StringFind in the comment).
+      // Was mislabeled MODE_SFP/'LiquiditySweep', which both starved the A/A+ gate
+      // and shared the loser SFP bucket for per-mode auto-disable attribution.
       if(m_rubberBand != NULL && m_rubberBand.IsInitialized() &&
          (m_context.IsBearRegimeActive() || m_context.IsRubberBandSignal()))
       {
          EntrySignal raw = m_rubberBand.CheckForEntrySignal();
-         if(raw.valid && AdoptSignal(raw, MODE_SFP, "LiquiditySweep"))
+         if(raw.valid && AdoptSignal(raw, MODE_RUBBER_BAND, "Rubber Band"))
             return raw;
       }
 
