@@ -26,6 +26,7 @@
 #include "../PluginSystem/CMajorStrategyEngine.mqh"
 #include "../Validation/CConfluenceScorer.mqh"
 #include "../MarketAnalysis/IMarketContext.mqh"
+#include "../MarketAnalysis/CRangeBoxDetector.mqh"
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
 
@@ -41,6 +42,7 @@ class CReversalSweepEngine : public CMajorStrategyEngine
 {
 private:
    // --- Composed sub-detectors (owned: created in Initialize, freed in Deinitialize)
+   CRangeBoxDetector     *m_box_detector; // shared H1 Donchian box (drives S6 box-edge sweeps)
    CFailedBreakReversal  *m_s6;          // S6 failed-break reversal
    CLiquiditySweepEntry  *m_liqSweep;    // standalone liquidity sweep
    CCrashBreakoutEntry   *m_rubberBand;  // death-cross rubber-band short
@@ -248,6 +250,7 @@ public:
       m_handle_atr        = INVALID_HANDLE;
       m_last_bar_time     = 0;
 
+      m_box_detector      = NULL;
       m_s6                = NULL;
       m_liqSweep          = NULL;
       m_rubberBand        = NULL;
@@ -279,8 +282,20 @@ public:
          return false;
       }
 
+      // Fix 3.1: own a real H1 Donchian range box and feed it to S6 so it
+      // detects box-edge sweeps (previously S6 was built with a NULL box and
+      // degraded to PDH/PDL-only). Built BEFORE S6 so the pointer is valid.
+      // Lifecycle mirrors CRangeReversionEngine's m_box_detector.
+      m_box_detector = new CRangeBoxDetector();
+      if(m_box_detector == NULL || !m_box_detector.Init())
+      {
+         m_lastError = "CReversalSweepEngine: range box detector init failed";
+         Print(m_lastError);
+         return false;
+      }
+
       // Build composed detectors with the SAME context.
-      m_s6         = new CFailedBreakReversal();           // S6 (uses its own range-box/ATR)
+      m_s6         = new CFailedBreakReversal(m_box_detector); // S6 (box-edge + PDH/PDL sweeps)
       m_liqSweep   = new CLiquiditySweepEntry(m_context);
       m_rubberBand = new CCrashBreakoutEntry(m_context);
 
@@ -312,6 +327,10 @@ public:
       if(m_liqSweep   != NULL) { m_liqSweep.Deinitialize();   delete m_liqSweep;   m_liqSweep   = NULL; }
       if(m_s6         != NULL) { m_s6.Deinitialize();         delete m_s6;         m_s6         = NULL; }
 
+      // Fix 3.1: free the range box AFTER S6 (S6 holds a borrowed pointer to it;
+      // free the consumer before the resource it references).
+      if(m_box_detector != NULL) { m_box_detector.Deinit(); delete m_box_detector; m_box_detector = NULL; }
+
       if(m_handle_atr != INVALID_HANDLE) { IndicatorRelease(m_handle_atr); m_handle_atr = INVALID_HANDLE; }
       m_isInitialized = false;
    }
@@ -337,6 +356,10 @@ public:
       datetime bar_time = iTime(_Symbol, m_timeframe, 0);
       if(bar_time == m_last_bar_time) return signal;
       m_last_bar_time = bar_time;
+
+      // Fix 3.1: refresh the owned range box before composing S6 (mirrors
+      // CRangeReversionEngine). Keeps S6's box-edge levels current each bar.
+      if(m_box_detector != NULL) m_box_detector.Update();
 
       // ---------- Path 1: S6 Failed-Break Reversal ----------
       if(m_s6 != NULL && m_s6.IsInitialized())
