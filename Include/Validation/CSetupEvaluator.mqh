@@ -114,10 +114,21 @@ public:
       }
 
       // Factor 1: Trend alignment (0-3 points)
+      // Fix 2.5: accumulate the TRUE trend-alignment subtotal into its OWN
+      // variable (trend_alignment, 0-3) — NOT into the running `points` total.
+      // Previously this added straight into `points`, then the CHoCH branch
+      // below snapshotted the WHOLE total (bear +2 boost + pattern/H4 bonus
+      // included) as "trend_points" and did an exclusive `points = choch_points`
+      // OVERWRITE — which (a) destroyed the bear +2 SHORT boost and the
+      // pattern/H4 bonus, and (b) made the CHoCH branch effectively unreachable
+      // (the snapshot was almost always already > 2). Isolating the real 0-3
+      // subtotal lets us apply the intended EXCLUSIVE max against CHoCH while
+      // preserving the other axes.
+      int trend_alignment = 0;
       if(daily == h4 && daily != TREND_NEUTRAL)
-         points += 2;
+         trend_alignment += 2;
       else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL)
-         points += 1;
+         trend_alignment += 1;
 
       // Check trend alignment from context
       if(m_context != NULL)
@@ -125,7 +136,7 @@ public:
          ENUM_TREND_DIRECTION d1 = m_context.GetTrendDirection();
          ENUM_TREND_DIRECTION h4_ctx = m_context.GetH4TrendDirection();
          if(d1 == h4_ctx && d1 != TREND_NEUTRAL)
-            points += 1;  // Aligned bonus
+            trend_alignment += 1;  // Aligned bonus
       }
 
       // Bonus for pattern direction matching H4 trend
@@ -134,16 +145,17 @@ public:
       if(pattern_bearish && h4 == TREND_BEARISH)
          points += 1;
 
-      // Factor 1A: CHoCH scoring (EXCLUSIVE with trend alignment)
-      // CHoCH provides +2 points but cannot stack with trend alignment points
-      // Whichever is higher wins
-      int trend_points = points;  // Snapshot of current points (all from trend alignment)
+      // Factor 1A: CHoCH scoring (EXCLUSIVE with trend alignment ONLY)
+      // CHoCH provides +2 points but cannot stack with the trend-alignment
+      // subtotal; whichever is higher wins. The bear +2 boost and the
+      // pattern/H4 bonus (the "rest" already in `points`) are PRESERVED — only
+      // the 0-3 trend_alignment subtotal competes with choch_points.
+      int choch_points = 0;
       if(m_context != NULL)
       {
          ENUM_BOS_TYPE recent_bos = m_context.GetRecentBOS();
          if(recent_bos == CHOCH_BULLISH || recent_bos == CHOCH_BEARISH)
          {
-            int choch_points = 2;
             // CHoCH direction should align with pattern direction
             bool choch_aligned = false;
             if(recent_bos == CHOCH_BULLISH && pattern_bullish)
@@ -153,17 +165,18 @@ public:
 
             if(choch_aligned)
             {
-               // EXCLUSIVE: replace trend points with whichever is higher
-               if(choch_points > trend_points)
-               {
-                  points = choch_points;
+               choch_points = 2;
+               if(choch_points > trend_alignment)
                   LogPrint("   CHoCH detected (", EnumToString(recent_bos),
-                           ") replacing trend points ", trend_points, " with CHoCH points ", choch_points);
-               }
-               // else: keep trend_points as they are already higher
+                           ") replacing trend-alignment points ", trend_alignment,
+                           " with CHoCH points ", choch_points);
             }
          }
       }
+
+      // EXCLUSIVE max: add whichever of trend_alignment / choch_points is higher
+      // to the running total (preserves the bear boost + pattern/H4 bonus).
+      points += MathMax(trend_alignment, choch_points);
 
       // Factor 1.5: Counter-Trend / RSI Bonus
       double rsi = (m_context != NULL) ? m_context.GetCurrentRSI() : 50.0;
