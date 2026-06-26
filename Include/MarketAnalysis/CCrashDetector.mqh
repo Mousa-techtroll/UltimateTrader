@@ -199,20 +199,23 @@ public:
       if(!m_enabled)
          return;
 
-      // Get D1 EMAs
+      // Get D1 EMAs — read the CLOSED D1 bar [1] so the death-cross test and
+      // reversal guard compare a closed-bar EMA against the closed-bar close
+      // (m_current_close = iClose(...,1)). Reading the forming bar [0] here mixed
+      // a forming-bar EMA with a closed-bar close. Copy 2 bars, use index [1].
       double ema50_buf[], ema200_buf[];
       ArraySetAsSeries(ema50_buf, true);
       ArraySetAsSeries(ema200_buf, true);
 
-      if(CopyBuffer(m_handle_ema50_d1, 0, 0, 1, ema50_buf) <= 0 ||
-         CopyBuffer(m_handle_ema200_d1, 0, 0, 1, ema200_buf) <= 0)
+      if(CopyBuffer(m_handle_ema50_d1, 0, 0, 2, ema50_buf) < 2 ||
+         CopyBuffer(m_handle_ema200_d1, 0, 0, 2, ema200_buf) < 2)
       {
          LogPrint("CrashDetector: Failed to get D1 EMAs");
          return;
       }
 
-      m_ema50 = ema50_buf[0];
-      m_ema200 = ema200_buf[0];
+      m_ema50 = ema50_buf[1];   // CLOSED D1 bar
+      m_ema200 = ema200_buf[1]; // CLOSED D1 bar
       m_current_close = iClose(_Symbol, PERIOD_D1, 1);  // Use CLOSED candle (index 1) for stability
 
       // ================================================================
@@ -281,24 +284,31 @@ public:
       if(m_handle_ema21_h1 == INVALID_HANDLE || m_handle_atr_h1 == INVALID_HANDLE || m_handle_adx_h1 == INVALID_HANDLE)
          return;
 
-      // Get H1 EMA21, ATR, and ADX
+      // Get H1 EMA21, ATR, and ADX — read the CLOSED H1 bar [1] for the mean/
+      // volatility/trend baseline (copy 2 bars, use index [1]). Reading the
+      // forming bar [0] mixed an intrabar-moving EMA21/ATR/ADX into the
+      // extension test. The baseline (the "rubber band" anchor) must be stable.
       double ema21_buf[], atr_buf[], adx_buf[];
       ArraySetAsSeries(ema21_buf, true);
       ArraySetAsSeries(atr_buf, true);
       ArraySetAsSeries(adx_buf, true);
 
-      if(CopyBuffer(m_handle_ema21_h1, 0, 0, 1, ema21_buf) <= 0 ||
-         CopyBuffer(m_handle_atr_h1, 0, 0, 1, atr_buf) <= 0 ||
-         CopyBuffer(m_handle_adx_h1, 0, 0, 1, adx_buf) <= 0)  // ADX main line is buffer 0
+      if(CopyBuffer(m_handle_ema21_h1, 0, 0, 2, ema21_buf) < 2 ||
+         CopyBuffer(m_handle_atr_h1, 0, 0, 2, atr_buf) < 2 ||
+         CopyBuffer(m_handle_adx_h1, 0, 0, 2, adx_buf) < 2)  // ADX main line is buffer 0
       {
          return;
       }
 
-      m_h1_ema21 = ema21_buf[0];
-      m_h1_atr = atr_buf[0];
-      m_h1_adx = adx_buf[0];
+      m_h1_ema21 = ema21_buf[1];  // CLOSED H1 bar — stable mean
+      m_h1_atr = atr_buf[1];      // CLOSED H1 bar — stable volatility
+      m_h1_adx = adx_buf[1];      // CLOSED H1 bar — stable trend strength
 
-      // Get current price (real-time, not closed candle)
+      // INTENTIONAL FRONT-RUN SPLIT: the BASELINE (EMA21/ATR/ADX) is read off the
+      // CLOSED bar [1] for stability, but the TRIGGER price is the LIVE bid. We
+      // deliberately fade the *current* over-extension against a *stable* mean —
+      // waiting for the H1 close would let the rally snap back before we enter.
+      // Closed-bar baseline + live-bid trigger is the design of this strategy.
       double current_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
       // Calculate extension threshold
