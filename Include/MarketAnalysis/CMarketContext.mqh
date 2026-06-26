@@ -784,8 +784,12 @@ private:
       double ma200_buf[];
       ArraySetAsSeries(ma200_buf, true);
 
-      if(CopyBuffer(m_handle_ma200_h1, 0, 0, 1, ma200_buf) > 0)
-         m_ma200_value = ma200_buf[0];
+      // FIX 1.9: read the CLOSED bar [1], not the forming bar [0]. The cached
+      // MA200 feeds IsPriceAboveMA200() (directional gate) and the scorer's
+      // premium/discount axis — a forming-bar value repaints intrabar. Copy 2
+      // bars and guard the short read so [1] is always valid.
+      if(CopyBuffer(m_handle_ma200_h1, 0, 0, 2, ma200_buf) >= 2)
+         m_ma200_value = ma200_buf[1];
    }
 
    //+------------------------------------------------------------------+
@@ -798,21 +802,29 @@ private:
       ArraySetAsSeries(low, true);
 
       int lookback = m_swing_lookback;
-      if(CopyHigh(_Symbol, PERIOD_H1, 0, lookback, high) <= 0 ||
-         CopyLow(_Symbol, PERIOD_H1, 0, lookback, low) <= 0)
+      // FIX 1.9: read CLOSED bars only (start_pos 1, not the forming bar 0),
+      // aligning with the GetDrawOnLiquidity shift-1 convention. The cached
+      // swings back GetSwingHigh/Low (structural SL anchors), GetDealingRange
+      // High/Low + GetEquilibrium (L1 premium/discount axis +2 in the scorer);
+      // a forming-bar high/low repaints intrabar and re-tiers borderline setups.
+      // Guard the short read: capture the realized count and only scan that many
+      // cells (the HTF de-correlation of the dealing range lands later in 2.4).
+      int got_high = CopyHigh(_Symbol, PERIOD_H1, 1, lookback, high);
+      int got_low  = CopyLow(_Symbol,  PERIOD_H1, 1, lookback, low);
+      if(got_high <= 0 || got_low <= 0)
          return;
 
-      //--- Find swing high (highest of recent bars)
+      //--- Find swing high (highest of recent CLOSED bars)
       m_swing_high = high[0];
-      for(int i = 1; i < lookback; i++)
+      for(int i = 1; i < got_high; i++)
       {
          if(high[i] > m_swing_high)
             m_swing_high = high[i];
       }
 
-      //--- Find swing low (lowest of recent bars)
+      //--- Find swing low (lowest of recent CLOSED bars)
       m_swing_low = low[0];
-      for(int i = 1; i < lookback; i++)
+      for(int i = 1; i < got_low; i++)
       {
          if(low[i] < m_swing_low)
             m_swing_low = low[i];
