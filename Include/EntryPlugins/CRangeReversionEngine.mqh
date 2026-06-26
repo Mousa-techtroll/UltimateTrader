@@ -124,7 +124,7 @@ private:
       signal.major_engine           = m_engine_id;          // ENGINE_RANGE_REVERSION
       signal.engine_mode            = mode;
       signal.regime_risk_multiplier = m_activation_weight;  // router weight onto risk plumbing
-      signal.day_type               = DAY_RANGE;            // this engine only fires in balance
+      signal.day_type               = (m_context != NULL) ? m_context.GetDayType() : DAY_RANGE; // real classified day type (telemetry fidelity; matches CReversalSweepEngine)
       signal.requiresConfirmation   = false;               // T3: immediate fade thesis
       signal.source                 = SIGNAL_SOURCE_PATTERN;
 
