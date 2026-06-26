@@ -1,10 +1,12 @@
 //+------------------------------------------------------------------+
 //| CConfluenceScorer.mqh                                            |
 //| UltimateTrader - shared orthogonal-axis confluence scorer        |
-//| Context axes (7): HTF-draw 2, premium/discount 2, entry-zone 2,  |
+//| Context axes: HTF-draw 1 (Phase 2.4: eq>0 sub-point dropped —    |
+//| not orthogonal), premium/discount 2, entry-zone 2,              |
 //| sweep+inducement 1.  Trigger axes (3): confirm 1, flow 1,        |
 //| killzone 1.  L3 sweep+structure-shift is a HARD GATE: no spine   |
-//| => SETUP_NONE (never scored).                                    |
+//| => SETUP_NONE (never scored). Max raw points now 9 (clamp at 10  |
+//| retained, never reached — re-derived at the 2.4-GATE).           |
 //| Used by the four major-strategy engines (multi-strategy redesign)|
 //+------------------------------------------------------------------+
 #property copyright "UltimateTrader"
@@ -123,18 +125,23 @@ public:
 
       // ==================== CONTEXT axes (7) ====================
 
-      // (1) HTF draw alignment (0-2): is price drawn toward a pool in our
-      //     direction, and are we on the correct side of it?
+      // (1) HTF draw alignment (0-1): is price drawn toward a pool in our
+      //     direction? Phase 2.4 — DROPPED the nested eq>0 sub-point. Equilibrium
+      //     was derived from the SAME H1 swing pair as the dealing range, the
+      //     premium/discount axis below, AND the structural SL anchor — so the
+      //     "dealing range is defined" sub-point was NOT orthogonal to axis 2 or
+      //     to the stop. The draw-exists +1 stays (an independent draw-on-
+      //     liquidity test); the location signal is carried solely by axis 2,
+      //     now backed by the DE-CORRELATED D1 IPDA dealing range.
       double draw = ctx.GetDrawOnLiquidity(dir);
       if(draw > 0)
-      {
          points += 1;                                   // a draw exists in our direction
-         double eq = ctx.GetEquilibrium();
-         if(eq > 0)
-            points += 1;                                // dealing range is defined (draw is meaningful)
-      }
 
-      // (2) Premium / discount location (0-2): longs in discount, shorts in premium.
+      // (2) Premium / discount location (0-2): longs in discount, shorts in
+      //     premium. Phase 2.4 — this is now the SOLE location axis, and it is
+      //     INDEPENDENT of the SL anchor: IsInDiscount/IsInPremium key off
+      //     GetEquilibrium, which (post-2.4) is the midpoint of the HTF D1 IPDA
+      //     dealing range, NOT the H1 swing pair that anchors the stop.
       double price = signal.entryPrice;
       if(price > 0)
       {

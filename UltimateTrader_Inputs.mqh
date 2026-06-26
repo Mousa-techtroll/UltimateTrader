@@ -502,3 +502,4 @@ input bool   InpEnableEngineRange     = false;   // Engine 3: Range / Mean-Rever
 input bool   InpEnableEngineExpansion = false;   // Engine 4: Breakout / Expansion (router-driven; legacy reg unchanged)
 input int    InpBOSFreshnessBars      = 8;       // Phase 2.2: scorer L3 spine BOS/CHoCH freshness window in H1 bars (floor 6 / cap 18; Iter-3 sweeps {4,6,8,12} by avg-R)
 input int    InpSpineMinConfluence    = 25;      // Phase 2.3: scorer L3 OBJECTIVE engine-confluence spine floor (0-100 SMC scale; below SMC hard-reject floor 40 → necessary-but-weaker)
+input int    InpDealingRangeD1Lookback = 20;     // Phase 2.4: HTF D1 dealing-range lookback (closed D1 bars, ICT IPDA 20-day window). De-correlates the scorer L1 location axis from the H1-swing SL anchor

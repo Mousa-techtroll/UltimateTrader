@@ -72,9 +72,18 @@ private:
    //    assumption would be unsafe.
    bool                      m_ma200_default_bullish;
 
-   //--- Cached swing high/low
+   //--- Cached swing high/low (H1 closed swing — the STRUCTURAL SL anchor)
    double                    m_swing_high;
    double                    m_swing_low;
+
+   //--- Phase 2.4: HTF D1 dealing-range lookback (ICT IPDA 20-day window).
+   //    The L1 LOCATION axis (dealing range / equilibrium / premium-discount)
+   //    is DE-CORRELATED from the SL anchor: GetDealingRangeHigh/Low now derive
+   //    from the highest-high / lowest-low over this many CLOSED D1 bars, while
+   //    GetSwingHigh/Low (SL anchor) stays the H1 closed swing. Different/slower
+   //    timeframe => the scorer's location axis is no longer the same swing pair
+   //    that anchors the stop.
+   int                       m_dealing_range_d1_lookback;
 
 public:
    //+------------------------------------------------------------------+
@@ -106,7 +115,8 @@ public:
                   double smc_liq_tolerance    = 30.0,
                   int smc_liq_min_touches     = 2,
                   int smc_zone_max_age        = 200,
-                  bool smc_use_htf_confluence = true)
+                  bool smc_use_htf_confluence = true,
+                  int dealing_range_d1_lookback = 20)
    {
       m_adx_period         = adx_period;
       m_atr_period         = atr_period;
@@ -134,6 +144,7 @@ public:
       m_enable_crash_detector = enable_crash_detector;
       m_enable_vol_regime  = enable_vol_regime;
       m_enable_momentum    = enable_momentum;
+      m_dealing_range_d1_lookback = (dealing_range_d1_lookback > 0) ? dealing_range_d1_lookback : 20;
 
       m_trend_detector    = NULL;
       m_regime_classifier = NULL;
@@ -150,6 +161,7 @@ public:
       m_ma200_default_bullish = true;   // gold profile default; preserves warmup long bias
       m_swing_high        = 0;
       m_swing_low         = 0;
+      // m_dealing_range_d1_lookback assigned above from the constructor param.
    }
 
    //+------------------------------------------------------------------+
@@ -718,16 +730,55 @@ public:
 
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign) ---
 
-   // Dealing range = the cached HTF swing high/low (reuses existing swing detection).
-   virtual double GetDealingRangeHigh() override { return m_swing_high; }
-   virtual double GetDealingRangeLow()  override { return m_swing_low; }
+   // Phase 2.4 — DE-CORRELATE the L1 LOCATION axis from the SL anchor.
+   // BEFORE: GetDealingRangeHigh/Low returned the cached H1 swing (m_swing_high/
+   //   low) — the SAME pair that anchors the structural stop (GetSwingHigh/Low).
+   //   The scorer's dealing-range, equilibrium, and premium/discount axes were
+   //   therefore NOT orthogonal to the SL: one H1 swing pair drove all four.
+   // AFTER: the dealing range is the highest-high / lowest-low over the last
+   //   m_dealing_range_d1_lookback (=20, ICT IPDA 20-day window) CLOSED D1 bars
+   //   (iHigh/iLow PERIOD_D1, shift 1..lookback). GetSwingHigh/Low (the SL
+   //   anchor) is UNCHANGED — still the H1 closed swing. A slower, structurally
+   //   independent timeframe backs the location axis, so the scorer's premium/
+   //   discount judgment no longer moves in lock-step with the stop distance.
+   double D1DealingRangeHigh() const
+   {
+      int    lookback = (m_dealing_range_d1_lookback > 0) ? m_dealing_range_d1_lookback : 20;
+      double hh = 0;
+      for(int i = 1; i <= lookback; i++)
+      {
+         double h = iHigh(_Symbol, PERIOD_D1, i);   // CLOSED D1 bars (shift 1..lookback)
+         if(h <= 0) continue;                        // skip un-available bars (warmup / gaps)
+         if(hh <= 0 || h > hh) hh = h;
+      }
+      return hh;
+   }
 
-   // Equilibrium = midpoint of the dealing range.
+   double D1DealingRangeLow() const
+   {
+      int    lookback = (m_dealing_range_d1_lookback > 0) ? m_dealing_range_d1_lookback : 20;
+      double ll = 0;
+      for(int i = 1; i <= lookback; i++)
+      {
+         double l = iLow(_Symbol, PERIOD_D1, i);    // CLOSED D1 bars (shift 1..lookback)
+         if(l <= 0) continue;                        // skip un-available bars (warmup / gaps)
+         if(ll <= 0 || l < ll) ll = l;
+      }
+      return ll;
+   }
+
+   // Dealing range = HTF D1 IPDA window (NOT the H1 swing SL anchor).
+   virtual double GetDealingRangeHigh() override { return D1DealingRangeHigh(); }
+   virtual double GetDealingRangeLow()  override { return D1DealingRangeLow();  }
+
+   // Equilibrium = midpoint of the D1 dealing range.
    virtual double GetEquilibrium() override
    {
-      if(m_swing_high <= 0 || m_swing_low <= 0 || m_swing_high <= m_swing_low)
+      double dr_high = D1DealingRangeHigh();
+      double dr_low  = D1DealingRangeLow();
+      if(dr_high <= 0 || dr_low <= 0 || dr_high <= dr_low)
          return 0;
-      return (m_swing_high + m_swing_low) * 0.5;
+      return (dr_high + dr_low) * 0.5;
    }
 
    virtual bool IsInDiscount(double price) override
@@ -829,12 +880,14 @@ private:
 
       int lookback = m_swing_lookback;
       // FIX 1.9: read CLOSED bars only (start_pos 1, not the forming bar 0),
-      // aligning with the GetDrawOnLiquidity shift-1 convention. The cached
-      // swings back GetSwingHigh/Low (structural SL anchors), GetDealingRange
-      // High/Low + GetEquilibrium (L1 premium/discount axis +2 in the scorer);
-      // a forming-bar high/low repaints intrabar and re-tiers borderline setups.
-      // Guard the short read: capture the realized count and only scan that many
-      // cells (the HTF de-correlation of the dealing range lands later in 2.4).
+      // aligning with the GetDrawOnLiquidity shift-1 convention; a forming-bar
+      // high/low repaints intrabar. Guard the short read: capture the realized
+      // count and only scan that many cells.
+      // Phase 2.4: the cached H1 swings now back GetSwingHigh/Low (the STRUCTURAL
+      // SL anchor) ONLY. GetDealingRangeHigh/Low + GetEquilibrium (the scorer's
+      // L1 premium/discount location axis) were DE-CORRELATED off this swing pair
+      // onto the HTF D1 IPDA window (see GetDealingRangeHigh/Low). So a swing-pair
+      // change moves the stop, not the location axis — they are now orthogonal.
       int got_high = CopyHigh(_Symbol, PERIOD_H1, 1, lookback, high);
       int got_low  = CopyLow(_Symbol,  PERIOD_H1, 1, lookback, low);
       if(got_high <= 0 || got_low <= 0)

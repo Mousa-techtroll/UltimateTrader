@@ -507,7 +507,8 @@ int OnInit()
       InpSMCOBBodyPct, InpSMCOBImpulseMult,
       InpSMCFVGMinPoints, InpSMCBOSLookback,
       InpSMCLiqTolerance, InpSMCLiqMinTouches,
-      InpSMCZoneMaxAge, InpSMCUseHTFConfluence
+      InpSMCZoneMaxAge, InpSMCUseHTFConfluence,
+      InpDealingRangeD1Lookback   // Phase 2.4: HTF D1 dealing-range lookback (ICT IPDA 20-day window)
    );
 
    if(!g_marketContext.Init())
