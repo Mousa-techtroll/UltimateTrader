@@ -690,7 +690,7 @@ public:
          // (The shift happened after the bearish structure)
          result = CHOCH_BULLISH;
          m_last_choch = CHOCH_BULLISH;
-         m_last_choch_time = TimeCurrent();
+         m_last_choch_time = iTime(_Symbol, PERIOD_H1, 1);   // Phase 1.2: closed-bar time (freshness anchor for 2.2)
          LogPrint("SMC CHoCH: BULLISH CHoCH detected | LL: ", m_choch_swing_lows[1],
                   " < ", m_choch_swing_lows[2],
                   " then HH: ", m_choch_swing_highs[0],
@@ -711,7 +711,7 @@ public:
       {
          result = CHOCH_BEARISH;
          m_last_choch = CHOCH_BEARISH;
-         m_last_choch_time = TimeCurrent();
+         m_last_choch_time = iTime(_Symbol, PERIOD_H1, 1);   // Phase 1.2: closed-bar time (freshness anchor for 2.2)
          LogPrint("SMC CHoCH: BEARISH CHoCH detected | HH: ", m_choch_swing_highs[1],
                   " > ", m_choch_swing_highs[2],
                   " then LL: ", m_choch_swing_lows[0],
@@ -953,10 +953,14 @@ private:
    {
       DetectSwingPoints();
 
-      double current_high = iHigh(_Symbol, PERIOD_H1, 0);
-      double current_low = iLow(_Symbol, PERIOD_H1, 0);
-      double prev_high = iHigh(_Symbol, PERIOD_H1, 1);
-      double prev_low = iLow(_Symbol, PERIOD_H1, 1);
+      // Phase 1.2: shift break-TRIGGER reads to CLOSED bars (was forming bar [0]).
+      // Once-per-new-H1-bar update meant [0] was the just-opened forming bar, so a
+      // real break on the JUST-CLOSED bar was missed/mis-timed. current = closed bar [1],
+      // prev = the bar before it [2]. Edge guard (prev<=swing && current>swing) kept EXACTLY.
+      double current_high = iHigh(_Symbol, PERIOD_H1, 1);
+      double current_low = iLow(_Symbol, PERIOD_H1, 1);
+      double prev_high = iHigh(_Symbol, PERIOD_H1, 2);
+      double prev_low = iLow(_Symbol, PERIOD_H1, 2);
 
       // Check for bullish BOS (break above recent swing high)
       if(m_last_swing_high > 0 && current_high > m_last_swing_high && prev_high <= m_last_swing_high)
@@ -972,7 +976,7 @@ private:
             m_last_bos = BOS_BULLISH;
             LogPrint("SMC: BOS BULLISH detected - Price broke above ", m_last_swing_high);
          }
-         m_last_bos_time = TimeCurrent();
+         m_last_bos_time = iTime(_Symbol, PERIOD_H1, 1);   // Phase 1.2: closed-bar time of the break (freshness anchor for 2.2)
          m_last_bos_level = m_last_swing_high;
       }
 
@@ -990,7 +994,7 @@ private:
             m_last_bos = BOS_BEARISH;
             LogPrint("SMC: BOS BEARISH detected - Price broke below ", m_last_swing_low);
          }
-         m_last_bos_time = TimeCurrent();
+         m_last_bos_time = iTime(_Symbol, PERIOD_H1, 1);   // Phase 1.2: closed-bar time of the break (freshness anchor for 2.2)
          m_last_bos_level = m_last_swing_low;
       }
    }
