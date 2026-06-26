@@ -10,6 +10,14 @@
 #include "../Common/Utils.mqh"
 
 //+------------------------------------------------------------------+
+//| Phase 1.1: liquidity-sweep recency window (closed H1 bars).      |
+//| A swept pool counts as "recent" only within this many H1 bars of |
+//| TimeCurrent(). Binding stok param = 3 (do NOT exceed ~5; a longer |
+//| window re-creates the permanent stale-latch this fix removes).   |
+//+------------------------------------------------------------------+
+#define SMC_SWEEP_RECENCY_BARS 3
+
+//+------------------------------------------------------------------+
 //| SMC Zone Type Enumeration                                        |
 //+------------------------------------------------------------------+
 enum ENUM_SMC_ZONE_TYPE
@@ -51,6 +59,7 @@ struct SLiquidityPool
    datetime             first_touch;    // First touch time
    datetime             last_touch;     // Last touch time
    bool                 is_swept;       // Has been swept
+   datetime             swept_time;     // Phase 1.1: time of the closed bar that swept this pool
    double               strength;       // Pool strength
 };
 
@@ -275,6 +284,7 @@ public:
       // Scan for new zones
       ScanForOrderBlocks();
       ScanForFairValueGaps();
+      ScanForLiquidityPools();   // Phase 1.1: re-scan equal highs/lows every bar (was Init-only)
       DetectBreakOfStructure();
       DetectCHoCH();
       UpdateLiquidityPools();
@@ -997,9 +1007,10 @@ private:
       ArraySetAsSeries(time, true);
 
       int bars = m_config.ob_lookback;
-      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars, high) <= 0) return;
-      if(CopyLow(_Symbol, PERIOD_H1, 0, bars, low) <= 0) return;
-      if(CopyTime(_Symbol, PERIOD_H1, 0, bars, time) <= 0) return;
+      // Phase 1.1: start_pos 0->1 — scan closed bars only (skip the forming bar)
+      if(CopyHigh(_Symbol, PERIOD_H1, 1, bars, high) <= 0) return;
+      if(CopyLow(_Symbol, PERIOD_H1, 1, bars, low) <= 0) return;
+      if(CopyTime(_Symbol, PERIOD_H1, 1, bars, time) <= 0) return;
 
       // Phase 3.1: ATR-derived tolerance for equal highs/lows detection
       double current_atr = GetCurrentATR();
@@ -1039,6 +1050,7 @@ private:
             m_liquidity_pools[m_liquidity_count].first_touch = first_time;
             m_liquidity_pools[m_liquidity_count].last_touch = last_time;
             m_liquidity_pools[m_liquidity_count].is_swept = false;
+            m_liquidity_pools[m_liquidity_count].swept_time = 0;   // Phase 1.1
             m_liquidity_pools[m_liquidity_count].strength = MathMin(100, touches * 20);
             m_liquidity_count++;
          }
@@ -1069,6 +1081,7 @@ private:
             m_liquidity_pools[m_liquidity_count].first_touch = first_time;
             m_liquidity_pools[m_liquidity_count].last_touch = last_time;
             m_liquidity_pools[m_liquidity_count].is_swept = false;
+            m_liquidity_pools[m_liquidity_count].swept_time = 0;   // Phase 1.1
             m_liquidity_pools[m_liquidity_count].strength = MathMin(100, touches * 20);
             m_liquidity_count++;
          }
@@ -1080,8 +1093,10 @@ private:
    //+------------------------------------------------------------------+
    void UpdateLiquidityPools()
    {
-      double current_high = iHigh(_Symbol, PERIOD_H1, 0);
-      double current_low = iLow(_Symbol, PERIOD_H1, 0);
+      // Phase 1.1: read the last CLOSED H1 bar (index 1), not the forming bar (0)
+      double current_high = iHigh(_Symbol, PERIOD_H1, 1);
+      double current_low = iLow(_Symbol, PERIOD_H1, 1);
+      datetime closed_bar_time = iTime(_Symbol, PERIOD_H1, 1);
 
       for(int i = 0; i < m_liquidity_count; i++)
       {
@@ -1091,6 +1106,7 @@ private:
             if(m_liquidity_pools[i].is_high && current_high > m_liquidity_pools[i].price)
             {
                m_liquidity_pools[i].is_swept = true;
+               m_liquidity_pools[i].swept_time = closed_bar_time;   // Phase 1.1: stamp sweep time
                LogPrint("SMC: Sell-side liquidity SWEPT at ", m_liquidity_pools[i].price);
             }
 
@@ -1098,6 +1114,7 @@ private:
             if(!m_liquidity_pools[i].is_high && current_low < m_liquidity_pools[i].price)
             {
                m_liquidity_pools[i].is_swept = true;
+               m_liquidity_pools[i].swept_time = closed_bar_time;   // Phase 1.1: stamp sweep time
                LogPrint("SMC: Buy-side liquidity SWEPT at ", m_liquidity_pools[i].price);
             }
          }
@@ -1109,9 +1126,18 @@ private:
    //+------------------------------------------------------------------+
    bool CheckRecentLiquiditySweep()
    {
+      // Phase 1.1: a sweep counts only while it is RECENT. Without this gate
+      // is_swept was a permanent latch (true forever after the first sweep),
+      // so liquidity_swept reported "swept" on every later bar. Require the
+      // sweep to have occurred within SMC_SWEEP_RECENCY_BARS closed H1 bars.
+      datetime recency_window = (datetime)(SMC_SWEEP_RECENCY_BARS * PeriodSeconds(PERIOD_H1));
+      datetime now = TimeCurrent();
+
       for(int i = 0; i < m_liquidity_count; i++)
       {
-         if(m_liquidity_pools[i].is_swept)
+         if(m_liquidity_pools[i].is_swept &&
+            m_liquidity_pools[i].swept_time > 0 &&
+            (now - m_liquidity_pools[i].swept_time) <= recency_window)
             return true;
       }
       return false;
