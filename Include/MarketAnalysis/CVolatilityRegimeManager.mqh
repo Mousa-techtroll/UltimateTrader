@@ -90,6 +90,10 @@ public:
    //+------------------------------------------------------------------+
    CVolatilityRegimeManager()
    {
+      m_handle_atr_h1 = INVALID_HANDLE;
+      m_handle_atr_h4 = INVALID_HANDLE;
+      m_handle_adx_h4 = INVALID_HANDLE;
+
       m_enabled = true;
       m_history_size = 120;
       m_atr_average = 0;
