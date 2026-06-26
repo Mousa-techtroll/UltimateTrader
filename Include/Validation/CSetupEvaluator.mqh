@@ -13,7 +13,12 @@
 #include "../Common/Structs.mqh"
 #include "../Common/Utils.mqh"
 #include "../MarketAnalysis/IMarketContext.mqh"
-#include "CConfluenceScorer.mqh"   // Multi-strategy: orthogonal-axis scorer (for the engine overload)
+// Fix 2.7: removed `#include "CConfluenceScorer.mqh"` — it was used ONLY by the
+// engine EvaluateSetupQuality(const EntrySignal&, IMarketContext*, ...) overloads,
+// which became dead after Fix 2.1 (the orchestrator now reads signal.setupQuality
+// for engine signals and calls the legacy ENUM_TREND_DIRECTION overload otherwise).
+// Both overloads + this orphan include are deleted. CConfluenceScorer remains live
+// via UltimateTrader.mq5, the four engines, and CMajorStrategyEngine.
 
 //+------------------------------------------------------------------+
 //| CSetupEvaluator - Evaluates setup quality and calculates risk    |
@@ -392,24 +397,14 @@ public:
       }
    }
 
-   //+------------------------------------------------------------------+
-   //| Multi-strategy OVERLOAD: orthogonal-axis scoring for the four    |
-   //| major engines. Delegates to CConfluenceScorer using THIS         |
-   //| evaluator's live point thresholds. The legacy scalar             |
-   //| EvaluateSetupQuality(...) above is left untouched.               |
-   //| out_score returns the 0-10 axis total.                           |
-   //+------------------------------------------------------------------+
-   ENUM_SETUP_QUALITY EvaluateSetupQuality(const EntrySignal &signal, IMarketContext *ctx, int &out_score)
-   {
-      CConfluenceScorer scorer;
-      scorer.Configure(m_points_aplus, m_points_a, m_points_bplus, m_points_b);
-      return scorer.Score(signal, ctx, out_score);
-   }
-
-   // Convenience overload without the out_score out-param.
-   ENUM_SETUP_QUALITY EvaluateSetupQuality(const EntrySignal &signal, IMarketContext *ctx)
-   {
-      int score = 0;
-      return EvaluateSetupQuality(signal, ctx, score);
-   }
+   // Fix 2.7: DELETED the two dead engine overloads
+   //   EvaluateSetupQuality(const EntrySignal&, IMarketContext*, int &out_score)
+   //   EvaluateSetupQuality(const EntrySignal&, IMarketContext*)
+   // They built a LOCAL non-shared CConfluenceScorer and were never called after
+   // Fix 2.1: the orchestrator (CSignalOrchestrator:743-748) now reads
+   // signal.setupQuality directly for engine signals and calls the legacy
+   // ENUM_TREND_DIRECTION overload (above) for non-engine signals. Repo-wide grep
+   // confirmed zero callers of the (EntrySignal&, IMarketContext*) overloads.
+   // Engines score themselves through their OWN shared CConfluenceScorer
+   // (CMajorStrategyEngine::SetScorer), so removing this footgun changes nothing.
 };

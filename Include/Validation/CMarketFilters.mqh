@@ -130,16 +130,32 @@ public:
    }
 
    //+------------------------------------------------------------------+
-   //| Pattern Confidence Scoring                                        |
-   //| Accepts ATR/ADX as parameters to avoid indicator creation         |
+   //| Pattern "Confidence" Scoring  (MISNOMER — see note below)         |
+   //|                                                                   |
+   //| WHAT THIS ACTUALLY IS: an ADX/ATR ENVIRONMENT gate, NOT a         |
+   //| pattern-confidence score. The `pattern`, `entry_price`,           |
+   //| `ma_fast_period` and `ma_slow_period` parameters are              |
+   //| INTENTIONALLY IGNORED — the result depends ONLY on the supplied   |
+   //| `atr` and `adx`. They are retained solely for call-site signature |
+   //| compatibility; do not assume the score reflects the pattern.      |
+   //|                                                                   |
+   //| Accepts ATR/ADX as parameters to avoid indicator creation here.   |
+   //|                                                                   |
+   //| BEHAVIORAL NOTE (locked baseline): the ATR/ADX bands below        |
+   //| silently cull quiet-regime setups — a setup scores low when       |
+   //| ATR < 6 (no ATR award) AND ADX falls outside 20–50 (no ADX        |
+   //| award). These bands are a LOCKED baseline: do NOT change the      |
+   //| thresholds or the math without an explicit A/B backtest.          |
    //+------------------------------------------------------------------+
    static int CalculatePatternConfidence(string pattern, double entry_price,
                                          int ma_fast_period, int ma_slow_period,
                                          double atr = 0.0, double adx = 0.0)
    {
+      // NOTE: pattern / entry_price / ma_fast_period / ma_slow_period are
+      //       intentionally unused — this is an environment gate (see header).
       int confidence = 0;
 
-      // Base score for detected pattern
+      // Base score (presence of a detected setup — environment-independent)
       confidence += 30;
 
       // Check ADX strength

@@ -98,6 +98,30 @@ public:
       m_points_b     = points_b;
       m_bos_freshness_bars   = bos_freshness_bars;
       m_spine_min_confluence = spine_min_confluence;
+
+      // Fix 2.8: DIAGNOSTIC ONLY — warn on a non-monotone threshold ordering.
+      // The tier cascade in Score() (`points>=aplus` → A+, `>=a` → A,
+      // `>=bplus` → B+, `>=b` → B) only assigns each band correctly when the
+      // thresholds are monotonically non-increasing
+      // (aplus >= a >= bplus >= b). If they are not, a higher band's `>=`
+      // test swallows the lower band's range and that lower tier becomes
+      // UNREACHABLE (e.g. the v18 default 8/7/6/7 makes SETUP_B unreachable
+      // because anything >=7 already returns SETUP_A before the B test).
+      // This is a WARNING ONLY: we do NOT clamp and we do NOT reorder —
+      // behavior is unchanged. The conscious decision about whether SETUP_B
+      // (0.6% tier) should be reachable is owned by the 2.4-GATE threshold
+      // re-derivation, not by this guard.
+      if(!(m_points_aplus >= m_points_a &&
+           m_points_a     >= m_points_bplus &&
+           m_points_bplus >= m_points_b))
+      {
+         PrintFormat("[CConfluenceScorer] WARNING: non-monotone tier thresholds "
+                     "(A+=%d, A=%d, B+=%d, B=%d) — expected A+>=A>=B+>=B. A lower "
+                     "tier whose threshold is not below the tier above it is "
+                     "UNREACHABLE (e.g. B+==B+ or B>B+ makes SETUP_B dead). "
+                     "No clamp/reorder applied; behavior unchanged.",
+                     m_points_aplus, m_points_a, m_points_bplus, m_points_b);
+      }
    }
 
    //+------------------------------------------------------------------+
