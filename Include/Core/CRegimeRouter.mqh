@@ -65,6 +65,11 @@ private:
    {
       if(m_context == NULL) return 0.0;
 
+      // Phase 3.6 (fix 3.2): this DAY_DATA news-flat gate is now LIVE — GetDayType()
+      // returns DAY_DATA inside HIGH-impact USD/XAU release windows (FOMC/CPI/NFP/PPI/
+      // PCE) via CMarketContext::IsDataDay() (MQL5 calendar + static-blackout fallback).
+      // Previously dead (GetDayType never returned DAY_DATA). Only reached when the
+      // router is ON (InpEnableMultiStrategy=true).
       bool data_day = (m_context.GetDayType() == DAY_DATA);
       if(data_day) return 0.0;   // flat / reduce on news days
 

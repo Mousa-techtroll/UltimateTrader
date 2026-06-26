@@ -504,3 +504,14 @@ input int    InpBOSFreshnessBars      = 8;       // Phase 2.2: scorer L3 spine B
 input int    InpSpineMinConfluence    = 25;      // Phase 2.3: scorer L3 OBJECTIVE engine-confluence spine floor (0-100 SMC scale; below SMC hard-reject floor 40 → necessary-but-weaker)
 input int    InpDealingRangeD1Lookback = 20;     // Phase 2.4: HTF D1 dealing-range lookback (closed D1 bars, ICT IPDA 20-day window). De-correlates the scorer L1 location axis from the H1-swing SL anchor
 input int    InpTrendSwingLookback     = 10;     // Phase 3.4: TrendCont engine zone_low SL-anchor = MORE CONSERVATIVE (lower) of GetSwingLow() and lowest CLOSED H1 low over this many bars [1..N] (NOT 20 — 20 reaches structurally-irrelevant lows → oversized stop)
+
+input group "══════ NEWS FLAT (DAY_DATA) ══════"
+// Phase 3.6 (fix 3.2): wire IsDataDay() so GetDayType() returns DAY_DATA on HIGH-impact
+// USD+XAU release windows (FOMC/CPI/NFP/PPI/PCE). Primary source = MQL5 economic calendar
+// (CalendarValueHistory); MANDATORY graceful degradation to a STATIC blackout schedule when
+// the calendar is empty/unavailable — CONFIRMED unavailable in the Strategy Tester on this
+// terminal (CalendarValueHistory => -1 / err 4014), so the static schedule carries the tester.
+// Consumed by the regime router (DAY_DATA → engine weight 0) which is OFF on the production
+// .set, so this is byte-identical on production; exercised at the engines-ON GATE / 3.x.
+input bool   InpEnableNewsFlat       = true;     // Master toggle: flat (DAY_DATA) on HIGH-impact news windows
+input int    InpNewsWindowMinutes    = 15;       // ± minutes around the scheduled release time to flag as DAY_DATA

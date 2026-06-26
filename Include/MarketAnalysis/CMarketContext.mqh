@@ -85,6 +85,16 @@ private:
    //    that anchors the stop.
    int                       m_dealing_range_d1_lookback;
 
+   //--- Phase 3.6 (fix 3.2): news-flat (DAY_DATA) support.
+   //    m_gmt_offset is the broker GMT offset (same derivation CSessionEngine uses —
+   //    TimeCurrent()-TimeGMT(), with the InpBrokerGMTOffset tester fallback) so the
+   //    news gate and the session engine agree on ONE offset. m_news_calendar_available
+   //    is probed once in Init() (CalendarValueHistory): TRUE → use the live calendar,
+   //    FALSE (e.g. in the Strategy Tester, where CalendarValueHistory returns -1/err 4014)
+   //    → fall back to the STATIC blackout schedule. Never throws.
+   int                       m_gmt_offset;
+   bool                      m_news_calendar_available;
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -162,6 +172,8 @@ public:
       m_swing_high        = 0;
       m_swing_low         = 0;
       // m_dealing_range_d1_lookback assigned above from the constructor param.
+      m_gmt_offset             = 0;       // Phase 3.6: resolved in Init()
+      m_news_calendar_available = false;  // Phase 3.6: probed in Init()
    }
 
    //+------------------------------------------------------------------+
@@ -267,6 +279,12 @@ public:
       {
          LogPrint("CMarketContext: WARNING - Failed to create H1 MA200 handle");
       }
+
+      //--- Phase 3.6 (fix 3.2): resolve the broker GMT offset (same derivation
+      //    CSessionEngine.Initialize() uses) so IsDataDay() and the session engine
+      //    agree on ONE offset, and probe the MQL5 economic calendar availability.
+      ResolveGMTOffset();
+      ProbeNewsCalendar();
 
       m_initialized = success;
 
@@ -828,10 +846,18 @@ public:
 
    // Day-type: CMarketContext has no dedicated day classifier, so synthesize
    // from the regime/volatility/choppiness primitives it already computes.
-   // (DAY_DATA requires a news calendar and is not derivable here — the
-   // engines/router gate news days separately via their own day-type source.)
+   // Phase 3.6 (fix 3.2): DAY_DATA is now derivable via IsDataDay() (MQL5 calendar
+   // with a static-blackout fallback). It is tested FIRST — a HIGH-impact USD/XAU
+   // news window overrides the volatility/trend/range classification so the router
+   // (and routed engines) can go flat (weight 0) on a data release. IsDataDay() is
+   // gated behind InpEnableMultiStrategy (the router context), so on the production
+   // .set (router OFF) it is constant-false and this branch never fires → the
+   // synthesized classification below is byte-identical to pre-3.6.
    virtual ENUM_DAY_TYPE GetDayType() override
    {
+      if(IsDataDay())
+         return DAY_DATA;
+
       ENUM_VOLATILITY_REGIME vol = GetVolatilityRegime();
       if(vol == VOL_EXTREME || vol == VOL_HIGH)
          return DAY_VOLATILE;
@@ -847,6 +873,181 @@ public:
    }
 
 private:
+   //+------------------------------------------------------------------+
+   //| Phase 3.6 (fix 3.2): NEWS-FLAT (DAY_DATA) support                 |
+   //|                                                                   |
+   //| IsDataDay() returns true when the CURRENT bar falls inside a      |
+   //| HIGH-impact USD/XAU news window (FOMC/CPI/NFP/PPI/PCE). Primary    |
+   //| source = the MQL5 economic calendar (CalendarValueHistory);       |
+   //| MANDATORY graceful degradation to a STATIC blackout schedule when |
+   //| the calendar is unavailable (e.g. the Strategy Tester, where      |
+   //| CalendarValueHistory returns -1 / err 4014). NEVER throws.        |
+   //|                                                                   |
+   //| Gated behind InpEnableMultiStrategy (the router context that      |
+   //| consumes DAY_DATA): constant-false on the production .set →        |
+   //| GetDayType()'s DAY_DATA branch is unreachable → byte-identical.   |
+   //+------------------------------------------------------------------+
+
+   //--- Resolve broker GMT offset (mirror CSessionEngine.Initialize()).
+   void ResolveGMTOffset()
+   {
+      long offset_seconds = (long)(TimeCurrent() - TimeGMT());
+      m_gmt_offset = (int)(offset_seconds / 3600);
+      if(m_gmt_offset == 0)
+      {
+         // TimeGMT() is unreliable in the tester (== TimeCurrent()); use the
+         // EA-wide configurable broker offset, the same fallback the session
+         // engine uses, so both clocks agree.
+         if((bool)MQLInfoInteger(MQL_TESTER))
+            m_gmt_offset = InpBrokerGMTOffset;
+      }
+      LogPrint("CMarketContext: news-flat GMT offset = ", m_gmt_offset,
+               " (tester=", (bool)MQLInfoInteger(MQL_TESTER), ")");
+   }
+
+   //--- Probe the economic calendar ONCE; print the event count (mandatory).
+   void ProbeNewsCalendar()
+   {
+      m_news_calendar_available = false;
+      MqlCalendarValue values[];
+      datetime from = TimeCurrent() - 7*24*60*60;
+      datetime to   = TimeCurrent() + 7*24*60*60;
+      int n = CalendarValueHistory(values, from, to, "US");
+      if(n > 0)
+      {
+         m_news_calendar_available = true;
+         LogPrint("CMarketContext: MQL5 calendar AVAILABLE — ", n,
+                  " US events in +/-7d window; using LIVE calendar for news-flat.");
+      }
+      else
+      {
+         int err = GetLastError();
+         ResetLastError();
+         LogPrint("CMarketContext: MQL5 calendar UNAVAILABLE (CalendarValueHistory=",
+                  n, " err=", err, ") — using STATIC news blackout fallback.");
+      }
+   }
+
+   //--- GMT hour / minute of a server time, using the resolved offset.
+   int GMTHourOf(datetime server_time)
+   {
+      MqlDateTime dt;
+      TimeToStruct(server_time, dt);
+      int hour = dt.hour - m_gmt_offset;
+      if(hour < 0)  hour += 24;
+      if(hour >= 24) hour -= 24;
+      return hour;
+   }
+
+   //--- Does the H1 bar [bar_open, bar_open+1h) overlap the release +/- window?
+   //    Release hours are given in GMT; the bar's GMT hour is compared with the
+   //    DST-robust pair (e.g. 12 OR 13 for an 08:30-ET drop). The minute window
+   //    (InpNewsWindowMinutes around :30) is honored: at H1 the bar spans the whole
+   //    hour, so any window that includes :30 of the matched hour flags the bar.
+   bool BarInReleaseHour(datetime bar_open, int gmt_hour_a, int gmt_hour_b)
+   {
+      int h = GMTHourOf(bar_open);
+      if(h != gmt_hour_a && h != gmt_hour_b)
+         return false;
+      // Honor InpNewsWindowMinutes: the release is at :30; the H1 bar covers
+      // :00..:59, so the bar overlaps [release-W, release+W] whenever
+      // 30-W <= 59 AND 30+W >= 0, which is always true for W in [0,30]. Keep the
+      // explicit guard so a narrowed window (e.g. ±5 / FOMC-only per the plan's
+      // fallback) still reduces to the correct hour-bar membership.
+      int w = InpNewsWindowMinutes; if(w < 0) w = 0;
+      int rel_lo = 30 - w, rel_hi = 30 + w;   // window in minutes-past-the-hour
+      return (rel_hi >= 0 && rel_lo <= 59);
+   }
+
+   //--- STATIC blackout schedule (binding stok table). HIGH-impact USD/XAU only.
+   //    DST handled by flagging BOTH candidate GMT hours (never compute US DST):
+   //    08:30-ET data drops -> GMT 12 or 13; 14:00-ET FOMC -> GMT 18 or 19.
+   bool IsStaticNewsBlackout(datetime bar_open)
+   {
+      MqlDateTime dt;
+      TimeToStruct(bar_open, dt);
+      int dom   = dt.day;            // 1..31
+      int month = dt.mon;            // 1..12
+      int dow   = dt.day_of_week;    // 0=Sun..6=Sat
+
+      bool data_hour = BarInReleaseHour(bar_open, 12, 13);   // 08:30 ET
+      bool fomc_hour = BarInReleaseHour(bar_open, 18, 19);   // 14:00 ET
+
+      bool is_weekday = (dow >= 1 && dow <= 5);
+
+      // NFP: first Friday of the month, 08:30 ET.
+      bool isNfp = (dow == 5 && dom <= 7) && data_hour;
+      // CPI: weekday, dom 10-15, 08:30 ET.
+      bool isCpi = is_weekday && (dom >= 10 && dom <= 15) && data_hour;
+      // PPI: weekday, dom 11-16, 08:30 ET.
+      bool isPpi = is_weekday && (dom >= 11 && dom <= 16) && data_hour;
+      // PCE: weekday, dom 26-31 (last week), 08:30 ET.
+      bool isPce = is_weekday && (dom >= 26 && dom <= 31) && data_hour;
+      // FOMC: Wednesday, dom 16-22, only in meeting months, 14:00 ET decision.
+      bool fomc_month = (month==1||month==3||month==5||month==6||
+                         month==7||month==9||month==11||month==12);
+      bool isFomc = (dow == 3 && dom >= 16 && dom <= 22 && fomc_month) && fomc_hour;
+
+      return (isNfp || isCpi || isPpi || isPce || isFomc);
+   }
+
+   //--- LIVE-calendar path: any HIGH-impact USD or XAU event within +/-window of now.
+   bool IsCalendarNewsWindow(datetime now)
+   {
+      int w = InpNewsWindowMinutes; if(w < 0) w = 0;
+      datetime from = now - (60*60);            // an hour back covers the H1 bar
+      datetime to   = now + (w*60);
+      string scopes[] = {"US", "XAU"};
+      for(int s = 0; s < ArraySize(scopes); s++)
+      {
+         MqlCalendarValue values[];
+         int n = CalendarValueHistory(values, from, to, scopes[s]);
+         if(n <= 0) { ResetLastError(); continue; }
+         for(int i = 0; i < ArraySize(values); i++)
+         {
+            // window membership: event time within [now-w, now+w]
+            long diff = (long)(values[i].time - now);
+            if(diff < -(long)(w*60) || diff > (long)(w*60))
+               continue;
+            MqlCalendarEvent ev;
+            if(!CalendarEventById(values[i].event_id, ev))
+               continue;
+            if(ev.importance == CALENDAR_IMPORTANCE_HIGH)
+               return true;
+         }
+      }
+      ResetLastError();
+      return false;
+   }
+
+   //--- Master news-flat predicate.
+   bool IsDataDay()
+   {
+      // Gated to the router context: DAY_DATA is consumed only when the
+      // multi-strategy router is ON. On the production .set (router OFF) this is
+      // constant-false, preserving byte-identity (the only production-reachable
+      // GetDayType() caller — CExpansionEngine's telemetry day_type stamp — keeps
+      // its pre-3.6 value).
+      if(!InpEnableMultiStrategy || !InpEnableNewsFlat)
+         return false;
+
+      datetime bar_open = iTime(_Symbol, PERIOD_H1, 0);
+      if(bar_open <= 0)
+         bar_open = TimeCurrent();
+
+      // Primary: live MQL5 calendar (when available — typically live, not tester).
+      if(m_news_calendar_available)
+      {
+         if(IsCalendarNewsWindow(bar_open))
+            return true;
+         // Calendar available but no event now: still apply the static schedule as
+         // a belt-and-suspenders backstop (a populated calendar can still miss XAU).
+      }
+
+      // Fallback (and tester path): static HIGH-impact USD/XAU blackout schedule.
+      return IsStaticNewsBlackout(bar_open);
+   }
+
    //+------------------------------------------------------------------+
    //| Update cached MA200 value                                         |
    //+------------------------------------------------------------------+
