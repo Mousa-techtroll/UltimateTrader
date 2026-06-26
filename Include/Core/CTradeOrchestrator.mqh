@@ -18,6 +18,11 @@
 #include "CAdaptiveTPManager.mqh"
 #include "../Display/CTradeLogger.mqh"
 
+// Fix 4.2: forward-declare the coordinator (defined AFTER this file in the
+// main include order) so ExecuteSignal can query aggregate open risk for the
+// portfolio exposure cap without creating a circular include.
+class CPositionCoordinator;
+
 //+------------------------------------------------------------------+
 //| CTradeOrchestrator - Coordinates trade execution                 |
 //+------------------------------------------------------------------+
@@ -29,6 +34,7 @@ private:
    CAdaptiveTPManager*     m_adaptive_tp_manager;
    IMarketContext*         m_context;
    CTradeLogger*         m_trade_logger;
+   CPositionCoordinator* m_pos_coordinator;   // Fix 4.2: queried for aggregate open risk (exposure cap)
 
    // Configuration
    double               m_min_rr_ratio;
@@ -74,6 +80,7 @@ public:
       m_adaptive_tp_manager = adaptive_tp;
       m_context = context;
       m_trade_logger = NULL;
+      m_pos_coordinator = NULL;   // Fix 4.2: wired post-construction via SetPositionCoordinator
 
       m_min_rr_ratio = min_rr;
       m_tp1_distance = tp1_dist;
@@ -116,6 +123,10 @@ public:
    bool IsChopSniperEnabled()              { return m_use_chop_sniper; }
 
    void SetTradeLogger(CTradeLogger* logger) { m_trade_logger = logger; }
+
+   // Fix 4.2: inject the position coordinator so ExecuteSignal can read
+   // aggregate open risk and enforce the InpMaxTotalExposure ceiling.
+   void SetPositionCoordinator(CPositionCoordinator* coord) { m_pos_coordinator = coord; }
 
    //+------------------------------------------------------------------+
    //| Get Bollinger Band values for Chop Sniper TPs                     |
@@ -526,6 +537,88 @@ public:
       // without recalculating lots, making it a no-op on sizing anyway.
 
       final_risk_pct = risk_pct;
+
+      //================================================================
+      // Fix 4.2: PORTFOLIO EXPOSURE CAP (InpMaxTotalExposure)
+      // Single chokepoint — runs AFTER final_risk_pct + lot_size are
+      // fully resolved (incl. any counter-trend rescale) and BEFORE the
+      // executor is called. Scale the LOT down to fit headroom; NEVER
+      // touch the structural SL. If headroom can't fund even one broker
+      // min-lot, HARD-REJECT (mirror the lot<=0 reject path: audit-logged,
+      // NO daily-counter increment). Do NOT round up to min-lot and breach.
+      //================================================================
+      if(m_pos_coordinator != NULL && InpMaxTotalExposure > 0.0 && final_risk_pct > 0.0)
+      {
+         double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+         double open_risk = m_pos_coordinator.GetTotalOpenRiskPct(equity);
+
+         if(open_risk + final_risk_pct > InpMaxTotalExposure)
+         {
+            double headroom = InpMaxTotalExposure - open_risk;
+
+            // Broker lot granularity for the floor decision (NormalizeLots
+            // would MathMax up to min_lot and breach the cap — do it by hand).
+            double min_lot  = SymbolInfoDouble(trade_symbol, SYMBOL_VOLUME_MIN);
+            double lot_step = SymbolInfoDouble(trade_symbol, SYMBOL_VOLUME_STEP);
+            if(min_lot  <= 0) min_lot  = 0.01;
+            if(lot_step <= 0) lot_step = 0.01;
+
+            bool hard_reject = false;
+
+            if(headroom <= 0.0)
+            {
+               // No room left at all (book already at/over the ceiling) — R is
+               // meaningless, cannot place any lot without breaching.
+               hard_reject = true;
+            }
+            else
+            {
+               // Rescale LOT only (SL preserved): bring candidate risk down to headroom.
+               double scale       = headroom / final_risk_pct;          // < 1.0 here
+               double scaled_lot  = lot_size * scale;
+               double floored_lot = MathFloor(scaled_lot / lot_step) * lot_step;
+               floored_lot        = NormalizeDouble(floored_lot, 2);
+
+               if(floored_lot < min_lot)
+               {
+                  // Headroom can't fund even one broker min-lot under the cap.
+                  hard_reject = true;
+               }
+               else
+               {
+                  // Apply the cap-respecting lot; rescale the audited risk % by
+                  // the realized lot ratio (SL unchanged → risk scales with lot).
+                  double new_risk_pct = final_risk_pct * (floored_lot / lot_size);
+                  LogPrint(">>> EXPOSURE CAP: open risk ", DoubleToString(open_risk, 2),
+                           "% + candidate ", DoubleToString(final_risk_pct, 2),
+                           "% > ", DoubleToString(InpMaxTotalExposure, 2),
+                           "% ceiling. Rescaling lot ", DoubleToString(lot_size, 2),
+                           " -> ", DoubleToString(floored_lot, 2),
+                           " (headroom ", DoubleToString(headroom, 2),
+                           "% -> risk ", DoubleToString(new_risk_pct, 2), "%). SL unchanged.");
+                  lot_size       = floored_lot;
+                  risk_pct       = new_risk_pct;
+                  final_risk_pct = new_risk_pct;
+               }
+            }
+
+            if(hard_reject)
+            {
+               LogPrint(">>> EXPOSURE CAP REJECT: open risk ", DoubleToString(open_risk, 2),
+                        "% + candidate ", DoubleToString(final_risk_pct, 2),
+                        "% > ", DoubleToString(InpMaxTotalExposure, 2),
+                        "% ceiling; headroom ", DoubleToString(headroom, 2),
+                        "% < broker min-lot risk — trade rejected (no daily-counter increment).");
+               LogRiskAudit(signal, sig_type, requested_risk_pct,
+                            risk_strategy_used, risk_strategy_valid, risk_reason,
+                            adjusted_risk_pct, fallback_sizing_used,
+                            counter_trend_reduced, counter_trend_multiplier,
+                            final_risk_pct, 0, margin,
+                            "REJECT_EXPOSURE_CAP");
+               return position;
+            }
+         }
+      }
 
       LogPrint("========================================");
       LogPrint("EXECUTING TRADE");

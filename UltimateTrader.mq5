@@ -1075,6 +1075,10 @@ int OnInit()
    if(g_pullbackEngine != NULL)
       g_posCoordinator.SetPBCEngine(g_pullbackEngine);
 
+   // Fix 4.2: give the trade orchestrator the coordinator so ExecuteSignal
+   // can read aggregate open risk and enforce the InpMaxTotalExposure cap.
+   g_tradeOrchestrator.SetPositionCoordinator(g_posCoordinator);
+
    // Load existing positions at startup (Phase 0.1: tries state file first)
    g_posCoordinator.LoadOpenPositions();
    Print("[Init] Core: SignalOrchestrator + TradeOrchestrator + PositionCoordinator + RiskMonitor");

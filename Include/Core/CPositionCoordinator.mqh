@@ -980,6 +980,23 @@ public:
    int GetPositionCount() { return m_position_count; }
 
    //+------------------------------------------------------------------+
+   //| Total open risk as % of equity (fix 4.2 exposure cap)            |
+   //|  Sums the SAME per-position risk-dollar model used elsewhere     |
+   //|  (CalculatePositionRiskDollars), divides by equity, x100.        |
+   //+------------------------------------------------------------------+
+   double GetTotalOpenRiskPct(double equity)
+   {
+      if(equity <= 0.0)
+         return 0.0;
+
+      double total_risk_dollars = 0.0;
+      for(int i = 0; i < m_position_count; i++)
+         total_risk_dollars += CalculatePositionRiskDollars(m_positions[i]);
+
+      return (total_risk_dollars / equity) * 100.0;
+   }
+
+   //+------------------------------------------------------------------+
    //| Get position ticket by index                                      |
    //+------------------------------------------------------------------+
    ulong GetPositionTicket(int index)
