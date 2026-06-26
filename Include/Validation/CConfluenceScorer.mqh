@@ -39,6 +39,13 @@ private:
    // floor 6 / cap 18). The {4,6,8,12} per-engine avg-R sweep happens in Iter 3.
    int      m_bos_freshness_bars;
 
+   // Phase 2.3: OBJECTIVE engine-confluence spine floor (0-100 SMC scale). The
+   // engine-confluence spine path no longer trusts the engine's self-certified
+   // engine_confluence; instead it requires the market context's OBJECTIVE
+   // GetSMCConfluenceScore(dir) to clear this floor. Default 25 (stok binding;
+   // BELOW the SMC hard-reject floor of 40, so the spine is necessary-but-weaker).
+   int      m_spine_min_confluence;
+
 public:
    CConfluenceScorer()
    {
@@ -46,19 +53,22 @@ public:
       m_points_a     = 7;
       m_points_bplus = 6;
       m_points_b     = 7;
-      m_bos_freshness_bars = 8;
+      m_bos_freshness_bars   = 8;
+      m_spine_min_confluence = 25;
    }
 
    // Phase C wires the live Inp* point thresholds here.
-   // bos_freshness_bars: Phase 2.2 spine freshness window (default 8 if omitted).
+   // bos_freshness_bars:   Phase 2.2 spine freshness window (default 8 if omitted).
+   // spine_min_confluence: Phase 2.3 objective spine floor (default 25 if omitted).
    void Configure(int points_aplus, int points_a, int points_bplus, int points_b,
-                  int bos_freshness_bars = 8)
+                  int bos_freshness_bars = 8, int spine_min_confluence = 25)
    {
       m_points_aplus = points_aplus;
       m_points_a     = points_a;
       m_points_bplus = points_bplus;
       m_points_b     = points_b;
-      m_bos_freshness_bars = bos_freshness_bars;
+      m_bos_freshness_bars   = bos_freshness_bars;
+      m_spine_min_confluence = spine_min_confluence;
    }
 
    //+------------------------------------------------------------------+
@@ -80,9 +90,8 @@ public:
          return SETUP_NONE;
 
       // ---- L3 HARD GATE: sweep + structure shift (the spine) ----
-      // The engine signals a spine by setting engine_confluence > 0 (its
-      // internal sweep+MSS detection) OR by a confirming recent BOS/CHoCH.
-      // No spine => no trade, for any engine.
+      // The spine is satisfied by EITHER a confirming recent BOS/CHoCH OR an
+      // OBJECTIVE engine-confluence floor. No spine => no trade, for any engine.
       //
       // Phase 2.2: the BOS/CHoCH spine is no longer a latched "ever happened"
       // state. A structure shift only counts as a spine when it is BOTH:
@@ -90,6 +99,13 @@ public:
       //   (b) DIRECTIONAL — aligned with the signal direction
       //                     (LONG: BOS/CHOCH_BULLISH; SHORT: BOS/CHOCH_BEARISH).
       // GetRecentBOS() / GetRecentBOSTime() stay raw for other readers.
+      //
+      // Phase 2.3: the engine-confluence spine path is now OBJECTIVE. Engines
+      // used to SELF-CERTIFY by setting signal.engine_confluence>0, which let
+      // them bypass this hard gate by fiat. The spine now requires the market
+      // context's OWN GetSMCConfluenceScore(dir) to clear m_spine_min_confluence
+      // (default 25, below the SMC hard-reject floor of 40 → necessary-but-weaker).
+      // 0 remains possible — an engine cannot fabricate its way past the gate.
       ENUM_BOS_TYPE bos = ctx.GetRecentBOS();
       bool bos_dir_match = (dir == SIGNAL_LONG)
                               ? (bos == BOS_BULLISH || bos == CHOCH_BULLISH)
@@ -99,7 +115,7 @@ public:
                        && ((TimeCurrent() - bos_time)
                               <= (long)m_bos_freshness_bars * PeriodSeconds(PERIOD_H1));
       bool structure_shift = (bos != BOS_NONE) && bos_dir_match && bos_fresh;
-      bool engine_spine    = (signal.engine_confluence > 0);
+      bool engine_spine    = (ctx.GetSMCConfluenceScore(dir) >= m_spine_min_confluence);
       if(!structure_shift && !engine_spine)
          return SETUP_NONE;   // no spine
 
@@ -154,11 +170,19 @@ public:
       if(ctx.GetSMCConfluenceScore(dir) > 0)
          points += 1;
 
-      // (7) Killzone timing (0-1): kept as a capped, deliberately-starved
-      //     nod (see validation kill criteria). Engine signals timing via
-      //     engine_mode being a session/expansion mode; conservative default
-      //     awards 0 unless the engine sets a high engine_confluence.
-      if(signal.engine_confluence >= 70)
+      // (7) Killzone timing (0-1): Phase 2.3 — award ONLY for a real
+      //     EXPANSION / BREAKOUT engine_mode (a measured displacement/break),
+      //     NOT a clock window. ICT killzones / Silver Bullet have NO measured
+      //     gold-H1 edge (-2.1R/6yr), so the pure session-clock modes
+      //     (MODE_SILVER_BULLET / MODE_NY_CONTINUATION / MODE_LONDON_CLOSE) and
+      //     the engine's self-certified engine_confluence no longer earn this
+      //     point. Only a genuine expansion/breakout displacement does.
+      bool expansion_mode = (signal.engine_mode == MODE_DISPLACEMENT
+                             || signal.engine_mode == MODE_LONDON_BREAKOUT
+                             || signal.engine_mode == MODE_COMPRESSION_BO
+                             || signal.engine_mode == MODE_INSTITUTIONAL_CANDLE
+                             || signal.engine_mode == MODE_PANIC_MOMENTUM);
+      if(expansion_mode)
          points += 1;
 
       if(points > 10) points = 10;

@@ -719,7 +719,8 @@ int OnInit()
       g_confluenceScorer = new CConfluenceScorer();
       g_confluenceScorer.Configure(InpPointsAPlusSetup, InpPointsASetup,
                                    InpPointsBPlusSetup, InpPointsBSetup,
-                                   InpBOSFreshnessBars);   // Phase 2.2: spine freshness window
+                                   InpBOSFreshnessBars,    // Phase 2.2: spine freshness window
+                                   InpSpineMinConfluence); // Phase 2.3: objective spine floor
 
       g_regimeRouter = new CRegimeRouter();
       g_regimeRouter.Initialize(GetPointer(g_marketContext));

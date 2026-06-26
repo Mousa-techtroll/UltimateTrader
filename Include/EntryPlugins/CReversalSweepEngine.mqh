@@ -197,8 +197,12 @@ private:
 
       // Engine metadata (per CONTRACT)
       signal.engine_mode          = mode;
-      signal.engine_confluence    = 60;   // >0: a real sweep+reclaim spine exists
-      if(has_shift) signal.engine_confluence = 75;
+      // Phase 2.3: engine_confluence is the REAL objective SMC confluence in our
+      // direction, NOT a self-certified passing constant. 0 must remain possible
+      // (a structureless sweep then has no engine-confluence spine and must clear
+      // the scorer's gate via a fresh directional BOS/CHoCH instead).
+      signal.engine_confluence    = (m_context != NULL)
+                                       ? m_context.GetSMCConfluenceScore(dir) : 0;
       signal.day_type             = m_context.GetDayType();
       signal.requiresConfirmation = false;             // T3: immediate reclaim entry
       signal.regime_risk_multiplier = m_activation_weight;

@@ -128,9 +128,16 @@ private:
       signal.requiresConfirmation   = false;               // T3: immediate fade thesis
       signal.source                 = SIGNAL_SOURCE_PATTERN;
 
-      // The edge-sweep+reclaim IS the spine for the scorer's hard gate.
-      if(signal.engine_confluence <= 0)
-         signal.engine_confluence = 60;
+      // Phase 2.3: engine_confluence is the REAL objective SMC confluence in the
+      // signal direction, NOT a self-certified passing constant. 0 must remain
+      // possible (a structureless edge-fade then has no engine-confluence spine
+      // and must clear the scorer's gate via a fresh directional BOS/CHoCH).
+      ENUM_SIGNAL_TYPE dir = (signal.action == "BUY" || signal.action == "buy")
+                                ? SIGNAL_LONG
+                                : (signal.action == "SELL" || signal.action == "sell")
+                                     ? SIGNAL_SHORT : SIGNAL_NONE;
+      signal.engine_confluence = (m_context != NULL && dir != SIGNAL_NONE)
+                                    ? m_context.GetSMCConfluenceScore(dir) : 0;
 
       // Retarget TP1 to range-mid POC proxy when we know it and it is on the
       // correct side of entry; otherwise leave the composed target intact.
@@ -479,7 +486,8 @@ private:
          signal.patternType = PATTERN_BB_MEAN_REVERSION;
          signal.riskReward  = (signal.takeProfit1 - entry) / (entry - sl);
          signal.comment     = "BB Mean Reversion Long";
-         signal.engine_confluence = 55;            // band-sweep reclaim spine
+         // Phase 2.3: engine_confluence set objectively in TagAndRetarget()
+         // from m_context.GetSMCConfluenceScore(dir); no fabricated constant.
 
          TagAndRetarget(signal, MODE_FVG_MITIGATION, "BB Touch");
          ScoreSignal(signal);
@@ -502,7 +510,8 @@ private:
          signal.patternType = PATTERN_BB_MEAN_REVERSION;
          signal.riskReward  = (entry - signal.takeProfit1) / (sl - entry);
          signal.comment     = "BB Mean Reversion Short";
-         signal.engine_confluence = 55;
+         // Phase 2.3: engine_confluence set objectively in TagAndRetarget()
+         // from m_context.GetSMCConfluenceScore(dir); no fabricated constant.
 
          TagAndRetarget(signal, MODE_FVG_MITIGATION, "BB Touch");
          ScoreSignal(signal);
