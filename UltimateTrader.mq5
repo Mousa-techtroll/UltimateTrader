@@ -731,26 +731,29 @@ int OnInit()
       g_trendContEngine = new CTrendContinuationEngine(14, 0.5, 100.0, 2.0,
                                                        InpTrendSwingLookback, PERIOD_H1);
       g_trendContEngine.SetScorer(g_confluenceScorer);
-      RegisterEntryPlugin(g_trendContEngine, InpEnableEngineTrend);
+      RegisterEntryPlugin(g_trendContEngine, InpEnableEngineTrend && register_patterns);  // Phase 5.6: engines are pattern strategies — honor FILE-only contract
       g_regimeRouter.RegisterEngine(g_trendContEngine);
 
       // Engine 2: Reversal / Sweep
       g_reversalSweepEngine = new CReversalSweepEngine(GetPointer(g_marketContext), 14, 0.5, PERIOD_H1);
       g_reversalSweepEngine.SetScorer(g_confluenceScorer);
-      RegisterEntryPlugin(g_reversalSweepEngine, InpEnableEngineReversal);
+      RegisterEntryPlugin(g_reversalSweepEngine, InpEnableEngineReversal && register_patterns);  // Phase 5.6: engines are pattern strategies — honor FILE-only contract
       g_regimeRouter.RegisterEngine(g_reversalSweepEngine);
 
       // Engine 3: Range / Mean-Reversion
       g_engineRange = new CRangeReversionEngine(GetPointer(g_marketContext));
       g_engineRange.SetScorer(g_confluenceScorer);
-      RegisterEntryPlugin(g_engineRange, InpEnableEngineRange);
+      RegisterEntryPlugin(g_engineRange, InpEnableEngineRange && register_patterns);  // Phase 5.6: engines are pattern strategies — honor FILE-only contract
       g_regimeRouter.RegisterEngine(g_engineRange);
 
       // Engine 4 = the EXISTING g_expansionEngine. Do NOT re-create or
       // re-register it; its legacy registration/gate stays untouched so
       // default behavior is preserved. Additively wire it to the router
-      // only when multi-strategy is on.
-      if(g_expansionEngine != NULL)
+      // only when multi-strategy is on AND InpEnableEngineExpansion is set
+      // (Phase 5.7: mirror engines 1-3's per-engine enable gate; honors the
+      // previously-orphan input. The legacy standalone registration above
+      // (~687) is the reuse-as-component path and stays unchanged).
+      if(g_expansionEngine != NULL && InpEnableEngineExpansion)
       {
          g_expansionEngine.SetScorer(g_confluenceScorer);
          g_regimeRouter.RegisterEngine(g_expansionEngine);

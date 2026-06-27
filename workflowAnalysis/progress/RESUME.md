@@ -35,6 +35,19 @@ For the NEXT ACTION phase:
      ```
    - **Pass = 0 errors AND 0 NEW warnings** (baseline is 38 pre-existing warnings; quote any delta). MQL **error 106 = include not found** — fix the relative include path / missing `#include`. If errors, fix and re-compile; stay `IMPL-DONE` until clean. Record the verbatim `Result:` line in the phase log.
    - Negative control is already proven live this project (a `#error` yields a non-zero count and deletes the `.ex5`); re-run it only if you suspect a stale gate.
+3b. **BIND the binary to the load path (MANDATORY — prevents stale-binary runs).** *(Added after the Phase-5.6 incident: a 7-commit-stale `9dbe9052` binary was silently tested because the fresh repo-path compile never reached the data-dir load path and no md5 assertion gated the run; see `progress/REBASELINE-5-6.md`.)* The compiler writes `C:\Trading\UltimateTrader\UltimateTrader.ex5` (repo); the tester loads `Expert=` from the data-dir `…\Terminal\725B72F25E46C780EF59F57016D58156\MQL5\Experts\`. These are DIFFERENT files — reconcile by md5 EVERY run or a stale data-dir copy is silently tested.
+   ```
+   DD="/mnt/c/Users/nullkuhl/AppData/Roaming/MetaQuotes/Terminal/725B72F25E46C780EF59F57016D58156"; E="$DD/MQL5/Experts"
+   rm -f "$E/UltimateTrader.ex5" "$E/UltimateTrader_<phase>.ex5"          # (a) delete data-dir load-path .ex5 BEFORE compiling
+   # (b) compile (repo path) — step 3
+   cp -p /mnt/c/Trading/UltimateTrader/UltimateTrader.ex5 "$E/UltimateTrader_<phase>.ex5"   # (c) copy FRESH build to the exact load path the .ini names
+   FRESH=$(md5sum /mnt/c/Trading/UltimateTrader/UltimateTrader.ex5|awk '{print $1}'); LOAD=$(md5sum "$E/UltimateTrader_<phase>.ex5"|awk '{print $1}')
+   [ "$FRESH" = "$LOAD" ] || { echo "STALE-BINARY ABORT: load=$LOAD != fresh=$FRESH"; exit 1; }   # (d) ASSERT — abort if differ
+   # (e) record BOTH md5s in the phase log; the .ini Expert= MUST name UltimateTrader_<phase>.ex5 (NEVER the bare UltimateTrader.ex5)
+   ```
+   - Each A/B leg gets its OWN uniquely-named `_<phase>X.ex5` + its own md5 line in the log; NEVER reuse a `_pNN` filename across phases. The two legs MUST have DISTINCT md5s for a production-affecting fix (same md5 ⇒ you compiled/copied once and ran one binary twice ⇒ the A/B is vacuous).
+   - **If a clean-HEAD baseline run diverges from the recorded baseline, suspect a STALE BINARY FIRST** (re-run 3b + assert load-path md5 == intended-source md5) — do NOT attribute to "data/state drift" without first proving the binary. For a baseline-relative P&L claim, also relocate `Common\Files\UltimateTrader_State*.bin/.bak` to start on clean recovery state (a stale state file is a real but SECONDARY confound; the binary md5 assertion is primary).
+   - **Current binding baseline (post-5.5, HEAD ed488df): Net $17,018.83 / PF 1.28 / 1742 trades / Eq-DD 12.89%; fresh-build md5 `f1e251fa…`; EA CSV md5 Stats `08640614…` / TradeEvents `18aedaca…` / Risk `7b3db7d1…`.** A fresh compile of committed HEAD MUST reproduce these — if it yields $25,570.97/2011t you are running the stale pre-4.6 `9dbe9052` binary.
 4. **Targeted / A-B backtest + decode (per the phase's QA criteria).**
    - Use `backtest_symbol.sh XAUUSD <year>` (point its terminal path at the Vantage path above if its hardcoded one fails). Decode the UTF-16LE stats CSV in `Logs/` with `iconv`. Report **actual** numbers — PF, avg-R, net, trade count, max DD — never estimate.
    - For `touches_logic=N` / "no-op on production path" claims: the A/B MUST be **trade-for-trade, SL-for-SL, R-for-R IDENTICAL** on the XAUUSD-only H1 production config. Not identical ⇒ the no-op claim is wrong ⇒ reconcile before merge.
