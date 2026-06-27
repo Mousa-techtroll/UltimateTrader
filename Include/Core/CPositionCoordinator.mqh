@@ -41,7 +41,7 @@
 //| Constants for state persistence                                   |
 //+------------------------------------------------------------------+
 #define STATE_FILE_SIGNATURE  0x554C5452   // "ULTR"
-#define STATE_FILE_VERSION    4
+#define STATE_FILE_VERSION    5             // v5 (Phase 5.11): PersistedPosition adds tp3 + entry_risk_amount
 #define STATE_FILE_NAME       "UltimateTrader_State.bin"
 
 //+------------------------------------------------------------------+
@@ -227,6 +227,12 @@ private:
       pp.original_sl  = pos.original_sl;
       pp.original_tp1 = pos.original_tp1;
 
+      // Phase 5.11 (v5): persist tp3 (runner target) + entry_risk_amount (symbol-correct
+      // money risk basis) so a restored position keeps the full TP ladder and never falls
+      // back to the _Symbol-tick risk recompute. signal_id is NOT persisted (string).
+      pp.tp3               = pos.tp3;
+      pp.entry_risk_amount = pos.entry_risk_amount;
+
       return pp;
    }
 
@@ -275,6 +281,16 @@ private:
       pos.original_sl  = (pp.original_sl != 0) ? pp.original_sl : pos.stop_loss;
       pos.original_tp1 = (pp.original_tp1 != 0) ? pp.original_tp1 : pos.tp1;
 
+      // Phase 5.11 (v5): restore the runner target + symbol-correct money risk basis.
+      // Only v5 files reach RestoreFromPersisted (v4 files are rejected up-front by the
+      // EXACT-MATCH version gate in LoadPositionState → broker-only fallback; the version
+      // byte, NOT the size check, is the deterministic discriminator — a large v4 file can
+      // exceed min_v5_size, so size-alone is insufficient), so these fields are
+      // authoritative; entry_risk_amount keeps CalculatePositionRiskDollars off the
+      // _Symbol-tick recompute that would re-break 5.1/5.3 for a foreign-symbol position.
+      pos.tp3               = pp.tp3;
+      pos.entry_risk_amount = pp.entry_risk_amount;
+
       // Derive stage_label from stage enum
       switch(pos.stage)
       {
@@ -285,6 +301,14 @@ private:
          case STAGE_TRAILING:  pos.stage_label = "TRAILING";   break;
          default:              pos.stage_label = "UNKNOWN";    break;
       }
+
+      // Phase 5.11: WARN if a restored FILE position expects a TP3 runner but tp3 didn't
+      // round-trip (signals something failed to persist/restore — degrades silently to a
+      // 2-way 50/50 split in the file-signal ladder).
+      if(pos.signal_source == SIGNAL_SOURCE_FILE && InpFileUseTP3 && pos.tp3 <= 0.0)
+         LogPrint("WARN: RestoreFromPersisted - FILE position ticket ", pos.ticket,
+                  " has InpFileUseTP3 set but tp3<=0 (runner target lost on restore) - "
+                  "ladder will degrade to 2-way split");
    }
 
    double CalculatePositionRiskDollars(const SPosition &pos)
@@ -1217,11 +1241,22 @@ public:
          return false;
       }
 
-      // Verify version (accept v1, v2, and v3 for backward compatibility)
-      if(header.version < 1 || header.version > STATE_FILE_VERSION)
+      // Verify version. The PersistedPosition struct layout is byte-serialized with
+      // FileWriteStruct/FileReadStruct, so a file can ONLY be read back into the struct
+      // it was written from. Each schema bump (v3 added Sprint 1 fields; v5 added
+      // tp3 + entry_risk_amount, +16 bytes) changed sizeof(PersistedPosition), so an
+      // older-version file CANNOT be parsed into the current struct without mis-reading
+      // bytes. Phase 5.11: require an EXACT version match — any other version (older v1-v4
+      // with a smaller record, or a newer/unknown layout) is rejected GRACEFULLY so the
+      // caller falls back to broker-only position recovery rather than restoring garbage.
+      // This is the deterministic v4-vs-v5 discriminator; the size check + per-record
+      // FileReadStruct short-read guard + CRC32 below are defense-in-depth backstops.
+      if(header.version != STATE_FILE_VERSION)
       {
-         LogPrint("ERROR: LoadPositionState - unsupported version: ",
-                  header.version, " (expected 1-", STATE_FILE_VERSION, ")");
+         LogPrint("ERROR: LoadPositionState - incompatible state file version: ",
+                  header.version, " (this build writes/reads v", STATE_FILE_VERSION,
+                  "; older files have a different PersistedPosition layout) - "
+                  "falling back to broker-only recovery");
          FileClose(handle);
          ArrayResize(records, 0);
          return false;
@@ -1236,10 +1271,37 @@ public:
          return false;
       }
 
+      // Phase 5.11: explicit SIZE CHECK to distinguish a v5 file from an OLD v4 layout.
+      // v5 enlarged PersistedPosition by two doubles (tp3 + entry_risk_amount, +16 bytes
+      // each record). The minimum size of a valid v5 file is the header plus the records
+      // region at the v5 struct size. An old v4 file has the SAME record_count in its
+      // header but smaller per-record bytes, so its records region (header + trailer
+      // aside) is too small — reading it as v5 would either short-read or, with a large
+      // enough mode-perf trailer, MIS-PARSE v4 bytes into v5 fields (garbage positions).
+      // Reject anything below the v5 minimum so we fall back to broker-only recovery
+      // rather than restoring corrupt state. (The per-record FileReadStruct short-read
+      // guard and the CRC32 check below are the defense-in-depth backstops.)
+      ulong actual_file_size = FileSize(handle);
+      ulong min_v5_size = (ulong)sizeof(StateFileHeader) +
+                          (ulong)header.record_count * (ulong)sizeof(PersistedPosition);
+      if(actual_file_size < min_v5_size)
+      {
+         LogPrint("ERROR: LoadPositionState - file too small for v5 layout (size=",
+                  actual_file_size, " < min=", min_v5_size, ", record_count=",
+                  header.record_count, ", header.version=", header.version,
+                  ") - likely an old v4 file; falling back to broker-only recovery");
+         FileClose(handle);
+         ArrayResize(records, 0);
+         return false;
+      }
+
       // Read records
-      // Note: v3 added Sprint 1 fields to PersistedPosition (R-milestone + TP0).
-      // Old v1/v2 files have smaller records and will fail FileReadStruct — this is
-      // expected; the system falls back to broker-only recovery gracefully.
+      // Note: each schema bump enlarged PersistedPosition (v3 added Sprint 1 R-milestone
+      // + TP0 fields; v5 added tp3 + entry_risk_amount). An older file is rejected up-front
+      // by the EXACT-MATCH version gate above (the version byte is the deterministic
+      // discriminator; the size check is a secondary guard but is NOT sufficient alone — a
+      // large v4 file with a fat mode-perf trailer can exceed min_v5_size). On any mismatch
+      // the system falls back to broker-only recovery gracefully.
       ArrayResize(records, header.record_count);
 
       for(int i = 0; i < header.record_count; i++)

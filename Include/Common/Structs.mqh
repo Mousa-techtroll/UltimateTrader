@@ -300,6 +300,19 @@ struct PersistedPosition
    // Sprint 5E: preserve original SL for R-calculations after restart
    double   original_sl;
    double   original_tp1;
+
+   // Phase 5.11 (state file version 5): preserve the full TP ladder + symbol-correct
+   // risk basis across restarts.
+   //  - tp3: runner target for file signals (was dropped on restore → 3-way split
+   //    silently degraded to 2-way 50/50; XCut-7).
+   //  - entry_risk_amount: money risk at entry. MANDATORY persist so a restored
+   //    position keeps its symbol-correct risk basis and CalculatePositionRiskDollars
+   //    never falls back to the _Symbol-tick recompute (which re-breaks the
+   //    wrong-symbol R error closed by fixes 5.1/5.3 for a foreign-symbol/file position).
+   // NOTE: signal_id is intentionally NOT persisted here — FileWriteStruct cannot
+   // serialize a dynamic string member (it would write a pointer/garbage).
+   double   tp3;
+   double   entry_risk_amount;
 };
 
 //+------------------------------------------------------------------+
