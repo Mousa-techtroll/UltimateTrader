@@ -658,6 +658,7 @@ int OnInit()
    RegisterEntryPlugin(g_displacementEntry, InpEnableDisplacementEntry && register_patterns);
 
    g_sessionBreakout = new CSessionBreakoutEntry(NULL, InpAsianRangeStartHour, InpAsianRangeEndHour, InpLondonOpenHour, InpLondonOpenHour + 1, InpNYOpenHour);
+   g_sessionBreakout.SetGMTOffset(InpBrokerGMTOffset);  // Phase 6.9 Entry-SessionBO-1: single source of truth (inert on prod — SessionBreakout DEAD when InpEnableSessionEngine=true)
    if(!InpEnableSessionEngine)
       RegisterEntryPlugin(g_sessionBreakout, InpEnableSessionBreakout && register_patterns);
 

@@ -207,19 +207,22 @@ public:
       }
 
       // ADX filter
+      // Phase 6.9 Entry-RangeBox-1 (forming->closed-bar; byte-identical on prod — plugin
+      // DEAD when InpEnableS3S6=true; correctness fix for the InpEnableS3S6=false config). Widen 1->2.
       double adx_buf[];
       ArraySetAsSeries(adx_buf, true);
-      if(CopyBuffer(m_handle_adx, 0, 0, 1, adx_buf) < 1)
+      if(CopyBuffer(m_handle_adx, 0, 0, 2, adx_buf) < 2)
          return signal;
-      if(adx_buf[0] > m_max_adx)
+      double adx_closed = adx_buf[1];
+      if(adx_closed > m_max_adx)
          return signal;
 
       // ATR filter
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
-      if(CopyBuffer(m_handle_atr, 0, 0, 1, atr_buf) < 1)
+      if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_buf) < 2)
          return signal;
-      if(atr_buf[0] > m_max_atr_lowvol)
+      if(atr_buf[1] > m_max_atr_lowvol)
          return signal;
 
       // Update range detection
@@ -257,6 +260,12 @@ public:
             double reward = tp - entry;
             double rr = (risk > 0) ? reward / risk : 0;
 
+            // Phase 6.9 Entry-Candles-6: RangeBox min-RR floor = 1.0 (stok-binding:
+            // validate at 1.0 before ever exceeding; low-frequency play, a higher floor
+            // could cut a thin sample). Byte-identical on prod (plugin DEAD when InpEnableS3S6=true).
+            if(rr < 1.0)
+               return signal;
+
             signal.valid = true;
             signal.symbol = _Symbol;
             signal.action = "BUY";
@@ -272,7 +281,7 @@ public:
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
             Print("CRangeBoxEntry: BULLISH | Entry=", entry, " SL=", sl, " TP=", tp,
-                  " | Range=[", m_range_low, "-", m_range_high, "] ADX=", adx_buf[0]);
+                  " | Range=[", m_range_low, "-", m_range_high, "] ADX=", adx_closed);
             return signal;
          }
       }
@@ -295,6 +304,11 @@ public:
             double reward = entry - tp;
             double rr = (risk > 0) ? reward / risk : 0;
 
+            // Phase 6.9 Entry-Candles-6: RangeBox min-RR floor = 1.0 (stok-binding;
+            // byte-identical on prod — plugin DEAD when InpEnableS3S6=true).
+            if(rr < 1.0)
+               return signal;
+
             signal.valid = true;
             signal.symbol = _Symbol;
             signal.action = "SELL";
@@ -310,7 +324,7 @@ public:
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
             Print("CRangeBoxEntry: BEARISH | Entry=", entry, " SL=", sl, " TP=", tp,
-                  " | Range=[", m_range_low, "-", m_range_high, "] ADX=", adx_buf[0]);
+                  " | Range=[", m_range_low, "-", m_range_high, "] ADX=", adx_closed);
             return signal;
          }
       }

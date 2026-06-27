@@ -145,7 +145,8 @@ private:
    double m_max_pullback_atr;    // Max pullback depth in ATR (1.8)
    double m_signal_body_atr;     // Min reclaim candle body in ATR (0.35)
    double m_stop_buffer_atr;     // SL buffer beyond pullback extreme (0.20)
-   double m_entry_buffer_atr;    // Entry buffer for reclaim (0.05)
+   // Phase 6.9 Entry-Pullback-3: removed dead member m_entry_buffer_atr (assigned from
+   // ctor param, never read). Ctor param entry_buffer_atr retained (EA passes positional arg).
    double m_min_adx;             // Min ADX for trend (18)
    double m_ideal_adx;           // Ideal ADX for quality bonus (20)
    bool   m_use_macro_filter;    // Require macro alignment
@@ -170,9 +171,8 @@ private:
    int    m_trend_reset_bars;
    SPBCCycleContext m_cycle;
    SRearmCandidate  m_rearm_candidate;  // Stored pullback that triggered re-arm
-   bool   m_has_open_pbc_trade;
-   datetime m_last_pbc_signal_bar;
-   bool   m_waiting_for_completion;
+   // Phase 6.9 Entry-Pullback-3: removed dead members m_has_open_pbc_trade,
+   // m_last_pbc_signal_bar, m_waiting_for_completion (assigned, never read).
 
    // Diagnostic logging
    int    m_diag_handle;
@@ -239,7 +239,7 @@ public:
       m_max_pullback_atr  = max_pb_atr;
       m_signal_body_atr   = signal_body_atr;
       m_stop_buffer_atr   = stop_buffer_atr;
-      m_entry_buffer_atr  = entry_buffer_atr;
+      // Phase 6.9 Entry-Pullback-3: m_entry_buffer_atr removed (dead). entry_buffer_atr param unused.
       m_min_adx           = min_adx;
       m_ideal_adx         = ideal_adx;
       m_use_macro_filter  = use_macro;
@@ -257,9 +257,8 @@ public:
       m_rearm_min_pullback_atr = 0.5;
       m_rearm_min_bars = 2;
       m_trend_reset_bars = 24;
-      m_has_open_pbc_trade = false;
-      m_waiting_for_completion = false;
-      m_last_pbc_signal_bar = 0;
+      // Phase 6.9 Entry-Pullback-3: m_has_open_pbc_trade / m_waiting_for_completion /
+      // m_last_pbc_signal_bar removed (dead — assigned, never read).
       m_cycle.Init();
       m_rearm_candidate.Init();
       m_day_type          = DAY_TREND;
@@ -304,7 +303,7 @@ public:
       m_cycle.lastDirection = dir;
       m_cycle.lastEntryTime = TimeCurrent();
       m_cycle.anchorTrend = m_context.GetH4TrendDirection();
-      m_has_open_pbc_trade = true;
+      // Phase 6.9 Entry-Pullback-3: m_has_open_pbc_trade removed (dead).
       WriteDiag("CYCLE: ACTIVE (cycle " + IntegerToString(m_cycle.cycleCountInTrend + 1) +
                 " | " + (dir == SIGNAL_LONG ? "LONG" : "SHORT") + ")");
    }
@@ -318,7 +317,7 @@ public:
       m_cycle.cycleCountInTrend++;
       m_cycle.highSinceExit = exit_price;
       m_cycle.lowSinceExit = exit_price;
-      m_has_open_pbc_trade = false;
+      // Phase 6.9 Entry-Pullback-3: m_has_open_pbc_trade removed (dead).
 
       // Track last cycle quality for future adaptive scoring
       double risk_dist = MathAbs(m_cycle.lastExitPrice - exit_price);
@@ -744,7 +743,7 @@ public:
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
       if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_buf) < 2) return signal;
-      double atr = atr_buf[0];
+      double atr = atr_buf[1];  // Phase 6.9 Entry-Pullback-1: closed-bar ATR (was atr_buf[0]=forming, repaints intrabar; 2-bar copy already fetches [1], no lookback widening)
       if(atr <= 0) return signal;
 
       // Get price data (need lookback + margin)
@@ -879,17 +878,32 @@ private:
       if(!rearm_reclaim)
          return signal;
 
-      // Step E: Calculate entry and SL from stored pullback extremes
+      // Step E: Calculate entry and SL from a STRUCTURAL protective extreme.
+      // Phase 6.9 Entry-Pullback-2: re-derive the protective extreme from FRESH
+      // CLOSED bars (mirror DetectPullback) instead of the stored candidate, whose
+      // pullbackLow was seeded from the live bid at re-arm time (m_rearm_candidate
+      // .pullbackLow = bid) — a broker-price anchor, not structure. Recompute the
+      // recent pullback extreme over the closed-bar pullback window so the SL sits
+      // beyond real structure, not a stale/live-price value. (Latent: only reached
+      // when InpPBCEnableMultiCycle=true, default false.)
+      int struct_window = MathMin(m_max_pullback_bars, ArraySize(low) - 2);
+      double protective_extreme;
       double entry, sl;
       if(dir == SIGNAL_LONG)
       {
+         protective_extreme = low[1];               // closed bars: index 1 = last closed
+         for(int i = 2; i <= struct_window; i++)
+            if(low[i] < protective_extreme) protective_extreme = low[i];
          entry = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
-         sl = state.pullbackLow - MathMax(atr * m_stop_buffer_atr, m_min_sl_points * _Point);
+         sl = protective_extreme - MathMax(atr * m_stop_buffer_atr, m_min_sl_points * _Point);
       }
       else
       {
+         protective_extreme = high[1];
+         for(int i = 2; i <= struct_window; i++)
+            if(high[i] > protective_extreme) protective_extreme = high[i];
          entry = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-         sl = state.pullbackHigh + MathMax(atr * m_stop_buffer_atr, m_min_sl_points * _Point);
+         sl = protective_extreme + MathMax(atr * m_stop_buffer_atr, m_min_sl_points * _Point);
       }
 
       double risk_dist = MathAbs(entry - sl);

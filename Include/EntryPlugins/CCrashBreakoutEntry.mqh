@@ -176,12 +176,14 @@ public:
       ArraySetAsSeries(ema50_buf, true);
       ArraySetAsSeries(ema200_buf, true);
 
-      if(CopyBuffer(m_handle_ema50_d1, 0, 0, 1, ema50_buf) < 1 ||
-         CopyBuffer(m_handle_ema200_d1, 0, 0, 1, ema200_buf) < 1)
+      // Phase 6.9 Entry-Crash-1: closed-bar EMAs (was [0]=forming D1, repaints the
+      // ema50<ema200 Death-Cross gate intrabar). Widen copy 1->2 to address [1].
+      if(CopyBuffer(m_handle_ema50_d1, 0, 0, 2, ema50_buf) < 2 ||
+         CopyBuffer(m_handle_ema200_d1, 0, 0, 2, ema200_buf) < 2)
          return signal;
 
-      double ema50 = ema50_buf[0];
-      double ema200 = ema200_buf[0];
+      double ema50 = ema50_buf[1];
+      double ema200 = ema200_buf[1];
       double d1_close = iClose(_Symbol, PERIOD_D1, 1);  // Last closed D1 candle
 
       bool death_cross_exists = (ema50 < ema200);
@@ -207,14 +209,17 @@ public:
       ArraySetAsSeries(atr_buf, true);
       ArraySetAsSeries(adx_buf, true);
 
-      if(CopyBuffer(m_handle_ema21_h1, 0, 0, 1, ema21_buf) < 1 ||
-         CopyBuffer(m_handle_atr_h1, 0, 0, 1, atr_buf) < 1 ||
-         CopyBuffer(m_handle_adx_h1, 0, 0, 1, adx_buf) < 1)
+      // Phase 6.9 Entry-Crash-1: closed-bar H1 indicators (was [0]=forming, ATR/ADX
+      // repaint hard intrabar). The extension threshold + ADX-to-fade filter must be
+      // confirmed-bar; current_price below stays LIVE (intentional front-run). Widen 1->2.
+      if(CopyBuffer(m_handle_ema21_h1, 0, 0, 2, ema21_buf) < 2 ||
+         CopyBuffer(m_handle_atr_h1, 0, 0, 2, atr_buf) < 2 ||
+         CopyBuffer(m_handle_adx_h1, 0, 0, 2, adx_buf) < 2)
          return signal;
 
-      double h1_ema21 = ema21_buf[0];
-      double h1_atr   = atr_buf[0];
-      double h1_adx   = adx_buf[0];
+      double h1_ema21 = ema21_buf[1];
+      double h1_atr   = atr_buf[1];
+      double h1_adx   = adx_buf[1];
 
       // Current price (real-time for Rubber Band - front-run the reversal)
       double current_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
@@ -237,6 +242,13 @@ public:
          double risk = sl - entry;
          double reward = entry - tp;
          double rr = (risk > 0) ? (reward / risk) : 0;
+
+         // Phase 6.9 Entry-Crash-1: min-RR floor = 1.0 (degenerate-config guardrail,
+         // NOT a tuning lever; stok-binding — any value >=~1.33 amputates the only
+         // profitable short #5). Rejects setups where stop > distance-to-mean (price
+         // barely extended) before the signal is armed.
+         if(rr < 1.0)
+            return signal;
 
          signal.valid = true;
          signal.symbol = _Symbol;

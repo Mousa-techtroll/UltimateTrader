@@ -485,7 +485,7 @@ struct SRiskStats
 };
 
 //+------------------------------------------------------------------+
-//| Pending Signal Structure (from Stack 1.7 SignalManager)          |
+//| Pending Signal Structure (used by CSignalOrchestrator pending path)|
 //+------------------------------------------------------------------+
 struct SPendingSignal
 {

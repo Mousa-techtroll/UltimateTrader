@@ -181,20 +181,22 @@ public:
       }
 
       // ATR filter
+      // Phase 6.9 (forming->closed-bar; byte-identical on prod — plugin DEAD when
+      // InpEnableS3S6=true; correctness fix for the InpEnableS3S6=false config). Widen 1->2.
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
-      if(CopyBuffer(m_handle_atr, 0, 0, 1, atr_buf) < 1)
+      if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_buf) < 2)
          return signal;
-      double atr = atr_buf[0];
+      double atr = atr_buf[1];
       if(atr >= m_max_atr_lowvol)
          return signal;
 
       // ADX tiered filter
       double adx_buf[];
       ArraySetAsSeries(adx_buf, true);
-      if(CopyBuffer(m_handle_adx, 0, 0, 1, adx_buf) < 1)
+      if(CopyBuffer(m_handle_adx, 0, 0, 2, adx_buf) < 2)
          return signal;
-      double adx = adx_buf[0];
+      double adx = adx_buf[1];
 
       if(adx > m_max_adx)
          return signal;
@@ -207,9 +209,9 @@ public:
       // RSI
       double rsi_buf[];
       ArraySetAsSeries(rsi_buf, true);
-      if(CopyBuffer(m_handle_rsi, 0, 0, 1, rsi_buf) < 1)
+      if(CopyBuffer(m_handle_rsi, 0, 0, 2, rsi_buf) < 2)  // Phase 6.9: closed-bar RSI (widen 1->2)
          return signal;
-      double rsi = rsi_buf[0];
+      double rsi = rsi_buf[1];
 
       // Get price data
       int bars_needed = m_swing_lookback + 5;

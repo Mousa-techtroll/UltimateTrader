@@ -108,6 +108,10 @@ public:
 
    void SetContext(IMarketContext *context) { m_context = context; }
 
+   // Phase 6.9 Entry-SessionBO-1: GMT-offset injection from the EA (single source of
+   // truth — InpBrokerGMTOffset). Do NOT add in-plugin TimeGMT auto-detect (stok-binding).
+   void SetGMTOffset(int gmt_offset) { m_gmt_offset = gmt_offset; }
+
    //+------------------------------------------------------------------+
    //| Initialize                                                        |
    //+------------------------------------------------------------------+

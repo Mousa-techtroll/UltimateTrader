@@ -75,7 +75,7 @@ across concurrent positions is separately bounded by the **5% portfolio ceiling*
 | Bearish Engulfing | `CEngulfingEntry` | `InpEnableBearishEngulfing` = false | -35.3R / 660 trades, 37% WR | Confirmed dead in all conditions |
 | Bearish MA Cross | `CMACrossEntry` | hardcoded score 0 | never fires | Fights long-term gold uptrend |
 | S6 Short | `CFailedBreakReversal` | `g_profileEnableS6Short` = false | -8.9R / 6 years | No structural short edge on gold |
-| Pullback Continuation | `CPullbackContinuationEngine` | `InpEnablePullbackCont` = false | -0.5R / 38 trades | No edge. Multi-cycle re-entry also failed |
+| Pullback Continuation | `CPullbackContinuationEngine` | `InpEnablePullbackCont` = **true** (KEPT, Phase 6.9) | **PF 1.110 / +$289 / 43 trades / 37.2% WR** (2019–2026) | **Repaint-fixed (Phase 6.9):** the old "−0.5R / 38 / no edge" result was MANUFACTURED by a forming-bar ATR (`[0]`) that under-estimated volatility → stops too tight → premature stop-outs (pre-fix PF 0.635 / −$674). Closed-bar ATR (`[1]`) corrected it to net-positive. **Forward kill-criterion (PBC-scoped): disable if a future full-sample run shows PF < 1.05 OR net < $0** — the standalone avg-R<0 arm is RETIRED for PBC (avg-R −0.045 on n=43 is breakeven-noise, contradicted by positive PF + net). On a WATCH flag: re-evaluate at the next full-sample A/B; park if avg-R<0 AND PF<1.05 then. |
 | BB Mean Reversion | `CBBMeanReversionEntry` | `InpEnableBBMeanReversion` = false | -1.1R / 10 trades | Never positive in any period |
 | Liquidity Sweep (old) | `CLiquiditySweepEntry` | `InpEnableLiquiditySweep` = false | — | Replaced by `CLiquidityEngine` SFP mode |
 | Support Bounce | `CSupportBounceEntry` | — | — | Pending validation, never enabled |
@@ -112,7 +112,7 @@ Every `Include/EntryPlugins/*.mqh` file and what it implements.
 | `CSessionEngine.mqh` | Multi-mode: Asian Range Build, London Breakout, NY Continuation, Silver Bullet, London Close — most disabled | Engine |
 | `CLiquidityEngine.mqh` | Multi-mode: Displacement, OB Retest, FVG Mitigation, SFP — most disabled | Engine |
 | `CLiquiditySweepEntry.mqh` | Liquidity Sweep (old) — disabled | Disabled |
-| `CPullbackContinuationEngine.mqh` | Pullback Continuation — disabled | Disabled |
+| `CPullbackContinuationEngine.mqh` | Pullback Continuation — **ENABLED & KEPT (Phase 6.9 repaint fix → PF 1.110)** | Active |
 | `CBBMeanReversionEntry.mqh` | BB Mean Reversion — disabled | Disabled |
 | `CSupportBounceEntry.mqh` | Support Bounce — pending, never enabled | Inactive |
 | `CFileEntry.mqh` | CSV-file-driven external signals (not a strategy; signal source) | Signal source |
@@ -361,7 +361,7 @@ Same anti-stall management as S3 (5/8 M15 bars).
 | **Bearish Engulfing** | Mirror of #1, but for shorts (big red candle engulfs prior green). | Lost -35.3R across 660 trades. Gold's long-term uptrend means even "bearish reversal" patterns get steamrolled. The single biggest improvement to the system came from turning this off. |
 | **Bearish MA Cross** | Fast MA crosses below slow MA → sell. | Hardcoded off. Fights gold's secular uptrend. Even when the cross looks "perfect," gold tends to resume up before the trade can profit. |
 | **S6 Short** | Failed-break reversal but going short. | -8.9R over 6 years. Failed breaks to the *downside* on gold are usually just normal pullbacks, not stop hunts. The structural asymmetry only works long. |
-| **Pullback Continuation** | Buy the dip in an uptrend / sell the rally in a downtrend. | -0.5R / 38 trades. Even the multi-cycle re-entry variant failed. Gold's pullbacks don't have a clean enough structure for systematic entry. |
+| **Pullback Continuation** | Buy the dip in an uptrend / sell the rally in a downtrend. | ~~-0.5R / 38 trades~~ **REVIVED in Phase 6.9** — the negative result was a forming-bar ATR repaint manufacturing the loss (stops too tight → premature stop-outs, PF 0.635); the closed-bar ATR fix made it net-positive (PF 1.110 / +$289 / 43 trades). Now ENABLED & KEPT (see the live strategy table). |
 | **BB Mean Reversion** | Buy/sell when price hits Bollinger Band extremes. | -1.1R / 10 trades. Never positive in any test period. Bands on gold expand too aggressively to fade. |
 | **Liquidity Sweep (old)** | Trade the snap-back after a level sweep. | Replaced by the more complete Liquidity Engine (which itself is mostly disabled — SFP mode 0% WR). |
 | **FVG Mitigation** | Trade when price returns to fill a Fair Value Gap (a 3-candle gap pattern). | PF 0.61 — consistent loser. Forensics revealed that on gold H1, FVGs act as *momentum signals* (price keeps going) not *imbalance signals* (price returns to fill). The entire premise was wrong for this market. |
@@ -494,7 +494,7 @@ Aggregated across all strategies, sorted by which tier produces the best risk-ad
 | 💀 2 | S6 Short | -8.9R / 6 years | No structural short edge on gold |
 | 💀 3 | Silver Bullet | -2.1R / 6 years | ICT magic-hours concept has no edge |
 | 4 | BB Mean Reversion | -1.1R / 10 trades | Never positive in any period |
-| 5 | Pullback Continuation | -0.5R / 38 trades | Even multi-cycle variant failed |
+| 5 | Pullback Continuation | ~~-0.5R / 38~~ → **PF 1.110 / +$289 / 43 (Phase 6.9 repaint fix)** | REVIVED — forming-ATR repaint manufactured the loss; closed-bar ATR fixed it. Now enabled & KEPT |
 | 6 | London Close Reversal | 27% WR, -$229 | Pattern exists but not tradeable |
 | 7 | Compression Breakout | PF 0.52, -$240 | Inconsistent across periods |
 | 8 | FVG Mitigation | PF 0.61 | FVGs are momentum signals on gold, not imbalance |

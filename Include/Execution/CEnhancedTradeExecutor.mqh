@@ -90,7 +90,7 @@ private:
    //          compiled OUT by default ⇒ byte-identical.
    bool              m_executing;          // Flag to prevent concurrent execution
    datetime          m_executionStartTime; // Time when execution started
-#endif
+#endif // ULTIMATETRADER_ENABLE_LEGACY_EXECUTE  (Phase 6.9 / 6.5 FU-2: label)
    datetime          m_lastSendTime;       // Fix 6.2: server time captured immediately BEFORE the order send (netting-fallback discriminator)
 
    // Phase 3.2: Execution Realism
@@ -123,7 +123,7 @@ private:
          }
       }
    }
-#endif
+#endif // ULTIMATETRADER_ENABLE_LEGACY_EXECUTE  (Phase 6.9 / 6.5 FU-2: label)
 
    //+------------------------------------------------------------------+
    //| Get and validate market data with comprehensive checks           |
@@ -1979,7 +1979,7 @@ public:
       // Initialize execution flag (Fix 6.5: fenced with the members it inits)
       m_executing = false;
       m_executionStartTime = 0;
-#endif
+#endif // ULTIMATETRADER_ENABLE_LEGACY_EXECUTE  (Phase 6.9 / 6.5 FU-2: label)
       m_lastSendTime = 0;               // Fix 6.2: set per-attempt right before each send
 
       // Phase 3.2: Execution Realism defaults
