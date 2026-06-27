@@ -355,6 +355,7 @@ input group "══════ EXECUTION INTELLIGENCE ══════"
 input bool   InpEnableSessionQualityGate = true;               // Auto-reduce risk in bad sessions
 input double InpExecQualityBlockThresh = 0.25;                 // Block entries below this quality (tightened from 0.3)
 input double InpExecQualityReduceThresh = 0.50;                // Halve risk below this quality
+input double InpMinSessionRiskFactor = 0.25;                   // Floor on COMBINED shock*session-quality risk factor (prevents two reducers driving size to a sliver/zero)
 
 //--- Group 37a: PULLBACK CONTINUATION ENGINE
 input group "══════ PULLBACK CONTINUATION ENGINE ══════"

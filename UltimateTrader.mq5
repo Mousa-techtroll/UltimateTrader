@@ -1445,6 +1445,14 @@ void OnTick()
    //=== NEW BAR PROCESSING ===
    if(isNewBar)
    {
+      // FIX 5.5: Reset the live position-size risk multiplier at the TOP of every
+      // new bar. Previously g_session_quality_factor was only ever reduced (shock
+      // path *=, session-quality path =) and never reset, so a reduction on one bar
+      // LEAKED into later bars and the shock path COMPOUNDED across bars. The two
+      // reducers are now computed SEPARATELY (shock_factor / sq_factor) below and
+      // combined ONCE at the apply site with a floor (InpMinSessionRiskFactor).
+      g_session_quality_factor = 1.0;
+
       //--- 1. Update market state (all Stack17 analysis components)
       g_stateManager.UpdateMarketState();
 
@@ -1727,6 +1735,14 @@ void OnTick()
       //--- 3. Check for new signals (if not halted)
       if(!g_riskMonitor.IsTradingHalted() && g_riskMonitor.CanTrade())
       {
+         // FIX 5.5: Keep the two risk reducers SEPARATE so neither overwrites the
+         // other. They are combined ONCE at the apply site (below). Both default to
+         // 1.0 (no reduction) and are fully recomputed every bar (the per-bar reset
+         // of g_session_quality_factor at the top of isNewBar plus these fresh
+         // locals mean nothing leaks/compounds across bars).
+         double shock_factor = 1.0;   // shock-path reducer, stays in [0.5, 1.0]
+         double sq_factor    = 1.0;   // session-execution-quality reducer, in (0, 1.0]
+
          // v3.2: Shock volatility override — blocks entries during extreme intra-bar spikes
          bool shock_blocked = false;
          if(InpEnableShockDetection && g_tradeExecutor != NULL)
@@ -1740,9 +1756,14 @@ void OnTick()
             }
             else if(shock.is_shock)
             {
-               g_session_quality_factor *= (1.0 - shock.shock_intensity * 0.5);
-               Print("[ShockGate] Moderate shock — risk reduced to ",
-                     DoubleToString(g_session_quality_factor * 100, 0), "%");
+               // FIX 5.5: clamp intensity to [0,1] before use so shock_factor stays
+               // in [0.5, 1.0]; write to the SEPARATE shock_factor (not the shared
+               // g_session_quality_factor) so the session-quality path can't be
+               // overwritten and the reduction can't compound across bars.
+               double shock_intensity = MathMax(0.0, MathMin(1.0, shock.shock_intensity));
+               shock_factor = 1.0 - shock_intensity * 0.5;
+               Print("[ShockGate] Moderate shock — shock_factor=",
+                     DoubleToString(shock_factor * 100, 0), "%");
             }
          }
 
@@ -1758,13 +1779,11 @@ void OnTick()
             else if(session_quality < InpExecQualityReduceThresh)
             {
                Print("[SessionQuality] Quality=", DoubleToString(session_quality, 2), " < ", DoubleToString(InpExecQualityReduceThresh, 2), " — risk will be halved");
-               // Flag for risk reduction (handled in risk strategy)
-               g_session_quality_factor = session_quality;
+               // FIX 5.5: write to the SEPARATE sq_factor (not the shared
+               // g_session_quality_factor); combined with shock_factor at apply.
+               sq_factor = session_quality;
             }
-            else
-            {
-               g_session_quality_factor = 1.0;
-            }
+            // else: sq_factor stays 1.0 (good session — no reduction)
          }
 
          // Phase 3.2: Spread gate - skip signal processing if spread too wide
@@ -1876,14 +1895,24 @@ void OnTick()
                      }
                   }
 
-                  // BUG 2 FIX: Apply session quality factor as risk reduction
-                  if(g_session_quality_factor < 1.0 && g_session_quality_factor > 0 && signal.riskPercent > 0)
+                  // BUG 2 FIX + FIX 5.5: Apply the COMBINED session-quality + shock
+                  // risk reduction. The two reducers are combined here ONCE
+                  // (shock_factor * sq_factor) and floored at InpMinSessionRiskFactor
+                  // so two simultaneous reducers can't drive size to a sliver/zero.
+                  // g_session_quality_factor (reset to 1.0 at the top of this bar)
+                  // holds the combined value purely for telemetry/logging downstream.
+                  double combined_risk_factor = shock_factor * sq_factor;
+                  combined_risk_factor = MathMax(combined_risk_factor, InpMinSessionRiskFactor);
+                  g_session_quality_factor = combined_risk_factor;
+                  if(combined_risk_factor < 1.0 && combined_risk_factor > 0 && signal.riskPercent > 0)
                   {
                      double pre_sq = signal.riskPercent;
-                     signal.riskPercent *= g_session_quality_factor;
+                     signal.riskPercent *= combined_risk_factor;
                      Print("[SessionQuality] Risk: ", DoubleToString(pre_sq, 2),
                            "% -> ", DoubleToString(signal.riskPercent, 2),
-                           "% (quality=", DoubleToString(g_session_quality_factor, 2), ")");
+                           "% (combined=", DoubleToString(combined_risk_factor, 2),
+                           " shock=", DoubleToString(shock_factor, 2),
+                           " sq=", DoubleToString(sq_factor, 2), ")");
                   }
 
                   // Sprint 2: Entry sanity — reject if SL too close to spread
