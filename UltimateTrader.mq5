@@ -2250,7 +2250,20 @@ void OnTick()
             g_riskMonitor.IncrementTradesToday();
             g_riskMonitor.RecordExecutionSuccess();
 
+            // Phase 5.10 deferred-commit: durable MarkExecuted ONLY on a
+            // confirmed fill (ticket>0) so this signal is never re-traded.
+            g_fileEntry.ConfirmExecuted();
+
             Print("[FileSignal] Executed: ticket=", filePos.ticket);
+         }
+         else
+         {
+            // Phase 5.10 deferred-commit: the orchestrator rejected the signal
+            // (slippage/risk/exposure gate, ticket<=0). The durable MarkExecuted
+            // was deferred, so roll back the optimistic flag → the signal can
+            // RETRY on a later in-window tick (the slippage gate self-rejects a
+            // retry that has drifted too far from the original entry).
+            g_fileEntry.RollbackPending();
          }
       }
    }

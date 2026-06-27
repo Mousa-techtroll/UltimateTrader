@@ -71,6 +71,15 @@ private:
    string            m_executedKeys[];
    int               m_executedCount;
 
+   // Phase 5.10 deferred-commit: an emitted signal is OPTIMISTICALLY flagged
+   // (m_trades[i].Executed=true) so the same-tick loop can't re-emit it in a
+   // tight loop, but the DURABLE MarkExecuted (never-retry) is deferred until
+   // the orchestrator confirms a real fill (ticket>0). m_pendingTradeIdx is the
+   // index into m_trades of the in-flight signal (-1 = none); m_pendingTradeKey
+   // is its persistent dedup key (used by ConfirmExecuted; survives a reload).
+   int               m_pendingTradeIdx;
+   string            m_pendingTradeKey;
+
    //--- EET timezone offset: GMT+2 winter, GMT+3 summer (EU DST rules)
    //    Most forex brokers (IC Markets, Vantage, etc.) use this timezone
    //    DST: last Sunday of March → GMT+3, last Sunday of October → GMT+2
@@ -619,6 +628,8 @@ public:
       m_magicCounter = 10000;
       m_atr_handle = INVALID_HANDLE;
       m_executedCount = 0;
+      m_pendingTradeIdx = -1;   // Phase 5.10: no in-flight signal yet
+      m_pendingTradeKey = "";
    }
 
    virtual string GetName() override    { return "FileEntry"; }
@@ -658,6 +669,60 @@ public:
    {
       ArrayFree(m_trades);
       m_isInitialized = false;
+   }
+
+   //+------------------------------------------------------------------+
+   //| Phase 5.10 ConfirmExecuted — durable commit of a CONFIRMED fill   |
+   //| Called by the EA after the orchestrator returns ticket>0. Fires   |
+   //| the permanent MarkExecuted (never-retry) using the dedup key       |
+   //| captured at emit time, then clears the pending slot. Idempotent:   |
+   //| no-op if no pending signal or the key was already committed.       |
+   //+------------------------------------------------------------------+
+   void ConfirmExecuted()
+   {
+      if(m_pendingTradeIdx < 0)
+         return;  // nothing in flight
+
+      if(m_pendingTradeKey != "" && !IsAlreadyExecuted(m_pendingTradeKey))
+         MarkExecuted(m_pendingTradeKey);
+
+      Print("CFileEntry: FILL CONFIRMED | Key=", m_pendingTradeKey,
+            " | committed (never-retry) | Executed: ", m_executedCount, " total");
+
+      m_pendingTradeIdx = -1;
+      m_pendingTradeKey = "";
+   }
+
+   //+------------------------------------------------------------------+
+   //| Phase 5.10 RollbackPending — undo the optimistic flag on a REJECT |
+   //| Called by the EA when the orchestrator rejects (ticket<=0:         |
+   //| slippage/risk/exposure gate). Clears the optimistic Executed flag  |
+   //| on the in-flight array entry so a later in-window tick can RETRY   |
+   //| the signal (the durable MarkExecuted was deferred → NOT consumed). |
+   //| BOUNDS-GUARDED: m_pendingTradeIdx must be a valid index into        |
+   //| m_trades before it is dereferenced (the array can shrink/grow on a  |
+   //| LoadTradesFromFile reload between emit and result).                 |
+   //+------------------------------------------------------------------+
+   void RollbackPending()
+   {
+      if(m_pendingTradeIdx >= 0 && m_pendingTradeIdx < ArraySize(m_trades))
+      {
+         m_trades[m_pendingTradeIdx].Executed = false;  // re-enable retry
+         Print("CFileEntry: REJECT — rolled back pending signal | Key=", m_pendingTradeKey,
+               " | idx=", m_pendingTradeIdx, " | retry enabled (not consumed)");
+      }
+      else if(m_pendingTradeIdx >= 0)
+      {
+         // Pending index stale (e.g. file reloaded + signal vanished) — nothing
+         // to clear on the array; the durable key was never committed so the
+         // signal will retry naturally if it reappears within its window.
+         Print("CFileEntry: REJECT — pending idx ", m_pendingTradeIdx,
+               " out of range (size=", ArraySize(m_trades), "), key=", m_pendingTradeKey,
+               " not committed (retryable)");
+      }
+
+      m_pendingTradeIdx = -1;
+      m_pendingTradeKey = "";
    }
 
    //+------------------------------------------------------------------+
@@ -762,15 +827,24 @@ public:
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
-            // Mark as executed — both on array AND in persistent key set
+            // Phase 5.10 DEFERRED-COMMIT: optimistically flag the array entry so
+            // the same-tick loop can't re-emit this signal in a tight loop, and
+            // record the in-flight signal's index + dedup key. The DURABLE
+            // MarkExecuted (never-retry) is NOT fired here — it is deferred to
+            // ConfirmExecuted() (on a confirmed fill, ticket>0). If the
+            // orchestrator rejects (slippage/risk/exposure gate, ticket<=0) the
+            // EA calls RollbackPending(), which clears this optimistic flag so a
+            // later in-window tick can RETRY the signal (the ExecuteSignal
+            // slippage gate self-rejects retries that drifted too far from entry).
             m_trades[i].Executed = true;
             string exec_key = BuildSignalKey(m_trades[i].Time, m_trades[i].Action, m_trades[i].EntryPrice);
-            MarkExecuted(exec_key);
+            m_pendingTradeIdx = i;
+            m_pendingTradeKey = exec_key;
 
-            Print("CFileEntry: SIGNAL READY | ", signal.symbol, " ", signal.action,
+            Print("CFileEntry: SIGNAL EMITTED (pending) | ", signal.symbol, " ", signal.action,
                   " @ ", signal.entryPrice, " SL=", signal.stopLoss,
                   " TP1=", signal.takeProfit1, " Risk=", signal.riskPercent,
-                  "% | Key=", exec_key, " | Executed: ", m_executedCount, " total");
+                  "% | Key=", exec_key, " | awaiting fill confirmation");
             return signal;
          }
       }
