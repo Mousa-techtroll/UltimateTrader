@@ -106,7 +106,7 @@ public:
             return signal;
          }
 
-         signal.shouldExit = true;
+         signal.shouldExit = signal.valid = true;
          signal.ticket = ticket;
          signal.reason = "MAX AGE: Position #" + IntegerToString(ticket) +
                          " aged " + IntegerToString(age_hours) + "h" +

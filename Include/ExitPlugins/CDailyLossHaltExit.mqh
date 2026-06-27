@@ -179,7 +179,7 @@ public:
       {
          if(PositionSelectByTicket(ticket))
          {
-            signal.shouldExit = true;
+            signal.shouldExit = signal.valid = true;
             signal.ticket = ticket;
             signal.reason = "Daily loss halt active (" + DoubleToString(m_daily_pnl_pct, 2) +
                             "% <= -" + DoubleToString(InpDailyLossLimit, 2) + "%)";
@@ -201,7 +201,7 @@ public:
 
          if(PositionSelectByTicket(ticket))
          {
-            signal.shouldExit = true;
+            signal.shouldExit = signal.valid = true;
             signal.ticket = ticket;
             signal.reason = "DAILY LOSS LIMIT HIT: " + DoubleToString(m_daily_pnl_pct, 2) +
                             "% (limit: -" + DoubleToString(InpDailyLossLimit, 2) + "%)";

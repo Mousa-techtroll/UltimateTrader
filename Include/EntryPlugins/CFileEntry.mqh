@@ -189,7 +189,7 @@ private:
    //| Validate parsed trade data                                        |
    //+------------------------------------------------------------------+
    //--- Helper: get current H1 ATR value
-   //    Uses persistent handle — DO NOT release (shared with other components)
+   //    Lazily created by CFileEntry (NOT shared) — released in Deinitialize().
    int m_atr_handle;
 
    double GetCurrentATR(string symbol)
@@ -667,6 +667,12 @@ public:
    //+------------------------------------------------------------------+
    virtual void Deinitialize() override
    {
+      // Phase 6.4: release the lazily-created ATR handle (owned by CFileEntry, not shared)
+      if(m_atr_handle != INVALID_HANDLE)
+      {
+         IndicatorRelease(m_atr_handle);
+         m_atr_handle = INVALID_HANDLE;
+      }
       ArrayFree(m_trades);
       m_isInitialized = false;
    }

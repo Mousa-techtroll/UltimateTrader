@@ -38,6 +38,8 @@ private:
    string         m_instanceId;           // Unique instance identifier
    int            m_flushInterval;        // How often to flush to disk (entries)
    int            m_entryCount;           // Count of entries since last flush
+   int            m_rotationCheckInterval;// Phase 6.3: throttle size/rotation check (writes)
+   int            m_writesSinceRotation;  // Phase 6.3: file writes since last rotation check
 
    //+------------------------------------------------------------------+
    //| Format log message with optional timestamp and component         |
@@ -326,6 +328,8 @@ public:
       m_initTime = time;
       m_flushInterval = 10; // Flush after every 10 log entries
       m_entryCount = 0;
+      m_rotationCheckInterval = 256; // Phase 6.3: only re-check rotation every 256 file writes
+      m_writesSinceRotation = 0;
    }
    
    //+------------------------------------------------------------------+
@@ -360,7 +364,8 @@ public:
       m_consoleLogLevel = consoleLevel;
       m_fileLogLevel = fileLevel;
       m_includeTimestamps = includeTimestamps;
-      
+      m_writesSinceRotation = 0; // Phase 6.3: reset rotation-check throttle on (re)init
+
       // Open log file for writing only if file logging is enabled
       if(fileLevel != LOG_LEVEL_NONE)
       {
@@ -491,9 +496,17 @@ public:
             }
          }
          
+         // Phase 6.3: throttle the rotation/size check — the close/reopen + size probe
+         // below is expensive and was previously run on EVERY file write. Only perform it
+         // once every m_rotationCheckInterval (256) writes.
+         m_writesSinceRotation++;
+
          // Check if we need to rotate log file
-         if(m_maxFileSize > 0 && m_logFileHandle != INVALID_HANDLE)
+         if(m_maxFileSize > 0 && m_logFileHandle != INVALID_HANDLE &&
+            m_writesSinceRotation >= m_rotationCheckInterval)
          {
+            m_writesSinceRotation = 0;
+
             // Use a safe approach with proper error checking
             bool rotationChecked = false;
             bool rotationNeeded = false;

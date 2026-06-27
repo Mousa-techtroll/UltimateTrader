@@ -135,7 +135,7 @@ public:
          // Still signal close for any remaining positions
          if(PositionSelectByTicket(ticket))
          {
-            signal.shouldExit = true;
+            signal.shouldExit = signal.valid = true;
             signal.ticket = ticket;
             signal.reason = "Weekend close (continuation) - Friday " +
                             IntegerToString(dt.hour) + ":" +
@@ -154,7 +154,7 @@ public:
          double profit = PositionGetDouble(POSITION_PROFIT);
          string profit_str = DoubleToString(profit, 2);
 
-         signal.shouldExit = true;
+         signal.shouldExit = signal.valid = true;
          signal.ticket = ticket;
          signal.reason = "WEEKEND CLOSE: Friday " +
                          IntegerToString(dt.hour) + ":" +

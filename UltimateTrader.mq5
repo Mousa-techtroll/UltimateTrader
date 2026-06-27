@@ -473,6 +473,14 @@ bool ShouldBlockLongExtension(const EntrySignal &signal,
 int OnInit()
 {
    g_isBacktesting = (bool)MQLInfoInteger(MQL_TESTER);
+
+   // Phase 6.3 (Infra-6): initialize the global logger explicitly.
+   //   Backtest -> LOG_LEVEL_NONE file threshold => NO file logging => no per-write
+   //   close/reopen perf cost. Live -> WARNING-and-above to file (WARNING/ERROR/CRITICAL
+   //   emitted; DEBUG/SIGNAL/INFO suppressed). Console stays INFO. Logger is off the
+   //   decision path (no logged value feeds a trade decision).
+   Log.Initialize("", LOG_LEVEL_INFO, g_isBacktesting ? LOG_LEVEL_NONE : LOG_LEVEL_WARNING);
+
    g_lastBarTime = iTime(_Symbol, PERIOD_H1, 1);  // Previous bar so first bar triggers isNewBar
    g_breakoutProbation.Reset();
    ComputePointScale();

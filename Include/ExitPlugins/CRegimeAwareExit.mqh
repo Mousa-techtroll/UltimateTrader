@@ -159,7 +159,7 @@ public:
                // Structure-based: only close if H1 has broken EMA(50) against the trade
                if(IsStructureBroken(pos_type))
                {
-                  signal.shouldExit = true;
+                  signal.shouldExit = signal.valid = true;
                   signal.ticket = ticket;
                   signal.reason = "CHOPPY + structure break (H1 < EMA50) - closing (" + comment + ")";
                   Print("CRegimeAwareExit: ", signal.reason, " #", ticket);
@@ -170,7 +170,7 @@ public:
             else
             {
                // Legacy: immediate close on CHOPPY
-               signal.shouldExit = true;
+               signal.shouldExit = signal.valid = true;
                signal.ticket = ticket;
                signal.reason = "CHOPPY regime - auto close trend position (" + comment + ")";
                Print("CRegimeAwareExit: ", signal.reason, " #", ticket);
@@ -183,7 +183,7 @@ public:
       // (unchanged — macro opposition is fundamental, not classifier noise)
       if(pos_type == POSITION_TYPE_BUY && macro_score <= -InpMacroOppositionThreshold)
       {
-         signal.shouldExit = true;
+         signal.shouldExit = signal.valid = true;
          signal.ticket = ticket;
          signal.reason = "Macro strongly bearish (score=" + IntegerToString(macro_score) +
                          ") - closing long";
@@ -193,7 +193,7 @@ public:
 
       if(pos_type == POSITION_TYPE_SELL && macro_score >= InpMacroOppositionThreshold)
       {
-         signal.shouldExit = true;
+         signal.shouldExit = signal.valid = true;
          signal.ticket = ticket;
          signal.reason = "Macro strongly bullish (score=+" + IntegerToString(macro_score) +
                          ") - closing short";
