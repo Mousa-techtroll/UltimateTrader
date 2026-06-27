@@ -143,10 +143,10 @@ public:
       if(profit_points < m_min_profit_points)
          return update;
 
-      // Get ATR value
+      // Get ATR value (closed bar [1] — avoid forming-bar repaint / backtest-live divergence)
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
-      if(CopyBuffer(m_handle_atr, 0, 0, 1, atr_buf) <= 0)
+      if(CopyBuffer(m_handle_atr, 0, 1, 1, atr_buf) <= 0)
          return update;
 
       double atr = atr_buf[0];

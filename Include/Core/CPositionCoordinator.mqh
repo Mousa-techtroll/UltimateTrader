@@ -2735,12 +2735,73 @@ private:
 
             if(is_better)
             {
-               double normalized_sl = NormalizeDouble(update.newStopLoss,
-                  (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS));
+               int sl_digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
+               double normalized_sl = NormalizeDouble(update.newStopLoss, sl_digits);
+               bool gate_reason_clamp = false;
                double old_sl = pos.stop_loss;
                datetime trail_time = TimeCurrent();
                double current_market_price = GetCurrentMarketPrice(pos);
                bool was_at_breakeven = pos.at_breakeven;
+
+               // M4-FIX (4.9): clamp the trailing SL to the broker STOPS_LEVEL / freeze
+               // distance BEFORE committing. The clamp ONLY ever moves SL AWAY from market
+               // (toward safety) — it can never pull a runner's stop closer to price. If the
+               // clamp would push SL past old_sl (i.e. break the is_better ratchet), skip the
+               // update entirely so the stop is never moved BACKWARD.
+               {
+                  double sl_point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+                  long stops_level = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
+                  long freeze_level = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
+                  double min_dist = (double)MathMax(stops_level, freeze_level) * sl_point;
+                  if(min_dist > 0.0 && sl_point > 0.0)
+                  {
+                     // Position closes at BID (long) / ASK (short): SL must sit at least
+                     // min_dist on the safe side of that price.
+                     double close_px = (pos.direction == SIGNAL_LONG)
+                        ? SymbolInfoDouble(_Symbol, SYMBOL_BID)
+                        : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+                     if(close_px > 0.0)
+                     {
+                        if(pos.direction == SIGNAL_LONG)
+                        {
+                           double max_allowed = NormalizeDouble(close_px - min_dist, sl_digits);
+                           // long SL is below price; too-close means SL is ABOVE max_allowed
+                           // -> push it DOWN (away from market = safer)
+                           if(normalized_sl > max_allowed)
+                           {
+                              normalized_sl = max_allowed;
+                              gate_reason_clamp = true;
+                           }
+                        }
+                        else
+                        {
+                           double min_allowed = NormalizeDouble(close_px + min_dist, sl_digits);
+                           // short SL is above price; too-close means SL is BELOW min_allowed
+                           // -> push it UP (away from market = safer)
+                           if(normalized_sl < min_allowed)
+                           {
+                              normalized_sl = min_allowed;
+                              gate_reason_clamp = true;
+                           }
+                        }
+                     }
+                  }
+               }
+
+               // Re-verify the is_better ratchet AGAINST the clamped value: the clamp may have
+               // pushed SL away from market past old_sl. Never commit a backward move.
+               bool clamped_is_better = (pos.direction == SIGNAL_LONG)
+                  ? (normalized_sl > old_sl)
+                  : (normalized_sl < old_sl || old_sl == 0);
+               if(!clamped_is_better)
+               {
+                  if(gate_reason_clamp)
+                     LogPrint("Trailing SL clamp held ratchet: ticket ", pos.ticket,
+                              " | clamped SL ", DoubleToString(normalized_sl, sl_digits),
+                              " not better than old ", DoubleToString(old_sl, sl_digits),
+                              " -> skip (no backward move)");
+                  continue;
+               }
 
                // Always update internal tracking (drives breakeven logic, logging, persistence)
                pos.stop_loss = normalized_sl;
@@ -2824,6 +2885,10 @@ private:
                // Broker SL modification now flows through a per-trade send policy.
                string gate_reason = "";
                bool should_send = ShouldSendBrokerTrail(pos, normalized_sl, gate_reason);
+               // M4-FIX (4.9): tag a STOPS_LEVEL/freeze clamp distinctly so it is logged + persisted.
+               if(gate_reason_clamp)
+                  gate_reason = (StringLen(gate_reason) > 0)
+                     ? (gate_reason + "+STOPS_LEVEL_CLAMP") : "STOPS_LEVEL_CLAMP";
                bool gate_changed = (pos.last_trail_gate_reason != gate_reason);
                if(gate_changed)
                {
@@ -2865,8 +2930,28 @@ private:
                   else
                   {
                      pos.trailing_broker_failures++;
+                     uint trail_retcode = trail_trade.ResultRetcode();
+                     // M4-FIX (4.9): on an INVALID_STOPS reject the broker keeps the OLD stop,
+                     // so the internal stop_loss (already advanced to normalized_sl) has
+                     // desynced. Revert it to old_sl + set a DISTINCT gate_reason so internal
+                     // tracking matches what the broker actually holds (a runner is never left
+                     // believing it is protected at a level the broker rejected).
+                     if(trail_retcode == TRADE_RETCODE_INVALID_STOPS)
+                     {
+                        pos.stop_loss = old_sl;
+                        pos.last_trailing_to_sl = old_sl;
+                        if(pos.at_breakeven && !was_at_breakeven)
+                        {
+                           pos.at_breakeven = false;
+                           if(pos.breakeven_time == trail_time)
+                              pos.breakeven_time = 0;
+                        }
+                        gate_reason = "INVALID_STOPS_REVERT";
+                        pos.last_trail_gate_reason = gate_reason;
+                     }
                      LogPrint("WARNING: Trailing SL modify FAILED: ticket ", pos.ticket,
                               " | Error: ", trail_trade.ResultComment(),
+                              " | retcode=", trail_retcode,
                               " | gate=", gate_reason);
                      if(m_trade_logger != NULL)
                      {

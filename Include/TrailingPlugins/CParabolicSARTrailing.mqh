@@ -139,10 +139,11 @@ public:
       if(profit_points < m_min_profit_points)
          return update;
 
-      // Get SAR value
+      // Get SAR value (closed bar [1] — avoid forming-bar repaint / backtest-live divergence;
+      // the SAR flip test below therefore evaluates the COMPLETED bar)
       double sar_buf[];
       ArraySetAsSeries(sar_buf, true);
-      if(CopyBuffer(m_handle_sar, 0, 0, 1, sar_buf) <= 0)
+      if(CopyBuffer(m_handle_sar, 0, 1, 1, sar_buf) <= 0)
          return update;
 
       double sar = sar_buf[0];
