@@ -12,6 +12,14 @@
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
 
+//--- Phase 4.3: forward declaration of CRiskMonitor (the SINGLE SOURCE OF TRUTH
+//--- for the daily-loss line). CRiskMonitor.mqh is included AFTER this file in
+//--- UltimateTrader.mq5, so a forward decl avoids a circular include; the inline
+//--- GetDailyPnL() call resolves at compile time (whole EA = one translation unit,
+//--- CRiskMonitor fully defined before the call site is compiled). Mirrors the
+//--- Phase 4.2 CPositionCoordinator forward-decl pattern.
+class CRiskMonitor;
+
 //--- Input parameters - Declared in UltimateTrader_Inputs.mqh
 // input double InpDailyLossLimit = 4.0;           // Declared in UltimateTrader_Inputs.mqh
 input bool   InpEnableDailyLossHalt = true;     // Enable daily loss halt
@@ -24,6 +32,7 @@ class CDailyLossHaltExit : public CExitStrategy
 {
 private:
    IMarketContext   *m_context;
+   CRiskMonitor     *m_risk_monitor;     // Phase 4.3: shared daily-loss source (SetRiskMonitor)
 
    // Daily P&L tracking
    double            m_daily_pnl_pct;
@@ -73,10 +82,20 @@ private:
          Print("CDailyLossHaltExit: New day - halt reset");
       }
 
-      // Calculate daily P&L percentage
+      // Phase 4.3: read the daily-loss line from CRiskMonitor (the SINGLE SOURCE
+      // OF TRUTH). CRiskMonitor anchors the baseline to start-of-day EQUITY and
+      // owns the day-reset; this consumer no longer computes its own (disagreeing)
+      // baseline. Fallback to the legacy self-computed line only if no monitor is
+      // wired (standalone plugin use) so the plugin is never broken.
+      if(m_risk_monitor != NULL)
+      {
+         m_daily_pnl_pct = m_risk_monitor.GetDailyPnL();
+         return;
+      }
+
+      // Fallback (no monitor wired): legacy equity-change-from-start-of-day-balance.
       // ACCOUNT_PROFIT already includes both realized today and floating P&L,
       // so summing realized_pnl + ACCOUNT_PROFIT would double-count realized.
-      // Use equity change from start-of-day balance instead:
       double current_equity = AccountInfoDouble(ACCOUNT_EQUITY);
       double realized_pnl = GetDailyRealizedPnL();
       double current_balance = AccountInfoDouble(ACCOUNT_BALANCE);
@@ -95,6 +114,7 @@ public:
    CDailyLossHaltExit(IMarketContext *context = NULL)
    {
       m_context = context;
+      m_risk_monitor = NULL;          // Phase 4.3: wired via SetRiskMonitor after both objects exist
       m_daily_pnl_pct = 0;
       m_halt_triggered = false;
       m_last_reset_day = 0;
@@ -112,6 +132,12 @@ public:
    //| Set market context                                                |
    //+------------------------------------------------------------------+
    void SetContext(IMarketContext *context) { m_context = context; }
+
+   //+------------------------------------------------------------------+
+   //| Phase 4.3: Inject CRiskMonitor as the shared daily-loss source.  |
+   //| Wired in UltimateTrader.mq5 AFTER both objects are constructed.  |
+   //+------------------------------------------------------------------+
+   void SetRiskMonitor(CRiskMonitor *monitor) { m_risk_monitor = monitor; }
 
    //+------------------------------------------------------------------+
    //| Initialize                                                        |

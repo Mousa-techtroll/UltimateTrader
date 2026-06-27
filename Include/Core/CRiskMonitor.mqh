@@ -24,7 +24,10 @@ private:
    int               m_max_trades_per_day;
 
    // Daily P&L tracking
-   double            m_daily_start_balance;
+   // Phase 4.3: anchored to start-of-day EQUITY (not balance) so this is the
+   // SINGLE SOURCE OF TRUTH for the daily-loss line. CDailyLossHaltExit reads
+   // GetDailyPnL() instead of computing a second (disagreeing) baseline.
+   double            m_daily_start_balance;     // start-of-day EQUITY snapshot (name kept for ABI/getter compat)
    datetime          m_last_day_reset;
    double            m_daily_loss_halt_pct;    // Max daily loss before halt (e.g., 3.0 = 3%)
    bool              m_trading_halted;
@@ -72,7 +75,7 @@ public:
    {
       m_trades_today = 0;
       m_last_trade_date = 0;
-      m_daily_start_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      m_daily_start_balance = AccountInfoDouble(ACCOUNT_EQUITY);  // Phase 4.3: start-of-day EQUITY baseline
       m_last_day_reset = TimeCurrent();
       m_trading_halted = false;
 
@@ -87,6 +90,9 @@ public:
 
    //+------------------------------------------------------------------+
    //| Get daily P&L as percentage                                       |
+   //| Phase 4.3: SINGLE SOURCE OF TRUTH for the daily-loss line.        |
+   //| current equity vs start-of-day EQUITY baseline (m_daily_start_    |
+   //| balance now holds the start-of-day equity snapshot).              |
    //+------------------------------------------------------------------+
    double GetDailyPnL()
    {
@@ -238,12 +244,12 @@ private:
       {
          // New day: reset all daily counters
          m_trades_today = 0;
-         m_daily_start_balance = AccountInfoDouble(ACCOUNT_BALANCE);
+         m_daily_start_balance = AccountInfoDouble(ACCOUNT_EQUITY);  // Phase 4.3: start-of-day EQUITY baseline
          m_last_day_reset = TimeCurrent();
          m_trading_halted = false;
          m_error_halted = false;
 
-         LogPrint("CRiskMonitor: New day reset | Balance: $",
+         LogPrint("CRiskMonitor: New day reset | Start equity: $",
                   DoubleToString(m_daily_start_balance, 2));
       }
    }

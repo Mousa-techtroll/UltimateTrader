@@ -993,6 +993,12 @@ int OnInit()
    );
    g_riskMonitor.Init();
 
+   // Phase 4.3: unify the daily-loss line — CDailyLossHaltExit reads CRiskMonitor's
+   // GetDailyPnL() (single source of truth, start-of-day EQUITY baseline) instead of
+   // computing its own (disagreeing) baseline. Wired here, after both objects exist.
+   if(g_dailyLossExit != NULL)
+      g_dailyLossExit.SetRiskMonitor(g_riskMonitor);
+
    // Regime risk scaler (analyst recommendation: scale risk by market state)
    g_regimeScaler = new CRegimeRiskScaler();
    g_regimeScaler.Enable(InpEnableRegimeRisk);
