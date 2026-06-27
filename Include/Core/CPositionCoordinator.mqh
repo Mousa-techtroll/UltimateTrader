@@ -295,8 +295,15 @@ private:
       double lots = (pos.original_lots > 0) ? pos.original_lots : ((pos.lot_size > 0) ? pos.lot_size : pos.remaining_lots);
       double reference_sl = (pos.original_sl > 0) ? pos.original_sl : pos.stop_loss;
       double risk_dist = MathAbs(pos.entry_price - reference_sl);
-      double tick_value = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
-      double tick_size = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+      // Derive the position's OWN symbol (multi-symbol file positions) — fall back to _Symbol.
+      string risk_symbol = _Symbol;
+      if(PositionSelectByTicket(pos.ticket))
+      {
+         string ps = PositionGetString(POSITION_SYMBOL);
+         if(ps != "") risk_symbol = ps;
+      }
+      double tick_value = SymbolInfoDouble(risk_symbol, SYMBOL_TRADE_TICK_VALUE);
+      double tick_size = SymbolInfoDouble(risk_symbol, SYMBOL_TRADE_TICK_SIZE);
 
       if(lots <= 0 || risk_dist <= 0 || tick_value <= 0 || tick_size <= 0)
          return 0;
@@ -317,16 +324,20 @@ private:
 
    double GetCurrentMarketPrice(const SPosition &pos)
    {
+      // Derive the position's OWN symbol (multi-symbol file positions) — fall back to _Symbol.
+      string price_symbol = _Symbol;
       if(PositionSelectByTicket(pos.ticket))
       {
+         string ps = PositionGetString(POSITION_SYMBOL);
+         if(ps != "") price_symbol = ps;
          double current = PositionGetDouble(POSITION_PRICE_CURRENT);
          if(current > 0.0)
             return current;
       }
 
       if(pos.direction == SIGNAL_LONG)
-         return SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      return SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+         return SymbolInfoDouble(price_symbol, SYMBOL_BID);
+      return SymbolInfoDouble(price_symbol, SYMBOL_ASK);
    }
 
    double CalculateLockedR(const SPosition &pos, double stop_loss)
@@ -1825,11 +1836,11 @@ public:
                else if(InpFileTrailAfterTP2)
                {
                   double atr_val = 0;
-                  int atr_h = iATR(_Symbol, PERIOD_H1, 14);
+                  int atr_h = iATR(pos_symbol, PERIOD_H1, 14);
                   if(atr_h != INVALID_HANDLE)
                   {
                      double buf[];
-                     if(CopyBuffer(atr_h, 0, 0, 1, buf) > 0) atr_val = buf[0];
+                     if(CopyBuffer(atr_h, 0, 1, 1, buf) > 0) atr_val = buf[0];  // closed bar [1]
                   }
 
                   if(atr_val > 0)
@@ -1838,15 +1849,15 @@ public:
                      double new_sl = 0;
                      if(m_positions[i].direction == SIGNAL_LONG)
                      {
-                        int hb = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, 5, 0);
+                        int hb = iHighest(pos_symbol, PERIOD_H1, MODE_HIGH, 5, 1);  // closed bars
                         if(hb >= 0)
-                           new_sl = iHigh(_Symbol, PERIOD_H1, hb) - trail_dist;
+                           new_sl = iHigh(pos_symbol, PERIOD_H1, hb) - trail_dist;
                      }
                      else
                      {
-                        int lb = iLowest(_Symbol, PERIOD_H1, MODE_LOW, 5, 0);
+                        int lb = iLowest(pos_symbol, PERIOD_H1, MODE_LOW, 5, 1);  // closed bars
                         if(lb >= 0)
-                           new_sl = iLow(_Symbol, PERIOD_H1, lb) + trail_dist;
+                           new_sl = iLow(pos_symbol, PERIOD_H1, lb) + trail_dist;
                      }
 
                      // Only tighten, never loosen
@@ -1890,11 +1901,11 @@ public:
                if(trail_eligible)
                {
                   double atr_val = 0;
-                  int atr_h = iATR(_Symbol, PERIOD_H1, 14);
+                  int atr_h = iATR(pos_symbol, PERIOD_H1, 14);
                   if(atr_h != INVALID_HANDLE)
                   {
                      double buf[];
-                     if(CopyBuffer(atr_h, 0, 0, 1, buf) > 0) atr_val = buf[0];
+                     if(CopyBuffer(atr_h, 0, 1, 1, buf) > 0) atr_val = buf[0];  // closed bar [1]
                   }
                   if(atr_val > 0)
                   {
@@ -1902,13 +1913,13 @@ public:
                      double new_sl = 0;
                      if(m_positions[i].direction == SIGNAL_LONG)
                      {
-                        int hb = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, 5, 0);
-                        if(hb >= 0) new_sl = iHigh(_Symbol, PERIOD_H1, hb) - trail_dist;
+                        int hb = iHighest(pos_symbol, PERIOD_H1, MODE_HIGH, 5, 1);  // closed bars
+                        if(hb >= 0) new_sl = iHigh(pos_symbol, PERIOD_H1, hb) - trail_dist;
                      }
                      else
                      {
-                        int lb = iLowest(_Symbol, PERIOD_H1, MODE_LOW, 5, 0);
-                        if(lb >= 0) new_sl = iLow(_Symbol, PERIOD_H1, lb) + trail_dist;
+                        int lb = iLowest(pos_symbol, PERIOD_H1, MODE_LOW, 5, 1);  // closed bars
+                        if(lb >= 0) new_sl = iLow(pos_symbol, PERIOD_H1, lb) + trail_dist;
                      }
                      if(new_sl > 0)
                      {
