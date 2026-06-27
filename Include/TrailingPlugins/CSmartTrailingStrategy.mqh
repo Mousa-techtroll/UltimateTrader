@@ -2,6 +2,14 @@
 //| CSmartTrailingStrategy.mqh                                      |
 //| Trailing plugin: Smart trailing with adaptive confirmation      |
 //| Adapted from AICoder V1 CSmartTrailingStrategy                  |
+//|                                                                 |
+//| DEPRECATED / INACTIVE — not in the live build (Fix 6.5).        |
+//| This file is not #included by UltimateTrader.mq5 or any live    |
+//| header; the EA's live trailing is handled by CPositionCoordinator|
+//| + the registered TrailingPlugins. Latent bugs repaired below    |
+//| (hardcoded FOK -> symbol-derived filling; magic 0 -> EA magic)  |
+//| so the class is CORRECT if ever re-enabled, but it is NOT wired  |
+//| anywhere. Do NOT re-activate without an A/B + stok sign-off.     |
 //+------------------------------------------------------------------+
 #property copyright "UltimateTrader"
 #property version   "1.00"
@@ -268,9 +276,13 @@ public:
       if(m_isInitialized)
          return true;
 
-      m_trade.SetExpertMagicNumber(0);
+      // Fix 6.5 (latent-only — class is DEAD/INACTIVE): use the EA magic param
+      // (InpMagicNumber, in scope after UltimateTrader_Inputs.mqh) not 0, and
+      // derive the filling mode from SYMBOL_FILLING_MODE instead of hardcoding
+      // FOK (a symbol that only supports IOC/RETURN would reject every FOK send).
+      m_trade.SetExpertMagicNumber(InpMagicNumber);
       m_trade.SetMarginMode();
-      m_trade.SetTypeFilling(ORDER_FILLING_FOK);
+      m_trade.SetTypeFillingBySymbol(m_symbolName);
       m_trade.SetDeviationInPoints(10);
 
       m_isInitialized = true;

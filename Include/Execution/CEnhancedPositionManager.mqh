@@ -1,6 +1,16 @@
 //+------------------------------------------------------------------+
 //|                                 EnhancedPositionManager.mqh |
 //|  Robust position management with error recovery             |
+//|                                                             |
+//|  DEPRECATED / INACTIVE — not in the live build (Fix 6.5).   |
+//|  Only #included by the equally-dead CComponentManager (which|
+//|  is itself never #included by UltimateTrader.mq5 or any live|
+//|  header). The EA's live position management is              |
+//|  CPositionCoordinator. Latent Sleep sites guarded below     |
+//|  (!MQLInfoInteger(MQL_TESTER)) so it is CORRECT if ever      |
+//|  re-enabled, but it is NOT wired anywhere. Do NOT            |
+//|  re-activate the health/concurrency stack into the trade    |
+//|  gate without an A/B + stok sign-off.                       |
 //+------------------------------------------------------------------+
 #property copyright "Enhanced EA Team"
 #property version   "1.2"
@@ -382,7 +392,7 @@ private:
          if(!m_concurrencyManager.TryLock(lockName))
          {
             // P2-07: Single retry with 10ms backoff before giving up
-            Sleep(10);
+            if(!MQLInfoInteger(MQL_TESTER)) Sleep(10);  // Fix 6.5: no Sleep in the tester (latent-only — class DEAD)
             if(!m_concurrencyManager.TryLock(lockName))
             {
                // Direct logging
@@ -884,7 +894,7 @@ private:
                            ErrorResult result = m_errorHandler.HandleError(error, "PartialCloseAtTP", "Ticket: " + IntegerToString(ticket));
                         }
 
-                        Sleep(100 * (attempt + 1)); // Progressive backoff
+                        if(!MQLInfoInteger(MQL_TESTER)) Sleep(100 * (attempt + 1)); // Progressive backoff (Fix 6.5: no Sleep in tester — class DEAD)
                      }
                   }
 
@@ -1349,7 +1359,7 @@ public:
          if(!canProcess)
          {
             // P2-07: Single retry with 10ms backoff before giving up
-            Sleep(10);
+            if(!MQLInfoInteger(MQL_TESTER)) Sleep(10);  // Fix 6.5: no Sleep in the tester (latent-only — class DEAD)
             canProcess = m_concurrencyManager.TryLock("PositionManagement");
          }
          if(canProcess)
@@ -1756,7 +1766,7 @@ public:
          if(!m_concurrencyManager.TryLock("CloseAllPositions"))
          {
             // P2-07: Single retry with 10ms backoff before proceeding without lock
-            Sleep(10);
+            if(!MQLInfoInteger(MQL_TESTER)) Sleep(10);  // Fix 6.5: no Sleep in the tester (latent-only — class DEAD)
             if(!m_concurrencyManager.TryLock("CloseAllPositions"))
             {
                // Direct logging
@@ -1937,7 +1947,7 @@ public:
 
                   // Use standardized retry delay calculation
                   int delay = ErrorHandlingUtils.CalculateRetryDelay(100, attempt);
-                  Sleep(delay);
+                  if(!MQLInfoInteger(MQL_TESTER)) Sleep(delay);  // Fix 6.5: no Sleep in the tester (latent-only — class DEAD)
                }
             }
 

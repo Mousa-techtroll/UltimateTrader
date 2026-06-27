@@ -33,7 +33,7 @@ For the NEXT ACTION phase:
      done
      iconv -f UTF-16LE -t UTF-8 mq5-build.log | grep -E "^Result:|: error|: warning"
      ```
-   - **Pass = 0 errors AND 0 NEW warnings** (baseline is 38 pre-existing warnings; quote any delta). MQL **error 106 = include not found** — fix the relative include path / missing `#include`. If errors, fix and re-compile; stay `IMPL-DONE` until clean. Record the verbatim `Result:` line in the phase log.
+   - **Pass = 0 errors AND 0 NEW warnings** (baseline is **16** pre-existing warnings as of Phase 6.5 — was 38 through 6.4; Phase 6.5 removed 2 dead health-stack includes that were emitting 22 type-conversion warnings, so the gate is now 0-err / no-new-above-16; quote any delta). MQL **error 106 = include not found** — fix the relative include path / missing `#include`. If errors, fix and re-compile; stay `IMPL-DONE` until clean. Record the verbatim `Result:` line in the phase log.
    - Negative control is already proven live this project (a `#error` yields a non-zero count and deletes the `.ex5`); re-run it only if you suspect a stale gate.
 3b. **BIND the binary to the load path (MANDATORY — prevents stale-binary runs).** *(Added after the Phase-5.6 incident: a 7-commit-stale `9dbe9052` binary was silently tested because the fresh repo-path compile never reached the data-dir load path and no md5 assertion gated the run; see `progress/REBASELINE-5-6.md`.)* The compiler writes `C:\Trading\UltimateTrader\UltimateTrader.ex5` (repo); the tester loads `Expert=` from the data-dir `…\Terminal\725B72F25E46C780EF59F57016D58156\MQL5\Experts\`. These are DIFFERENT files — reconcile by md5 EVERY run or a stale data-dir copy is silently tested.
    ```

@@ -82,8 +82,15 @@ private:
    bool              m_useAdaptiveParams;  // Use adaptive parameters based on market
    int               m_maxRetries;         // Maximum retry attempts
    int               m_retryDelay;         // Delay between retries (ms)
+#ifdef ULTIMATETRADER_ENABLE_LEGACY_EXECUTE
+   // Fix 6.5: fenced — only the DEAD ExecuteTrade(TradeData&) path uses these
+   //          (concurrent-execution guard). The live path goes through
+   //          ExecuteTradeWithRetries()/ExecuteSignal(), which never touch them.
+   //          ULTIMATETRADER_ENABLE_LEGACY_EXECUTE is not defined anywhere ⇒
+   //          compiled OUT by default ⇒ byte-identical.
    bool              m_executing;          // Flag to prevent concurrent execution
    datetime          m_executionStartTime; // Time when execution started
+#endif
    datetime          m_lastSendTime;       // Fix 6.2: server time captured immediately BEFORE the order send (netting-fallback discriminator)
 
    // Phase 3.2: Execution Realism
@@ -91,8 +98,11 @@ private:
    double            m_max_slippage_points;   // max acceptable slippage
    ExecutionMetrics  m_exec_metrics;          // broker reality tracking
 
+#ifdef ULTIMATETRADER_ENABLE_LEGACY_EXECUTE
    //+------------------------------------------------------------------+
    //| Check and reset execution flag if necessary                      |
+   //| Fix 6.5: fenced — only reachable from the DEAD ExecuteTrade()    |
+   //| (reads the fenced m_executing/m_executionStartTime members).     |
    //+------------------------------------------------------------------+
    void CheckExecutionFlag()
    {
@@ -113,6 +123,7 @@ private:
          }
       }
    }
+#endif
 
    //+------------------------------------------------------------------+
    //| Get and validate market data with comprehensive checks           |
@@ -1964,9 +1975,11 @@ public:
       m_maxRetries = 3;                 // Default retries
       m_retryDelay = 100;               // Default delay
 
-      // Initialize execution flag
+#ifdef ULTIMATETRADER_ENABLE_LEGACY_EXECUTE
+      // Initialize execution flag (Fix 6.5: fenced with the members it inits)
       m_executing = false;
       m_executionStartTime = 0;
+#endif
       m_lastSendTime = 0;               // Fix 6.2: set per-attempt right before each send
 
       // Phase 3.2: Execution Realism defaults
@@ -2241,8 +2254,18 @@ public:
    //+------------------------------------------------------------------+
    ExecutionMetrics GetExecutionMetrics() const { return m_exec_metrics; }
 
+#ifdef ULTIMATETRADER_ENABLE_LEGACY_EXECUTE
    //+------------------------------------------------------------------+
    //| Execute trade with retry logic and fallbacks                     |
+   //|                                                                  |
+   //| DEPRECATED / INACTIVE — not in the live build (Fix 6.5).         |
+   //| The TradeData-based entry point is an orphan: nothing calls      |
+   //| ExecuteTrade(TradeData&). The live path is                       |
+   //| CTradeOrchestrator::ExecuteSignal() -> ExecuteTradeWithRetries(),|
+   //| which does NOT touch m_executing/m_executionStartTime. Fenced    |
+   //| under ULTIMATETRADER_ENABLE_LEGACY_EXECUTE (undefined ⇒ compiled |
+   //| out ⇒ byte-identical). Do NOT re-activate without re-verifying   |
+   //| the concurrent-execution guard and the retcode classifier.       |
    //+------------------------------------------------------------------+
    bool ExecuteTrade(TradeData &data)
    {
@@ -2502,4 +2525,5 @@ public:
          return false;
       }
    }
+#endif // ULTIMATETRADER_ENABLE_LEGACY_EXECUTE
 };

@@ -26,8 +26,12 @@
 // Infrastructure (from AICoder V1)
 #include "Include/Infrastructure/Logger.mqh"
 #include "Include/Infrastructure/CErrorHandler.mqh"
-#include "Include/Infrastructure/HealthMonitor.mqh"
-#include "Include/Infrastructure/CHealthBasedRiskAdjuster.mqh"
+// Fix 6.5: removed two transitively-dead includes (HealthMonitor.mqh +
+// CHealthBasedRiskAdjuster.mqh) — their only consumers (CComponentManager /
+// IComponentManager) are themselves never included anywhere live, and no live
+// symbol uses CHealthMonitor/CHealthBasedRiskAdjuster. The live ENUM_HEALTH_STATUS
+// lives in Include/Common/Enums.mqh (unaffected). Do NOT re-activate the health
+// stack into the trade gate (latent Infra-2..5 bugs could silently scale/halt trading).
 
 // Market Analysis (Stack17 components wrapped in CMarketContext)
 #include "Include/MarketAnalysis/IMarketContext.mqh"
