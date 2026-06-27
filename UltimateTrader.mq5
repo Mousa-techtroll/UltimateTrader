@@ -2145,11 +2145,17 @@ void OnTick()
       }
    }
 
-   //=== FILE SIGNAL CHECK (every tick — position limit + daily halt enforced) ===
+   //=== FILE SIGNAL CHECK (every tick — position limit + daily halt + trade-count enforced) ===
+   // Phase 4.5: add g_riskMonitor.CanTrade() so file signals respect the SHARED daily
+   // trade-count budget (InpMaxTradesPerDay) — previously the file path bypassed it, so
+   // in BOTH mode with defaults file trades were unlimited per day. CanTrade() also
+   // re-checks the OR'd halt flags (4.4). Orphan-adoption below is NOT gated (re-tracking
+   // an existing broker fill is not a new entry).
    if((InpSignalSource == SIGNAL_SOURCE_BOTH || InpSignalSource == SIGNAL_SOURCE_FILE) &&
       g_fileEntry != NULL &&
       g_posCoordinator.GetPositionCount() < InpMaxPositions &&
-      !g_riskMonitor.IsTradingHalted())
+      !g_riskMonitor.IsTradingHalted() &&
+      g_riskMonitor.CanTrade())
    {
       EntrySignal fileSignal = g_fileEntry.CheckForEntrySignal();
       if(fileSignal.valid)

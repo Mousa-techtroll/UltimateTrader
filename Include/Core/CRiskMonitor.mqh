@@ -30,7 +30,12 @@ private:
    double            m_daily_start_balance;     // start-of-day EQUITY snapshot (name kept for ABI/getter compat)
    datetime          m_last_day_reset;
    double            m_daily_loss_halt_pct;    // Max daily loss before halt (e.g., 3.0 = 3%)
-   bool              m_trading_halted;
+   // Phase 4.4: split the formerly-shared halt flag into two INDEPENDENT backstops.
+   // m_loss_halted = daily-loss halt (resets ONLY on a new day).
+   // m_error_halted (below) = consecutive-error halt (cleared by error-recovery).
+   // A post-error SUCCESS must NOT lift a daily-loss halt. IsTradingHalted()/CanTrade()
+   // return the OR of both. (No external readers of the old member — grep-verified.)
+   bool              m_loss_halted;
 
    // Notification settings
    bool              m_enable_alerts;
@@ -60,7 +65,7 @@ public:
       m_last_trade_date = 0;
       m_daily_start_balance = 0;
       m_last_day_reset = 0;
-      m_trading_halted = false;
+      m_loss_halted = false;
 
       // Phase 3.3: Initialize consecutive error tracking
       m_consecutive_errors = 0;
@@ -77,7 +82,7 @@ public:
       m_last_trade_date = 0;
       m_daily_start_balance = AccountInfoDouble(ACCOUNT_EQUITY);  // Phase 4.3: start-of-day EQUITY baseline
       m_last_day_reset = TimeCurrent();
-      m_trading_halted = false;
+      m_loss_halted = false;
 
       LogPrint("CRiskMonitor: Initialized | Max trades/day: ", m_max_trades_per_day,
                " | Daily loss halt: ", DoubleToString(m_daily_loss_halt_pct, 2), "%");
@@ -108,7 +113,7 @@ public:
    //+------------------------------------------------------------------+
    //| Check if trading is halted                                        |
    //+------------------------------------------------------------------+
-   bool IsTradingHalted() { return m_trading_halted; }
+   bool IsTradingHalted() { return m_loss_halted || m_error_halted; }  // Phase 4.4: OR of the two independent halts
 
    //+------------------------------------------------------------------+
    //| Increment daily trade counter                                     |
@@ -128,10 +133,14 @@ public:
    {
       CheckDayReset();
 
-      // Check if halted due to daily loss
-      if(m_trading_halted)
+      // Phase 4.4: halted if EITHER the daily-loss backstop OR the consecutive-error
+      // backstop is active (the two are now independent flags).
+      if(m_loss_halted || m_error_halted)
       {
-         LogPrint("REJECTED: Trading halted due to daily loss limit");
+         LogPrint("REJECTED: Trading halted (",
+                  (m_loss_halted ? "daily-loss" : ""),
+                  (m_loss_halted && m_error_halted ? "+" : ""),
+                  (m_error_halted ? "consecutive-error" : ""), ")");
          return false;
       }
 
@@ -156,14 +165,14 @@ public:
    {
       CheckDayReset();
 
-      if(m_trading_halted)
-         return;  // Already halted
+      if(m_loss_halted)
+         return;  // Phase 4.4: daily-loss halt already active for today
 
       double daily_pnl = GetDailyPnL();
 
       if(m_daily_loss_halt_pct > 0 && daily_pnl <= -m_daily_loss_halt_pct)
       {
-         m_trading_halted = true;
+         m_loss_halted = true;  // Phase 4.4: set the DAILY-LOSS backstop (resets only on a new day)
 
          LogPrint("========================================");
          LogPrint("DAILY LOSS LIMIT HIT: ", FormatPercent(daily_pnl));
@@ -197,8 +206,7 @@ public:
       m_consecutive_errors++;
       if(m_consecutive_errors >= m_max_consecutive_errors)
       {
-         m_error_halted = true;
-         m_trading_halted = true;
+         m_error_halted = true;  // Phase 4.4: sets ONLY the error backstop (OR'd into CanTrade/IsTradingHalted)
          LogPrint("CRITICAL: ", m_consecutive_errors, " consecutive errors — TRADING HALTED");
       }
    }
@@ -211,8 +219,10 @@ public:
       m_consecutive_errors = 0;
       if(m_error_halted)
       {
+         // Phase 4.4: error-recovery clears ONLY the error backstop. A daily-LOSS
+         // halt (m_loss_halted) is NOT lifted by a post-error success — it persists
+         // until the new-day reset. This strictly tightens the daily-loss backstop.
          m_error_halted = false;
-         m_trading_halted = false;
          LogPrint("CRiskMonitor: Error halt CLEARED after successful execution");
       }
    }
@@ -246,7 +256,7 @@ private:
          m_trades_today = 0;
          m_daily_start_balance = AccountInfoDouble(ACCOUNT_EQUITY);  // Phase 4.3: start-of-day EQUITY baseline
          m_last_day_reset = TimeCurrent();
-         m_trading_halted = false;
+         m_loss_halted = false;   // Phase 4.4: daily-loss halt clears ONLY on a new day
          m_error_halted = false;
 
          LogPrint("CRiskMonitor: New day reset | Start equity: $",
