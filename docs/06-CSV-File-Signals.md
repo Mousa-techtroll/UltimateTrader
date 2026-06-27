@@ -180,8 +180,19 @@ File signal check runs on **every tick** (not gated behind isNewBar):
 if((InpSignalSource == BOTH || FILE) && g_fileEntry != NULL && positions < MaxPositions)
 ```
 
-**Bypassed:** Daily trade limit, daily loss halt.
-**Applied:** Position limit (InpMaxPositions = 5, shared with pattern signals).
+The full guard (UltimateTrader.mq5) is:
+
+```
+if((InpSignalSource == BOTH || FILE) && g_fileEntry != NULL &&
+   positions < InpMaxPositions &&
+   !g_riskMonitor.IsTradingHalted() &&   // daily LOSS halt (-3%) + error halt
+   g_riskMonitor.CanTrade())             // daily TRADE-COUNT limit (Phase 4.5)
+```
+
+**Applied to file signals:**
+- Position limit (`InpMaxPositions = 5`, shared with pattern signals).
+- Daily **loss** halt (-3% equity) — `IsTradingHalted()`; also re-checked inside `CanTrade()`.
+- Daily **trade-count** limit (`InpMaxTradesPerDay = 5`, shared budget) — `CanTrade()`, added in **Phase 4.5** (previously the file path bypassed it).
 
 ### Risk: Fixed or CSV-Provided
 
@@ -322,12 +333,23 @@ File positions skip ALL internal EA systems:
 
 | Limit | Why |
 |-------|-----|
-| Daily trade limit (5/day) | Not checked for file signals |
-| Daily loss halt (-3%) | Not checked for file signals |
 | R:R minimum (1.3x) | Explicitly bypassed for SIGNAL_SOURCE_FILE |
 | Quality-tier risk | Overridden by InpFileSignalRiskPct |
 | Confirmation candle | Default: skip (InpFileSignalSkipConfirmation=true) |
 | Regime filter | Default: skip (InpFileSignalSkipRegime=true) |
+
+### Enforced Limits (NOT bypassed)
+
+| Limit | How |
+|-------|-----|
+| Position limit (5 concurrent) | `GetPositionCount() < InpMaxPositions` |
+| Daily loss halt (-3%) | `IsTradingHalted()` + re-checked in `CanTrade()` — **enforced** |
+| Daily trade-count limit (5/day) | `CanTrade()` (`InpMaxTradesPerDay`, shared budget) — **enforced since Phase 4.5** |
+
+> Earlier revisions of this doc listed the daily loss halt and daily trade-count
+> limit as "not checked" for file signals. Both are now enforced: the loss halt was
+> always in the guard via `IsTradingHalted()`, and Phase 4.5 added `CanTrade()` so the
+> file path shares the daily trade-count budget with pattern signals.
 
 ---
 
@@ -357,10 +379,25 @@ File positions skip ALL internal EA systems:
 File entry disabled. Only EA pattern plugins generate signals. CFileEntry not initialized.
 
 ### SIGNAL_SOURCE_FILE
-File signals go through the orchestrator (registered as entry plugin). Subject to orchestrator ranking -- can be outranked by pattern signals on the same bar.
+Only file signals fire; EA pattern plugins are not registered. File signals run on
+their **own independent every-tick execution path** -- they are **NOT** registered
+with the orchestrator and are **NOT** ranked against anything (there are no pattern
+signals competing). `CFileEntry` is created and `Initialize()`d directly in `OnInit`
+(it bypasses orchestrator validation), exactly as in BOTH mode.
 
 ### SIGNAL_SOURCE_BOTH (Default)
-File signals run **independently** on every tick (not through orchestrator). Pattern signals run on H1 bar close. Both can execute on the same bar. File signals are NOT registered with the orchestrator -- they have their own execution path.
+File signals run **independently** on every tick (never through the orchestrator).
+Pattern signals run on H1 bar close through the orchestrator. Both can execute on the
+same bar. File signals are **NOT** registered with the orchestrator and are **NOT**
+orchestrator-ranked -- they have their own execution path and cannot be outranked by
+pattern signals (the two paths are independent; only the shared position limit and
+daily trade-count/loss-halt budget couple them).
+
+> Earlier revisions of this doc claimed file signals are "registered as an entry
+> plugin" and "subject to orchestrator ranking" under SIGNAL_SOURCE_FILE. That is
+> incorrect: file signals are **never** registered with the orchestrator in any mode
+> (see UltimateTrader.mq5: "File signals ALWAYS run independently (never through
+> orchestrator)").
 
 ---
 

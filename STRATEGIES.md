@@ -37,6 +37,35 @@ Performance data from v18 production backtest (2019–2026). Strategies 6–14 a
 | B | 7 (unreachable, same as A) | 0.6% | — | — | — |
 | NONE | < 6 | rejected | — | — | — |
 
+> The `Risk %` column is the **tier base** (`InpRiskAPlusSetup` etc.), not the
+> realized per-trade risk. The base is then scaled by regime / pattern / session
+> multipliers and clamped to a hard cap — see the effective-risk band below.
+
+### Effective Realized Risk Band (A+ — base vs. actual)
+
+The 1.5% A+ figure above is the **base** risk. In a favorable (TRENDING) setup the
+base stacks several multipliers and is clamped at the `InpMaxRiskPerTrade` hard cap,
+so the **realized** per-trade A+ risk is **2.0%**, not 1.5%:
+
+| Stage | Factor | Running risk % | Source |
+|---|---|---|---|
+| Base (A+) | 1.50% | 1.50% | `InpRiskAPlusSetup` |
+| × Pattern (MA cross) | ×1.15 | 1.73% | `GetRiskForQuality` (CTradeOrchestrator) |
+| × Regime (TRENDING) | ×1.25 | 2.16% | `InpRegimeRiskTrending` |
+| × A+ trend boost | ×1.08 | 2.33% | `InpEnableQualityTrendBoost` (UltimateTrader.mq5) — **default OFF** |
+| **Hard cap** | **clamp** | **2.00%** | `InpMaxRiskPerTrade = 2.0` (CTradeOrchestrator cap site) |
+
+Note: `InpEnableQualityTrendBoost` is **OFF by default** ("$0 net across 4 years tested"), so in the production config the ×1.08 row does not apply — the clean-A+ TRENDING stack is `1.5 × 1.15 × 1.25 = 2.16%`, which **still clamps to the 2.0% cap**. So the realized A+ risk is 2.0% with or without the trend-boost toggle.
+
+So the **true realized A+ per-trade risk is 2.0% (cap-bound), not 1.5%.** Session
+scalers (London 0.5×, NY 0.9×) and the EC v3 controller can pull realized risk back
+*below* the cap on a given trade, but on a clean A+ TRENDING setup the cap binds.
+The multipliers are **not** lowered to "fix" this — the documented edge was earned
+at this capped sizing; lowering them would invalidate the backtest. Aggregate risk
+across concurrent positions is separately bounded by the **5% portfolio ceiling**
+(`InpMaxTotalExposure`); see the per-trade-2.0% vs. portfolio-5.0% distinction in
+`docs/03-Risk-Model.md`.
+
 ---
 
 ## Disabled Strategies
@@ -452,6 +481,8 @@ Aggregated across all strategies, sorted by which tier produces the best risk-ad
 | — | B | 0 | — | — | 0.6% | Threshold set unreachable on purpose |
 
 **Takeaway:** The tier system works as designed. A+ trades earn ~4× the expectancy of B+ trades. The B threshold is deliberately set equal to A so B-tier trades never fire (they're too low conviction).
+
+> **Risk-% note:** the `Risk %` column is the **tier base**, not the realized per-trade risk. On a clean A+ TRENDING setup the base 1.5% stacks pattern/regime/trend-boost multipliers to ~2.33% and is clamped to the **2.0% hard cap** (`InpMaxRiskPerTrade`) — so realized A+ risk is **2.0%, not 1.5%**. See "Effective Realized Risk Band (A+)" above and `docs/03-Risk-Model.md`.
 
 ---
 

@@ -422,7 +422,16 @@ public:
                   "% (x", DoubleToString(InpShortRiskMultiplier, 2), ")");
       }
 
-      // Hard cap: separate caps for file signals vs pattern signals
+      // Hard cap: separate caps for file signals vs pattern signals.
+      // Fix 6.7 (doc-honesty): realized A+ risk routinely HITS this 2.0% cap, it is
+      // NOT the 1.5% tier base. Effective band on an A+ TRENDING setup stacks
+      // base 1.5% (InpRiskAPlusSetup) x pattern 1.15 (MA, GetRiskForQuality)
+      // x regime 1.25 (InpRegimeRiskTrending) x A+ trend-boost 1.08
+      // = 2.33% pre-cap -> clamped here to InpMaxRiskPerTrade=2.0%. So the TRUE
+      // realized per-trade A+ risk is 2.0% (cap-bound), not 1.5%. Do NOT lower the
+      // multipliers to "fix" this — the edge was earned at this capped sizing.
+      // (Aggregate across concurrent positions is separately bounded by the 5%
+      // portfolio ceiling InpMaxTotalExposure — see Fix 4.2.)
       double cap = (signal.source == SIGNAL_SOURCE_FILE) ? InpFileMaxRiskPerTrade : InpMaxRiskPerTrade;
       if(signal.riskPercent > cap)
       {

@@ -23,6 +23,39 @@ section below.
 
 ---
 
+## Effective Realized Risk (Base vs. Cap)
+
+The tier base in Step 1 is **not** the risk that actually hits the market. The base
+is scaled by the regime / pattern / trend-boost multipliers in Steps 2-4 and then
+clamped at the Step-5 hard cap. On a clean A+ TRENDING setup the multipliers stack
+past the cap, so the **realized** per-trade A+ risk is the **2.0% cap, not 1.5%**:
+
+| Stage | Factor | Running % | Source |
+|---|---|---|---|
+| Base (A+ tier) | 1.50% | 1.50% | `InpRiskAPlusSetup` |
+| × Pattern (MA cross) | ×1.15 | 1.73% | `GetRiskForQuality` |
+| × Regime (TRENDING) | ×1.25 | 2.16% | `InpRegimeRiskTrending` |
+| × A+ trend boost | ×1.08 | 2.33% | `InpEnableQualityTrendBoost` — **default OFF** |
+| **Hard cap** | **clamp** | **2.00%** | `InpMaxRiskPerTrade = 2.0` |
+
+`InpEnableQualityTrendBoost` is **OFF by default** ("$0 net across 4 years tested"),
+so in the production config the ×1.08 row does not apply; the clean-A+ TRENDING stack
+is `1.5 × 1.15 × 1.25 = 2.16%`, which still clamps to the 2.0% cap. Realized A+ risk
+is 2.0% with or without the trend-boost toggle.
+
+Session scalers (London 0.5×, NY 0.9×) and EC v3 can pull realized risk back below
+the cap on a given trade, but on a clean A+ TRENDING setup the cap binds. The
+multipliers are deliberately **not** lowered — the production edge was earned at
+this capped sizing.
+
+> **Per-trade cap (2.0%) vs. portfolio cap (5.0%):** the 2.0% `InpMaxRiskPerTrade`
+> bounds the risk of a **single** trade. A separate **5% portfolio-exposure ceiling**
+> (`InpMaxTotalExposure`, Fix 4.2) bounds the **summed open stop-distance risk**
+> across all concurrent positions (equity-denominated). Two distinct caps: one
+> per-trade, one aggregate.
+
+---
+
 ## Quality-Tiered Base Risk
 
 | Quality Tier | Base Risk | Input Parameter |
