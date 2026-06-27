@@ -84,6 +84,7 @@ private:
    int               m_retryDelay;         // Delay between retries (ms)
    bool              m_executing;          // Flag to prevent concurrent execution
    datetime          m_executionStartTime; // Time when execution started
+   datetime          m_lastSendTime;       // Fix 6.2: server time captured immediately BEFORE the order send (netting-fallback discriminator)
 
    // Phase 3.2: Execution Realism
    double            m_max_spread_points;     // reject if spread > X
@@ -1355,6 +1356,11 @@ public:
          Log.Signal("EXECUTION ATTEMPT #" + IntegerToString(attempt + 1) + "/" +
                    IntegerToString(m_maxRetries) + ": " + symbol + " " + action);
 
+         // Fix 6.2: stamp the server time IMMEDIATELY before the send so the
+         // netting-mode position-binding fallback can tell a freshly-opened
+         // position (POSITION_TIME >= this) from a stale pre-existing one.
+         m_lastSendTime = TimeCurrent();
+
          // Execute the trade
          bool success = ExecuteTradeAttempt(symbol, action, lotSize, price, stopLoss, takeProfit, comment);
 
@@ -1565,8 +1571,9 @@ private:
       if(!ValidateExecutedVolume(result.executedLots, lotSize, validationErrors))
          resultValid = false;
 
-      // Validate position exists
-      if(!ValidatePositionExists(symbol, magicNumber, result.resultTicket, validationErrors))
+      // Validate position exists (lotSize passed for the Fix 6.2 netting-fallback
+      // volume-within-step discriminator)
+      if(!ValidatePositionExists(symbol, magicNumber, lotSize, result.resultTicket, validationErrors))
          resultValid = false;
 
       // Handle validation results
@@ -1640,29 +1647,95 @@ private:
    //+------------------------------------------------------------------+
    //| Validate position exists                                         |
    //+------------------------------------------------------------------+
-   bool ValidatePositionExists(string symbol, int magicNumber, ulong &ticket, string &validationErrors)
+   bool ValidatePositionExists(string symbol, int magicNumber, double expectedLots,
+                               ulong &ticket, string &validationErrors)
    {
       // Try to select position by ticket
       if(PositionSelectByTicket(ticket))
          return true;
 
-      // Fall back to trying by symbol and magic
-      for(int i = 0; i < PositionsTotal(); i++)
+      // Fix 6.2 (Infra-2): the direct ResultOrder/ResultDeal binding above did not
+      // yield a live ticket, so fall back to a symbol+magic position lookup. On a
+      // NETTING account (ACCOUNT_MARGIN_MODE_RETAIL_NETTING) same-symbol positions
+      // merge into ONE ticket, so a naive first-match can bind a PRE-EXISTING
+      // position that was open before we sent — adopting the wrong fill. Discriminate
+      // the netting fallback: only adopt a candidate that (a) opened at/after our send
+      // (POSITION_TIME >= m_lastSendTime) AND (b) carries roughly the volume we
+      // requested (within one SYMBOL_VOLUME_STEP); on ties pick the LATEST
+      // (max POSITION_TIME); otherwise FALL THROUGH to the history-deal check rather
+      // than binding a stale position. The HEDGING path keeps the original behaviour.
+      bool isNetting = ((ENUM_ACCOUNT_MARGIN_MODE)AccountInfoInteger(ACCOUNT_MARGIN_MODE)
+                        == ACCOUNT_MARGIN_MODE_RETAIL_NETTING);
+
+      if(isNetting)
       {
-         ulong posTicket = PositionGetTicket(i);
-         if(posTicket > 0 && PositionSelectByTicket(posTicket))
+         double volStep = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+         double volTol  = (volStep > 0.0) ? volStep : 0.0000001; // guard zero/unset step
+         ulong    bestTicket = 0;
+         datetime bestTime   = 0;
+
+         for(int i = 0; i < PositionsTotal(); i++)
          {
-            if(PositionGetString(POSITION_SYMBOL) == symbol &&
-               PositionGetInteger(POSITION_MAGIC) == magicNumber)
+            ulong posTicket = PositionGetTicket(i);
+            if(posTicket > 0 && PositionSelectByTicket(posTicket))
             {
-               // Update ticket info if it was wrong
-               if(posTicket != ticket)
+               if(PositionGetString(POSITION_SYMBOL) == symbol &&
+                  PositionGetInteger(POSITION_MAGIC) == magicNumber)
                {
-                  Log.Warning("Trade result had incorrect ticket, updating: " +
-                                IntegerToString(ticket) + " -> " + IntegerToString(posTicket));
-                  ticket = posTicket;
+                  datetime posTime = (datetime)PositionGetInteger(POSITION_TIME);
+                  double   posVol  = PositionGetDouble(POSITION_VOLUME);
+
+                  // (a) opened at/after our send  AND  (b) volume within one step
+                  if(posTime >= m_lastSendTime &&
+                     MathAbs(posVol - expectedLots) <= volTol)
+                  {
+                     // (c) tie-break: keep the LATEST qualifying position
+                     if(posTime >= bestTime)
+                     {
+                        bestTime   = posTime;
+                        bestTicket = posTicket;
+                     }
+                  }
                }
-               return true;
+            }
+         }
+
+         if(bestTicket > 0)
+         {
+            // Re-select the chosen ticket (the loop left some other position selected)
+            PositionSelectByTicket(bestTicket);
+            if(bestTicket != ticket)
+            {
+               Log.Warning("Trade result had incorrect ticket (netting fallback), updating: " +
+                             IntegerToString(ticket) + " -> " + IntegerToString(bestTicket));
+               ticket = bestTicket;
+            }
+            return true;
+         }
+
+         // No fresh, correctly-sized position to adopt — do NOT bind a stale
+         // pre-existing netting position; fall through to the history-deal check.
+      }
+      else
+      {
+         // HEDGING (or non-netting): original first symbol+magic match.
+         for(int i = 0; i < PositionsTotal(); i++)
+         {
+            ulong posTicket = PositionGetTicket(i);
+            if(posTicket > 0 && PositionSelectByTicket(posTicket))
+            {
+               if(PositionGetString(POSITION_SYMBOL) == symbol &&
+                  PositionGetInteger(POSITION_MAGIC) == magicNumber)
+               {
+                  // Update ticket info if it was wrong
+                  if(posTicket != ticket)
+                  {
+                     Log.Warning("Trade result had incorrect ticket, updating: " +
+                                   IntegerToString(ticket) + " -> " + IntegerToString(posTicket));
+                     ticket = posTicket;
+                  }
+                  return true;
+               }
             }
          }
       }
@@ -1894,6 +1967,7 @@ public:
       // Initialize execution flag
       m_executing = false;
       m_executionStartTime = 0;
+      m_lastSendTime = 0;               // Fix 6.2: set per-attempt right before each send
 
       // Phase 3.2: Execution Realism defaults
       m_max_spread_points = 0;       // 0 = disabled
