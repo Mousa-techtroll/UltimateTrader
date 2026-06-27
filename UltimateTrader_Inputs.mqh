@@ -47,7 +47,13 @@ input double InpRiskASetup = 1.0;            // Risk % for A setups — EC filte
 input double InpRiskBPlusSetup = 0.75;       // Risk % for B+ setups — EC filter compensated
 input double InpRiskBSetup = 0.6;            // Risk % for B setups — EC filter compensated
 input double InpMaxRiskPerTrade = 2.0;       // Hard cap % per trade (catches regime+ATR stacking outliers)
-input double InpMaxTotalExposure = 5.0;      // Max total portfolio exposure %
+input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe backstop, NOT a DD lever.
+                                             // OPT-2 (2026-06-27, Model=4 real ticks, FIT 2019-2022) tested 4.0/3.5/3.0:
+                                             // cap binds monotonically (0/10/16/19 events) but Eq-DD barely responds
+                                             // (max -0.95pp @ 3.0, below the 1.0pp adoption bar); cost floors all held.
+                                             // Frozen-entry-risk aggregate over-counts safe trailed runners, so the cap
+                                             // trims marginal stacked adds, not the real single-position tail DD.
+                                             // 5.0 retained as the stack ceiling. See OPT-2-exposure-sweep.md.
 input double InpDailyLossLimit = 3.0;        // Daily loss limit % (halt trading)
 input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier
 input int    InpMaxPositions = 5;            // Max concurrent positions
