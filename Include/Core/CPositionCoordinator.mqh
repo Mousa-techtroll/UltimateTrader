@@ -2793,8 +2793,12 @@ private:
       pos.last_live_chandelier_mult = live_chand_mult;
       pos.last_effective_chandelier_mult = effective_chand_mult;
 
-      // Confirmed wider trailing A/B tested (1.2x): -$1,127 profit, DD +1.18%.
-      // Chandelier settings are optimal for ALL positions. Wider trail lets reversals eat more.
+      // OPT-1 (2026-06-27, Model=4 real ticks, full 2019-2026H1): a 1.2x-wider regime trail
+      // (Group-44 InpRegExit*Chand x1.2) measured Net +51% ($13,267->$20,069), PF 1.24->1.29,
+      // avg-R 0.131->0.169, FIT +29.6% & CONFIRM +42% OOS -- NOT the old -$1,127 (that was a
+      // dead Model-1 look-ahead figure). ADOPTED as the new defaults (4.2/3.6/3.0/3.6) per
+      // stok's binding ruling relaxing the strict 13.3% Eq-DD cap to ~14.0% (C1 Eq-DD 13.97%;
+      // Balance-DD improved 12.26->11.92%). See OPT-1-trail-sweep.md.
       for(int t = 0; t < m_trailing_count; t++)
       {
          CChandelierTrailing *chandelier = dynamic_cast<CChandelierTrailing*>(m_trailing_plugins[t]);

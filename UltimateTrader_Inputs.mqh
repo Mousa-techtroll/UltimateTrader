@@ -382,7 +382,7 @@ input group "══════ REGIME EXIT PROFILES ══════"
 input bool   InpEnableRegimeExit = true;                // Phase 3: dynamic trailing only (BE/TP fixed, trailing adapts to live regime)
 // TRENDING: let winners run — wider trailing, later BE, smaller TP0
 input double InpRegExitTrendBE = 1.2;                   // TRENDING: BE trigger (R)
-input double InpRegExitTrendChand = 3.5;                // TRENDING: Chandelier multiplier
+input double InpRegExitTrendChand = 4.2;                // TRENDING: Chandelier multiplier
 input double InpRegExitTrendTP0Dist = 0.7;              // TRENDING: TP0 distance (R)
 input double InpRegExitTrendTP0Vol = 10.0;              // TRENDING: TP0 volume %
 input double InpRegExitTrendTP1Dist = 1.5;              // TRENDING: TP1 distance (R)
@@ -391,7 +391,7 @@ input double InpRegExitTrendTP2Dist = 2.2;              // TRENDING: TP2 distanc
 input double InpRegExitTrendTP2Vol = 25.0;              // TRENDING: TP2 volume %
 // NORMAL: standard behavior
 input double InpRegExitNormalBE = 1.0;                  // NORMAL: BE trigger (R)
-input double InpRegExitNormalChand = 3.0;               // NORMAL: Chandelier multiplier
+input double InpRegExitNormalChand = 3.6;               // NORMAL: Chandelier multiplier
 input double InpRegExitNormalTP0Dist = 0.7;             // NORMAL: TP0 distance (R)
 input double InpRegExitNormalTP0Vol = 15.0;             // NORMAL: TP0 volume %
 input double InpRegExitNormalTP1Dist = 1.3;             // NORMAL: TP1 distance (R)
@@ -400,7 +400,7 @@ input double InpRegExitNormalTP2Dist = 1.8;             // NORMAL: TP2 distance 
 input double InpRegExitNormalTP2Vol = 30.0;             // NORMAL: TP2 volume %
 // CHOPPY: take profit fast, protect capital (NOT too aggressive)
 input double InpRegExitChoppyBE = 0.7;                  // CHOPPY: BE trigger (R)
-input double InpRegExitChoppyChand = 2.5;               // CHOPPY: Chandelier multiplier
+input double InpRegExitChoppyChand = 3.0;               // CHOPPY: Chandelier multiplier
 input double InpRegExitChoppyTP0Dist = 0.5;             // CHOPPY: TP0 distance (R)
 input double InpRegExitChoppyTP0Vol = 20.0;             // CHOPPY: TP0 volume %
 input double InpRegExitChoppyTP1Dist = 1.0;             // CHOPPY: TP1 distance (R)
@@ -409,7 +409,7 @@ input double InpRegExitChoppyTP2Dist = 1.4;             // CHOPPY: TP2 distance 
 input double InpRegExitChoppyTP2Vol = 35.0;             // CHOPPY: TP2 volume %
 // VOLATILE: moderate protection
 input double InpRegExitVolBE = 0.8;                     // VOLATILE: BE trigger (R)
-input double InpRegExitVolChand = 3.0;                  // VOLATILE: Chandelier multiplier
+input double InpRegExitVolChand = 3.6;                  // VOLATILE: Chandelier multiplier
 input double InpRegExitVolTP0Dist = 0.6;                // VOLATILE: TP0 distance (R)
 input double InpRegExitVolTP0Vol = 20.0;                // VOLATILE: TP0 volume %
 input double InpRegExitVolTP1Dist = 1.3;                // VOLATILE: TP1 distance (R)
