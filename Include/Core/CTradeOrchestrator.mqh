@@ -696,7 +696,13 @@ public:
          position.ticket = exec_result.resultTicket;
          position.direction = sig_type;
          position.pattern_type = signal.patternType;
-         position.lot_size = lot_size;
+         // Fix 4.7: seed lot_size from the ACTUAL filled volume, not the requested
+         // lot. Downstream (EA + AddPosition) seeds original_lots/remaining_lots from
+         // position.lot_size, so a partial fill must propagate here or R-milestones
+         // and partial-TP volumes over-state the position. Guard executedLots>0
+         // (ValidateExecutedVolume already rejected <=0); fall back to requested.
+         double filled_lots = (exec_result.executedLots > 0.0) ? exec_result.executedLots : lot_size;
+         position.lot_size = filled_lots;
          position.entry_price = entry_price;
          position.requested_entry_price = entry_price;
          position.executed_entry_price = (exec_result.executedPrice > 0.0) ? exec_result.executedPrice : entry_price;
@@ -715,6 +721,11 @@ public:
          position.entry_balance = AccountInfoDouble(ACCOUNT_BALANCE);
          position.entry_equity = AccountInfoDouble(ACCOUNT_EQUITY);
          position.entry_risk_amount = position.entry_balance * position.initial_risk_pct / 100.0;
+         // Fix 4.7: scale recorded entry risk to the ACTUAL filled fraction so
+         // CalculatePositionRiskDollars (returns entry_risk_amount directly) does not
+         // over-state realized R on a partial fill. Full fill => factor 1.0 (no-op).
+         if(lot_size > 0.0 && filled_lots != lot_size)
+            position.entry_risk_amount *= (filled_lots / lot_size);
 
          double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
          if(point > 0.0)

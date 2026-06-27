@@ -1615,12 +1615,23 @@ private:
    //+------------------------------------------------------------------+
    bool ValidateExecutedVolume(double executedLots, double expectedLots, string &validationErrors)
    {
-      if(executedLots <= 0 || MathAbs(executedLots - expectedLots) > 0.001) // 0.001 lot difference
+      // Fix 4.7: a PARTIAL fill is a REAL open position, not a failure.
+      // Fail ONLY when nothing filled (executedLots <= 0). On a short fill
+      // (0 < executedLots < expectedLots) accept the trade — the caller
+      // propagates exec_result.executedLots into position.lot_size so
+      // original/remaining lots + entry_risk reflect the ACTUAL filled volume.
+      if(executedLots <= 0)
       {
-         validationErrors += "Volume mismatch (" + DoubleToString(executedLots, 2) +
+         validationErrors += "Zero volume executed (" + DoubleToString(executedLots, 2) +
                            " vs expected " + DoubleToString(expectedLots, 2) + "); ";
          return false;
       }
+
+      if(MathAbs(executedLots - expectedLots) > 0.001) // partial fill — accept, log it
+         Log.Warning("Partial fill accepted: executed " + DoubleToString(executedLots, 2) +
+                     " vs requested " + DoubleToString(expectedLots, 2) +
+                     " lots (position lot_size set to actual filled volume)");
+
       return true;
    }
 
