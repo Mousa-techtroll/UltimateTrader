@@ -20,8 +20,18 @@
 // input double InpMaxRiskPerTrade = 3.0;           // Declared in UltimateTrader_Inputs.mqh
 // input double InpLossLevel1Reduction = 0.75;     // Declared in UltimateTrader_Inputs.mqh
 // input double InpLossLevel2Reduction = 0.50;     // Declared in UltimateTrader_Inputs.mqh
-input int    InpLossLevel1Threshold = 2;         // Consecutive losses for level 1 reduction
-input int    InpLossLevel2Threshold = 4;         // Consecutive losses for level 2 reduction
+input int    InpLossLevel1Threshold = 2;         // 2 — OPT-3 (2026-06-27, Model=4 real ticks) tested 3/5 & 3/6 on
+input int    InpLossLevel2Threshold = 4;         // 4 — FIT: both reproduced 2/4 to the cent. The scaler fires 0x at
+                                                 // EVERY threshold (close-time counter update vs sizing-time read +
+                                                 // up to 5 overlapping positions + full-reset-on-win => counter ~always
+                                                 // 0/1 at sizing). Threshold is a confirmed NO-OP lever; the only live
+                                                 // lever is reset/increment timing. The scaler is effectively DORMANT
+                                                 // by design here and that is ACCEPTABLE — per-tier sizing, the 5%
+                                                 // exposure cap, the daily-loss halt, and EC v3 cover the loss-streak
+                                                 // case. DO NOT "re-animate" the reset/increment timing to force it to
+                                                 // fire: this one-sided book-shrinker would de-risk into the dips a
+                                                 // long-biased gold strategy is built to buy. Re-open only on a real
+                                                 // OOS drawdown symptom. 2/4 retained. See OPT-3-lossscaler-sweep.md.
 // input double InpShortRiskMultiplier = 0.5;       // Declared in UltimateTrader_Inputs.mqh
 // input double InpMaxLotMultiplier = 3.0;          // Declared in UltimateTrader_Inputs.mqh
 
