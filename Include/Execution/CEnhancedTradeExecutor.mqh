@@ -2075,21 +2075,48 @@ public:
    }
 
    //+------------------------------------------------------------------+
+   //| Closed-bar ATR (handle-free TR average) — OPT-SHOCK fix          |
+   //| Mirrors CMarketContext::GetATRVelocity idiom: read TR directly   |
+   //| from closed bars (i>=1) so we never create/release a shared iATR |
+   //| handle (shared handles are reference-counted; releasing here     |
+   //| would corrupt other components' ATR access).                     |
+   //+------------------------------------------------------------------+
+   double GetClosedATR(ENUM_TIMEFRAMES tf, int period = 14)
+   {
+      if(period < 1) return 0.0;
+      double sum_tr = 0.0;
+      for(int i = 1; i <= period; i++)
+      {
+         double h      = iHigh(_Symbol, tf, i);
+         double l      = iLow(_Symbol, tf, i);
+         double c_prev = iClose(_Symbol, tf, i + 1);
+         sum_tr += MathMax(h - l, MathMax(MathAbs(h - c_prev), MathAbs(l - c_prev)));
+      }
+      return sum_tr / period;
+   }
+
+   //+------------------------------------------------------------------+
    //| Detect shock volatility conditions (v3.2)                        |
    //| Uses intra-bar data to catch spikes that H1 ATR misses          |
+   //| OPT-SHOCK (Arm A): read the CLOSED bar [1] (the new-bar caller   |
+   //| fires at bar-open when [0] range==0) and divide BOTH legs by a   |
+   //| closed H1 ATR(14) (was the mislabeled H4 regime ATR param).      |
    //+------------------------------------------------------------------+
    ShockState DetectShock(double atr_h1, double shock_bar_thresh = 2.0)
    {
       ShockState state;
       state.Init();
 
-      if(atr_h1 <= 0) return state;
+      // OPT-SHOCK: denominator is now a closed H1 ATR(14), computed handle-free.
+      // (atr_h1 param retained for call-site compatibility but no longer the divisor.)
+      double h1_atr = GetClosedATR(PERIOD_H1, 14);
+      if(h1_atr <= 0) return state;
 
-      // Check 1: Current H1 bar range vs ATR
-      double bar_high = iHigh(_Symbol, PERIOD_H1, 0);
-      double bar_low  = iLow(_Symbol, PERIOD_H1, 0);
+      // Check 1: Last CLOSED H1 bar range vs closed H1 ATR
+      double bar_high = iHigh(_Symbol, PERIOD_H1, 1);
+      double bar_low  = iLow(_Symbol, PERIOD_H1, 1);
       double bar_range = bar_high - bar_low;
-      state.bar_range_ratio = bar_range / atr_h1;
+      state.bar_range_ratio = bar_range / h1_atr;
 
       // Check 2: Spread spike vs recent baseline
       double current_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);  // points (Fix 4.6: was *_Point=price; samples[] are points → ratio dimension match)
@@ -2106,16 +2133,21 @@ public:
             state.spread_ratio = current_spread / recent_avg;
       }
 
-      // Check 3: M5 range relative to H1 ATR (fast detection)
-      double m5_high = iHigh(_Symbol, PERIOD_M5, 0);
-      double m5_low  = iLow(_Symbol, PERIOD_M5, 0);
+      // Check 3: Last CLOSED M5 bar range relative to closed H1 ATR (fast detection).
+      // OPT-SHOCK §1c: intentional M5-range / H1-ATR cross-TF ratio — preserves the
+      // 0.5/0.8 thresholds' "fraction of the hourly range" meaning (NOT an M5 ATR).
+      double m5_high = iHigh(_Symbol, PERIOD_M5, 1);
+      double m5_low  = iLow(_Symbol, PERIOD_M5, 1);
       double m5_range = m5_high - m5_low;
-      state.m5_range_ratio = m5_range / atr_h1;
+      state.m5_range_ratio = m5_range / h1_atr;
 
       // Classify shock level
-      if(state.bar_range_ratio > shock_bar_thresh * 1.5 ||
-         state.spread_ratio > 3.0 ||
-         state.m5_range_ratio > 0.8)
+      // OPT-SHOCK Arm B (EXTREME-demotion §2c): ONLY the SPREAD leg's EXTREME crossing
+      // hard-blocks (direction-agnostic illiquidity earns the block). Range/M5 EXTREME
+      // crossings (bar>3.0 OR m5>0.8) are DEMOTED to the MODERATE down-size arm at full
+      // intensity (shock_intensity→1.0 → shock_factor 0.5, 50% risk cut) so a direction-
+      // blind range spike never fully amputates a long-biased continuation entry.
+      if(state.spread_ratio > 3.0)
       {
          state.is_extreme = true;
          state.is_shock = true;
@@ -2125,6 +2157,9 @@ public:
               state.spread_ratio > 2.0 ||
               state.m5_range_ratio > 0.5)
       {
+         // Range/M5 (and moderate spread) down-size. A range/M5 EXTREME crossing
+         // (bar>3.0 or m5>0.8) drives this formula to 1.0 → shock_factor=0.5 (hardest
+         // allowed down-size), but never sets is_extreme → never a hard block.
          state.is_shock = true;
          state.shock_intensity = MathMin(1.0,
             MathMax(state.bar_range_ratio / (shock_bar_thresh * 1.5),
