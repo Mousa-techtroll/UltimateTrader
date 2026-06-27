@@ -93,7 +93,6 @@
 #include "Include/Core/CPositionCoordinator.mqh"
 #include "Include/Core/CRiskMonitor.mqh"
 #include "Include/Core/CAdaptiveTPManager.mqh"
-#include "Include/Core/CSignalManager.mqh"
 #include "Include/Core/CRegimeRiskScaler.mqh"
 #include "Include/Core/CEquityCurveRiskController.mqh"
 
@@ -340,7 +339,6 @@ CTradeOrchestrator     *g_tradeOrchestrator  = NULL;
 CPositionCoordinator   *g_posCoordinator     = NULL;
 CRiskMonitor           *g_riskMonitor        = NULL;
 CAdaptiveTPManager     *g_adaptiveTP         = NULL;
-CSignalManager         *g_signalManager      = NULL;
 CRegimeRiskScaler      *g_regimeScaler       = NULL;
 
 // Execution
@@ -351,9 +349,6 @@ CEnhancedTradeExecutor *g_tradeExecutor      = NULL;
 // Display & Logging
 CDisplay               *g_display            = NULL;
 CTradeLogger           *g_tradeLogger        = NULL;
-
-// Phase 3.3: Consecutive error tracking
-int                     g_consecutiveErrors  = 0;
 
 // Phase 3: Session execution quality factor
 double g_session_quality_factor = 1.0;
@@ -881,8 +876,6 @@ int OnInit()
    );
    g_adaptiveTP.Init();
 
-   g_signalManager = new CSignalManager(InpConfirmationStrictness, InpTP1Distance, InpTP2Distance);
-
    // Phase 1.2: Trade Logger with proper log level
    g_tradeLogger = new CTradeLogger(InpEnableLogging ? LOG_LEVEL_SIGNAL : LOG_LEVEL_WARNING);
    g_tradeLogger.Init();
@@ -1274,7 +1267,6 @@ void OnDeinit(const int reason)
    if(g_riskMonitor != NULL)        { delete g_riskMonitor; g_riskMonitor = NULL; }
    if(g_regimeScaler != NULL)       { delete g_regimeScaler; g_regimeScaler = NULL; }
    if(g_adaptiveTP != NULL)         { delete g_adaptiveTP; g_adaptiveTP = NULL; }
-   if(g_signalManager != NULL)      { delete g_signalManager; g_signalManager = NULL; }
 
    //--- Layer 7: Execution
    if(g_tradeExecutor != NULL) { delete g_tradeExecutor; g_tradeExecutor = NULL; }
