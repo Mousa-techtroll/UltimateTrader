@@ -1318,11 +1318,15 @@ public:
          // Check if this position still exists at broker
          if(PositionSelectByTicket(ticket))
          {
-            // Verify magic number matches
-            if(PositionGetInteger(POSITION_MAGIC) != m_magic_number)
+            // Verify magic number AND symbol match (mirror OnTick adoption guard
+            // at UltimateTrader.mq5: POSITION_MAGIC==InpMagicNumber && POSITION_SYMBOL==_Symbol).
+            // Single-symbol-per-chart guard: never adopt a foreign-symbol position
+            // and manage it with this chart's (gold's) tick math.
+            if(PositionGetInteger(POSITION_MAGIC) != m_magic_number ||
+               PositionGetString(POSITION_SYMBOL) != _Symbol)
             {
                LogPrint("ReconcileWithBroker: Ticket ", ticket,
-                        " exists but magic mismatch - skipping");
+                        " exists but magic/symbol mismatch - skipping");
                skipped++;
                continue;
             }
@@ -1413,7 +1417,11 @@ public:
       {
          ulong ticket = PositionGetTicket(i);
 
-         if(PositionGetInteger(POSITION_MAGIC) == m_magic_number)
+         // Adopt only same-magic AND same-symbol positions (mirror OnTick adoption guard
+         // at UltimateTrader.mq5: POSITION_MAGIC==InpMagicNumber && POSITION_SYMBOL==_Symbol).
+         // Single-symbol-per-chart guard: never manage a foreign-symbol position with gold's tick math.
+         if(PositionGetInteger(POSITION_MAGIC) == m_magic_number &&
+            PositionGetString(POSITION_SYMBOL) == _Symbol)
          {
             SPosition position;
             ZeroMemory(position);
@@ -1487,7 +1495,11 @@ public:
       for(int i = 0; i < total; i++)
       {
          ulong ticket = PositionGetTicket(i);
-         if(PositionGetInteger(POSITION_MAGIC) != m_magic_number)
+         // Adopt only same-magic AND same-symbol orphans (mirror OnTick adoption guard
+         // at UltimateTrader.mq5: POSITION_MAGIC==InpMagicNumber && POSITION_SYMBOL==_Symbol).
+         // Single-symbol-per-chart guard: never manage a foreign-symbol position with gold's tick math.
+         if(PositionGetInteger(POSITION_MAGIC) != m_magic_number ||
+            PositionGetString(POSITION_SYMBOL) != _Symbol)
             continue;
 
          // Check if already loaded from persisted state
