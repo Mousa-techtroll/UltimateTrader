@@ -153,7 +153,170 @@ public:
    }
 
    //+------------------------------------------------------------------+
-   //| Handle trading error with standard logic                         |
+   //| Fix 6.1 (Infra-1): RETCODE-FIRST trade-error/retry classifier    |
+   //|                                                                  |
+   //| The PRIMARY classification is the MQL5 server retcode            |
+   //| (m_trade.ResultRetcode(), TRADE_RETCODE_*). The legacy           |
+   //| GetLastError()-based switch (the overload below) is kept as the  |
+   //| SECONDARY path and is used ONLY when retcode==0 (i.e. CTrade did  |
+   //| not return a server retcode, so only the runtime GetLastError()  |
+   //| code is available). This fixes the MQL4-era bug where retry/      |
+   //| no-retry decisions were made on the wrong code space.            |
+   //|                                                                  |
+   //| RETRY (transient):   REQUOTE / PRICE_CHANGED / PRICE_OFF /        |
+   //|                       REJECT / TIMEOUT  (capped by attemptNumber  |
+   //|                       < maxAttempts-1 — the m_maxRetries cap).    |
+   //| NO-RETRY + critical++: NO_MONEY / MARKET_CLOSED / TRADE_DISABLED /|
+   //|                        INVALID_VOLUME / INVALID_STOPS /           |
+   //|                        INVALID_PRICE / LIMIT_VOLUME / LIMIT_ORDERS|
+   //|                        / LIMIT_POSITIONS.                         |
+   //| shouldAdjustParams=true: INVALID_STOPS / INVALID_PRICE / REQUOTE  |
+   //|   (drives the caller's structural SL re-derivation + re-validate).|
+   //+------------------------------------------------------------------+
+   void HandleTradingError(
+      uint retcode,                 // PRIMARY: MQL5 server retcode (m_trade.ResultRetcode())
+      int errorCode,                // SECONDARY: GetLastError() code (used only when retcode==0)
+      string operation,             // Operation that failed (e.g., "OrderSend", "ModifyPosition")
+      string context,               // Additional context info
+      int attemptNumber,            // Current attempt number (0-based)
+      int maxAttempts,              // Maximum number of attempts
+      bool &shouldRetry,            // Output: whether to retry the operation
+      bool &shouldAdjustParams,     // Output: whether to adjust parameters before retry
+      string &errorMessage          // Output: detailed error message
+   )
+   {
+      // SECONDARY path: no server retcode available — defer to the legacy
+      // GetLastError() classifier (kept intact below). This preserves the
+      // full legacy logic for the retcode==0 case (NO logic cut).
+      if(retcode == 0)
+      {
+         HandleTradingError(errorCode, operation, context, attemptNumber,
+                            maxAttempts, shouldRetry, shouldAdjustParams, errorMessage);
+         return;
+      }
+
+      // ---- PRIMARY path: classify on the MQL5 server retcode ----
+      m_totalErrors++;
+
+      // Record error information (use the retcode as the recorded code so the
+      // stats/recovery bookkeeping reflects the server result, not GetLastError).
+      m_lastError = (int)retcode;
+      m_lastErrorMsg = "retcode " + IntegerToString((int)retcode);
+      m_lastErrorOperation = operation;
+      m_lastErrorTime = TimeCurrent();
+
+      errorMessage = "Retcode " + IntegerToString((int)retcode) +
+                     " (GetLastError #" + IntegerToString(errorCode) + ") in " + operation +
+                     " (Attempt " + IntegerToString(attemptNumber + 1) + "/" +
+                     IntegerToString(maxAttempts) + ")";
+
+      if(context != "")
+         errorMessage += ". Context: " + context;
+
+      // Default to no retry / no adjust
+      shouldRetry = false;
+      shouldAdjustParams = false;
+
+      // Log error
+      if(m_logger != NULL)
+      {
+         if(attemptNumber == 0)
+            Log.Error(errorMessage);
+         else
+            Log.Warning(errorMessage);
+      }
+
+      // Forward to error handler if available (pass the GetLastError code so the
+      // legacy handler's message table still resolves a human string).
+      if(m_errorHandler != NULL)
+      {
+         m_errorHandler.HandleError(errorCode, operation, context);
+      }
+
+      // Retcode-specific handling
+      switch(retcode)
+      {
+         // ---- Transient: RETRY (capped by m_maxRetries via attemptNumber) ----
+         case TRADE_RETCODE_REQUOTE:        // 10004 — requote
+            // Requote: price moved; refresh price/SL/TP and retry.
+            shouldRetry = (attemptNumber < maxAttempts - 1);
+            shouldAdjustParams = true;
+            break;
+
+         case TRADE_RETCODE_PRICE_CHANGED:  // 10020 — prices changed
+         case TRADE_RETCODE_PRICE_OFF:      // 10021 — no quotes to process the request
+         case TRADE_RETCODE_REJECT:         // 10006 — request rejected
+         case TRADE_RETCODE_TIMEOUT:        // 10012 — request cancelled by timeout
+            // Transient server conditions: retry without forcing a param adjust
+            // (the caller still refreshes market data on every retry).
+            shouldRetry = (attemptNumber < maxAttempts - 1);
+            shouldAdjustParams = false;
+            break;
+
+         // ---- Invalid params: NO-RETRY (chasing won't help) + adjust flag ----
+         // INVALID_STOPS / INVALID_PRICE are CRITICAL (no auto-retry loop) but
+         // set shouldAdjustParams so that IF the caller takes an adjust path it
+         // re-derives + re-validates the SL as STRUCTURAL (not broker-min snap).
+         case TRADE_RETCODE_INVALID_STOPS:  // 10016 — invalid stops
+         case TRADE_RETCODE_INVALID_PRICE:  // 10015 — invalid price
+            m_criticalErrors++;
+            shouldRetry = false;
+            shouldAdjustParams = true;
+            if(m_logger != NULL)
+               Log.Error("Critical trading error (invalid params): " + errorMessage);
+            break;
+
+         // ---- Hard NO-RETRY + critical (halt; chasing is harmful) ----
+         case TRADE_RETCODE_NO_MONEY:        // 10019 — not enough money
+         case TRADE_RETCODE_MARKET_CLOSED:   // 10018 — market is closed
+         case TRADE_RETCODE_TRADE_DISABLED:  // 10017 — trade is disabled
+         case TRADE_RETCODE_INVALID_VOLUME:  // 10014 — invalid volume
+         case TRADE_RETCODE_LIMIT_VOLUME:    // 10034 — volume limit reached
+         case TRADE_RETCODE_LIMIT_ORDERS:    // 10033 — number of pending orders limit reached
+         case TRADE_RETCODE_LIMIT_POSITIONS: // 10040 — number of open positions limit reached
+            m_criticalErrors++;
+            shouldRetry = false;
+            shouldAdjustParams = false;
+            if(m_logger != NULL)
+               Log.Error("Critical trading error: " + errorMessage);
+            break;
+
+         // ---- Success codes (should not reach here on failure path) ----
+         case TRADE_RETCODE_DONE:            // 10009
+         case TRADE_RETCODE_PLACED:          // 10008
+         case TRADE_RETCODE_DONE_PARTIAL:    // 10010
+            shouldRetry = false;
+            shouldAdjustParams = false;
+            break;
+
+         // ---- Unknown server retcode: retry once, conservatively ----
+         default:
+            shouldRetry = (attemptNumber == 0 && maxAttempts > 1);
+            shouldAdjustParams = false;
+            break;
+      }
+
+      // Update retry statistics
+      if(shouldRetry)
+         m_totalRetries++;
+
+      // Add recommendation to error message
+      if(shouldRetry)
+      {
+         errorMessage += ". Retrying" +
+                        (shouldAdjustParams ? " with adjusted parameters" : "") +
+                        "...";
+      }
+      else
+      {
+         errorMessage += ". Giving up after " + IntegerToString(attemptNumber + 1) +
+                        " attempt" + (attemptNumber > 0 ? "s" : "");
+      }
+   }
+
+   //+------------------------------------------------------------------+
+   //| Handle trading error with standard logic (LEGACY GetLastError    |
+   //| classifier — SECONDARY path, kept intact for the retcode==0 case)|
    //+------------------------------------------------------------------+
    void HandleTradingError(
       int errorCode,                // Error code from GetLastError()

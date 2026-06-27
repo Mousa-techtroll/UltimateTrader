@@ -52,7 +52,8 @@ struct ExecutionResult
    ulong     resultTicket;   // Resulting ticket if successful
    double    executedPrice;  // Actual execution price
    double    executedLots;   // Actual executed lot size
-   int       lastError;      // Last error code if failed
+   int       lastError;      // Last error code if failed (GetLastError)
+   uint      retcode;        // Fix 6.1: MQL5 server retcode (m_trade.ResultRetcode())
    string    message;        // Success or error message
 
    void Init()
@@ -62,6 +63,7 @@ struct ExecutionResult
       executedPrice = 0.0;
       executedLots = 0.0;
       lastError = 0;
+      retcode = 0;
       message = "";
    }
 };
@@ -1706,12 +1708,17 @@ private:
                            double price, double stopLoss, double takeProfit,
                            int attempt, ExecutionResult &result)
    {
-      // Get error code
+      // Fix 6.1 (Infra-1): capture the MQL5 server retcode FIRST. CTrade reports
+      // the broker's TRADE_RETCODE_* via ResultRetcode(); GetLastError() is the
+      // SECONDARY (runtime) code, only meaningful when no server retcode exists.
+      uint retcode = m_trade.ResultRetcode();
       int errorCode = GetLastError();
+      result.retcode = retcode;
       result.lastError = errorCode;
 
       // Create detailed context for error handler
-      string context = "Attempt " + IntegerToString(attempt + 1) + "/" +
+      string context = "Retcode " + IntegerToString((int)retcode) +
+                     ", Attempt " + IntegerToString(attempt + 1) + "/" +
                      IntegerToString(m_maxRetries) + ", Symbol: " + symbol +
                      ", Action: " + action +
                      ", Lots: " + DoubleToString(lotSize, 2) +
@@ -1723,13 +1730,15 @@ private:
       bool shouldRetry = false;
       bool shouldAdjustParams = false;
 
-      // Use centralized error handling utility
+      // Use the RETCODE-FIRST classifier: TRADE_RETCODE_* is the PRIMARY code,
+      // GetLastError() is the SECONDARY fallback used only when retcode==0.
       ErrorHandlingUtils.HandleTradingError(
-         errorCode,                // Error code
+         retcode,                  // PRIMARY: server retcode
+         errorCode,                // SECONDARY: GetLastError() (used only when retcode==0)
          "Trade Execution",        // Operation name
          context,                  // Context information
          attempt,                  // Current attempt number
-         m_maxRetries,             // Maximum retries
+         m_maxRetries,             // Maximum retries (the retry CAP — enforced by the loop too)
          shouldRetry,              // Will be set based on error type
          shouldAdjustParams,       // Will be set based on error type
          result.message            // Will be populated with error message
@@ -1788,6 +1797,13 @@ private:
       // Update price for next attempt
       price = (action == "BUY" || action == "buy") ? newAsk : newBid;
 
+      // Fix 6.1 (Infra-1): remember the STRUCTURAL SL the strategy asked for, so
+      // that on an INVALID_STOPS retry we can detect whether GetSafeSL had to snap
+      // it to the broker minimum-distance level (which destroys the structural
+      // stop) instead of merely re-anchoring it to the refreshed price.
+      bool isBuy = (action == "BUY" || action == "buy");
+      double requestedSL = stopLoss;
+
       // Recalculate SL/TP based on new price
       stopLoss = GetSafeSL(symbol, action, price, stopLoss);
       takeProfit = GetSafeTP(symbol, action, price, stopLoss, takeProfit, true, true);
@@ -1798,6 +1814,49 @@ private:
          Log.Error("Invalid SL/TP on retry for " + symbol);
          result.message = "Invalid SL/TP on retry";
          return false;
+      }
+
+      // Fix 6.1 (Infra-1): when the failure that triggered this retry was
+      // INVALID_STOPS, do NOT just snap to broker-min and fire. Re-validate that
+      // the new SL is still STRUCTURAL: if GetSafeSL had to widen the requested SL
+      // out to (within one point of) the broker minimum-distance level, the stop
+      // is no longer the strategy's structural level — abort the retry rather than
+      // open a position with a meaningless broker-min stop (which would corrupt R).
+      //
+      // ⚠️ PARKED — INTENTIONALLY UNREACHABLE under stok's 6.1 ruling (Option A):
+      // INVALID_STOPS is classified NO-RETRY+critical, so UpdateParametersForRetry is
+      // never entered for it and this block does not execute. It is RETAINED (not
+      // deleted) as the correct gate for any FUTURE adjust-retry path: never fire a
+      // non-structural stop to satisfy the broker. Do NOT promote INVALID_STOPS to a
+      // retry to "use" this guard — a broker-unplaceable structural stop means the
+      // setup is un-tradeable at this broker's stop-distance for that signal: stand
+      // aside (a skipped trade costs nothing; a corrupted-R fired trade costs real R
+      // and pollutes the telemetry the iteration loop depends on). See progress/6-1.md.
+      if(result.retcode == TRADE_RETCODE_INVALID_STOPS && requestedSL > 0)
+      {
+         double minStopLevel = SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL) *
+                               SymbolInfoDouble(symbol, SYMBOL_POINT);
+         double pt = SymbolInfoDouble(symbol, SYMBOL_POINT);
+         if(minStopLevel > 0 && pt > 0)
+         {
+            minStopLevel *= 1.1; // mirror GetSafeSL's safety margin
+            double brokerMinSL = isBuy ? (price - minStopLevel) : (price + minStopLevel);
+            // SL sits at the broker-min snap level (within 1 point) ...
+            bool snappedToBrokerMin = (MathAbs(stopLoss - brokerMinSL) <= pt);
+            // ... AND the strategy's requested structural level was further from
+            // price than broker-min (i.e. it really got pulled in to the minimum).
+            bool requestWasStructural = isBuy ? (requestedSL < brokerMinSL - pt)
+                                              : (requestedSL > brokerMinSL + pt);
+            if(snappedToBrokerMin && requestWasStructural)
+            {
+               Log.Error("INVALID_STOPS retry for " + symbol +
+                         " would snap SL to broker-min (" + DoubleToString(stopLoss, 5) +
+                         ") losing the structural level (" + DoubleToString(requestedSL, 5) +
+                         ") — aborting retry rather than firing a non-structural stop.");
+               result.message = "INVALID_STOPS: structural SL not preservable at broker min-distance";
+               return false;
+            }
+         }
       }
 
       return true;
