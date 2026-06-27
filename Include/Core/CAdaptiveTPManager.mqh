@@ -482,10 +482,13 @@ private:
    {
       double high[];
       ArraySetAsSeries(high, true);
-      if(CopyHigh(_Symbol, PERIOD_H4, 0, 100, high) <= 0) return 0;
+      // FIX 5.9: start_pos 0->1 so the first neighbor is the last CLOSED H4 bar (no forming-bar repaint).
+      // FIX 5.8: capture n; n<5 => no pivot possible (early-return 0); loop i<n-2 so high[i+2] is in-bounds.
+      int n = CopyHigh(_Symbol, PERIOD_H4, 1, 100, high);
+      if(n < 5) return 0;
 
       double nearest = 0;
-      for(int i = 2; i < 98; i++)
+      for(int i = 2; i < n - 2; i++)
       {
          if(high[i] > high[i-1] && high[i] > high[i-2] &&
             high[i] > high[i+1] && high[i] > high[i+2])
@@ -507,10 +510,13 @@ private:
    {
       double low[];
       ArraySetAsSeries(low, true);
-      if(CopyLow(_Symbol, PERIOD_H4, 0, 100, low) <= 0) return 0;
+      // FIX 5.9: start_pos 0->1 so the first neighbor is the last CLOSED H4 bar (no forming-bar repaint).
+      // FIX 5.8: capture n; n<5 => no pivot possible (early-return 0); loop i<n-2 so low[i+2] is in-bounds.
+      int n = CopyLow(_Symbol, PERIOD_H4, 1, 100, low);
+      if(n < 5) return 0;
 
       double nearest = 0;
-      for(int i = 2; i < 98; i++)
+      for(int i = 2; i < n - 2; i++)
       {
          if(low[i] < low[i-1] && low[i] < low[i-2] &&
             low[i] < low[i+1] && low[i] < low[i+2])

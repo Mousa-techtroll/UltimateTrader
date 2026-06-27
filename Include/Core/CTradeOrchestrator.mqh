@@ -1011,11 +1011,14 @@ private:
       if(direction == SIGNAL_LONG)
       {
          // 1. H4 swing highs above entry (2-left, 2-right confirmed pivots)
+         // FIX 5.9: start_pos 0->1 so the first neighbor is the last CLOSED H4 bar (no forming-bar repaint).
+         // FIX 5.8: capture n; loop i<n-2 with an n>=5 floor so high[i+2] is never out-of-bounds at warmup.
          double high[];
          ArraySetAsSeries(high, true);
-         if(CopyHigh(_Symbol, PERIOD_H4, 0, 100, high) > 0)
+         int n_high = CopyHigh(_Symbol, PERIOD_H4, 1, 100, high);
+         if(n_high >= 5)
          {
-            for(int i = 2; i < 98; i++)
+            for(int i = 2; i < n_high - 2; i++)
             {
                if(high[i] > high[i-1] && high[i] > high[i-2] &&
                   high[i] > high[i+1] && high[i] > high[i+2])
@@ -1055,11 +1058,14 @@ private:
       else
       {
          // 1. H4 swing lows below entry (2-left, 2-right confirmed pivots)
+         // FIX 5.9: start_pos 0->1 so the first neighbor is the last CLOSED H4 bar (no forming-bar repaint).
+         // FIX 5.8: capture n; loop i<n-2 with an n>=5 floor so low[i+2] is never out-of-bounds at warmup.
          double low[];
          ArraySetAsSeries(low, true);
-         if(CopyLow(_Symbol, PERIOD_H4, 0, 100, low) > 0)
+         int n_low = CopyLow(_Symbol, PERIOD_H4, 1, 100, low);
+         if(n_low >= 5)
          {
-            for(int i = 2; i < 98; i++)
+            for(int i = 2; i < n_low - 2; i++)
             {
                if(low[i] < low[i-1] && low[i] < low[i-2] &&
                   low[i] < low[i+1] && low[i] < low[i+2])
