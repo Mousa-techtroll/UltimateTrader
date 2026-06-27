@@ -1935,7 +1935,7 @@ public:
       state.bar_range_ratio = bar_range / atr_h1;
 
       // Check 2: Spread spike vs recent baseline
-      double current_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
+      double current_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);  // points (Fix 4.6: was *_Point=price; samples[] are points → ratio dimension match)
       int sample_count = ArraySize(m_exec_metrics.spread_samples);
       state.spread_ratio = 1.0;
       if(sample_count >= 5)
@@ -2036,7 +2036,7 @@ public:
 
       // Component 2: Spread stability (v3.1 NEW — current vs recent baseline)
       double spread_stability = 1.0;
-      double current_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
+      double current_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);  // points (Fix 4.6: was *_Point=price; samples[] are points → ratio dimension match)
       int sample_count = ArraySize(m_exec_metrics.spread_samples);
       if(sample_count >= 5)
       {
