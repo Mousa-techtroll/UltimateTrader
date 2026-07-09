@@ -13,6 +13,7 @@
 #include "CSMCOrderBlocks.mqh"
 #include "CVolatilityRegimeManager.mqh"
 #include "CMomentumFilter.mqh"
+#include "CNewsGate.mqh"   // NEWS FILTER: shared event engine (IsDataDay delegates when wired)
 
 //+------------------------------------------------------------------+
 //| CMarketContext - Concrete implementation of IMarketContext        |
@@ -76,6 +77,11 @@ private:
    double                    m_swing_high;
    double                    m_swing_low;
 
+   //--- FIX-1: cached trailing 48h H1 range (highest high - lowest low over the
+   //    last 48 CLOSED H1 bars). Refreshed once per H1 bar in Update(); on a
+   //    short CopyHigh/CopyLow read the PREVIOUS value is kept (never zeroed).
+   double                    m_range48h;
+
    //--- Phase 2.4: HTF D1 dealing-range lookback (ICT IPDA 20-day window).
    //    The L1 LOCATION axis (dealing range / equilibrium / premium-discount)
    //    is DE-CORRELATED from the SL anchor: GetDealingRangeHigh/Low now derive
@@ -94,6 +100,7 @@ private:
    //    → fall back to the STATIC blackout schedule. Never throws.
    int                       m_gmt_offset;
    bool                      m_news_calendar_available;
+   CNewsGate                *m_news_gate;   // NEWS FILTER: shared event engine (borrowed, not owned)
 
 public:
    //+------------------------------------------------------------------+
@@ -171,9 +178,11 @@ public:
       m_ma200_default_bullish = true;   // gold profile default; preserves warmup long bias
       m_swing_high        = 0;
       m_swing_low         = 0;
+      m_range48h          = 0;   // FIX-1: no data yet — floor lever stays inert until first Update()
       // m_dealing_range_d1_lookback assigned above from the constructor param.
       m_gmt_offset             = 0;       // Phase 3.6: resolved in Init()
       m_news_calendar_available = false;  // Phase 3.6: probed in Init()
+      m_news_gate              = NULL;    // NEWS FILTER: wired by OnInit via SetNewsGate()
    }
 
    //+------------------------------------------------------------------+
@@ -337,6 +346,9 @@ public:
       //--- Update cached swing high/low
       UpdateSwingPoints();
 
+      //--- FIX-1: update cached trailing 48h H1 range (once per H1 bar)
+      Update48hRange();
+
       m_last_h1_bar = current_h1;
    }
 
@@ -418,6 +430,16 @@ public:
       if(m_volatility_mgr == NULL) return 0;
       SVolatilityAnalysis analysis = m_volatility_mgr.GetAnalysis();
       return analysis.average_atr;
+   }
+
+   // ACTION-3b (2026-07-08): matched H1 ATR pair — GetATRCurrent() is H4 and made this ratio ~2.0 vs 1.0-centered thresholds (choppy leg never fired / permanent EC vol tax). See AB_TEST_LOG.md ACTION-3a entry.
+   //--- Current H1 ATR(14) from the SAME series whose rolling mean GetATRAverage()
+   //--- returns, so current/average is 1.0-centered by construction. No new handles.
+   virtual double GetATRH1Current()
+   {
+      if(m_volatility_mgr == NULL) return 0;
+      SVolatilityAnalysis analysis = m_volatility_mgr.GetAnalysis();
+      return analysis.current_atr;
    }
 
    virtual double GetBBWidth()
@@ -716,6 +738,12 @@ public:
       return m_swing_low;
    }
 
+   // FIX-1: trailing 48h H1 range backing the volatility-anchored min-SL floor.
+   virtual double GetTrailing48hRange()
+   {
+      return m_range48h;
+   }
+
    virtual double GetCurrentRSI()
    {
       if(m_momentum_filter == NULL) return 50;
@@ -853,6 +881,9 @@ public:
    // gated behind InpEnableMultiStrategy (the router context), so on the production
    // .set (router OFF) it is constant-false and this branch never fires → the
    // synthesized classification below is byte-identical to pre-3.6.
+   //--- NEWS FILTER: wire the shared event engine (borrowed pointer, owned by OnInit)
+   void SetNewsGate(CNewsGate *gate) { m_news_gate = gate; }
+
    virtual ENUM_DAY_TYPE GetDayType() override
    {
       if(IsDataDay())
@@ -1035,7 +1066,15 @@ private:
       if(bar_open <= 0)
          bar_open = TimeCurrent();
 
-      // Primary: live MQL5 calendar (when available — typically live, not tester).
+      // NEWS FILTER delegation: CNewsGate owns the event data (live calendar with
+      // 6h refresh, or the exported CSV in the tester) and keeps the static-schedule
+      // backstop OR'd internally — same belt-and-suspenders semantics as below, with
+      // real event timestamps instead of hour heuristics.
+      if(m_news_gate != NULL)
+         return m_news_gate.IsHighImpactWindow(bar_open, InpNewsWindowMinutes);
+
+      // Legacy path (gate not wired — defensive only, OnInit always wires it):
+      // primary live MQL5 calendar (when available — typically live, not tester).
       if(m_news_calendar_available)
       {
          if(IsCalendarNewsWindow(bar_open))
@@ -1109,5 +1148,40 @@ private:
          if(low[i] < m_swing_low)
             m_swing_low = low[i];
       }
+   }
+
+   //+------------------------------------------------------------------+
+   //| FIX-1: update cached trailing 48h H1 range                        |
+   //| Highest high - lowest low over the last 48 CLOSED H1 bars         |
+   //| (bars 1..48 — same closed-bar CopyHigh/CopyLow idiom as           |
+   //| UpdateSwingPoints). On a short read the previous value is KEPT.   |
+   //+------------------------------------------------------------------+
+   void Update48hRange()
+   {
+      double high[], low[];
+      ArraySetAsSeries(high, true);
+      ArraySetAsSeries(low, true);
+
+      int lookback = 48;
+      int got_high = CopyHigh(_Symbol, PERIOD_H1, 1, lookback, high);
+      int got_low  = CopyLow(_Symbol,  PERIOD_H1, 1, lookback, low);
+      if(got_high <= 0 || got_low <= 0)
+         return;   // keep the previous cached value
+
+      double hh = high[0];
+      for(int i = 1; i < got_high; i++)
+      {
+         if(high[i] > hh)
+            hh = high[i];
+      }
+
+      double ll = low[0];
+      for(int i = 1; i < got_low; i++)
+      {
+         if(low[i] < ll)
+            ll = low[i];
+      }
+
+      m_range48h = hh - ll;
    }
 };

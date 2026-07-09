@@ -112,6 +112,10 @@ private:
    bool                 m_enable_confirmation;
    double               m_short_risk_multiplier;
    double               m_confirmation_strictness;
+   // FIX-1: EA-wide scaled min SL points (g_scaledMinSLPoints, wired via
+   // SetMinSLPoints from OnInit — the global is declared AFTER this include
+   // so it is not directly visible here; same route as CSessionEngine).
+   double               m_min_sl_points;
 
    //--- Session/time filters
    bool                 m_trade_asia;
@@ -170,6 +174,7 @@ public:
       m_enable_confirmation = enable_confirm;
       m_short_risk_multiplier = MathMax(0.0, short_risk_mult);
       m_confirmation_strictness = confirm_strictness;
+      m_min_sl_points = 0.0;   // FIX-1: wired via SetMinSLPoints in OnInit
 
       m_trade_asia = trade_asia;
       m_trade_london = trade_london;
@@ -198,6 +203,11 @@ public:
    }
 
    void SetTradeLogger(CTradeLogger* logger) { m_trade_logger = logger; }
+
+   // FIX-1: receive the EA-wide scaled min SL (points) — same wiring route as
+   // CSessionEngine.SetMinSLPoints (the g_scaledMinSLPoints global is declared
+   // after this include in UltimateTrader.mq5 and is not visible here).
+   void SetMinSLPoints(double pts) { m_min_sl_points = pts; }
 
    //+------------------------------------------------------------------+
    //| Register an entry plugin                                          |
@@ -866,6 +876,39 @@ public:
                      best_smc_score, best_quality, best_quality_score,
                      best_signal.base_risk_pct, best_signal.requiresConfirmation, true);
 
+      // FIX-1: volatility-anchored minimum stop. Single choke point AHEAD of both
+      // the pending path (SL is snapshotted at StorePendingSignal below) and the
+      // immediate-execution return. Structural no-op at InpMinSLRangePct == 0.
+      // The file-signal path never passes through here (independent CFileEntry
+      // route in UltimateTrader.mq5 OnTick — verified).
+      if(InpMinSLRangePct > 0.0 && m_context != NULL && best_signal.valid)
+      {
+         double rng = m_context.GetTrailing48hRange();
+         double floor_dist = MathMax(m_min_sl_points * _Point, InpMinSLRangePct * rng);
+         double old_dist = MathAbs(best_signal.entryPrice - best_signal.stopLoss);
+         if(rng > 0 && old_dist > 0 && old_dist < floor_dist)
+         {
+            // Push SL out and recompute every set TP proportionally (SAME
+            // R-multiples on the wider distance). MANDATORY: without the TP
+            // recompute the stale short TPs fail the RR>=1.3 gate
+            // (measured: 270/373 shorts would die). Unset (0) TPs stay 0.
+            double k = floor_dist / old_dist;   // >1
+            if(best_sig_type == SIGNAL_LONG)
+               best_signal.stopLoss = best_signal.entryPrice - floor_dist;
+            else
+               best_signal.stopLoss = best_signal.entryPrice + floor_dist;
+            if(best_signal.takeProfit1 > 0)
+               best_signal.takeProfit1 = best_signal.entryPrice + (best_signal.takeProfit1 - best_signal.entryPrice) * k;
+            if(best_signal.takeProfit2 > 0)
+               best_signal.takeProfit2 = best_signal.entryPrice + (best_signal.takeProfit2 - best_signal.entryPrice) * k;
+            if(best_signal.takeProfit3 > 0)
+               best_signal.takeProfit3 = best_signal.entryPrice + (best_signal.takeProfit3 - best_signal.entryPrice) * k;
+            Print("[SLFloor] widened ", DoubleToString(old_dist, 2), " -> ", DoubleToString(floor_dist, 2),
+                  " (", DoubleToString(100.0 * old_dist / rng, 1), "% of 48h range ", DoubleToString(rng, 2), ") ",
+                  best_signal.comment);
+         }
+      }
+
       // Confirmation candle logic — applied to the winner only
       // Fix 1: honor the winner's own requiresConfirmation flag. Signals that
       // explicitly opted out (S6/S3 snapback stabilizers, File when configured,
@@ -1083,6 +1126,15 @@ private:
       int copied = CopyRates(_Symbol, PERIOD_H1, 0, 2, rates);
       if(copied >= 2)
       {
+         // ACTION-2 SHADOW: an existing pending is being overwritten — emit its
+         // KILL row before the new signal replaces it (decision-free logging).
+         if(m_has_pending && m_trade_logger != NULL)
+            m_trade_logger.LogShadowPending(m_pending_signal, "KILL", "OVERWRITTEN", "",
+                                            (m_context != NULL ? m_context.GetCurrentRegime() : REGIME_UNKNOWN),
+                                            (m_context != NULL ? m_context.GetATRCurrent() : 0.0),
+                                            (m_context != NULL ? m_context.GetADXValue() : 0.0),
+                                            m_pending_signal.regime_risk_multiplier);
+
          m_pending_signal.detection_time = TimeCurrent();
          m_pending_signal.signal_type    = sig_type;
          m_pending_signal.pattern_name   = signal.comment;
@@ -1110,6 +1162,14 @@ private:
          m_pending_signal.pending_bar_count = 0;  // Sprint 5D: init bar counter
 
          m_has_pending = true;
+
+         // ACTION-2 SHADOW: lifecycle CREATED row (decision-free logging)
+         if(m_trade_logger != NULL)
+            m_trade_logger.LogShadowPending(m_pending_signal, "CREATED", "", "",
+                                            (m_context != NULL ? m_context.GetCurrentRegime() : REGIME_UNKNOWN),
+                                            (m_context != NULL ? m_context.GetATRCurrent() : 0.0),
+                                            (m_context != NULL ? m_context.GetADXValue() : 0.0),
+                                            m_pending_signal.regime_risk_multiplier);
 
          LogPrint(">>> PENDING: ", signal.comment, " detected - waiting for confirmation candle");
          LogPrint("    Pattern High: ", m_pending_signal.pattern_high,

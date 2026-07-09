@@ -176,8 +176,9 @@ public:
          return rs;
 
       // Gather data from existing context (NO new indicators)
+      // ACTION-3b (2026-07-08): matched H1 ATR pair — GetATRCurrent() is H4 and made this ratio ~2.0 vs 1.0-centered thresholds (choppy leg never fired / permanent EC vol tax). See AB_TEST_LOG.md ACTION-3a entry.
       double adx       = ctx.GetADXValue();
-      double atrCur    = ctx.GetATRCurrent();
+      double atrCur    = ctx.GetATRH1Current();
       double atrAvg    = ctx.GetATRAverage();
       bool   volExpand = ctx.IsVolatilityExpanding();
       ENUM_TREND_DIRECTION h4Trend = ctx.GetH4TrendDirection();

@@ -207,9 +207,14 @@ public:
       // BEARISH ENGULFING
       // DISABLED by data: -25.9R across 6 years (2019-2025), net loser in 4/6 years.
       // Dominates every major loss streak. Toggle: InpEnableBearishEngulfing
+      // ACTION-4 (2026-07-09): trend gate narrowed to {BEAR, NEUTRAL} — the old
+      // -25.9R measurement ran with TREND_BULLISH allowed (shorting into bull
+      // trends; bull twin is gated {BULL, NEUTRAL}). This line makes the bear
+      // side the true MIRROR of the bull discipline; it is inert while the
+      // enable flag is false. The A/B judges the narrowed symmetric version.
       // =============================================================
       if(g_profileEnableBearishEngulfing &&
-         (trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL || trend_bias == TREND_BULLISH))
+         (trend_bias == TREND_BEARISH || trend_bias == TREND_NEUTRAL))
       {
          bool prev_bullish = (close[2] > open[2]);
          bool curr_bearish = (close[1] < open[1]);

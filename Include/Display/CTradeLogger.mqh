@@ -92,6 +92,11 @@ private:
    string   m_risk_csv_filename;
    int      m_risk_csv_handle;
 
+   // ACTION-2 SHADOW: pending-signal lifecycle ledger (decision-free
+   // instrumentation — one row per CREATED / KILL / EXEC / EXEC_FAIL event)
+   string   m_shadow_csv_filename;
+   int      m_shadow_csv_handle;
+
    // 2.4-GATE: per-signal axis-breakdown ledger (engines-ON derivation only).
    // Written INSIDE each engine's scoring block for EVERY scored signal —
    // including the SETUP_NONE / raw-low drops the Candidates ledger never sees.
@@ -319,6 +324,8 @@ public:
       m_candidate_csv_handle = INVALID_HANDLE;
       m_risk_csv_filename = "";
       m_risk_csv_handle = INVALID_HANDLE;
+      m_shadow_csv_filename = "";
+      m_shadow_csv_handle = INVALID_HANDLE;
       m_gate_csv_filename = "";
       m_gate_csv_handle = INVALID_HANDLE;
       m_log_filename = "";
@@ -476,6 +483,32 @@ public:
       else
       {
          LogPrint("WARNING: Could not create risk audit file: ", m_risk_csv_filename);
+      }
+
+      // ACTION-2 SHADOW: create the pending-signal lifecycle ledger
+      m_shadow_csv_filename = StringFormat("UltTrader_ShadowPendings_%s_%04d%02d%02d_%02d%02d.csv",
+                                           _Symbol, dt.year, dt.mon, dt.day, dt.hour, dt.min);
+      m_shadow_csv_handle = FileOpen(m_shadow_csv_filename, FILE_WRITE | FILE_CSV | FILE_COMMON, ',');
+      if(m_shadow_csv_handle != INVALID_HANDLE)
+      {
+         FileWrite(m_shadow_csv_handle,
+                   "RowType", "KillReason", "Detail", "SignalID",
+                   "EventTime", "BarTime", "DetectionTime", "PendingBarCount",
+                   "Direction", "Plugin", "Pattern", "PatternType",
+                   "Quality", "EngineMode", "DayType", "EngineConfluence",
+                   "MacroScore", "RegimeAtSignal", "RegimeNow", "DailyTrend", "H4Trend",
+                   "PatternHigh", "PatternLow", "SignalEntryPrice", "StopLoss",
+                   "TP1_Signal", "TP2_Signal", "Ask", "Bid", "SpreadPoints",
+                   "ATR", "ADX", "ConfO", "ConfH", "ConfL", "ConfC",
+                   "BaseRiskPct", "SessionMult", "RegimeMultConfirmed",
+                   "ExitRegimeClass", "BETrigger", "ChandMult",
+                   "TP0Dist", "TP0Vol", "TP1Dist", "TP1Vol", "TP2Dist", "TP2Vol",
+                   "Ticket", "LotSize", "FinalTP1", "FinalTP2");
+         LogPrint("CTradeLogger: Shadow pendings file created: ", m_shadow_csv_filename);
+      }
+      else
+      {
+         LogPrint("WARNING: Could not create shadow pendings file: ", m_shadow_csv_filename);
       }
 
       // Create structured log file
@@ -1022,6 +1055,90 @@ public:
                 pending_confirmation ? "YES" : "NO",
                 winner ? "YES" : "NO");
       FileFlush(m_candidate_csv_handle);
+   }
+
+   //+------------------------------------------------------------------+
+   //| ACTION-2 SHADOW: pending-signal lifecycle ledger.                 |
+   //| Decision-free instrumentation — one row per lifecycle event       |
+   //| (CREATED / KILL+KillReason / EXEC / EXEC_FAIL). Must NEVER        |
+   //| influence a trading decision. ConfO/H/L/C = the just-closed H1    |
+   //| candle at event time. The exit-profile/ticket tail defaults to 0  |
+   //| for events that precede execution (CREATED / KILL rows).          |
+   //+------------------------------------------------------------------+
+   void LogShadowPending(const SPendingSignal &p,
+                         string row_type, string kill_reason, string detail,
+                         ENUM_REGIME_TYPE regime_now,
+                         double atr, double adx,
+                         double regime_mult_confirmed,
+                         int exit_regime_class = 0,
+                         double be_trigger = 0.0, double chand_mult = 0.0,
+                         double tp0_dist = 0.0, double tp0_vol = 0.0,
+                         double tp1_dist = 0.0, double tp1_vol = 0.0,
+                         double tp2_dist = 0.0, double tp2_vol = 0.0,
+                         ulong ticket = 0, double lot_size = 0.0,
+                         double final_tp1 = 0.0, double final_tp2 = 0.0)
+   {
+      if(m_shadow_csv_handle == INVALID_HANDLE) return;
+
+      double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+      double spread_points = (point > 0) ? (ask - bid) / point : 0.0;
+
+      FileWrite(m_shadow_csv_handle,
+                SanitizeCSV(row_type),
+                SanitizeCSV(kill_reason),
+                SanitizeCSV(detail),
+                SanitizeCSV(p.signal_id),
+                TimeToString(TimeCurrent(), TIME_DATE | TIME_MINUTES),
+                TimeToString(iTime(_Symbol, PERIOD_H1, 0), TIME_DATE | TIME_MINUTES),
+                TimeToString(p.detection_time, TIME_DATE | TIME_MINUTES),
+                IntegerToString(p.pending_bar_count),
+                EnumToString(p.signal_type),
+                SanitizeCSV(p.plugin_name),
+                SanitizeCSV(p.pattern_name),
+                EnumToString(p.pattern_type),
+                EnumToString(p.quality),
+                EnumToString(p.engine_mode),
+                EnumToString(p.day_type),
+                IntegerToString(p.engine_confluence),
+                IntegerToString(p.macro_score),
+                EnumToString(p.regime),
+                EnumToString(regime_now),
+                EnumToString(p.daily_trend),
+                EnumToString(p.h4_trend),
+                DoubleToString(p.pattern_high, _Digits),
+                DoubleToString(p.pattern_low, _Digits),
+                DoubleToString(p.entry_price, _Digits),
+                DoubleToString(p.stop_loss, _Digits),
+                DoubleToString(p.take_profit1, _Digits),
+                DoubleToString(p.take_profit2, _Digits),
+                DoubleToString(ask, _Digits),
+                DoubleToString(bid, _Digits),
+                DoubleToString(spread_points, 1),
+                DoubleToString(atr, 2),
+                DoubleToString(adx, 1),
+                DoubleToString(iOpen(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(iHigh(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(iLow(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(iClose(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(p.base_risk_pct, 2),
+                DoubleToString(p.session_risk_multiplier, 2),
+                DoubleToString(regime_mult_confirmed, 2),
+                IntegerToString(exit_regime_class),
+                DoubleToString(be_trigger, 2),
+                DoubleToString(chand_mult, 2),
+                DoubleToString(tp0_dist, 2),
+                DoubleToString(tp0_vol, 2),
+                DoubleToString(tp1_dist, 2),
+                DoubleToString(tp1_vol, 2),
+                DoubleToString(tp2_dist, 2),
+                DoubleToString(tp2_vol, 2),
+                IntegerToString((long)ticket),
+                DoubleToString(lot_size, 2),
+                DoubleToString(final_tp1, _Digits),
+                DoubleToString(final_tp2, _Digits));
+      FileFlush(m_shadow_csv_handle);
    }
 
    //+------------------------------------------------------------------+
@@ -1686,6 +1803,14 @@ public:
          FileClose(m_risk_csv_handle);
          m_risk_csv_handle = INVALID_HANDLE;
          LogPrint("CTradeLogger: Risk audit file closed: ", m_risk_csv_filename);
+      }
+
+      // ACTION-2 SHADOW: pending-signal lifecycle ledger
+      if(m_shadow_csv_handle != INVALID_HANDLE)
+      {
+         FileClose(m_shadow_csv_handle);
+         m_shadow_csv_handle = INVALID_HANDLE;
+         LogPrint("CTradeLogger: Shadow pendings file closed: ", m_shadow_csv_filename);
       }
 
       // 2.4-GATE: only ever opened on the engines-ON derivation path (lazy)

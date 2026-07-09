@@ -394,8 +394,9 @@ public:
       if(g_ecController != NULL && signal.riskPercent > 0)
       {
          // Feed volatility data from market context (Layer 1)
+         // ACTION-3b (2026-07-08): matched H1 ATR pair — GetATRCurrent() is H4 and made this ratio ~2.0 vs 1.0-centered thresholds (choppy leg never fired / permanent EC vol tax). See AB_TEST_LOG.md ACTION-3a entry.
          if(m_context != NULL)
-            g_ecController.UpdateVolatility(m_context.GetATRCurrent(), m_context.GetATRAverage());
+            g_ecController.UpdateVolatility(m_context.GetATRH1Current(), m_context.GetATRAverage());
 
          double ec_mult = g_ecController.GetRiskMultiplier(signal.comment);
          if(ec_mult < 1.0)

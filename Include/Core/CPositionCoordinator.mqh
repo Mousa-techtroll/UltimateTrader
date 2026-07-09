@@ -2743,6 +2743,60 @@ private:
    }
 
    //+------------------------------------------------------------------+
+   //| FIX-2: synthesize an ACTIVE break-even proposal (InpEnableBEMover)|
+   //| Mirrors the EXACT pieces of the existing at_breakeven diagnostic  |
+   //| below (eligibility, per-position trigger w/ InpTrailBETrigger     |
+   //| fallback, profit-R test, offset math incl. price-scale factor) —  |
+   //| but returns a real TrailingUpdate so the SAME ratchet/clamp/send  |
+   //| machinery moves the stop instead of only setting a flag.          |
+   //| Returns true only when be_sl is strictly better than the current  |
+   //| pos.stop_loss (respecting direction).                             |
+   //+------------------------------------------------------------------+
+   bool SynthesizeBEMoverUpdate(SPosition &pos, TrailingUpdate &update)
+   {
+      // Eligibility (mirror of the diagnostic block below)
+      bool be_eligible = !InpEnableTP0 || pos.tp0_closed;
+      if(!be_eligible)
+         return false;
+
+      double risk_dist_be = MathAbs(pos.entry_price - pos.original_sl);
+      if(risk_dist_be <= 0)
+         return false;
+
+      double current_price_be = (pos.direction == SIGNAL_LONG)
+         ? SymbolInfoDouble(_Symbol, SYMBOL_BID)
+         : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      double profit_r_be = (pos.direction == SIGNAL_LONG)
+         ? (current_price_be - pos.entry_price) / risk_dist_be
+         : (pos.entry_price - current_price_be) / risk_dist_be;
+
+      // Trigger source: per-position regime exit profile, fallback to global input
+      double be_trigger = (pos.exit_be_trigger > 0.0) ? pos.exit_be_trigger : InpTrailBETrigger;
+      if(profit_r_be < be_trigger)
+         return false;
+
+      // BE stop level with offset (same math incl. price-scale factor)
+      double be_sl = pos.entry_price;
+      if(pos.direction == SIGNAL_LONG)
+         be_sl += InpTrailBEOffset * _Point * (InpAutoScalePoints ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) / 2000.0) : 1.0);
+      else
+         be_sl -= InpTrailBEOffset * _Point * (InpAutoScalePoints ? (SymbolInfoDouble(_Symbol, SYMBOL_BID) / 2000.0) : 1.0);
+
+      // Only propose when strictly better than the current stop
+      bool is_better = (pos.direction == SIGNAL_LONG)
+         ? (be_sl > pos.stop_loss)
+         : (be_sl < pos.stop_loss || pos.stop_loss == 0);
+      if(!is_better)
+         return false;
+
+      update.shouldUpdate = true;
+      update.ticket       = pos.ticket;
+      update.newStopLoss  = be_sl;
+      update.reason       = "BE_MOVER";
+      return true;
+   }
+
+   //+------------------------------------------------------------------+
    //| Apply all registered trailing stop plugins to a position          |
    //+------------------------------------------------------------------+
    void ApplyTrailingPlugins(SPosition &pos)
@@ -2806,12 +2860,27 @@ private:
             chandelier.SetMultiplier(effective_chand_mult);
       }
 
-      for(int t = 0; t < m_trailing_count; t++)
+      // FIX-2 (InpEnableBEMover): iteration t == -1 synthesizes the ACTIVE
+      // break-even proposal and feeds it through the SAME ratchet / STOPS_LEVEL
+      // clamp / broker-send machinery as every plugin proposal below. With the
+      // flag off the loop starts at 0 — byte-identical to the historical path.
+      for(int t = (InpEnableBEMover ? -1 : 0); t < m_trailing_count; t++)
       {
-         if(m_trailing_plugins[t] == NULL || !m_trailing_plugins[t].IsEnabled())
-            continue;
+         TrailingUpdate update;
+         update.Init();
 
-         TrailingUpdate update = m_trailing_plugins[t].CheckForTrailingUpdate(pos.ticket);
+         if(t < 0)
+         {
+            if(!SynthesizeBEMoverUpdate(pos, update))
+               continue;
+         }
+         else
+         {
+            if(m_trailing_plugins[t] == NULL || !m_trailing_plugins[t].IsEnabled())
+               continue;
+
+            update = m_trailing_plugins[t].CheckForTrailingUpdate(pos.ticket);
+         }
 
          if(update.shouldUpdate && update.newStopLoss > 0)
          {
@@ -2974,6 +3043,15 @@ private:
                // Broker SL modification now flows through a per-trade send policy.
                string gate_reason = "";
                bool should_send = ShouldSendBrokerTrail(pos, normalized_sl, gate_reason);
+               // NEWS FILTER: a pre-news tighten must reach the broker NOW — bypass the
+               // cadence gates only (never the InpDisableBrokerTrailing kill switch,
+               // which ShouldSendBrokerTrail already honored above).
+               if(!should_send && !InpDisableBrokerTrailing &&
+                  StringFind(update.reason, "NEWS_TIGHTEN") == 0)
+               {
+                  should_send = true;
+                  gate_reason = "NEWS_TIGHTEN_FORCE";
+               }
                // M4-FIX (4.9): tag a STOPS_LEVEL/freeze clamp distinctly so it is logged + persisted.
                if(gate_reason_clamp)
                   gate_reason = (StringLen(gate_reason) > 0)

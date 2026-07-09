@@ -36,6 +36,7 @@
 // Market Analysis (Stack17 components wrapped in CMarketContext)
 #include "Include/MarketAnalysis/IMarketContext.mqh"
 #include "Include/MarketAnalysis/CMarketContext.mqh"
+#include "Include/MarketAnalysis/CNewsGate.mqh"   // News filter engine (hybrid live-calendar / tester-CSV)
 
 // Plugin System
 #include "Include/PluginSystem/CEntryStrategy.mqh"
@@ -77,6 +78,7 @@
 #include "Include/ExitPlugins/CDailyLossHaltExit.mqh"
 #include "Include/ExitPlugins/CWeekendCloseExit.mqh"
 #include "Include/ExitPlugins/CMaxAgeExit.mqh"
+#include "Include/ExitPlugins/CNewsFlattenExit.mqh"
 
 // Trailing Plugins
 #include "Include/TrailingPlugins/CATRTrailing.mqh"
@@ -85,6 +87,7 @@
 #include "Include/TrailingPlugins/CChandelierTrailing.mqh"
 #include "Include/TrailingPlugins/CSteppedTrailing.mqh"
 #include "Include/TrailingPlugins/CHybridTrailing.mqh"
+#include "Include/TrailingPlugins/CNewsTightenTrailing.mqh"
 
 // Risk Plugins
 #include "Include/RiskPlugins/CQualityTierRiskStrategy.mqh"
@@ -316,11 +319,15 @@ void ApplySymbolProfile()
    }
 }
 
+// News gate (news-filter plan 2026-07: hybrid live-calendar / tester-CSV event windows)
+CNewsGate              *g_newsGate           = NULL;
+
 // Exit Plugins
 CRegimeAwareExit       *g_regimeExit         = NULL;
 CDailyLossHaltExit     *g_dailyLossExit      = NULL;
 CWeekendCloseExit      *g_weekendExit        = NULL;
 CMaxAgeExit            *g_maxAgeExit         = NULL;
+CNewsFlattenExit       *g_newsFlattenExit    = NULL;
 CExitStrategy          *g_exitPlugins[];
 int                     g_exitPluginCount    = 0;
 
@@ -331,6 +338,7 @@ CSwingTrailing         *g_swingTrailing      = NULL;
 CParabolicSARTrailing  *g_sarTrailing        = NULL;
 CSteppedTrailing       *g_steppedTrailing    = NULL;
 CHybridTrailing        *g_hybridTrailing     = NULL;
+CNewsTightenTrailing   *g_newsTightenTrailing = NULL;
 CTrailingStrategy      *g_trailingPlugins[];
 int                     g_trailingPluginCount = 0;
 
@@ -472,6 +480,24 @@ bool ShouldBlockLongExtension(const EntrySignal &signal,
 }
 
 //+------------------------------------------------------------------+
+//| ACTION-2 SHADOW: single choke point for confirmed-path pending    |
+//| kills — logs the lifecycle KILL row, then clears the pending.     |
+//| Decision-free: the logging must never influence a trading         |
+//| decision. Do NOT use for the orchestrator's self-clearing         |
+//| revalidation failure (that site logs from a pre-captured copy).   |
+//+------------------------------------------------------------------+
+void ClearPendingSignalLogged(const SPendingSignal &p, string kill_reason, string detail)
+{
+   if(g_tradeLogger != NULL)
+      g_tradeLogger.LogShadowPending(p, "KILL", kill_reason, detail,
+                                     (g_marketContext != NULL ? g_marketContext.GetCurrentRegime() : REGIME_UNKNOWN),
+                                     (g_marketContext != NULL ? g_marketContext.GetATRCurrent() : 0.0),
+                                     (g_marketContext != NULL ? g_marketContext.GetADXValue() : 0.0),
+                                     p.regime_risk_multiplier);
+   g_signalOrchestrator.ClearPendingSignal();
+}
+
+//+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit()
@@ -536,6 +562,17 @@ int OnInit()
    }
 
    Print("[Init] Market Analysis: OK (Regime + Trend + Macro + SMC + Crash + VolRegime)");
+
+   // NEWS FILTER: hybrid event-window engine (live calendar / tester CSV / static fallback).
+   // Initialize() never fails hard — worst case it degrades to the static blackout schedule.
+   g_newsGate = new CNewsGate();
+   if(g_newsGate == NULL)
+   {
+      Print("[Init] CRITICAL: CNewsGate creation failed!");
+      return(INIT_FAILED);
+   }
+   g_newsGate.Initialize();
+   g_marketContext.SetNewsGate(g_newsGate);
 
    g_stateManager = new CMarketStateManager(g_marketContext);
 
@@ -779,14 +816,21 @@ int OnInit()
    g_dailyLossExit = new CDailyLossHaltExit(g_marketContext);
    g_weekendExit  = new CWeekendCloseExit(g_marketContext);
    g_maxAgeExit   = new CMaxAgeExit(g_marketContext);
+   // NEWS FILTER: explicitly Initialize()'d — the four legacy exit plugins above are
+   // knowingly left uninitialized (RXT-02, EVAL-CONSOLIDATED.md): their dormancy is part
+   // of the honest baseline, and waking them here would change far more than the news
+   // filter. NewsFlatten is inert anyway unless InpNewsFlattenEnable=true.
+   g_newsFlattenExit = new CNewsFlattenExit(g_newsGate);
+   g_newsFlattenExit.Initialize();
 
-   ArrayResize(g_exitPlugins, 4);
+   ArrayResize(g_exitPlugins, 5);
    g_exitPlugins[0] = g_dailyLossExit;
    g_exitPlugins[1] = g_weekendExit;
    g_exitPlugins[2] = g_maxAgeExit;
    g_exitPlugins[3] = g_regimeExit;
-   g_exitPluginCount = 4;
-   Print("[Init] Exit Plugins: 4 (DailyLoss + Weekend + MaxAge + RegimeAware)");
+   g_exitPlugins[4] = g_newsFlattenExit;
+   g_exitPluginCount = 5;
+   Print("[Init] Exit Plugins: 5 (DailyLoss + Weekend + MaxAge + RegimeAware + NewsFlatten)");
 
    //================================================================
    // LAYER 5: Trailing Plugins
@@ -799,6 +843,7 @@ int OnInit()
    g_sarTrailing        = new CParabolicSARTrailing();
    g_steppedTrailing    = new CSteppedTrailing(NULL, InpATRPeriod, InpTrailStepSize);
    g_hybridTrailing     = new CHybridTrailing();
+   g_newsTightenTrailing = new CNewsTightenTrailing(g_newsGate, InpATRPeriod);
 
    // Initialize all trailing plugins
    g_atrTrailing.Initialize();
@@ -807,17 +852,19 @@ int OnInit()
    g_sarTrailing.Initialize();
    g_steppedTrailing.Initialize();
    g_hybridTrailing.Initialize();
+   g_newsTightenTrailing.Initialize();
 
    // Register based on selected strategy
-   ArrayResize(g_trailingPlugins, 6);
+   ArrayResize(g_trailingPlugins, 7);
    g_trailingPlugins[0] = g_atrTrailing;
    g_trailingPlugins[1] = g_swingTrailing;
    g_trailingPlugins[2] = g_sarTrailing;
    g_trailingPlugins[3] = g_chandelierTrailing;
    g_trailingPlugins[4] = g_steppedTrailing;
    g_trailingPlugins[5] = g_hybridTrailing;
-   g_trailingPluginCount = 6;
-   Print("[Init] Trailing Plugins: 6 registered (ATR + Swing + SAR + Chandelier + Stepped + Hybrid)");
+   g_trailingPlugins[6] = g_newsTightenTrailing;
+   g_trailingPluginCount = 7;
+   Print("[Init] Trailing Plugins: 7 registered (ATR + Swing + SAR + Chandelier + Stepped + Hybrid + NewsTighten)");
 
    // Sprint 1B: Wire InpTrailStrategy — disable all except selected plugin.
    // Previously all 6 ran simultaneously and ATR (tightest) always won,
@@ -847,14 +894,32 @@ int OnInit()
          g_trailingPlugins[t].SetEnabled(false);
    }
 
+   // NEWS FILTER: the tighten plugin is orthogonal to the exclusive InpTrailStrategy
+   // selection above (which just disabled it) — re-enable when configured. Flatten
+   // wins when both behaviors are ON (the plugin also self-guards on this).
+   if(InpNewsFilterEnable && InpNewsTightenEnable && !InpNewsFlattenEnable)
+   {
+      g_newsTightenTrailing.SetEnabled(true);
+      Print("[Init] NEWS TIGHTEN active alongside ", EnumToString(InpTrailStrategy));
+   }
+
    //================================================================
    // LAYER 6: Risk Strategy (merged model)
    //================================================================
-   g_riskStrategy = new CQualityTierRiskStrategy(g_marketContext);
-   // Strategy NOT initialized — fallback sizing active.
-   // The 8-step chain compounds 50-80% reduction (proven harmful in all tests).
-   // Individual protections (cap, EC, short) applied independently in ExecuteSignal.
-   Print("[Init] Risk Strategy: FALLBACK SIZING (strategy chain disabled)");
+   // ACTION-3 DELETE (2026-07-08): the CQualityTierRiskStrategy object is intentionally
+   // NOT constructed. It was never Initialize()'d in production ("8-step chain compounds
+   // 50-80% reduction — proven harmful in all tests"), so every trade since v18 has been
+   // sized by the orchestrator fallback (CTradeOrchestrator.mqh ~:479) — which is hereby
+   // the EXPLICIT design, not an accident. Forensics 2026-07-08: waking the chain under
+   // the production config is a no-op for every advertised feature (tier table lives
+   // upstream in CSetupEvaluator; vol-sizing yields to regime-risk; short-mult=1.0;
+   // health/engine-weight are placeholders) EXCEPT the InpMaxLotMultiplier 0.10-lot clamp,
+   // which would cut ~46% of lot volume. OPT-3's loss-scaler sweep measured this
+   // unreachable code (fire-count 0 explained by the :301 init early-return, not counter
+   // timing). g_riskStrategy stays NULL; all consumers are NULL-guarded; the orchestrator
+   // routes to its fallback at the m_risk_strategy NULL check.
+   g_riskStrategy = NULL;
+   Print("[Init] Risk Strategy: NONE BY DESIGN — orchestrator fallback sizing (Action-3 DELETE)");
 
    //================================================================
    // LAYER 7: Execution
@@ -929,6 +994,10 @@ int OnInit()
    );
    g_signalOrchestrator.SetSkipHours2(InpSkipStartHour2, InpSkipEndHour2);
    g_signalOrchestrator.SetTradeLogger(g_tradeLogger);
+   // FIX-1: wire the EA-wide scaled min SL into the orchestrator's volatility-
+   // anchored SL floor (g_scaledMinSLPoints is declared after the orchestrator
+   // include, so it is passed in — same route as g_sessionEngine.SetMinSLPoints).
+   g_signalOrchestrator.SetMinSLPoints(g_scaledMinSLPoints);
 
    //----------------------------------------------------------------
    // 2.4-GATE: wire the per-axis GATE score log into the four routed
@@ -1297,12 +1366,17 @@ void OnDeinit(const int reason)
    if(g_sarTrailing != NULL)        { g_sarTrailing.Deinitialize(); delete g_sarTrailing; }
    if(g_steppedTrailing != NULL)    { g_steppedTrailing.Deinitialize(); delete g_steppedTrailing; }
    if(g_hybridTrailing != NULL)     { g_hybridTrailing.Deinitialize(); delete g_hybridTrailing; }
+   if(g_newsTightenTrailing != NULL){ g_newsTightenTrailing.Deinitialize(); delete g_newsTightenTrailing; }
 
    //--- Layer 4: Exit Plugins
    if(g_regimeExit != NULL)    { delete g_regimeExit; }
    if(g_dailyLossExit != NULL) { delete g_dailyLossExit; }
    if(g_weekendExit != NULL)   { delete g_weekendExit; }
    if(g_maxAgeExit != NULL)    { delete g_maxAgeExit; }
+   if(g_newsFlattenExit != NULL) { g_newsFlattenExit.Deinitialize(); delete g_newsFlattenExit; }
+
+   //--- News gate (deleted AFTER the plugins that borrow its pointer)
+   if(g_newsGate != NULL) { delete g_newsGate; g_newsGate = NULL; }
 
    //--- Layer 3: Entry Plugins
    if(g_engulfingEntry != NULL)    { g_engulfingEntry.Deinitialize(); delete g_engulfingEntry; }
@@ -1580,11 +1654,46 @@ void OnTick()
       }
 
       //--- Sprint 3D: Block Friday entries (38.7% WR, -1.35R in backtest)
+      //--- ACTION-5 (2026-07-09): ban is now hour-gated by InpFridayEntryCutoffGMT.
+      //    Default 0 keeps the full ban bit-identically (gmt_hour >= 0 is always true).
+      //    The gate covers BOTH signal generation and pending-confirmation processing
+      //    (one flag — splitting them would produce incoherent funnel logs). Weekend
+      //    close (coordinator, Fri 20:00 server) and management are unaffected.
       MqlDateTime dow_dt;
       TimeToStruct(TimeCurrent(), dow_dt);
       bool is_friday = (dow_dt.day_of_week == 5);
+      int fri_gmt_hour = (g_sessionEngine != NULL)
+                            ? g_sessionEngine.GetGMTHour(TimeCurrent())
+                            : 24;   // fail-closed: unknown clock => treat as past any cutoff
+      bool friday_entry_blocked = is_friday && (fri_gmt_hour >= InpFridayEntryCutoffGMT);
 
-      if(!is_friday)
+      // ACTION-7 GUARD (staleness): pending_bar_count only advances on PROCESSED
+      // bars, so market-closure gaps (Friday gate + weekend, holidays) freeze a
+      // pending signal instead of expiring it — 2 baseline cases fired ~74h stale
+      // into Monday 01:00 and were saved only by broker retcode 10018. This
+      // wall-clock guard clears such fossils. The +2h slack preserves the designed
+      // 23:00 -> 01:00 daily-break confirmation (11 baseline cases).
+      if(g_signalOrchestrator.HasPendingSignal())
+      {
+         const int PENDING_STALE_SLACK_SEC = 7200;
+         SPendingSignal stale_check = g_signalOrchestrator.GetPendingSignal();
+         long stale_max_sec = (long)InpConfirmationWindowBars * PeriodSeconds(PERIOD_H1)
+                              + PENDING_STALE_SLACK_SEC;
+         long stale_age_sec = (long)(TimeCurrent() - stale_check.detection_time);
+         if(stale_age_sec > stale_max_sec)
+         {
+            Print("[PendingStale] ", stale_check.pattern_name,
+                  " created ", TimeToString(stale_check.detection_time, TIME_DATE | TIME_MINUTES),
+                  " age=", DoubleToString(stale_age_sec / 3600.0, 1), "h",
+                  " > max=", DoubleToString(stale_max_sec / 3600.0, 1), "h",
+                  " — cleared (market-closure gap)");
+            ClearPendingSignalLogged(stale_check, "GUARD_STALENESS",
+                                     StringFormat("age_h=%.1f max_h=%.1f",
+                                                  stale_age_sec / 3600.0, stale_max_sec / 3600.0));
+         }
+      }
+
+      if(!friday_entry_blocked)
       {
       //--- 2. Check pending confirmation signal (handled by CSignalOrchestrator)
       if(InpEnableConfirmation && g_signalOrchestrator.HasPendingSignal())
@@ -1594,6 +1703,11 @@ void OnTick()
 
          if(g_signalOrchestrator.CheckPendingConfirmation())
          {
+            // ACTION-2 SHADOW: capture the pending BEFORE revalidation — the
+            // orchestrator SELF-CLEARS m_has_pending on revalidation failure,
+            // so the copy is unreachable by the time !revalid is observable here.
+            SPendingSignal pend_pre = g_signalOrchestrator.GetPendingSignal();
+
             // Sprint 5D: soft or full revalidation
             bool revalid = InpSoftRevalidation ?
                g_signalOrchestrator.SoftRevalidatePending() :
@@ -1605,7 +1719,37 @@ void OnTick()
 	               double pct_rise_72h = 0.0;
 	               double entry_reference = 0.0;
 	               double price_72h_ago = 0.0;
-	               if(ShouldBlockLongExtensionCore(pending.signal_type == SIGNAL_LONG,
+	               string news_conf_reason = "";
+	               // ACTION-7 GUARDS (halt/budget + position cap): the confirmed
+	               // path runs OUTSIDE the immediate path's halt/budget gate
+	               // (section 3 below: !IsTradingHalted() && CanTrade()) and has
+	               // no position cap (the immediate path gates on
+	               // GetPositionCount() < InpMaxPositions); ProcessConfirmedSignal
+	               // only enforces the exposure cap. Historical baseline counts for
+	               // both guards are 0 -> expected backtest delta 0 (invariant
+	               // enforcement, not a behavior change on the baseline).
+	               if(g_riskMonitor.IsTradingHalted() || !g_riskMonitor.CanTrade())
+	               {
+	                  Print("[ConfRiskGate] confirmed entry blocked — halted=",
+	                        (g_riskMonitor.IsTradingHalted() ? "YES" : "NO"),
+	                        " trades_today=", g_riskMonitor.GetTradesToday(),
+	                        "/", InpMaxTradesPerDay,
+	                        " (", pending.pattern_name, ")");
+	                  ClearPendingSignalLogged(pending, "GUARD_HALT_OR_BUDGET",
+	                     StringFormat("halted=%s trades_today=%d/%d",
+	                                  (g_riskMonitor.IsTradingHalted() ? "YES" : "NO"),
+	                                  g_riskMonitor.GetTradesToday(), InpMaxTradesPerDay));
+	               }
+	               else if(g_posCoordinator.GetPositionCount() >= InpMaxPositions)
+	               {
+	                  Print("[ConfPositionCap] confirmed entry blocked — positions=",
+	                        g_posCoordinator.GetPositionCount(), "/", InpMaxPositions,
+	                        " (", pending.pattern_name, ")");
+	                  ClearPendingSignalLogged(pending, "GUARD_POSCAP",
+	                     StringFormat("positions=%d/%d",
+	                                  g_posCoordinator.GetPositionCount(), InpMaxPositions));
+	               }
+	               else if(ShouldBlockLongExtensionCore(pending.signal_type == SIGNAL_LONG,
 	                                              SymbolInfoDouble(_Symbol, SYMBOL_ASK),
 	                                              pct_rise_72h,
 	                                              entry_reference,
@@ -1620,13 +1764,27 @@ void OnTick()
 	                        " | entryRef=", DoubleToString(entry_reference, _Digits),
 	                        " | H1_72bars_ago=",
 	                        DoubleToString(price_72h_ago, _Digits));
-	                  g_signalOrchestrator.ClearPendingSignal();
+	                  ClearPendingSignalLogged(pending, "EXTENSION_72H",
+	                     StringFormat("pct_rise_72h=%.2f threshold=%.2f entry_ref=%.2f price_72h_ago=%.2f",
+	                                  pct_rise_72h, InpLongExtensionPct,
+	                                  entry_reference, price_72h_ago));
 	               }
 	               // Phase 5: Confirmed Entry Quality Filter
 	               else if(!PassConfirmedEntryQualityFilter(pending))
 	               {
 	                  // Weak confirmed long — skip execution
-	                  g_signalOrchestrator.ClearPendingSignal();
+	                  ClearPendingSignalLogged(pending, "QUALITY_FILTER", "");
+	               }
+	               // NEWS FILTER: confirmations execute OUTSIDE the gated chain, so without
+	               // this check a signal born on a clean bar can fill INSIDE a news window
+	               // 1-2 bars later (2026-07-08 audit: 20 such Tier-2 fills in the 2019-2026
+	               // ON leg; Tier-1 windows are wide enough to cover the confirmation bar).
+	               else if(InpNewsFilterEnable && InpNewsBlockEntries && g_newsGate != NULL &&
+	                       g_newsGate.IsEntryBlocked(currentBarTime, news_conf_reason))
+	               {
+	                  Print("[NewsGate] confirmed entry blocked — ", news_conf_reason,
+	                        " (", pending.pattern_name, ")");
+	                  ClearPendingSignalLogged(pending, "NEWS_GATE", news_conf_reason);
 	               }
 	               else
 	               {
@@ -1710,15 +1868,60 @@ void OnTick()
 
                      g_tradeLogger.LogTradeEntry(position, position.entry_risk_amount);
                   }
+
+                  // ACTION-2 SHADOW: lifecycle EXEC row — mirrors the exit-profile
+                  // values stamped on the position above (0/default when the
+                  // regime-exit stamp did not run). Decision-free logging.
+                  if(g_tradeLogger != NULL)
+                     g_tradeLogger.LogShadowPending(pending, "EXEC", "", "",
+                        (g_marketContext != NULL ? g_marketContext.GetCurrentRegime() : REGIME_UNKNOWN),
+                        (g_marketContext != NULL ? g_marketContext.GetATRCurrent() : 0.0),
+                        (g_marketContext != NULL ? g_marketContext.GetADXValue() : 0.0),
+                        pending.regime_risk_multiplier,
+                        position.exit_regime_class,
+                        position.exit_be_trigger,
+                        position.exit_chandelier_mult,
+                        position.exit_tp0_distance,
+                        position.exit_tp0_volume,
+                        position.exit_tp1_distance,
+                        position.exit_tp1_volume,
+                        position.exit_tp2_distance,
+                        position.exit_tp2_volume,
+                        position.ticket,
+                        position.lot_size,
+                        position.tp1,
+                        position.tp2);
                }
                else
                {
                   g_riskMonitor.RecordExecutionError();
+
+                  // ACTION-2 SHADOW: lifecycle EXEC_FAIL row (no ticket) —
+                  // decision-free logging.
+                  if(g_tradeLogger != NULL)
+                     g_tradeLogger.LogShadowPending(pending, "EXEC_FAIL", "", "",
+                        (g_marketContext != NULL ? g_marketContext.GetCurrentRegime() : REGIME_UNKNOWN),
+                        (g_marketContext != NULL ? g_marketContext.GetATRCurrent() : 0.0),
+                        (g_marketContext != NULL ? g_marketContext.GetADXValue() : 0.0),
+                        pending.regime_risk_multiplier);
                }
                // Sprint 5D: clear after execution attempt (success or error)
                g_signalOrchestrator.ClearPendingSignal();
             }
                } // end else (quality filter passed)
+	            else
+	            {
+	               // ACTION-2 SHADOW: revalidation failed — the orchestrator already
+	               // self-cleared the pending (RevalidatePending/SoftRevalidatePending
+	               // set m_has_pending=false), so log from the pre-captured copy and
+	               // do NOT call ClearPendingSignal again.
+	               if(g_tradeLogger != NULL)
+	                  g_tradeLogger.LogShadowPending(pend_pre, "KILL", "REVALIDATE_FAIL", "",
+	                     (g_marketContext != NULL ? g_marketContext.GetCurrentRegime() : REGIME_UNKNOWN),
+	                     (g_marketContext != NULL ? g_marketContext.GetATRCurrent() : 0.0),
+	                     (g_marketContext != NULL ? g_marketContext.GetADXValue() : 0.0),
+	                     pend_pre.regime_risk_multiplier);
+	            }
          }
          else
          {
@@ -1728,7 +1931,9 @@ void OnTick()
             {
                Print("[ConfirmWindow] Exhausted ", pend_check.pending_bar_count,
                      "/", InpConfirmationWindowBars, " bars — clearing");
-               g_signalOrchestrator.ClearPendingSignal();
+               ClearPendingSignalLogged(pend_check, "CONFIRM_WINDOW_EXHAUSTED",
+                  StringFormat("bars=%d/%d", pend_check.pending_bar_count,
+                               InpConfirmationWindowBars));
             }
             else
             {
@@ -1753,6 +1958,7 @@ void OnTick()
 
          // v3.2: Shock volatility override — blocks entries during extreme intra-bar spikes
          bool shock_blocked = false;
+         string news_block_reason = "";   // NEWS FILTER: filled by the news gate branch below
          if(InpEnableShockDetection && g_tradeExecutor != NULL)
          {
             double shock_atr = g_marketContext.GetATRCurrent();
@@ -1812,6 +2018,14 @@ void OnTick()
          {
             // Regime changed >2x in 4 hours — skip entries until conditions settle
             Print("[ThrashCooldown] Regime thrashing — entries blocked");
+         }
+         else if(InpNewsFilterEnable && InpNewsBlockEntries && g_newsGate != NULL &&
+                 g_newsGate.IsEntryBlocked(currentBarTime, news_block_reason))
+         {
+            // NEWS FILTER: a high-impact USD event window intersects this H1 bar.
+            // Entries only — open positions keep running under their stops/trails
+            // (flatten/tighten are separate opt-in behaviors on the management path).
+            Print("[NewsGate] ", news_block_reason, " — new entries blocked this bar");
          }
          else
          {
@@ -2103,7 +2317,7 @@ void OnTick()
             }
          }
       }
-      } // end if(!is_friday) — Sprint 3D
+      } // end if(!friday_entry_blocked) — Sprint 3D + ACTION-5 hour gate
    }
 
    //=== ADOPT UNTRACKED BROKER POSITIONS (every tick) ===

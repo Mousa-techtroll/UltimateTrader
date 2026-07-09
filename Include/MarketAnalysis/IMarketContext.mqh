@@ -20,6 +20,8 @@ public:
    virtual double               GetADXValue()            { return 0; }
    virtual double               GetATRCurrent()          { return 0; }
    virtual double               GetATRAverage()          { return 0; }
+   // ACTION-3b (2026-07-08): matched H1 ATR pair — GetATRCurrent() is H4 and made this ratio ~2.0 vs 1.0-centered thresholds (choppy leg never fired / permanent EC vol tax). See AB_TEST_LOG.md ACTION-3a entry.
+   virtual double               GetATRH1Current()        { return 0; }
    virtual double               GetBBWidth()             { return 0; }
    virtual bool                 IsVolatilityExpanding()  { return false; }
 
@@ -76,6 +78,9 @@ public:
    //--- Price Action Data
    virtual double               GetSwingHigh()           { return 0; }
    virtual double               GetSwingLow()            { return 0; }
+   // FIX-1: trailing 48h H1 range (highest high - lowest low over the last 48
+   // CLOSED H1 bars). Backs the volatility-anchored minimum-SL floor.
+   virtual double               GetTrailing48hRange()    { return 0; }
    virtual double               GetCurrentRSI()          { return 50; }
 
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign)

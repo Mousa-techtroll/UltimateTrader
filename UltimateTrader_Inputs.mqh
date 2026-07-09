@@ -42,10 +42,15 @@ input double InpFileFixedLots = 0.05;          // Fixed lot size (when InpFileLo
 
 //--- Group 2: RISK MANAGEMENT
 input group "══════ RISK MANAGEMENT ══════"
-input double InpRiskAPlusSetup = 1.5;        // Risk % for A+ setups — v18 production (EC v3 manages drawdown)
-input double InpRiskASetup = 1.0;            // Risk % for A setups — EC filter compensated
-input double InpRiskBPlusSetup = 0.75;       // Risk % for B+ setups — EC filter compensated
-input double InpRiskBSetup = 0.6;            // Risk % for B setups — EC filter compensated
+// ACTION-3b ADOPTION (2026-07-08, user-approved with conditions): tier table scaled x0.90
+// alongside the ATR-pair fix so the restored (un-taxed) sizing returns inside the 14% Eq-DD
+// policy. Measured FULL 2019-2026H1: $21,623.18 / PF 1.31 / Sharpe 2.28 / Eq-DD 13.68% /
+// Bal-DD 11.68% — beats the pre-fix baseline ($20,064.29/1.29/2.16/14.02%/11.98%) on EVERY
+// absolute and relative DD measure while netting +7.8%. Old values 1.5/1.0/0.75/0.6.
+input double InpRiskAPlusSetup = 1.35;        // Risk % for A+ setups — v18 production (EC v3 manages drawdown)
+input double InpRiskASetup = 0.9;            // Risk % for A setups — EC filter compensated
+input double InpRiskBPlusSetup = 0.675;       // Risk % for B+ setups — EC filter compensated
+input double InpRiskBSetup = 0.54;            // Risk % for B setups — EC filter compensated
 input double InpMaxRiskPerTrade = 2.0;       // Hard cap % per trade (catches regime+ATR stacking outliers)
 input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe backstop, NOT a DD lever.
                                              // OPT-2 (2026-06-27, Model=4 real ticks, FIT 2019-2022) tested 4.0/3.5/3.0:
@@ -55,7 +60,7 @@ input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe b
                                              // trims marginal stacked adds, not the real single-position tail DD.
                                              // 5.0 retained as the stack ceiling. See OPT-2-exposure-sweep.md.
 input double InpDailyLossLimit = 3.0;        // Daily loss limit % (halt trading)
-input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier
+input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier — DEAD (sole consumer = never-constructed CQualityTierRiskStrategy; Action-3 DELETE 2026-07-08)
 input int    InpMaxPositions = 5;            // Max concurrent positions
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
 input bool   InpStructureBasedExit = false; // CONFIRMED IRRELEVANT: CHOPPY regime never occurs on gold (0/815 trades). Gate has nothing to gate.
@@ -94,9 +99,9 @@ input int    InpShortMRMacroMax = 0;         // MR short max macro score (wired:
 
 //--- Group 4: CONSECUTIVE LOSS PROTECTION
 input group "══════ CONSECUTIVE LOSS PROTECTION ══════"
-input bool   InpEnableLossScaling = true;    // Enable consecutive loss scaling
-input double InpLossLevel1Reduction = 0.75;  // Level 1 reduction (2-3 losses)
-input double InpLossLevel2Reduction = 0.50;  // Level 2 reduction (4+ losses)
+input bool   InpEnableLossScaling = true;    // Enable consecutive loss scaling — DEAD (never-constructed CQualityTierRiskStrategy; OPT-3 swept unreachable code; Action-3 DELETE 2026-07-08)
+input double InpLossLevel1Reduction = 0.75;  // Level 1 reduction (2-3 losses) — DEAD (same)
+input double InpLossLevel2Reduction = 0.50;  // Level 2 reduction (4+ losses) — DEAD (same)
 
 //--- Group 5: TREND DETECTION
 input group "══════ TREND DETECTION ══════"
@@ -117,6 +122,7 @@ input group "══════ STOP LOSS & ATR ══════"
 input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
 input double InpMinSLPoints = 800.0;         // Minimum SL distance (points) — auto-scaled for non-gold symbols
 input bool   InpAutoScalePoints = true;      // Auto-scale all point distances by symbol price (gold=reference)
+input double InpMinSLRangePct = 0.0;         // FIX-1: min SL as fraction of trailing 48h H1 range (0 = off = baseline-identical). Replaces the frozen first-tick $-floor pathology (InpMinSLPoints x first-tick price scale = $5.13 for a 2019 start, held to $3,750 gold).
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
 input double InpMinRRShortCrash = 1.30;      // REVERTED to match default (0.50 caused butterfly effects)
 input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
@@ -177,6 +183,7 @@ input double InpTrailStepSize = 0.5;                 // Step size
 input int    InpTrailMinProfit = 60;                 // Min profit (points)
 input double InpTrailBETrigger = 0.8;                // Breakeven trigger (overridden by regime exit profiles)
 input double InpTrailBEOffset = 50.0;                // Breakeven offset (points)
+input bool   InpEnableBEMover = false;               // FIX-2: ACTIVE break-even stop move at the configured per-regime BE trigger (default off; historically the trigger only set a diagnostic flag)
 
 //--- Group 13: ADAPTIVE TAKE PROFIT
 input group "══════ ADAPTIVE TAKE PROFIT ══════"
@@ -272,6 +279,13 @@ input int    InpSkipStartHour = 11;           // Skip zone 1 start (GMT) — 11=
 input int    InpSkipEndHour = 11;            // Skip zone 1 end (GMT)
 input int    InpSkipStartHour2 = 11;         // Skip zone 2 start (GMT) — set to 11 = disabled (baseline)
 input int    InpSkipEndHour2 = 11;           // Skip zone 2 end (GMT) — set to 11 = disabled (baseline)
+// ACTION-5 (2026-07-09): input-gated Friday reopen. The Sprint-3D total Friday entry ban
+// (38.7% WR / -1.35R) was derived on an OLD config and never re-derived under the current
+// stack. 0 = block from 00:00 GMT = the full ban, BIT-IDENTICAL to today. 1-23 = allow
+// entries (and pending-confirmation processing) until N:00 GMT Friday; 24 = Friday fully
+// open. Weekend-flat close (coordinator, Fri 20:00 server) and position management are
+// UNTOUCHED by this input.
+input int    InpFridayEntryCutoffGMT = 0;    // Friday entry cutoff (GMT hour): 0=full ban (baseline) | 14=till 14:00 | 24=open
 
 //--- Group 21: CONFIRMATION
 input group "══════ CONFIRMATION CANDLE ══════"
@@ -522,3 +536,35 @@ input group "══════ NEWS FLAT (DAY_DATA) ══════"
 // .set, so this is byte-identical on production; exercised at the engines-ON GATE / 3.x.
 input bool   InpEnableNewsFlat       = true;     // Master toggle: flat (DAY_DATA) on HIGH-impact news windows
 input int    InpNewsWindowMinutes    = 15;       // ± minutes around the scheduled release time to flag as DAY_DATA
+
+//--- Group 47: NEWS FILTER (production path; hybrid data per the news-filter plan 2026-07)
+// Unlike the NEWS FLAT group above (router-only DAY_DATA classification, inert with
+// multi-strategy OFF), this filter acts on the PRODUCTION entry gate chain and the
+// position-management path. Data: LIVE = MQL5 economic calendar (2007+, MetaQuotes);
+// TESTER = GoldHistory/NewsCalendar_USD.csv exported from that same calendar by
+// Scripts/ExportNewsCalendar.mq5 (the calendar API is dead in the tester: -1/err 4014).
+// CSV timestamps are UTC; tester server-time conversion uses InpNewsWinterGMTOffset
+// plus +1h during US DST (deterministic — broker clocks are NY-close aligned).
+input group "══════ NEWS FILTER (USD HIGH-IMPACT) ══════"
+// A/B 2026-07-08 (Model=4 real ticks, full 2019-2026H1, same-day pairs vs OFF-identity
+// $20,064.29/PF1.29/Sharpe2.16/EqDD14.02%): ON(entry-block) $17,660.26/-12.0%/Sharpe2.15/
+// EqDD13.43%; FLAT(+T1 flatten) $18,348.57/-8.6%/PF1.29/Sharpe2.29(best)/EqDD13.89%;
+// TIGHT(+T1 stop-tighten) $15,327.68/-23.6%/PF1.26/Sharpe2.01 (KILL). Net-negative on this
+// long-biased book -> DEFAULT OFF per plan acceptance rule; stok owns the adopt ruling.
+// NOTE: real-tick sim understates live news risk (no slippage/gap-through-stop modeling) —
+// the live-protection case is stronger than the backtest number alone.
+input bool   InpNewsFilterEnable       = false;  // Master: hybrid news data + behaviors below (A/B'd net-negative; enable deliberately)
+input bool   InpNewsBlockEntries       = true;   // 1) Block NEW entries inside event windows
+input int    InpNewsT1PreMin           = 60;     // Tier-1 (FOMC/NFP/CPI): block N min BEFORE
+input int    InpNewsT1PostMin          = 30;     // Tier-1: block N min AFTER
+input int    InpNewsT2PreMin           = 30;     // Tier-2 (other HIGH USD): block N min BEFORE
+input int    InpNewsT2PostMin          = 15;     // Tier-2: block N min AFTER
+input bool   InpNewsIncludeModerate    = false;  // Treat MODERATE USD events as Tier-2 windows
+input bool   InpNewsFlattenEnable      = false;  // 2) CLOSE all positions before Tier-1 events
+input int    InpNewsFlattenLeadMin     = 20;     // Flatten N min before Tier-1
+input bool   InpNewsTightenEnable      = false;  // 3) TIGHTEN stops before Tier-1 (flatten wins if both ON)
+input int    InpNewsTightenLeadMin     = 30;     // Tighten window: N min before Tier-1
+input double InpNewsTightenATRMult     = 1.0;    // Tightened SL distance = ATR(14,H1) x this
+input string InpNewsCsvFile            = "NewsCalendar_USD.csv"; // Tester/fallback CSV (Common Files)
+input int    InpNewsWinterGMTOffset    = 2;      // Broker GMT offset in WINTER (Vantage: +2 / +3 US-summer; InpBrokerGMTOffset=3 is the SUMMER value)
+input bool   InpNewsServerFollowsUSDST = true;   // Server clock is NY-close aligned (+1h during US DST)
