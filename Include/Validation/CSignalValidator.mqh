@@ -70,6 +70,9 @@ public:
 
    //+------------------------------------------------------------------+
    //| Configure SMC integration                                         |
+   //| DEAD (T0 2026-07-09): zero call sites. m_smc_min_confluence is    |
+   //| never compared either — ValidateSMCConditions() uses a hardcoded  |
+   //| <40 floor (:198). Wire or delete before tuning InpSMCMinConfluence|
    //+------------------------------------------------------------------+
    void ConfigureSMC(bool enabled, int min_confluence, bool block_counter)
    {

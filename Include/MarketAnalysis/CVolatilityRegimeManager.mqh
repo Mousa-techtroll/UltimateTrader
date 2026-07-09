@@ -267,6 +267,11 @@ public:
 
    //+------------------------------------------------------------------+
    //| Get risk multiplier for current volatility regime                 |
+   //| SPRINT-1C HOLE (T0 2026-07-09): only caller chain is              |
+   //| CMarketContext.GetVolatilityRiskMultiplier() -> the never-        |
+   //| constructed CQualityTierRiskStrategy (Action-3 DELETE). The       |
+   //| InpVol*Risk inputs configured into m_config tune nothing until    |
+   //| this is wired into the live sizing path.                          |
    //+------------------------------------------------------------------+
    double GetRiskMultiplier()
    {
@@ -340,6 +345,9 @@ public:
    //+------------------------------------------------------------------+
    //| Get stop loss multiplier for current volatility regime            |
    //| Returns < 1.0 in high vol to tighten stops                        |
+   //| SPRINT-1C HOLE (T0 2026-07-09): ZERO call sites (as is            |
+   //| AdjustSLForVolatility below). InpEnableVolSLAdjust /              |
+   //| InpVolHighSLMult / InpVolExtremeSLMult tune nothing until wired.  |
    //+------------------------------------------------------------------+
    double GetSLMultiplier()
    {

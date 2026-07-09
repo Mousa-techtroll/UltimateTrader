@@ -157,7 +157,9 @@ public:
       m_smc_liq_min_touches = smc_liq_min_touches;
       m_smc_zone_max_age   = smc_zone_max_age;
       m_smc_use_htf_confluence = smc_use_htf_confluence;
-      m_smc_min_confluence = smc_min_confluence;
+      m_smc_min_confluence = smc_min_confluence;  // DEAD STORE (T0 2026-07-09): never read/compared anywhere —
+                                                  // the live SMC floor is hardcoded <40 in CSignalValidator.mqh:198.
+                                                  // Wire this before tuning InpSMCMinConfluence.
       m_enable_crash_detector = enable_crash_detector;
       m_enable_vol_regime  = enable_vol_regime;
       m_enable_momentum    = enable_momentum;

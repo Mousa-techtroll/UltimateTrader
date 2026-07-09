@@ -38,13 +38,17 @@ private:
    double            m_extension_atr_mult;    // ATR multiplier for Rubber Band extension (2.0)
    double            m_rubber_band_sl_atr;    // SL ATR multiplier (1.5)
    double            m_rubber_band_min_adx;   // Min ADX for Rubber Band (25.0)
-   double            m_rsi_ceiling;           // RSI ceiling (future use)
-   double            m_rsi_floor;             // RSI floor (future use)
-   int               m_max_spread;            // Max spread points (future use)
-   int               m_buffer_points;         // Buffer points (future use)
-   int               m_start_hour;            // Start hour GMT (future use)
-   int               m_end_hour;              // End hour GMT (future use)
-   int               m_donchian_period;       // Donchian period (future use)
+   // DEAD MEMBERS (T0 2026-07-09): the 7 "(future use)" members below are write-only —
+   // assigned in the ctor (:73-79) and never read. The InpCrash* inputs that plumb here
+   // (RSICeiling/RSIFloor/MaxSpread/BufferPoints/StartHour/EndHour/DonchianPeriod) tune
+   // nothing: no RSI band, spread cap, buffer, GMT time-box, or Donchian channel is applied.
+   double            m_rsi_ceiling;           // RSI ceiling (future use — never read)
+   double            m_rsi_floor;             // RSI floor (future use — never read)
+   int               m_max_spread;            // Max spread points (future use — never read)
+   int               m_buffer_points;         // Buffer points (future use — never read)
+   int               m_start_hour;            // Start hour GMT (future use — never read)
+   int               m_end_hour;              // End hour GMT (future use — never read)
+   int               m_donchian_period;       // Donchian period (future use — never read)
 
 public:
    //+------------------------------------------------------------------+

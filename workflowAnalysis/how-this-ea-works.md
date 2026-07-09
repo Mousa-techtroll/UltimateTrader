@@ -10,6 +10,8 @@
 >
 > Source-of-truth files this is built from (all verified against the `.mq5`/`.mqh` code): `trading-decision-flow.md` (the full decision graph), `explainer/TIMEFRAMES.md` (the timeframe map), and `explainer/E1–E4` (the per-subsystem write-ups).
 
+> **📏 Measured reality check (2026-07).** This guide describes the *mechanics as designed*. For what the bot *actually does* in a 7.5-year real-tick backtest, see **`entry-strategies-report.md`** (census: which strategies actually fire — several described below never do) and **`improvement-campaign-report.md`** (what was fixed or killed and why).
+
 ---
 
 ## 0. First, what is a "timeframe"? (and which ones this bot watches)
@@ -94,6 +96,8 @@ The bias is built from **three timeframes at once**:
 
 **How many scouts are on duty by default?** About **twelve**: four simple candle-shape scouts (Engulfing, Pin Bar, MA Cross, Displacement), the two range scouts (S3 RangeEdgeFade, S6 FailedBreakReversal), two breakout scouts (Volatility Breakout, Crash Breakout), and four multi-mode engines (Liquidity, Session, Expansion, Pullback-Continuation).
 
+> **⚠️ Honest correction (2026-07-09, measured — see `entry-strategies-report.md`).** "Twelve scouts" is true of *registration*, not of behavior. In the 7.5-year real-tick backtest (2019–2026H1), **5 of the 12 registered plugins produced zero candidates**: S3 RangeEdgeFade, Volatility Breakout, Displacement, the Liquidity engine, and the Session engine. Four of those five are mute *with their enable switches ON* — their internal conditions simply never fire on gold H1 (the Session engine is the exception: all four of its sub-modes ship disabled). Meanwhile **three bullish candlestick scouts — Pin Bar, Engulfing, MA Cross — account for 77% of all fills and 89% of profit**. The live book is effectively **7 scouts, dominated by 3**, not twelve.
+
 **The grade decides the risk.** Each idea is scored 0–10 and graded **A+ / A / B+ / B** (or rejected). A higher grade is allowed to risk a little more money (see §5).
 
 - **⚙️ Exact rule (scoring & tiers):** score from trend agreement, regime fit, macro alignment, pattern type and a choppiness check → A+ ≥ 8, A ≥ 7, B+ ≥ 6, else rejected. Tier sets base risk: A+ 1.5% / A 1.0% / B+ 0.75% / B 0.6%. *(`CSetupEvaluator.mqh:170-350`; `UltimateTrader_Inputs.mqh:45-48`)*
@@ -145,7 +149,7 @@ The bias is built from **three timeframes at once**:
 - **🕒 Timeframe: H1 (pure — no mixing).** All four modes read H1 candles, H1 ATR, and H1 RSI; structure (BOS/CHoCH) uses closed H1 `[1]/[2]`.
 - **⚙️ Exact rule:** e.g. Order-Block Retest = price re-enters a prior institutional candle's zone, recent H1 structure is bullish, and a rejection candle forms. Stands aside on news days; on volatile days only Displacement is allowed. *(`CLiquidityEngine.mqh:104-1209`)*
 
-**Session engine** — *trades the daily clock; two modes on by default: London Breakout and NY Continuation.* Both directions. (This engine also runs the bot's master GMT clock.)
+**Session engine** — *trades the daily clock — but **all four of its sub-modes ship disabled**, so on defaults this engine emits no signals at all.* (`InpSessionLondonBO`, `InpSessionNYCont`, `InpSessionSilverBullet`, `InpSessionLondonClose` all default `false`, marked "DISABLED: 0% WR" / negative-R at source — `UltimateTrader_Inputs.mqh:382-385`.) The engine stays registered because it also runs the bot's master GMT clock. *(Correction 2026-07-09: this guide previously claimed London Breakout and NY Continuation were on by default — that was false.)*
 - **🕒 Timeframe: clock (GMT) + H1 triggers + M15 for the Asian range / Silver-Bullet.** Each mode only fires inside its GMT window; the breakouts trigger on the closed H1 candle; the Asian range and the (off-by-default) Silver-Bullet mode use M15.
 - **⚙️ Exact rule:** London Breakout (GMT 8–10) = H1 candle opens below the M15-built Asian high but closes above it + 0.35×ATR with the H4 trend up. *(`CSessionEngine.mqh:460-1165`)*
 

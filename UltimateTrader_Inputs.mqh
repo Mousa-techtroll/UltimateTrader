@@ -14,6 +14,11 @@ input group "══════ SYMBOL PROFILE ══════"
 input ENUM_SYMBOL_PROFILE InpSymbolProfile = SYMBOL_PROFILE_XAUUSD; // Symbol profile (overrides filters/params for the selected instrument)
 
 //--- Group 1: SIGNAL SOURCE
+// ── LIVE-ONLY feature (T0 note 2026-07-09): this group drives the Telegram-CSV signal bridge
+// (CFileEntry + UltimateTrader.mq5 ~:2429). It is functional in live trading whenever
+// MQL5/Files/telegram_signals.csv exists, and inert in backtests ONLY because no CSV exists
+// there. Backtest silence does NOT mean these inputs are dead. (One true exception:
+// InpFileUseCSVRisk below has zero readers — see its line note.)
 input group "══════ SIGNAL SOURCE ══════"
 input ENUM_SIGNAL_SOURCE InpSignalSource = SIGNAL_SOURCE_BOTH;     // Signal source: PATTERN=engine only, FILE=CSV only, BOTH=engine+CSV
 input string InpSignalFile = "telegram_signals.csv";               // CSV signal file path (in MQL5/Files/)
@@ -27,7 +32,7 @@ input bool   InpFileSignalSkipConfirmation = true;                 // File signa
 input ENUM_FILE_SIGNAL_MODE InpFileSignalMode = FILE_MODE_OPPORTUNISTIC; // CSV parse mode: Strict/Opportunistic/BestEffort
 input bool   InpFileUseTP3 = true;              // Use TP3 from CSV as runner target (3-way split)
 input bool   InpFileTrailAfterTP2 = true;       // Enable ATR trailing for runner after TP2
-input bool   InpFileUseCSVRisk = false;         // Use CSV RiskPct (clamped) instead of fixed
+input bool   InpFileUseCSVRisk = false;         // DEAD (T0 2026-07-09): zero readers — superseded by InpFileLotMode=FILE_LOT_CSV_RISK (UltimateTrader.mq5:2440), which is what actually selects CSV risk
 input double InpFileCSVRiskMin = 0.4;          // CSV risk floor % (when InpFileUseCSVRisk=true)
 input double InpFileCSVRiskMax = 1.2;          // CSV risk ceiling % (when InpFileUseCSVRisk=true)
 input double InpFileMaxRiskPerTrade = 2.0;     // Hard cap % per trade for CSV signals (separate from pattern cap)
@@ -67,10 +72,10 @@ input bool   InpStructureBasedExit = false; // CONFIRMED IRRELEVANT: CHOPPY regi
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
 input bool   InpEnableWednesdayReduction = false; // Wednesday 0.85x: -$101 net across 4 years. Not worth it.
 input double InpWednesdayRiskMult = 0.85;        // Wednesday risk multiplier (0.85 = 15% reduction)
-input bool   InpEnableEquityCurveFilter = false;  // EC v1 DISABLED — replaced by EC v2 (CEquityCurveRiskController)
-input int    InpECFastPeriod = 20;                // (EC v1 legacy — unused)
-input int    InpECSlowPeriod = 50;                // (EC v1 legacy — unused)
-input double InpECReducedRiskMult = 0.75;         // (EC v1 legacy — unused)
+input bool   InpEnableEquityCurveFilter = false;  // EC v1 DEAD (T0 2026-07-09): zero readers anywhere — replaced by EC v2 (CEquityCurveRiskController); this toggle gates nothing
+input int    InpECFastPeriod = 20;                // (EC v1 legacy — DEAD, zero readers)
+input int    InpECSlowPeriod = 50;                // (EC v1 legacy — DEAD, zero readers)
+input double InpECReducedRiskMult = 0.75;         // (EC v1 legacy — DEAD, zero readers)
 input bool   InpEnableQualityTrendBoost = false;  // Quality-trend boost: $0 net across 4 years tested. Not worth complexity.
 input bool   InpEnableUniversalStall = false;    // CONFIRMED DEAD x2: -$4,189 even with exit fixes. Gold consolidates 8-12h before continuing.
 input int    InpStallHours = 8;                  // Hours without TP0 before stall close
@@ -100,8 +105,8 @@ input int    InpShortMRMacroMax = 0;         // MR short max macro score (wired:
 //--- Group 4: CONSECUTIVE LOSS PROTECTION
 input group "══════ CONSECUTIVE LOSS PROTECTION ══════"
 input bool   InpEnableLossScaling = true;    // Enable consecutive loss scaling — DEAD (never-constructed CQualityTierRiskStrategy; OPT-3 swept unreachable code; Action-3 DELETE 2026-07-08)
-input double InpLossLevel1Reduction = 0.75;  // Level 1 reduction (2-3 losses) — DEAD (same)
-input double InpLossLevel2Reduction = 0.50;  // Level 2 reduction (4+ losses) — DEAD (same)
+input double InpLossLevel1Reduction = 0.75;  // Level 1 reduction (2-3 losses) — DEAD (same: sole consumer is the never-constructed CQualityTierRiskStrategy)
+input double InpLossLevel2Reduction = 0.50;  // Level 2 reduction (4+ losses) — DEAD (same: sole consumer is the never-constructed CQualityTierRiskStrategy)
 
 //--- Group 5: TREND DETECTION
 input group "══════ TREND DETECTION ══════"
@@ -168,7 +173,7 @@ input int    InpSMCZoneMinStrength = 20;     // Min strength for zone to partici
 input int    InpSMCZoneRecycleAge = 400;     // Bars before dead zones can be recycled for new ones
 input double InpSMCTouchStrengthBoost = 10.0;// Strength boost when zone is touched/respected
 input bool   InpSMCUseHTFConfluence = false; // Use HTF confluence (wired: was hardcoded as false)
-input int    InpSMCMinConfluence = 55;       // Min confluence score
+input int    InpSMCMinConfluence = 55;       // DEAD (T0 2026-07-09): stored into CMarketContext.m_smc_min_confluence (:160) but never compared; the live SMC floor is hardcoded <40 in CSignalValidator.mqh:198 — WIRE or DELETE before tuning
 
 //--- Group 11: MOMENTUM FILTER
 input group "══════ MOMENTUM FILTER ══════"
@@ -201,31 +206,43 @@ input double InpWeakTrendTPCut = 0.55;       // Weak trend TP reduction
 //--- Group 14: VOLATILITY REGIME RISK
 input group "══════ VOLATILITY REGIME RISK ══════"
 input bool   InpEnableVolRegime = true;      // Enable vol regime adjustment
-input bool   InpVolRegimeYieldsToRegimeRisk = true; // Skip vol-regime when regime-risk scaler active (prevents double-reduction)
+input bool   InpVolRegimeYieldsToRegimeRisk = true; // DEAD (T0 2026-07-09): both readers (CQualityTierRiskStrategy.mqh:112,:338) live only inside the never-constructed CQualityTierRiskStrategy (Action-3 DELETE, UltimateTrader.mq5 ~:921)
 input double InpVolVeryLowThresh = 0.5;      // Very low threshold
 input double InpVolLowThresh = 0.7;          // Low threshold
 input double InpVolNormalThresh = 1.0;       // Normal threshold
 input double InpVolHighThresh = 1.3;         // High threshold
-input double InpVolVeryLowRisk = 1.0;        // Very low risk multiplier
-input double InpVolLowRisk = 0.92;           // Low risk multiplier
-input double InpVolNormalRisk = 1.0;         // Normal risk multiplier
-input double InpVolHighRisk = 0.85;          // High risk multiplier
-input double InpVolExtremeRisk = 0.65;       // Extreme risk multiplier
-input bool   InpEnableVolSLAdjust = true;    // Enable vol SL adjustment
-input double InpVolHighSLMult = 0.85;        // High vol SL multiplier
-input double InpVolExtremeSLMult = 0.70;     // Extreme vol SL multiplier
+// ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09, Sprint-1C hole): the 5 risk multipliers and the SL-adjust
+// family below ARE configured into CVolatilityRegimeManager (UltimateTrader.mq5 ~:568), but the
+// manager's outputs have ZERO live consumers — GetRiskMultiplier()'s only caller chain ends in
+// the never-constructed CQualityTierRiskStrategy (Action-3 DELETE, UltimateTrader.mq5 ~:921),
+// and GetSLMultiplier()/AdjustSLForVolatility() have NO call sites at all. Tuning these changes
+// nothing. The THRESHOLDS above stay LIVE: they drive GetVolatilityRegime() classification
+// consumed by CDayTypeRouter / CExpansionEngine / CDisplay. WIRE or DELETE.
+input double InpVolVeryLowRisk = 1.0;        // Very low risk multiplier — DEAD (see banner)
+input double InpVolLowRisk = 0.92;           // Low risk multiplier — DEAD (see banner)
+input double InpVolNormalRisk = 1.0;         // Normal risk multiplier — DEAD (see banner)
+input double InpVolHighRisk = 0.85;          // High risk multiplier — DEAD (see banner)
+input double InpVolExtremeRisk = 0.65;       // Extreme risk multiplier — DEAD (see banner)
+input bool   InpEnableVolSLAdjust = true;    // Enable vol SL adjustment — DEAD (see banner: GetSLMultiplier/AdjustSLForVolatility have no call sites)
+input double InpVolHighSLMult = 0.85;        // High vol SL multiplier — DEAD (see banner)
+input double InpVolExtremeSLMult = 0.70;     // Extreme vol SL multiplier — DEAD (see banner)
 
 //--- Group 15: CRASH DETECTOR
 input group "══════ CRASH DETECTOR (BEAR HUNTER) ══════"
 input bool   InpEnableCrashDetector = true;  // Enable crash detector
 input double InpCrashATRMult = 2.0;          // Crash ATR multiplier (wired: was hardcoded as 2.0)
-input double InpCrashRSICeiling = 45.0;      // RSI ceiling
-input double InpCrashRSIFloor = 25.0;        // RSI floor
-input int    InpCrashMaxSpread = 40;         // Max spread (points)
-input int    InpCrashBufferPoints = 15;      // Buffer points
-input int    InpCrashStartHour = 13;         // Start hour (GMT)
-input int    InpCrashEndHour = 17;           // End hour (GMT)
-input int    InpCrashDonchianPeriod = 24;    // Donchian period
+// ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09): the 7 inputs below plumb into CCrashBreakoutEntry ctor
+// params whose members are declared "(future use)" and NEVER read (CCrashBreakoutEntry.mqh:45-51
+// — write-only stores at :73-79). No RSI band, spread cap, buffer, time-box, or Donchian channel
+// is applied by the live Rubber Band logic. Only InpCrashATRMult and InpCrashSLATRMult are live.
+// WIRE or DELETE.
+input double InpCrashRSICeiling = 45.0;      // RSI ceiling — DEAD (see banner: never read)
+input double InpCrashRSIFloor = 25.0;        // RSI floor — DEAD (see banner: never read)
+input int    InpCrashMaxSpread = 40;         // Max spread (points) — DEAD (see banner: never read)
+input int    InpCrashBufferPoints = 15;      // Buffer points — DEAD (see banner: never read)
+input int    InpCrashStartHour = 13;         // Start hour (GMT) — DEAD (see banner: no time-box is applied)
+input int    InpCrashEndHour = 17;           // End hour (GMT) — DEAD (see banner: no time-box is applied)
+input int    InpCrashDonchianPeriod = 24;    // Donchian period — DEAD (see banner: never read)
 input double InpCrashSLATRMult = 1.5;        // SL ATR multiplier (wired: was hardcoded as 1.5)
 
 //--- Group 16: MACRO BIAS
@@ -248,11 +265,18 @@ input bool   InpEnableRangeBox = true;       // Enable Range Box
 input bool   InpEnableFalseBreakout = true;  // Enable False Breakout Fade (baseline)
 
 //--- Group 18: PATTERN SCORES (backtested 2023-2025)
+// ▼▼▼ DEAD GROUP (T0 2026-07-09): ALL 8 InpScoreBull*/InpScoreBear* inputs are placebo.
+// The pattern plugins stamp these into signal.qualityScore, but CSignalOrchestrator.mqh:791-792
+// OVERWRITES qualityScore for every non-engine signal with the {10/7/5/3} tier bucket from
+// CSetupEvaluator::GetQualityScore(quality) BEFORE the best-signal ranking. Zero downstream
+// readers of the original values survive (InpScoreBearMACross is not even referenced by
+// CMACrossEntry — the bearish leg was removed at source). WIRE (honor plugin scores in the
+// ranking) or DELETE (touches 4 plugin files); DEAD-marked instead to keep behavior identical.
 input group "══════ PATTERN SCORE ADJUSTMENTS ══════"
-input int    InpScoreBullEngulfing = 92;     // Bullish Engulfing score
-input int    InpScoreBullPinBar = 88;        // Bullish Pin Bar score
-input int    InpScoreBullMACross = 82;       // Bullish MA Cross score
-input int    InpScoreBearEngulfing = 42;     // Bearish Engulfing score (wired: was hardcoded as 42)
+input int    InpScoreBullEngulfing = 92;     // Bullish Engulfing score — DEAD (overwritten; see banner)
+input int    InpScoreBullPinBar = 88;        // Bullish Pin Bar score — DEAD (overwritten; see banner)
+input int    InpScoreBullMACross = 82;       // Bullish MA Cross score — DEAD (overwritten; see banner)
+input int    InpScoreBearEngulfing = 42;     // Bearish Engulfing score — DEAD (overwritten; see banner)
 input bool   InpEnableBearishEngulfing = false; // CONFIRMED DEAD: -35.3R/660 trades. Loses in ALL conditions. Even with exit fixes, 37% WR both up and down gold.
 input bool   InpBearPinBarAsiaOnly = false;    // CHANGED: GMT fix made London positive (+4.4R). Now using NY-block instead.
 input bool   InpBearPinBarBlockNY = true;     // NEW: Block Bearish Pin Bar in NY only (-1.9R). Asia+London both positive with GMT fix.
@@ -260,10 +284,10 @@ input bool   InpRubberBandAPlusOnly = true;   // CONFIRMED: B+ still -3.3R/19 tr
 input bool   InpBullMACrossBlockNY = true;    // CONFIRMED: NY still -1.9R/60 trades with GMT fix
 input bool   InpLongExtensionFilter = true;  // Momentum exhaustion: block longs rising >0.5%/72h when weekly EMA20 falling
 input double InpLongExtensionPct = 0.5;      // 72h rise threshold (only fires when weekly trend is falling)
-input int    InpScoreBearPinBar = 15;        // Bearish Pin Bar score (wired: was hardcoded as 15)
-input int    InpScoreBearMACross = 18;       // Bearish MA Cross score (wired: was hardcoded as 18)
-input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score
-input int    InpScoreBearLiqSweep = 38;      // Bearish Liquidity Sweep score (wired: was hardcoded as 38)
+input int    InpScoreBearPinBar = 15;        // Bearish Pin Bar score — DEAD (overwritten; see banner)
+input int    InpScoreBearMACross = 18;       // Bearish MA Cross score — DEAD (doubly so: unreferenced, bearish MA Cross removed at source)
+input int    InpScoreBullLiqSweep = 65;      // Bullish Liquidity Sweep score — DEAD (overwritten; see banner — and plugin not registered by default)
+input int    InpScoreBearLiqSweep = 38;      // Bearish Liquidity Sweep score — DEAD (overwritten; see banner — and plugin not registered by default)
 
 //--- Group 19: MARKET REGIME FILTERS
 input group "══════ MARKET REGIME FILTERS ══════"
