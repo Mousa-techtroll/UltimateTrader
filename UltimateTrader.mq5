@@ -205,7 +205,7 @@ bool IsBreakoutPattern(ENUM_PATTERN_TYPE pt)
 CEquityCurveRiskController *g_ecController = NULL;
 
 // Auto-scaling: adjust point-based distances for non-gold symbols
-// Gold reference price ~2000. Scale factor = symbol_price / 2000.
+// Gold reference price ~2000. Scale factor = anchor_price / 2000.
 // Silver at $30 → scale = 0.015, so 800pt min SL becomes 12pt ($0.12)
 double g_pointScale = 1.0;
 double g_scaledMinSLPoints;
@@ -217,13 +217,24 @@ double g_scaledBOEntryBuffer;
 void ComputePointScale()
 {
    g_pointScale = 1.0;
+   // TIER-1 (2026-07-09): the scale anchor is now an explicit config value
+   // (InpScaleAnchorPrice) instead of the FIRST TICK of the run. The legacy
+   // first-tick anchor froze every scaled floor to the run's start date —
+   // a 2019 start traded a $5.13 min-SL floor, a 2026 start $17.28, same
+   // config. Default 1282.43 = the 2019.01.01 first tick that ALL tuning is
+   // calibrated to (verified from tester journals: [AutoScale] Price: 1282.43
+   // | Scale: 0.6412 | MinSL: 513.0pts), so a 2019-start backtest is
+   // bit-identical. Set 0 to restore legacy first-tick behavior.
+   double scale_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+   bool   anchored    = (InpScaleAnchorPrice > 0);
+   if(anchored)
+      scale_price = InpScaleAnchorPrice;
    if(InpAutoScalePoints)
    {
-      double price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
-      if(price > 0)
+      if(scale_price > 0)
       {
          double gold_ref = 2000.0;
-         g_pointScale = price / gold_ref;
+         g_pointScale = scale_price / gold_ref;
          if(g_pointScale < 0.001) g_pointScale = 0.001;  // Floor
          if(g_pointScale > 10.0)  g_pointScale = 10.0;   // Cap
       }
@@ -235,7 +246,8 @@ void ComputePointScale()
    g_scaledTrailBEOffset    = InpTrailBEOffset * g_pointScale;
    g_scaledBOEntryBuffer    = InpBOEntryBuffer * g_pointScale;
 
-   Print("[AutoScale] Symbol: ", _Symbol, " | Price: ", SymbolInfoDouble(_Symbol, SYMBOL_BID),
+   Print("[AutoScale] Symbol: ", _Symbol,
+         " | Price: ", scale_price, (anchored ? " (fixed anchor)" : " (first tick)"),
          " | Scale: ", DoubleToString(g_pointScale, 4),
          " | MinSL: ", DoubleToString(g_scaledMinSLPoints, 1), "pts",
          " | TrailMove: ", DoubleToString(g_scaledMinTrailMovement, 1), "pts",

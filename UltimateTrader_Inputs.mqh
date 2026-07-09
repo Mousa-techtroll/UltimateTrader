@@ -122,6 +122,7 @@ input group "══════ STOP LOSS & ATR ══════"
 input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
 input double InpMinSLPoints = 800.0;         // Minimum SL distance (points) — auto-scaled for non-gold symbols
 input bool   InpAutoScalePoints = true;      // Auto-scale all point distances by symbol price (gold=reference)
+input double InpScaleAnchorPrice = 1282.43;  // TIER-1 (2026-07-09): fixed anchor for point scaling (was first-tick price — start-date-dependent: $5.13 vs $17.28 floors for 2019 vs 2026 starts). 1282.43 = the 2019.01 first tick ALL tuning is calibrated to. 0 = legacy first-tick behavior.
 input double InpMinSLRangePct = 0.0;         // FIX-1: min SL as fraction of trailing 48h H1 range (0 = off = baseline-identical). Replaces the frozen first-tick $-floor pathology (InpMinSLPoints x first-tick price scale = $5.13 for a 2019 start, held to $3,750 gold).
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
 input double InpMinRRShortCrash = 1.30;      // REVERTED to match default (0.50 caused butterfly effects)

@@ -49,7 +49,13 @@ public:
       ENUM_VOLATILITY_REGIME vol_regime = m_context.GetVolatilityRegime();
       bool vol_expanding = m_context.IsVolatilityExpanding();
       double bb_width = m_context.GetBBWidth();
-      double atr_current = m_context.GetATRCurrent();
+      // TIER-1 (2026-07-09), ACTION-3b family: matched H1 ATR pair — GetATRCurrent() is H4
+      // and skewed this ratio ~2.0 vs the 1.0-centered thresholds below (1.5 / 1.2 legs).
+      // Last inheritor of the pairing bug fixed 2026-07-08 in CRegimeRiskScaler /
+      // CTradeOrchestrator / CMarketContext (see AB_TEST_LOG.md ACTION-3a entry). This
+      // router is gated behind InpEnableMultiStrategy=false on prod, so the binding
+      // config is byte-identical.
+      double atr_current = m_context.GetATRH1Current();
       double atr_average = m_context.GetATRAverage();
       double atr_ratio = (atr_average > 0) ? atr_current / atr_average : 1.0;
 
