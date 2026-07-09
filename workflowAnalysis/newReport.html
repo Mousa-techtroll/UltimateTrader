@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UltimateTrader — Clean-Room Evaluation</title>
+<meta name="description" content="Independent, source-only evaluation of the UltimateTrader MT5 EA: edge, logic, and implementation — what it advertises vs. what it actually runs.">
+<style>
+  :root{
+    --ground:#F5F6F8; --card:#FFFFFF; --ink:#14171D; --muted:#59616D; --faint:#8A93A0;
+    --hair:#E4E7EC; --hair-2:#EEF0F3;
+    --brand:#28344B;          /* structural slate-indigo */
+    --bronze:#9C7A24;         /* subject signature (gold/XAUUSD) — used sparingly */
+    --crit:#A8281F; --high:#BF4A1C; --med:#C98A1E; --low:#6B7280;
+    --good:#1E7A52;
+    --crit-bg:#F8EAE8; --high-bg:#FAEDE5; --med-bg:#FAF3E2; --low-bg:#EFF1F3; --good-bg:#E7F2EC;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --serif:"Iowan Old Style","Charter",Georgia,"Times New Roman",serif;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --measure:68ch;
+  }
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{
+    font-family:var(--sans); color:var(--ink); background:var(--ground);
+    font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+  }
+  .col{max-width:1040px; margin:0 auto; padding:0 24px}
+  .reading{max-width:var(--measure)}
+  a{color:var(--brand); text-decoration:none; border-bottom:1px solid color-mix(in srgb,var(--brand) 30%,transparent)}
+  a:hover{border-bottom-color:var(--brand)}
+  a:focus-visible{outline:2px solid var(--bronze); outline-offset:2px; border-radius:2px}
+  code,.mono{font-family:var(--mono); font-size:.86em; background:var(--hair-2); padding:.06em .36em; border-radius:4px; color:#2A2F38; white-space:nowrap}
+  h1,h2,h3{font-family:var(--serif); font-weight:600; text-wrap:balance; letter-spacing:-.01em}
+  .eyebrow{font-family:var(--sans); font-size:11.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--bronze); margin:0 0 10px}
+
+  /* ---------- nav ---------- */
+  .nav{position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--ground) 86%,transparent); backdrop-filter:saturate(1.1) blur(8px); border-bottom:1px solid var(--hair)}
+  .nav .col{display:flex; gap:4px; align-items:center; height:48px; overflow-x:auto; scrollbar-width:none}
+  .nav .col::-webkit-scrollbar{display:none}
+  .nav b{font-family:var(--serif); font-size:14px; color:var(--ink); margin-right:14px; white-space:nowrap}
+  .nav a{font-size:12.5px; color:var(--muted); border:0; padding:5px 9px; border-radius:6px; white-space:nowrap; font-weight:500}
+  .nav a:hover{color:var(--ink); background:var(--hair-2)}
+
+  /* ---------- masthead ---------- */
+  .mast{padding:64px 0 40px}
+  .mast .kicker{font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  .mast h1{font-size:clamp(34px,6vw,56px); line-height:1.04; margin:14px 0 0}
+  .mast .rule{height:3px; width:120px; background:linear-gradient(90deg,var(--bronze),color-mix(in srgb,var(--bronze) 20%,transparent)); margin:22px 0 20px; border-radius:2px}
+  .mast .sub{font-size:18px; color:var(--muted); max-width:60ch; margin:0}
+  .mast .meta{display:flex; flex-wrap:wrap; gap:8px 8px; margin-top:24px}
+  .pill{font-size:12px; font-weight:600; color:var(--brand); background:#fff; border:1px solid var(--hair); padding:5px 11px; border-radius:999px}
+  .pill.warn{color:var(--high); border-color:color-mix(in srgb,var(--high) 35%,var(--hair))}
+  .pill.ok{color:var(--good); border-color:color-mix(in srgb,var(--good) 35%,var(--hair))}
+
+  /* ---------- generic section ---------- */
+  section{padding:46px 0; border-top:1px solid var(--hair)}
+  section > .col > h2{font-size:clamp(24px,3.4vw,32px); margin:0 0 6px}
+  .lede{font-size:17px; color:var(--muted); margin:0 0 26px; max-width:var(--measure)}
+  p{margin:0 0 16px}
+  .reading p{max-width:var(--measure)}
+
+  /* ---------- verdict card ---------- */
+  .verdict{background:var(--brand); color:#EDEFF3; border-radius:14px; padding:30px 30px 26px; margin:6px 0 0}
+  .verdict .eyebrow{color:#C9B681}
+  .verdict h2{color:#fff; font-size:26px; margin:0 0 18px}
+  .vrow{display:grid; grid-template-columns:120px 1fr; gap:18px; padding:16px 0; border-top:1px solid rgba(255,255,255,.14)}
+  .vrow:first-of-type{border-top:0}
+  .vrow .lab{font-family:var(--sans); font-size:12px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:#C9B681; padding-top:3px}
+  .vrow p{margin:0; color:#DEE2E8; font-size:15.5px; line-height:1.58}
+  @media(max-width:640px){.vrow{grid-template-columns:1fr; gap:6px}}
+
+  /* ---------- stat strip ---------- */
+  .stats{display:grid; grid-template-columns:repeat(6,1fr); gap:14px; margin-top:28px}
+  .stat{background:var(--card); border:1px solid var(--hair); border-radius:10px; padding:16px 14px}
+  .stat .n{font-family:var(--serif); font-size:30px; line-height:1; font-variant-numeric:tabular-nums; color:var(--ink)}
+  .stat .n.good{color:var(--good)} .stat .n.high{color:var(--high)} .stat .n.bronze{color:var(--bronze)}
+  .stat .l{font-size:12px; color:var(--muted); margin-top:8px; line-height:1.35}
+  @media(max-width:880px){.stats{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+
+  /* ---------- chips ---------- */
+  .chip{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:700; letter-spacing:.02em; padding:3px 9px; border-radius:6px; white-space:nowrap; vertical-align:middle}
+  .c-crit{background:var(--crit-bg); color:var(--crit)} .c-high{background:var(--high-bg); color:var(--high)}
+  .c-med{background:var(--med-bg); color:#9A6B0E} .c-low{background:var(--low-bg); color:var(--low)}
+  .c-good{background:var(--good-bg); color:var(--good)} .c-dead{background:#ECEAF0; color:#6E6685}
+  .impact{display:inline-flex; gap:3px; align-items:center; vertical-align:middle}
+  .dot{width:9px; height:9px; border-radius:50%; background:var(--hair); display:inline-block}
+  .dot.on{background:var(--high)} .impact.m0 .dot.on{background:var(--low)}
+  .impact .ilab{font-size:11px; color:var(--muted); margin-left:5px; font-weight:600}
+
+  /* ---------- tables ---------- */
+  .scroll-x{overflow-x:auto; border:1px solid var(--hair); border-radius:12px; background:var(--card)}
+  table{border-collapse:collapse; width:100%; font-size:14px}
+  th,td{text-align:left; padding:12px 14px; border-bottom:1px solid var(--hair-2); vertical-align:top}
+  thead th{background:#FAFBFC; font-size:11.5px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); position:sticky; top:0}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:#FBFBFC}
+  td .num{font-variant-numeric:tabular-nums; font-weight:600}
+  .strat{font-weight:600}
+  .sub-note{color:var(--muted); font-size:13px}
+  .sevcell{white-space:nowrap}
+
+  /* score meter */
+  .score{display:inline-flex; align-items:center; gap:8px; font-variant-numeric:tabular-nums}
+  .meter{width:54px; height:6px; border-radius:3px; background:var(--hair); overflow:hidden}
+  .meter > i{display:block; height:100%; border-radius:3px}
+
+  /* ---------- inert table ---------- */
+  .inert td:first-child{font-weight:600; width:32%}
+  .inert .real{color:#4A515C}
+
+  /* ---------- finding cards ---------- */
+  .finding{background:var(--card); border:1px solid var(--hair); border-left-width:4px; border-radius:10px; padding:20px 22px; margin:14px 0}
+  .finding.s-high{border-left-color:var(--high)} .finding.s-med{border-left-color:var(--med)}
+  .finding.s-crit{border-left-color:var(--crit)} .finding.s-low{border-left-color:var(--low)}
+  .finding .top{display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-bottom:10px}
+  .finding .fid{font-family:var(--mono); font-size:12px; font-weight:700; color:var(--brand); background:var(--hair-2); padding:2px 8px; border-radius:5px}
+  .finding h3{font-size:17.5px; margin:0; flex:1 1 60%; min-width:240px; line-height:1.3}
+  .finding .body{font-size:14.5px; color:#39404B; line-height:1.6}
+  .finding .body p{max-width:none; margin:0 0 10px}
+  .finding .body p:last-child{margin-bottom:0}
+  .kv{display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:13.5px; margin:10px 0 0; padding-top:12px; border-top:1px dashed var(--hair)}
+  .kv dt{color:var(--faint); font-weight:600; font-size:12px; letter-spacing:.03em; text-transform:uppercase; padding-top:1px}
+  .kv dd{margin:0; color:#39404B}
+
+  .axis-note{display:flex; gap:14px; flex-wrap:wrap; background:#FBFAF6; border:1px solid color-mix(in srgb,var(--bronze) 22%,var(--hair)); border-radius:10px; padding:14px 18px; font-size:13.5px; color:#4A515C; margin:0 0 22px}
+  .axis-note b{color:var(--ink)}
+
+  /* contradiction list */
+  .contra{background:var(--card); border:1px solid var(--hair); border-radius:10px; padding:0; overflow:hidden; margin-top:4px}
+  .contra .row{display:grid; grid-template-columns:30px 1fr; gap:14px; padding:16px 18px; border-top:1px solid var(--hair-2)}
+  .contra .row:first-child{border-top:0}
+  .contra .id{font-family:var(--serif); font-size:18px; color:var(--bronze); font-weight:600}
+  .contra .q{font-weight:600; margin:0 0 4px; font-size:15px}
+  .contra .a{margin:0; font-size:14px; color:#4A515C}
+  .contra .a .tag{font-weight:700; color:var(--good)}
+
+  /* recommendations */
+  .recs{counter-reset:r; padding:0; margin:6px 0 0; list-style:none}
+  .recs > li{counter-increment:r; position:relative; background:var(--card); border:1px solid var(--hair); border-radius:10px; padding:18px 20px 18px 64px; margin:12px 0}
+  .recs > li::before{content:counter(r); position:absolute; left:18px; top:16px; width:30px; height:30px; border-radius:8px; background:var(--brand); color:#fff; font-family:var(--serif); font-size:16px; display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums}
+  .recs h3{font-size:16px; margin:0 0 5px}
+  .recs p{font-size:14px; color:#4A515C; margin:0; max-width:none}
+  .recs .kill{display:block; margin-top:8px; font-size:13px; color:var(--muted)}
+  .recs .kill b{color:var(--high)}
+
+  .callout{background:var(--good-bg); border:1px solid color-mix(in srgb,var(--good) 28%,var(--hair)); border-radius:10px; padding:16px 18px; font-size:14.5px; color:#2A4A3B; margin:0 0 4px}
+  .callout.warn{background:var(--high-bg); border-color:color-mix(in srgb,var(--high) 28%,var(--hair)); color:#6A3414}
+
+  /* footer */
+  footer{border-top:1px solid var(--hair); padding:34px 0 60px; color:var(--muted); font-size:13px}
+  footer .col{display:flex; flex-wrap:wrap; gap:20px; justify-content:space-between}
+  footer b{color:var(--ink)}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin:18px 0 0; font-size:12.5px; color:var(--muted)}
+  .legend span{display:inline-flex; align-items:center; gap:6px}
+  .sw{width:12px; height:12px; border-radius:3px; display:inline-block}
+
+  @media (prefers-reduced-motion:no-preference){
+    .finding,.stat{transition:box-shadow .2s ease}
+    .finding:hover{box-shadow:0 2px 14px rgba(20,23,29,.06)}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<nav class="nav"><div class="col">
+  <b>Clean-Room Eval</b>
+  <a href="#summary">Summary</a>
+  <a href="#inert">Inert Features</a>
+  <a href="#edge">Edge</a>
+  <a href="#findings">Findings</a>
+  <a href="#crosscut">Cross-Cutting</a>
+  <a href="#contradictions">Contradictions</a>
+  <a href="#recs">Recommendations</a>
+  <a href="#method">Method</a>
+</div></nav>
+
+<header class="mast"><div class="col">
+  <div class="kicker">UltimateTrader · XAUUSD H1 · MT5 / MQL5 Expert Advisor</div>
+  <h1>What it advertises<br>vs. what it actually runs.</h1>
+  <div class="rule"></div>
+  <p class="sub">An independent, from-scratch evaluation across three axes — trading edge, logic correctness, and implementation — built <strong>only from source</strong>, reading no existing docs, reports, or commit history.</p>
+  <div class="meta">
+    <span class="pill">Clean-room · source-only</span>
+    <span class="pill">Static edge grading · no new backtests</span>
+    <span class="pill">19 audit units · 2 agent tracks</span>
+    <span class="pill ok">Compile: 0 errors · 16 warnings</span>
+    <span class="pill warn">0 CRITICAL · 7 HIGH</span>
+  </div>
+</div></header>
+
+<!-- ============ EXECUTIVE SUMMARY ============ -->
+<section id="summary"><div class="col">
+  <div class="verdict">
+    <p class="eyebrow">The two-sentence verdict</p>
+    <h2>One correlated long-gold book, defended by stops — not by the adaptive logic the code appears to contain.</h2>
+    <div class="vrow">
+      <div class="lab">Edge</div>
+      <p>The real realized edge is a single regime-conditioned bet: buy gold dips in an uptrend through a handful of near-redundant, tie-biased long triggers (~75% of trades), plus a genuinely diversifying death-cross-gated mean-reversion short that pays only in a sustained gold downtrend and sleeps for years otherwise — a thin, small-positive-expectancy long-continuation factor with dormant short insurance, measured on unrealistic zero-slippage, in-sample-curated fills.</p>
+    </div>
+    <div class="vrow">
+      <div class="lab">Risk</div>
+      <p>The risk machine is net-conservative and intact where it matters — correct fixed-fractional sizing, an EC-v3 graded drawdown reducer, a 3% daily halt, a 5% portfolio cap, and per-position stops — but a broad band of <em>adaptive</em> protection is silently asleep (uninitialized risk plugin, dead exit plugins, an unreachable B tier, RSI frozen at 50, a vol-inflating ATR mismatch that only ever shaves size). The EA under-risks rather than over-risks.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="n good">0</div><div class="l">CRITICAL defects (wrong-direction / capital-loss / crash)</div></div>
+    <div class="stat"><div class="n high">7</div><div class="l">HIGH findings — but none with realized materiality&nbsp;3</div></div>
+    <div class="stat"><div class="n bronze">1<span style="font-size:18px;color:var(--muted)"> / 12</span></div><div class="l">Strategies clearing the positive-edge gate</div></div>
+    <div class="stat"><div class="n">~10</div><div class="l">Advertised subsystems inert or dead on prod</div></div>
+    <div class="stat"><div class="n good">16</div><div class="l">Compile warnings — exactly baseline, all cosmetic</div></div>
+    <div class="stat"><div class="n">83<span style="font-size:18px;color:var(--muted)"> / 25</span></div><div class="l">Live vs. dead <code>.mqh</code> files (no dead path wired live)</div></div>
+  </div>
+
+  <div class="reading" style="margin-top:30px">
+    <p>On the production configuration, UltimateTrader presents as an ~11-strategy, multi-layer SMC and adaptive-risk system. Read from source, it <strong>operates as something much smaller</strong>: one correlated long-gold trend-continuation bet (Engulfing / PinBar / MA-Cross plus the long-biased engines) and <strong>one genuinely diversifying conditional short</strong> (the D1 death-cross "Rubber-Band" fade), sized by an inline fallback, gated mainly by regime, a point-threshold quality tier, and the fact that the registered plugin set is long-only.</p>
+    <p>The defining theme of this evaluation is the <strong>gap between surface and operation</strong>. A large fraction of the advertised sophistication never executes on prod — the SMC confluence floor, the RSI/momentum gate, the adaptive risk-scaling steps, the HTF short-veto, breakout-probation, the SETUP_B tier, and most consequentially the <strong>entire exit-plugin layer</strong>. None of this corrupts trade direction or oversizes a position, which is why the register tops out at HIGH and not CRITICAL — but it means the EA is honestly described by far less than its codebase implies.</p>
+  </div>
+</div></section>
+
+<!-- ============ INERT FEATURES ============ -->
+<section id="inert"><div class="col">
+  <p class="eyebrow">The spine of the report</p>
+  <h2>Advertised, but inert on production</h2>
+  <p class="lede">Ten subsystems that the codebase appears to implement do not actually run on the production config. This is the single most important finding cluster — not because any one is a dangerous bug, but because together they mean the operative EA is far simpler than it looks.</p>
+  <div class="scroll-x">
+    <table class="inert">
+      <thead><tr><th>Advertised feature</th><th>Reality on production</th><th>Finding</th></tr></thead>
+      <tbody>
+        <tr><td>Exit plugins — structure-aware, max-age, daily-loss-close, weekend</td><td class="real">All 4 plugins <code>new</code>'d &amp; registered but <strong>never <code>Initialize()</code>d</strong> → <code>CheckExitPlugins</code> is a permanent no-op</td><td><span class="chip c-high">RXT-02</span></td></tr>
+        <tr><td>SMC confluence floor (40 hard / 60 gate)</td><td class="real"><code>ConfigureSMC</code> never called → <code>m_smc_enabled=false</code> → returns 50/PASS for every signal</td><td><span class="chip c-med">FILT-01</span></td></tr>
+        <tr><td>RSI-extreme gating + "+3 quality points"</td><td class="real">Momentum filter disabled → <code>GetCurrentRSI()</code> returns a hardcoded <strong>50</strong> for every signal</td><td><span class="chip c-high">FILT-04</span></td></tr>
+        <tr><td>Adaptive risk-scaling (loss / vol / short / health / engine-weight)</td><td class="real">Risk plugin never initialized → inline fallback sizes trades (lots identical; scaling steps never run)</td><td><span class="chip c-low">RISK-01</span></td></tr>
+        <tr><td>HTF short-veto</td><td class="real">Gated on <code>routed_engine</code> → never fires on the prod (long-only, multi-strategy off) path</td><td><span class="chip c-low">ORC-04</span></td></tr>
+        <tr><td>Breakout-probation double-multiplier</td><td class="real">Confirmed math error, but on a dead path (probation off)</td><td><span class="chip c-low">ORC-01</span></td></tr>
+        <tr><td>SETUP_B risk tier</td><td class="real">Unreachable — <code>InpPointsBSetup=7</code> sits behind the A check (≥7); B+ (6) is the effective floor</td><td><span class="chip c-med">RXT-14</span></td></tr>
+        <tr><td>Macro DXY / VIX intermarket bias</td><td class="real">Symbols rarely resolve in tester → degrades to a ±2 price-proxy off gold's own EMAs (a redundant trend echo)</td><td><span class="chip c-med">FILT-09</span></td></tr>
+        <tr><td>Multi-strategy router + its 4 engines</td><td class="real">Off by default (<code>InpEnableMultiStrategy=false</code>)</td><td><span class="chip c-dead">By design</span></td></tr>
+        <tr><td>LiquiditySweep / SessionBreakout / RangeBox / FalseBreakoutFade plugins</td><td class="real">Instantiated &amp; deleted, but never registered or initialized</td><td><span class="chip c-dead">PAT-09</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div></section>
+
+<!-- ============ EDGE ============ -->
+<section id="edge"><div class="col">
+  <p class="eyebrow">Track B — trading edge (static / structural)</p>
+  <h2>Edge-ranked strategy table</h2>
+  <p class="lede">Each live strategy graded on a 5-axis rubric (structural fidelity · directional justification · filter soundness · look-ahead cleanliness · robustness). Positive edge is credited only when fidelity ≥ 1 <em>and</em> look-ahead = 2 <em>and</em> robustness ≥ 1. The <code>all_trades_v15.csv</code> record is a Model-1 artifact, used as a directional cross-reference only — never as the verdict.</p>
+  <div class="scroll-x">
+    <table>
+      <thead><tr><th>Strategy</th><th>Edge class</th><th>Score</th><th>Look-ahead</th><th>Credited</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="strat">CrashBreakout</span> <span class="sub-note">— Rubber-Band, short-only</span></td>
+          <td><span class="chip c-good">Real structural edge</span></td>
+          <td><span class="score"><span class="meter"><i style="width:90%;background:var(--good)"></i></span><b class="num">9</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="chip c-good">✦ Yes</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">OB-Retest</span> <span class="sub-note">— Liquidity engine</span></td>
+          <td><span class="chip c-good">Real edge — dormant</span></td>
+          <td><span class="score"><span class="meter"><i style="width:70%;background:var(--good)"></i></span><b class="num">7</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">Inert (0 trades)</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">FailedBreakReversal</span> <span class="sub-note">— S6</span></td>
+          <td><span class="chip c-low">No-edge-on-gold</span></td>
+          <td><span class="score"><span class="meter"><i style="width:70%;background:var(--med)"></i></span><b class="num">7</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No — measured loser (−1.65R)</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">Engulfing</span> <span class="sub-note">— bull, long-only</span></td>
+          <td><span class="chip c-low">Naive / indicator</span></td>
+          <td><span class="score"><span class="meter"><i style="width:60%;background:var(--med)"></i></span><b class="num">6</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">Institutional-Candle BO</span> <span class="sub-note">— Expansion engine</span></td>
+          <td><span class="chip c-low">Naive / indicator</span></td>
+          <td><span class="score"><span class="meter"><i style="width:60%;background:var(--med)"></i></span><b class="num">6</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No (n=4)</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">PinBar</span> <span class="sub-note">— bull, long-only</span></td>
+          <td><span class="chip c-low">Naive / indicator</span></td>
+          <td><span class="score"><span class="meter"><i style="width:50%;background:var(--med)"></i></span><b class="num">5</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No — location filter disabled</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">MA-Cross</span> <span class="sub-note">— bull, long-only</span></td>
+          <td><span class="chip c-low">Naive / lagging</span></td>
+          <td><span class="score"><span class="meter"><i style="width:50%;background:var(--med)"></i></span><b class="num">5</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No — SMA mislabeled "EMA"; NY block fit to n=60</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">RangeEdgeFade</span> <span class="sub-note">— S3</span></td>
+          <td><span class="chip c-med">Curve-fit / fragile</span></td>
+          <td><span class="score"><span class="meter"><i style="width:50%;background:var(--med)"></i></span><b class="num">5</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No — 0 fires</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">Displacement</span> <span class="sub-note">— Liquidity engine mode</span></td>
+          <td><span class="chip c-high">Look-ahead-dependent</span></td>
+          <td><span class="score"><span class="meter"><i style="width:40%;background:var(--high)"></i></span><b class="num">4</b></span></td>
+          <td><span class="chip c-high">Quarantined (0)</span></td>
+          <td><span class="sub-note">No — W1/D1 repaint gate</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">PullbackContinuation</span> <span class="sub-note">— PBC</span></td>
+          <td><span class="chip c-med">Naive / curve-fit</span></td>
+          <td><span class="score"><span class="meter"><i style="width:40%;background:var(--med)"></i></span><b class="num">4</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No — 0 fires</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">CDisplacementEntry</span> <span class="sub-note">— discrete plugin</span></td>
+          <td><span class="chip c-med">Curve-fit / fragile</span></td>
+          <td><span class="score"><span class="meter"><i style="width:40%;background:var(--med)"></i></span><b class="num">4</b></span></td>
+          <td><span class="chip c-good">Clean</span></td>
+          <td><span class="sub-note">No — <code>m_context=NULL</code>, gates dead</span></td>
+        </tr>
+        <tr>
+          <td><span class="strat">Session engine</span> <span class="sub-note">— state clock</span></td>
+          <td><span class="sub-note">Emits zero signals</span></td>
+          <td><span class="sub-note">—</span></td>
+          <td><span class="sub-note">—</span></td>
+          <td><span class="sub-note">n/a</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="reading" style="margin-top:24px">
+    <div class="callout"><strong>Only one strategy clears the positive-edge gate</strong> — the Rubber-Band conditional short (9/10). Its D1 death-cross gate is the architecturally correct way to short a structurally-bullish asset: it arms only once gold itself has confirmed a downtrend, then fades overextension to EMA21. The catch is that it is <strong>episodic</strong> — essentially all of its positive R came from a single 2021H2–2022 window, with zero trades in 2019, 2020, 2024, and 2025. It is regime insurance, not a workhorse.</div>
+    <p style="margin-top:18px"><strong>OB-Retest</strong> is the only other genuinely structural mode — a real triple AND-gate (order-block zone ∧ same-direction BOS/CHoCH ∧ rejection), all on closed bars, and notably it does <em>not</em> call the look-ahead helpers that quarantine the Displacement mode. But it fired zero trades in the artifact. That inertness is <strong>structural starvation</strong> (the conjunction is rare, and it loses the strict-<code>&gt;</code> tie-rank at its fixed 82/80 score) rather than a config-off choice — so it cannot be assumed beneficial without an isolation run.</p>
+  </div>
+</div></section>
+
+<!-- ============ FINDINGS ============ -->
+<section id="findings"><div class="col">
+  <p class="eyebrow">Track A — implementation &amp; logic</p>
+  <h2>Findings register</h2>
+  <div class="axis-note reading">
+    <div><b>Two axes, read together.</b> <b>Severity</b> grades the code defect in isolation. <b>Realized impact (0–3)</b> grades how much it actually moved P&amp;L or risk on the production config. The signature result of this audit is that several HIGH-severity findings carry <b>impact 0–1</b> — because they sit on dead, dormant, or zero-firing paths.</div>
+  </div>
+
+  <p class="eyebrow" style="color:var(--high)">High severity</p>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">RXT-02</span><h3>The entire exit-plugin layer never initializes — <code>CheckExitPlugins</code> is a permanent no-op</h3>
+      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
+    <div class="body">
+      <p>All four live exit plugins — <code>CDailyLossHaltExit</code>, <code>CWeekendCloseExit</code>, <code>CMaxAgeExit</code>, and <code>CRegimeAwareExit</code> (the only structure-aware exit) — are constructed and registered, but <code>Initialize()</code> is never called on any of them. The base constructor leaves <code>m_isInitialized=false</code>, so every <code>CheckForExitSignal</code> early-returns on its guard. Managed exits never fire: no regime/macro-opposition exit, no 72-hour max-age close, no daily-loss <em>position</em> close.</p>
+      <p><strong>Why HIGH and not CRITICAL:</strong> three backstops survive — per-position broker stop-losses are intact, weekend gap risk has a coordinator-native closer, and <code>CanTrade()</code> still blocks <em>new</em> entries on a daily loss. It is a capital-protection gap, not an edge-defining one.</p>
+      <dl class="kv">
+        <dt>Location</dt><dd><code>Include/ExitPlugins/*</code> · base <code>CTradeStrategy.mqh:30</code> · guard <code>CMaxAgeExit.mqh:77</code> · call-site <code>CPositionCoordinator.mqh:3084</code> · backstop <code>:1712–1723</code></dd>
+        <dt>Verified</dt><dd>Confirmed by independent cold re-derivation (grep of every <code>Initialize</code> call-site)</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">FILT-04</span><h3>RSI is frozen at 50 — the momentum filter it is sourced from is disabled</h3>
+      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
+    <div class="body">
+      <p>RSI is sole-sourced from <code>CMomentumFilter</code>, which is off on prod (<code>InpEnableMomentum=false</code>). With no alternate handle, <code>GetCurrentRSI()</code> returns a hardcoded <strong>50</strong> for every signal. This silently kills both the validator's RSI-extreme exceptions and the <code>CSetupEvaluator</code> "+3 quality points for extreme RSI."</p>
+      <p>The effect is one-directional and conservative: the validator becomes <em>stricter</em>, and quality tiers (hence risk %) <em>deflate</em>. It changes which trades fire and at what size, but never corrupts direction. Note that the per-tier expectancy seen in the CSV was produced under this RSI-blind scoring.</p>
+      <dl class="kv">
+        <dt>Touches</dt><dd><code>CMomentumFilter</code> → <code>GetCurrentRSI()</code> → <code>CSignalValidator</code> &amp; <code>CSetupEvaluator</code></dd>
+        <dt>Bears on</dt><dd>WT-5 (sizing) and the per-tier expectancy WT-1/WT-2 read off the CSV</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">CTX-10</span><h3>ATR units mismatch in the live risk-multiplier stack (H4 current ÷ H1 average)</h3>
+      <span class="chip c-high">HIGH</span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 1 · under-risk</span></span></div>
+    <div class="body">
+      <p><code>GetATRCurrent()</code> returns an <strong>H4</strong> ATR (from <code>CRegimeClassifier</code>) while <code>GetATRAverage()</code> returns an <strong>H1</strong> ATR (from <code>CVolatilityRegimeManager</code>). That mismatched current/average pair feeds the EC-v3 volatility controller and two other consumers — so the vol ratio reads systematically high.</p>
+      <p><strong>Direction matters:</strong> the EC-v3 vol layer only ever <em>reduces</em> size, floored at 0.90. So the mismatch produces a slight, systematic <em>under</em>-risk — it never over-sizes. A real units bug with a conservative consequence.</p>
+      <dl class="kv">
+        <dt>Location</dt><dd><code>CRegimeClassifier.mqh:106</code> (H4) · <code>CVolatilityRegimeManager:182/390</code> (H1) · consumed at <code>CTradeOrchestrator.mqh:398</code>, <code>CRegimeRiskScaler:181</code>, <code>CDayTypeRouter:53</code></dd>
+        <dt>Status</dt><dd>Confirmed active (<code>InpEnableECv2</code> &amp; <code>InpEnableRegimeRisk</code> true)</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">ENG-01 / ENG-02 / WT3-01</span><h3>Displacement mode hard-gates on a forming weekly bar — repaint-instability</h3>
+      <span class="chip c-high">HIGH <span style="font-weight:600">code</span></span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 0 · latent</span></span></div>
+    <div class="body">
+      <p>In <code>CLiquidityEngine</code>'s Displacement mode, <code>ScoreLiquidityLevel</code> reads the forming weekly bar <code>iHigh/iLow(…,PERIOD_W1,0)</code> and feeds it into a <strong>hard gate</strong> (<code>liq_score &gt;= 2</code>); <code>GetLocationPenalty</code> additionally reads the forming daily bar <code>(…,PERIOD_D1,0)</code> into the score.</p>
+      <p><strong>Adjudication of the census contradiction:</strong> this is <em>not</em> a future-data leak — a forming-HTF running extreme read at H1-bar-open is a known-now value. But because that weekly extreme keeps moving as the week develops, using it as a hard gate is a genuine <strong>repaint-instability</strong>: the same setup evaluated on different H1 bars within the week can pass or fail the gate. Realized impact is <strong>zero today</strong> because the whole Liquidity engine fired no trades — but it is a latent landmine that must be fixed (shift <code>0→1</code>) before the mode can be graded in an isolation test.</p>
+      <dl class="kv">
+        <dt>Location</dt><dd>W1 read <code>CLiquidityEngine.mqh:1498–1499</code> → gate <code>:587/:690</code>; D1 read <code>:1519–1520</code> (score-only) <code>:651–652/:754–755</code></dd>
+        <dt>Fix</dt><dd>One-line shift per read; would un-quarantine the mode</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">EXE-01</span><h3>Netting partial-fill ticket bind desync</h3>
+      <span class="chip c-high">HIGH</span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 1</span></span></div>
+    <div class="body">
+      <p>On a netting account, a partial fill can desync the ticket bind in the executor. The live send path is otherwise sound (retcode-first, bounded retry). Materiality is conditional: it requires a netting broker <em>and</em> a partial fill — rare on market-execution gold — and the coordinator re-adopts the position afterward, so it cannot open a wrong-direction or oversized trade.</p>
+      <dl class="kv"><dt>Location</dt><dd><code>CEnhancedTradeExecutor.mqh</code></dd><dt>Confidence</dt><dd>Likely</dd></dl>
+    </div>
+  </div>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">PORT-01</span><h3>"11 strategies" overstates breadth roughly two-fold</h3>
+      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
+    <div class="body">
+      <p>Six of twelve registered-enabled strategies fire zero trades across seven years. The live book is two regime-keyed clusters — a dominant bullish-continuation long factor (~75% of trades, five near-redundant triggers, internally highly correlated) plus a genuinely diversifying counter-trend short fade (~25%). It reshapes the honest description of the system, not per-trade P&amp;L: the edge rests on a far narrower base than the configuration implies.</p>
+      <dl class="kv"><dt>Category</dt><dd>Cross-strategy portfolio / methodology</dd></dl>
+    </div>
+  </div>
+
+  <div class="finding s-high">
+    <div class="top"><span class="fid">PORT-02</span><h3>Strict-<code>&gt;</code> tie-break biases the realized blend toward the lowest-expectancy trigger</h3>
+      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
+    <div class="body">
+      <p>The orchestrator ranks signals with a strict <code>&gt;</code> over a 4-value score bucket, and 64% of A+ setups tie. First-registered <strong>Engulfing</strong> wins every A+ tie over higher-average-R MA-Cross and PinBar — so the tie-break actively shifts the realized blend toward the lower-expectancy pattern. This is edge-relevant: it is not a cosmetic ordering choice, it changes what actually trades.</p>
+      <dl class="kv"><dt>Location</dt><dd><code>CSignalOrchestrator.mqh:796</code> · bucket <code>CSetupEvaluator.mqh:388</code></dd></dl>
+    </div>
+  </div>
+
+  <p class="eyebrow" style="color:var(--med); margin-top:34px">Medium severity — selected</p>
+  <div class="scroll-x">
+    <table>
+      <thead><tr><th>ID</th><th>Finding</th><th>Location</th><th>Sev</th></tr></thead>
+      <tbody>
+        <tr><td><code>RXT-14</code></td><td>SETUP_B tier unreachable (<code>InpPointsBSetup=7</code> behind the A≥7 check) → B+ is the effective floor</td><td><span class="sub-note">CSetupEvaluator</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>RISK-03</code></td><td>The 2.0% hard risk cap never binds (max realized 1.21%) — contradicts the in-code comment</td><td><span class="sub-note">CQualityTierRiskStrategy</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>DET-01</code></td><td>Spread-sample array never trimmed → entire-history median leaks forward into the live entry-block / risk-halve gate</td><td><span class="sub-note">CEnhancedTradeExecutor</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>POS-12</code></td><td>Recovery-path R-denominator rebuild can stack-fire the partial ladder; v4→v5 state bump forces it</td><td><span class="sub-note">CPositionCoordinator</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>ORC-02</code></td><td>Exposure-cap mixes balance-frozen $ risk over an equity denominator (drift)</td><td><span class="sub-note">CTradeOrchestrator / X4-NUM-02</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>NUM-03</code></td><td>Live send path never checks STOPS_LEVEL / freeze / normalize on SL/TP</td><td><span class="sub-note">CEnhancedTradeExecutor</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>RXT-18</code></td><td><code>CAdaptiveTPManager</code> sizes TP from forming-bar ATR/ADX (breaks the closed-bar convention; TP placement only)</td><td><span class="sub-note">CAdaptiveTPManager</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>LA-05</code></td><td>Forming-bar Bollinger feeds the Chop-Sniper TP calc and can <em>abort</em> the trade ("BB too tight for R:R")</td><td><span class="sub-note">CTradeOrchestrator:867–894</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>SMC-04/05</code></td><td>SMC&lt;40 hard-reject is dead; the L3 SMC spine ≥25 is a rubber stamp (base 50, add-only)</td><td><span class="sub-note">CSMCOrderBlocks / scoring</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>PAT-07</code></td><td>Displacement-plugin local-swing fallback seeds the swept level from <code>[2]</code> — dilutes the structural-sweep edge (no look-ahead)</td><td><span class="sub-note">CDisplacementEntry</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>ENG-05</code></td><td>Per-mode auto-disable can permanently prune a live engine mode on noise</td><td><span class="sub-note">CLiquidityEngine / engines</span></td><td><span class="chip c-med">MED</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="eyebrow" style="color:var(--low); margin-top:34px">Reconciled down from HIGH · low / dead-path</p>
+  <div class="scroll-x">
+    <table>
+      <thead><tr><th>ID</th><th>Finding</th><th>Resolution</th><th>Now</th></tr></thead>
+      <tbody>
+        <tr><td><code>RISK-01</code></td><td>Quality-tier risk plugin never initialized → adaptive scaling inert</td><td>Lots algebraically identical to the fallback; wiring would double-count vol/short. Only gap = an absent margin pre-check.</td><td><span class="chip c-low">LOW · by-design</span></td></tr>
+        <tr><td><code>CTX-02</code></td><td>Momentum filter reads forming-bar [0] for all indicators</td><td>Filter disabled on prod &amp; new-bar-gated → look-ahead is latent.</td><td><span class="chip c-low">LOW on prod</span></td></tr>
+        <tr><td><code>ORC-04</code></td><td>HTF short-veto</td><td>Gated on <code>routed_engine</code> → never fires on prod.</td><td><span class="chip c-low">LOW · dead</span></td></tr>
+        <tr><td><code>ORC-01</code></td><td>Breakout-probation double-multiplier math error</td><td>Real error, but probation is off on prod.</td><td><span class="chip c-low">LOW · dead</span></td></tr>
+        <tr><td><code>ORC-09</code></td><td>Daily-loss-halt setter "not wired"</td><td><strong>Refuted</strong> — setter is invoked every tick; <code>CanTrade()</code> blocks new entries. Only position-liquidation on daily-loss is lost (folded into RXT-02).</td><td><span class="chip c-good">Refuted</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div></section>
+
+<!-- ============ CROSS-CUTTING ============ -->
+<section id="crosscut"><div class="col">
+  <p class="eyebrow">Synthesis across all files</p>
+  <h2>Cross-cutting verdicts</h2>
+  <div class="scroll-x">
+    <table>
+      <thead><tr><th>Dimension</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Risk / sizing</strong></td><td>Core fixed-fractional lot math is dimensionally correct in both plugin and fallback paths; div-by-zero guarded on every axis. But the <em>adaptive</em> layer is largely inert, the vol ratio is mis-unit'd (CTX-10), the 2% cap never binds, and RSI-blind tiering deflates risk %.</td></tr>
+        <tr><td><strong>Exits / trailing</strong></td><td>Trailing is clean (only Chandelier live, closed-bar discipline, double ratchet, STOPS_LEVEL clamp). Exit plugins are a no-op (RXT-02) → operative exits are SL, the TP ladder, the Chandelier trail, and the weekend-native closer only.</td></tr>
+        <tr><td><strong>Filter stack</strong></td><td>The "~8 gates" are mostly no-ops on prod. The gates that actually bind: the point-threshold quality tier, the direction-blind ADX/ATR confidence gate, the long-for-longs validator, and the registered plugin set being long-only.</td></tr>
+        <tr><td><strong>Look-ahead</strong></td><td>The signal path is new-bar-gated and <code>CMarketContext::Update()</code> self-gates once per H1 bar, so component forming-bar reads are bar-open snapshots, not intrabar repaint. No CRITICAL/HIGH future-data leak in the discrete-entry path; the one repaint-instability (ENG-02) sits on a zero-firing mode.</td></tr>
+        <tr><td><strong>Determinism</strong></td><td>Live OnTick is deterministic — no RNG on the live path, all tester branches deterministic. One forward-leak (DET-01, spread median). Adaptive closed-trade state is path-dependent by design.</td></tr>
+        <tr><td><strong>Portfolio / methodology</strong></td><td>Two regime-keyed clusters, not 11 independent edges. Methodology is weak-to-moderate: 98% zero-slippage fills (implausible for gold OTC), in-sample mode curation baked into source defaults, direction-asymmetric confirmation.</td></tr>
+        <tr><td><strong>Dead code</strong></td><td>83 live vs. 25 dead <code>.mqh</code> files; no dead path is wired live. The <code>CXAUUSDEnhancer → CMarketCondition → CATRCalculator</code> chain is dead (executor built with NULL enhancer).</td></tr>
+        <tr><td><strong>Numeric / portability</strong></td><td>Sizing is symbol-aware (point-scale + per-symbol profiles), but position-management price math is single-symbol / single-timeframe — effectively gold-H1 only (hardcoded <code>$50</code> levels, <code>_Symbol</code> vs. position-symbol, ~196 literal <code>PERIOD_H1</code>).</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div></section>
+
+<!-- ============ CONTRADICTIONS ============ -->
+<section id="contradictions"><div class="col">
+  <p class="eyebrow">Reconciliation</p>
+  <h2>Data-contradiction resolutions</h2>
+  <p class="lede">Five contradictions between recon impressions and unit findings, each resolved with a source citation.</p>
+  <div class="contra">
+    <div class="row"><div class="id">a</div><div><p class="q">Constructor risk defaults vs. wired inputs — which reaches sizing?</p><p class="a"><span class="tag">Resolved.</span> The wired inline fallback reaches sizing; the risk plugin is dormant by design and its lot math is algebraically identical. <span class="sub-note">(U8 RXT-01)</span></p></div></div>
+    <div class="row"><div class="id">b</div><div><p class="q">Scorer thresholds 5/6/7/8 vs. evaluator B=7</p><p class="a"><span class="tag">Resolved.</span> SETUP_B is unreachable — <code>InpPointsBSetup=7</code> sits behind the A≥7 check, so B+ (6) is the effective floor. <span class="sub-note">(RXT-14)</span></p></div></div>
+    <div class="row"><div class="id">c</div><div><p class="q">CHOPPY regime "never fires" vs. the classifier coding it</p><p class="a"><span class="tag">Resolved.</span> Reachable, but near-measure-zero on gold H4 (when ADX&lt;15, ATR is almost always contracting → routes to RANGING). Dead by construction, not by bug. <span class="sub-note">(WT-7)</span></p></div></div>
+    <div class="row"><div class="id">d</div><div><p class="q">Verdicts leaning on the all-trades CSV</p><p class="a"><span class="tag">Resolved.</span> The CSV is a Model-1 artifact; used as a directional cross-reference only, never as a verdict, throughout this report.</p></div></div>
+    <div class="row"><div class="id">e</div><div><p class="q">Look-ahead census ("zero HIGH") vs. ENG-01/02 (Displacement W1/D1 = HIGH)</p><p class="a"><span class="tag">Resolved.</span> Both half-right: there is no future-data leak (census correct), but the W1 read is a hard gate whose level moves intrabar (the units correct) — precisely classified as <strong>repaint-instability</strong>, HIGH by code, zero realized today. <span class="sub-note">(Phase-2 adversarial)</span></p></div></div>
+  </div>
+  <div class="callout" style="margin-top:22px"><strong>Build reality check.</strong> A single MetaEditor compile produced <strong>0 errors and 16 warnings — exactly the baseline, zero deltas</strong>. All 16 are cosmetic (type-convert, static-array, a deprecated enum, one unused local). None touches any finding's file, so the compiler corroborates nothing — confirming these are logic/wiring defects invisible to a build check.</div>
+</div></section>
+
+<!-- ============ RECOMMENDATIONS ============ -->
+<section id="recs"><div class="col">
+  <p class="eyebrow">Evaluation only — not executed</p>
+  <h2>Prioritized recommendations</h2>
+  <ol class="recs">
+    <li><h3>Decide the exit-plugin layer (RXT-02)</h3><p>Either initialize the four exit plugins — restoring the structure-aware regime exit, daily-loss position-close, and 72h max-age — or formally delete them and document that exits = SL / TP-ladder / Chandelier / weekend-native.</p><span class="kill"><b>Kill-criterion:</b> a backtest with the regime-aware exit live must not degrade PF vs. current; if it does, the no-op was accidentally beneficial and should be made explicit.</span></li>
+    <li><h3>Fix the ATR vol-ratio units (CTX-10)</h3><p>Make <code>GetATRCurrent</code> and <code>GetATRAverage</code> the same timeframe, then re-confirm the EC-v3 multiplier.</p><span class="kill"><b>Falsifiable:</b> the realized vol-ratio distribution should center near 1.0 in normal regimes (today it reads systematically high).</span></li>
+    <li><h3>Adjudicate and, if real, fix the Displacement W1/D1 gate (ENG-01/02)</h3><p>A one-line shift (<code>0→1</code>) per read removes the repaint-instability; only then can the Displacement mode be fairly graded in an isolation test.</p></li>
+    <li><h3>Resolve RSI sourcing (FILT-04)</h3><p>Either add an RSI handle independent of the disabled momentum filter, or remove the RSI-dependent tier bonus and validator exceptions so tiers are not silently deflated.</p></li>
+    <li><h3>Re-state the EA honestly</h3><p>Bring the advertised strategy count and feature list in line with the operative reality — one long cluster plus one conditional short, and the inert-feature inventory above. The tie-break (PORT-02) should also be re-examined, since it currently favors the lowest-expectancy trigger.</p></li>
+    <li><h3>Lower priority</h3><p>EXE-01 netting bind, DET-01 spread-median trim, NUM-03 STOPS_LEVEL check, the exposure-cap denominator (ORC-02), and dead-input / dead-file cleanup.</p></li>
+  </ol>
+</div></section>
+
+<!-- ============ METHOD ============ -->
+<section id="method"><div class="col reading">
+  <p class="eyebrow">How this was produced</p>
+  <h2>Method &amp; scope</h2>
+  <p>This evaluation was built entirely from source — <code>UltimateTrader.mq5</code>, <code>UltimateTrader_Inputs.mqh</code>, and <code>Include/**/*.mqh</code> — reading no existing documentation, HTML reports, or commit history, so the assessment adjudicates the code on its own terms. Work was fanned out across <strong>19 parallel audit units</strong> in two tracks (implementation/logic and trading/edge), each reporting line-anchored findings in a shared schema, then reconciled in a dual-agent adversarial pass with a single build-check compile.</p>
+  <p><strong>Scope boundaries.</strong> Edge verdicts are <em>static and structural</em> — fidelity to the named concept, look-ahead cleanliness, and posture justification read from code. No new backtests were run. The <code>all_trades_v15.csv</code> record is a Model-1 (1-minute-OHLC) artifact reflecting one whole-pipeline build, used as a directional cross-reference only and never as an edge verdict. No fixes or commits were made; the recommendations are listed, not executed.</p>
+  <div class="legend">
+    <span><span class="sw" style="background:var(--crit)"></span>Critical</span>
+    <span><span class="sw" style="background:var(--high)"></span>High</span>
+    <span><span class="sw" style="background:var(--med)"></span>Medium</span>
+    <span><span class="sw" style="background:var(--low)"></span>Low / dead-path</span>
+    <span><span class="sw" style="background:var(--good)"></span>Credited edge / clean</span>
+    <span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span></span> realized impact 0–3</span>
+  </div>
+</div></section>
+
+<footer><div class="col">
+  <div><b>UltimateTrader — Clean-Room Evaluation.</b> Independent, source-only · static edge grading · no new backtests.</div>
+  <div>0 CRITICAL · 7 HIGH · 1 / 12 credited edge · compile 0E / 16W.</div>
+</div></footer>
+
+</div>
+
+</body>
+</html>

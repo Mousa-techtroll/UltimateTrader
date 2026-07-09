@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the UltimateTrader Gold Bot Works — Plain-English Guide</title>
+<meta name="description" content="A beginner-friendly, jargon-defined explanation of how the UltimateTrader XAUUSD robot decides to trade: entry engines, risk and money management, trailing, exits — with the exact rules.">
+<style>
+  :root{
+    --bg:#F7F6F3; --card:#FFFFFF; --ink:#1E2228; --mut:#5E646E; --faint:#8A909A; --hair:#E7E4DD; --hair-2:#F0EEE9;
+    --gold:#B8862E; --gold-lite:#D8A93E; --gold-bg:#FBF3E0; --gold-deep:#8A6212;
+    --slate:#2B3340; --slate-soft:#EDF0F3;
+    --rule:#2E5E8A; --rule-bg:#EEF3F8; --rule-br:#D4E0EC;
+    --off:#9A6B12; --off-bg:#FBF1DD; --off-br:#ECDCB6;
+    --good:#2E7D52;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    --serif:"Iowan Old Style",Charter,"Palatino Linotype",Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box} body{margin:0}
+  .wrap{font-family:var(--sans); color:var(--ink); background:var(--bg); font-size:17px; line-height:1.65; -webkit-font-smoothing:antialiased}
+  .col{max-width:760px; margin:0 auto; padding:0 22px}
+  .wide{max-width:920px}
+  code,.mono{font-family:var(--mono); font-size:.85em; background:#EEEDe9; background:#EDECE8; padding:.05em .35em; border-radius:4px; white-space:nowrap}
+  h1,h2,h3{font-family:var(--serif); font-weight:600; line-height:1.15; text-wrap:balance; letter-spacing:-.01em}
+  a{color:var(--rule)}
+  .eyebrow{font-size:11.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--gold-deep); margin:0 0 8px}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* nav */
+  .nav{position:sticky; top:0; z-index:20; background:color-mix(in srgb,var(--bg) 88%,transparent); backdrop-filter:saturate(1.1) blur(8px); border-bottom:1px solid var(--hair)}
+  .nav .col{max-width:920px; display:flex; gap:3px; align-items:center; height:46px; overflow-x:auto; scrollbar-width:none}
+  .nav .col::-webkit-scrollbar{display:none}
+  .nav b{font-family:var(--serif); font-size:14px; margin-right:12px; white-space:nowrap}
+  .nav a{font-size:12.5px; color:var(--mut); text-decoration:none; padding:5px 9px; border-radius:6px; white-space:nowrap; font-weight:500}
+  .nav a:hover{background:var(--gold-bg); color:var(--gold-deep)}
+
+  /* hero */
+  .hero{padding:56px 0 30px; border-bottom:1px solid var(--hair)}
+  .hero .kick{font-size:12px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--gold-deep)}
+  .hero h1{font-size:clamp(32px,5.4vw,50px); margin:14px 0 0}
+  .hero .one{font-size:20px; color:var(--ink); margin:18px 0 0; font-family:var(--serif); font-style:italic; color:#3a414b}
+  .hero .note{font-size:14px; color:var(--mut); margin:18px 0 0; padding:12px 16px; background:var(--card); border:1px solid var(--hair); border-radius:10px}
+
+  section{padding:38px 0; border-top:1px solid var(--hair)}
+  section:first-of-type{border-top:0}
+  h2{font-size:clamp(23px,3.4vw,31px); margin:0 0 4px}
+  .sec-no{color:var(--gold); font-variant-numeric:tabular-nums; margin-right:.4em}
+  h3{font-size:19px; margin:26px 0 6px}
+  p{margin:0 0 15px}
+  .lede{font-size:18px; color:var(--mut); margin:0 0 22px}
+  strong{font-weight:650}
+
+  /* exact-rule callout */
+  .rule-box{background:var(--rule-bg); border:1px solid var(--rule-br); border-radius:10px; padding:12px 15px; margin:14px 0; font-size:14px; line-height:1.55}
+  .rule-box .lab{display:inline-block; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--rule); background:#fff; border:1px solid var(--rule-br); padding:2px 8px; border-radius:5px; margin-bottom:7px}
+  .rule-box .mono, .rule-box code{background:#E3EAF2; color:#23425f}
+  .rule-box .src{color:var(--faint); font-size:12px}
+
+  /* analogy / plain callout */
+  .plain{border-left:3px solid var(--gold-lite); padding:2px 0 2px 16px; margin:14px 0; color:#42474f; font-size:16px}
+  .plain b{color:var(--gold-deep)}
+
+  /* off-by-default aside */
+  .off{background:var(--off-bg); border:1px solid var(--off-br); border-radius:10px; padding:13px 16px; margin:16px 0; font-size:14.5px}
+  .off .lab{font-weight:800; color:var(--off); font-size:12px; letter-spacing:.04em; text-transform:uppercase; display:block; margin-bottom:5px}
+
+  /* tables */
+  .scroll-x{overflow-x:auto; border:1px solid var(--hair); border-radius:12px; background:var(--card); margin:16px 0}
+  table{border-collapse:collapse; width:100%; font-size:14.5px}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--hair-2); vertical-align:top}
+  thead th{background:#FAFAF8; font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--mut)}
+  tbody tr:last-child td{border-bottom:0}
+  td .num{font-weight:600}
+  .tier{font-weight:700; font-variant-numeric:tabular-nums}
+
+  /* strategy cards */
+  .strat{background:var(--card); border:1px solid var(--hair); border-radius:11px; padding:15px 17px; margin:11px 0}
+  .strat h4{margin:0 0 3px; font-size:16.5px; font-family:var(--serif); display:flex; flex-wrap:wrap; gap:8px; align-items:baseline}
+  .strat .dir{font-size:11px; font-weight:700; letter-spacing:.03em; padding:2px 7px; border-radius:5px; background:var(--slate-soft); color:var(--slate)}
+  .strat .dir.long{background:#E7F2EB; color:var(--good)} .strat .dir.short{background:#F6EAEA; color:#9A3B33} .strat .dir.off{background:#EEEDE9; color:#888}
+  .strat p{margin:4px 0 0; font-size:15px; color:#3f454d}
+  .strat .ex{font-family:var(--mono); font-size:12.5px; color:#4a5560; background:#F4F3EF; border-radius:7px; padding:8px 11px; margin-top:9px; white-space:normal}
+  .strat .ex b{color:var(--rule)}
+  .grp-label{font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--gold-deep); margin:22px 0 2px}
+
+  /* gauntlet list */
+  ol.gauntlet{counter-reset:g; list-style:none; padding:0; margin:16px 0}
+  ol.gauntlet li{counter-increment:g; position:relative; padding:11px 0 11px 44px; border-bottom:1px solid var(--hair-2)}
+  ol.gauntlet li:last-child{border-bottom:0}
+  ol.gauntlet li::before{content:counter(g); position:absolute; left:0; top:10px; width:28px; height:28px; border-radius:8px; background:var(--slate); color:#fff; font-size:13px; display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums; font-weight:600}
+  ol.gauntlet b{font-weight:650}
+  ol.gauntlet .r{display:block; font-family:var(--mono); font-size:12px; color:var(--rule); margin-top:3px}
+
+  /* rails panel */
+  .rails{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:16px 0}
+  @media(max-width:620px){.rails{grid-template-columns:1fr}}
+  .rail{background:var(--card); border:1px solid var(--hair); border-radius:10px; padding:14px 16px; border-top:3px solid var(--gold)}
+  .rail .big{font-family:var(--serif); font-size:22px; color:var(--ink); font-variant-numeric:tabular-nums}
+  .rail .nm{font-weight:650; font-size:14.5px; margin-top:2px}
+  .rail .ds{font-size:13px; color:var(--mut); margin-top:3px}
+
+  /* diagrams */
+  .diagram{background:var(--card); border:1px solid var(--hair); border-radius:14px; padding:20px; margin:18px 0}
+  .diagram .cap{font-size:12.5px; color:var(--faint); text-align:center; margin-top:12px}
+  .loop{display:flex; flex-wrap:wrap; align-items:stretch; gap:8px; justify-content:center}
+  .loop .step{flex:1 1 0; min-width:96px; background:var(--slate-soft); border:1px solid var(--hair); border-radius:9px; padding:10px 8px; text-align:center; font-size:12.5px; font-weight:600; color:var(--slate); display:flex; flex-direction:column; gap:4px; justify-content:center}
+  .loop .step .e{font-size:18px}
+  .loop .arr{display:flex; align-items:center; color:var(--gold); font-weight:700; font-size:16px}
+  @media(max-width:620px){.loop .arr{transform:rotate(90deg)}}
+
+  .funnel{display:flex; flex-direction:column; align-items:center; gap:7px}
+  .funnel .f{border:1px solid var(--hair); border-radius:9px; padding:9px 14px; text-align:center; background:var(--gold-bg); font-size:13.5px}
+  .funnel .f b{color:var(--gold-deep)}
+  .funnel .f:nth-child(1){width:100%} .funnel .f:nth-child(3){width:80%} .funnel .f:nth-child(5){width:60%} .funnel .f:nth-child(7){width:42%; background:var(--slate); color:#fff; border-color:var(--slate)}
+  .funnel .d{color:var(--gold); font-weight:700}
+
+  svg{display:block; width:100%; height:auto}
+
+  /* glossary */
+  dl.gloss{margin:14px 0; display:grid; grid-template-columns:max-content 1fr; gap:8px 18px}
+  @media(max-width:560px){dl.gloss{grid-template-columns:1fr; gap:2px 0} dl.gloss dd{margin:0 0 10px}}
+  dl.gloss dt{font-weight:700; color:var(--ink)}
+  dl.gloss dd{margin:0; color:#42474f; font-size:15px}
+
+  .recap{background:var(--slate); color:#E8EBEF; border-radius:14px; padding:22px 24px; margin:22px 0 0}
+  .recap h3{color:#fff; margin:0 0 8px; font-size:18px}
+  .recap p{margin:0; font-size:15.5px; color:#D3D8DE}
+
+  footer{padding:28px 0 56px; color:var(--mut); font-size:13px; border-top:1px solid var(--hair)}
+  footer b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+<nav class="nav"><div class="col">
+  <b>How it works</b>
+  <a href="#loop">The loop</a>
+  <a href="#reads">Reading the market</a>
+  <a href="#entries">Entry engines</a>
+  <a href="#gauntlet">Safety checks</a>
+  <a href="#money">Position sizing</a>
+  <a href="#rails">Risk limits</a>
+  <a href="#manage">Exits &amp; trailing</a>
+  <a href="#example">Example trade</a>
+  <a href="#glossary">Glossary</a>
+</div></nav>
+
+<header class="hero"><div class="col">
+  <div class="kick">A plain-English guide · UltimateTrader · Gold (XAUUSD) · 1-hour chart</div>
+  <h1>How the UltimateTrader gold bot works</h1>
+  <p class="one">It's an automated trader that watches the price of gold and, once an hour, decides whether to buy — and if it does, it manages that trade from start to finish, sizing it so a wrong guess costs only a small, fixed slice of the account.</p>
+  <p class="note">Written for someone <strong>brand new to trading</strong> — every term is defined the first time it appears. It describes what the bot actually does on its <strong>default settings</strong>, and explains <strong>mechanics only</strong>: there are no profit, win-rate, or "how much money" claims anywhere. Each "<span style="color:var(--rule);font-weight:700">Exact rule</span>" box gives the precise condition behind the plain-English explanation, so you can skim the story and dip into the specifics whenever you want.</p>
+</div></header>
+
+<!-- ===== THE LOOP ===== -->
+<section id="loop"><div class="col wide">
+  <p class="eyebrow">The big picture</p>
+  <h2><span class="sec-no">1</span>One decision, once an hour</h2>
+  <div class="col" style="padding:0">
+  <p class="lede">The bot works on the <strong>1-hour candle</strong> — a "candle" is one block on a price chart that records where price opened, closed, and the high and low it hit during that hour. It only acts when an hour <em>finishes</em>, so it never reacts to a half-formed price that might still reverse.</p>
+  <p>Like a careful shopper who checks the shelf at the top of each hour instead of fidgeting over every flicker, the bot runs the same routine every hour: read the market, look for the single best trade idea, run that idea through a wall of safety checks, size it, place it, then manage it until it closes. Here is that loop end to end:</p>
+  </div>
+  <div class="diagram">
+    <div class="loop">
+      <div class="step"><span class="e">📊</span>Read the market<br>(trend · regime · session)</div>
+      <div class="arr">→</div>
+      <div class="step"><span class="e">🔎</span>Find the single best setup</div>
+      <div class="arr">→</div>
+      <div class="step"><span class="e">🛡️</span>Pass the safety checks</div>
+      <div class="arr">→</div>
+      <div class="step"><span class="e">📏</span>Size it to the risk</div>
+      <div class="arr">→</div>
+      <div class="step"><span class="e">✅</span>Enter</div>
+      <div class="arr">→</div>
+      <div class="step"><span class="e">⚙️</span>Manage</div>
+      <div class="arr">→</div>
+      <div class="step"><span class="e">🏁</span>Exit</div>
+    </div>
+    <div class="cap">The hourly cycle. Open trades are <em>managed</em> continuously; new trades are only <em>decided</em> once per finished hour.</div>
+  </div>
+</div></section>
+
+<!-- ===== READING THE MARKET ===== -->
+<section id="reads"><div class="col">
+  <p class="eyebrow">Step one each hour</p>
+  <h2><span class="sec-no">2</span>How it reads the market</h2>
+  <p class="lede">Before it thinks about any specific trade, the bot "reads the room." That picture has three parts — each answers a question a human trader asks first.</p>
+
+  <h3>a) "Which direction am I even allowed to go?" — the bias</h3>
+  <p>Gold has spent years in a long, grinding climb. The bot is built around that: it is <strong>heavily tilted toward buying</strong> ("going long"), and a buy must clear a thorough set of checks — is price above its long-term average line, does the trend agree, does the current market type agree? Selling ("going short") is treated as the rare, suspicious case.</p>
+  <p class="plain"><b>Why a trader cares:</b> trading <em>with</em> the prevailing direction is like paddling downstream instead of fighting the current. You can still be wrong, but the odds are friendlier.</p>
+
+  <h3>b) "What kind of market is this right now?" — the regime</h3>
+  <p>The bot sorts the market into a <strong>type</strong>: <strong>Trending</strong> (a clear staircase one way), <strong>Ranging</strong> (bouncing inside a box, going nowhere), <strong>Choppy</strong> (messy, indecisive, lots of fakeouts), or <strong>Volatile</strong> (lurching in big fast swings). This label changes how boldly it acts — it risks a bit more in a clean trend and shrinks right down in choppy or volatile conditions.</p>
+  <p class="plain"><b>Why a trader cares:</b> the same idea is smart in a trend and reckless in chop. A good trader asks "is <em>this kind of market</em> one where my style even works?" — and the bot turns the dial down when things look treacherous.</p>
+
+  <h3>c) "What time of day is it?" — the session</h3>
+  <p>Gold trades almost around the clock, and it behaves differently depending on which part of the world is awake. The bot tracks three <strong>sessions</strong> — <strong>Asia</strong>, <strong>London</strong>, and <strong>New York</strong> — and, for example, deliberately takes <strong>half its usual risk</strong> in London (historically a rougher window for this style) and a little less in New York.</p>
+  <p class="plain"><b>Why a trader cares:</b> a thin, quiet market moves erratically and costs more to trade; a busy one is smoother. Knowing <em>when</em> you trade matters as much as <em>what</em>.</p>
+  <div class="off"><span class="lab">Once-a-week rule</span>The bot will not <em>open</em> a brand-new trade on a <strong>Friday</strong> — it doesn't want to be caught holding a fresh position over the weekend, when the market is closed and price can "gap" (jump) on Monday. <span class="rule-box" style="display:inline;border:0;background:0;padding:0"><span class="src"><code>UltimateTrader.mq5:1585</code></span></span></div>
+</div></section>
+
+<!-- ===== ENTRY ENGINES ===== -->
+<section id="entries"><div class="col wide">
+  <p class="eyebrow">Finding a trade</p>
+  <h2><span class="sec-no">3</span>The entry engines — many scouts, one decision</h2>
+  <div class="col" style="padding:0">
+  <p class="lede">Picture the bot as a hiring manager who, once an hour, interviews a panel of specialist <strong>scouts</strong>. Each scout is an expert in one chart shape or situation. The manager asks them all "do you see your setup right now?", <strong>scores</strong> every "yes," lines them up best-to-worst, and <strong>hires exactly one</strong> — the highest-scoring idea. Everyone else's idea is dropped until next hour.</p>
+  <p>That "interview everyone, then pick the single best" step is what makes this safe to run with many strategies at once: they don't all fire independently — they compete, and one winner is chosen.</p>
+  </div>
+  <div class="diagram"><div class="col" style="padding:0">
+    <div class="funnel">
+      <div class="f"><b>~12 scouts</b> are polled every hour — "do you see your setup?"</div>
+      <div class="d">▼</div>
+      <div class="f">Each "yes" is <b>scored 0–10</b> and graded a tier: <b>A+ / A / B+ / B</b> (or rejected)</div>
+      <div class="d">▼</div>
+      <div class="f">The bot keeps only the <b>single highest-scoring</b> idea</div>
+      <div class="d">▼</div>
+      <div class="f"><b>One trade</b> (sometimes after a 1-hour confirmation wait)</div>
+    </div>
+    <div class="cap">"Chaining" = poll all scouts → grade → keep the best one. Usually only one trade opens per hour.</div>
+  </div></div>
+
+  <div class="col" style="padding:0">
+  <h3>The grade decides how much it risks</h3>
+  <p>A higher grade means the bot is more confident, so it's allowed to risk a little more money on that trade (more on sizing in section 5). "Risk X%" means: <em>if this trade hits its safety exit, the account loses about X% — not that it bets X%.</em></p>
+  <div class="rule-box"><span class="lab">Exact rule</span>A 0–10 score is built from trend agreement, regime fit, macro alignment, pattern type and a choppiness check, then mapped to a tier: A+ ≥ 8, A ≥ 7, B+ ≥ 6, else rejected. The tier sets the base risk: <strong>A+ = 1.5%, A = 1.0%, B+ = 0.75%, B = 0.6%</strong>. A "none" grade is thrown out before it can take a slot. <span class="src"><code>CSetupEvaluator.mqh:170-350</code> · <code>UltimateTrader_Inputs.mqh:45-48</code></span></div>
+  <div class="rule-box"><span class="lab">Exact rule — the 1-hour confirmation</span>Some winning ideas wait one more hour and only enter if the next candle keeps going the same way (closes past the pattern). It's <strong>on by default</strong>, but deliberately <strong>skipped for short trades and mean-reversion trades</strong>, and several scouts opt out and trade immediately (S3, S6, Session, Expansion). <span class="src"><code>CSignalOrchestrator.mqh:878-961</code></span></div>
+  <p style="font-size:13.5px;color:var(--mut)"><em>Terms: <strong>long</strong> = a bet price goes up (buy); <strong>short</strong> = a bet price goes down (sell); <strong>mean-reversion</strong> = betting price snaps back after overshooting; <strong>ATR</strong> = a yardstick for how much gold typically moves in an hour; <strong>wick</strong> = the thin line above/below a candle's body marking a rejected extreme.</em></p>
+
+  <p class="grp-label">The simple "candle-shape" scouts</p></div>
+
+  <div class="strat"><h4>Engulfing <span class="dir long">Long only</span></h4><p>A single up-candle that completely "swallows" the previous down-candle — buyers decisively overpowering sellers, like one runner lapping another.</p><div class="ex"><b>Exact rule:</b> prior candle down, signal candle up and engulfs its body (≥ 80% of the prior body) and is &gt; 0.3×ATR → buy at market. The short side is off by default. <code>CEngulfingEntry.mqh:160-211</code></div></div>
+  <div class="strat"><h4>Pin Bar <span class="dir">Both (short NY-blocked)</span></h4><p>A candle with a long "tail" and a small body — price stabbed one way and got slapped back. A long lower tail = buyers rejected lower prices.</p><div class="ex"><b>Exact rule:</b> lower wick &gt; 1.5× the body, upper wick &lt; 0.8× the body, close in the top 30% of the range → buy. Bearish pin is the mirror but blocked during New York hours. <code>CPinBarEntry.mqh:159-244</code></div></div>
+  <div class="strat"><h4>MA Cross <span class="dir long">Long only</span></h4><p>A "moving average" is a smoothed running average of price. A fast 10-bar average crossing <em>above</em> a slow 20-bar average is a classic "momentum just turned up" signal.</p><div class="ex"><b>Exact rule:</b> the 10-MA was at/below the 20-MA last hour and is above it now (a fresh upward cross) → buy. Trending regime only, and blocked during New York. <code>CMACrossEntry.mqh:173-217</code></div></div>
+  <div class="strat"><h4>Displacement <span class="dir">Both</span></h4><p>Price sweeps past a recent low to grab orders, then a <strong>big decisive candle</strong> drives back the other way — institutions showing their hand. A quick fake-out dip, then a forceful shove up.</p><div class="ex"><b>Exact rule:</b> a wick dips below the recent swing low but closes back above it (a "sweep"), then a candle with a body ≥ 1.5×ATR closes decisively above that level → buy. Mirror for sells. <code>CDisplacementEntry.mqh:202-256</code></div></div>
+
+  <p class="grp-label">The "range" scouts (the S3 / S6 pair)</p>
+  <div class="strat"><h4>RangeEdgeFade — S3 <span class="dir">Both</span></h4><p>When gold is stuck bouncing inside a box, price often pokes just outside and snaps back — a "false break." S3 buys that snap-back at the floor (or sells it at the ceiling), betting price returns to the middle. Like a ball that briefly rolls off a table edge and gets caught.</p><div class="ex"><b>Exact rule:</b> inside a validated range box, the low pierced just below the floor but closed back inside, while at the lower edge or oversold; reward to the far edge must be ≥ 2× the risk → buy. <code>CRangeEdgeFade.mqh:148-221</code></div></div>
+  <div class="strat"><h4>FailedBreakReversal — S6 <span class="dir long">Long only (short off)</span></h4><p>Price spikes past an important level to grab the orders resting there, then <strong>reclaims</strong> it — a textbook "stop hunt" that fails. Like a wave that crashes over a seawall then drains right back behind it. (The most carefully-specified scout in the system.)</p><div class="ex"><b>Exact rule:</b> price spiked below a level by ≥ 0.20×ATR; the wick that pierced is bigger than the candle body (proof of rejection); price then closes back above the level by a margin, but not so far that the snap-back is exhausted → buy. Short side is off by default. <code>CFailedBreakReversal.mqh:126-191</code></div></div>
+
+  <p class="grp-label">The "breakout" scouts</p>
+  <div class="strat"><h4>VolatilityBreakout <span class="dir off">Both — effectively dormant</span></h4><p>Price punching out of its recent 20-bar range and a volatility band while the bigger trend agrees — a momentum breakout.</p><div class="ex"><b>Exact rule:</b> volatile regime + ADX ≥ 25 + trend agreement + a close beyond the 20-bar high or the upper volatility band. Its volatile-only filter produces essentially zero trades by design — kept for parity. <code>CVolatilityBreakoutEntry.mqh:148-281</code></div></div>
+  <div class="strat"><h4>CrashBreakout <span class="dir short">Short only</span></h4><p>Only wakes up in a confirmed gold <strong>downtrend</strong> ("death cross" = the 50-day average below the 200-day). When price rubber-bands too far above its short-term mean inside that downtrend, it shorts the snap-back. Like a stretched elastic expected to recoil.</p><div class="ex"><b>Exact rule:</b> daily death cross present, then price &gt; (1-hour EMA21 + 2×ATR) and ADX ≥ 25 → sell, targeting the EMA21 mean. <code>CCrashBreakoutEntry.mqh:189-272</code></div></div>
+
+  <p class="grp-label">The engines (multi-mode scouts)</p>
+  <div class="col" style="padding:0"><p>An <strong>engine</strong> is a scout that checks several related setups ("modes") in priority order and reports at most one idea — the first mode that triggers. Four engines run by default:</p></div>
+  <div class="strat"><h4>Liquidity engine <span class="dir">Both</span></h4><p>Checks four "smart-money" modes in order — <strong>Displacement → Order-Block Retest → Fair-Value-Gap Mitigation → Swing-Failure</strong> — and returns the first that fires. These hunt the zones where big institutional orders likely sit (price returning to an "order block," filling a price "gap," or sweeping a swing and reversing), each needing a confluence score to agree.</p><div class="ex"><b>Exact rule:</b> e.g. Order-Block Retest = price re-enters a prior institutional candle's zone, recent structure is bullish, and a rejection candle forms. Stands aside on news days; on volatile days only Displacement is allowed. <code>CLiquidityEngine.mqh:352-1127</code></div></div>
+  <div class="strat"><h4>Session engine <span class="dir">Both</span></h4><p>Trades the daily clock. Two modes are on: <strong>London Breakout</strong> (early London, price breaks out of the overnight Asian range) and <strong>NY Continuation</strong> (at the New York open, price extends London's move). The Asian phase only <em>builds</em> a range; two other modes ship off.</p><div class="ex"><b>Exact rule:</b> London Breakout (GMT 8–10) = candle opens below the Asian-session high but closes above it by 0.35×ATR with the trend up. Each mode only fires inside its GMT hour window. <code>CSessionEngine.mqh:85-877</code></div></div>
+  <div class="strat"><h4>Expansion engine <span class="dir">Both</span></h4><p>Looks for energy building then releasing. <strong>Institutional-Candle Breakout</strong> (one oversized candle, then a few quiet bars coiling inside it, then a break out) and <strong>Compression Breakout</strong> (a volatility "squeeze" that releases with momentum).</p><div class="ex"><b>Exact rule:</b> Institutional candle = body ≥ 2×ATR closing near its extreme, ≥ 2 coil bars, then a close beyond the big candle's high; stop at its low, targets 1R and 2R. <code>CExpansionEngine.mqh:693-1000</code></div></div>
+  <div class="strat"><h4>PullbackContinuation engine <span class="dir">Both</span></h4><p>Buys the <strong>dip inside an uptrend</strong> (or sells the bounce in a downtrend) — the bread-and-butter "trend pullback." Like a car climbing a hill that briefly coasts back, then accelerates again.</p><div class="ex"><b>Exact rule:</b> 4-hour trend up with ADX ≥ 18, price pulled back 0.6–1.8 ATR over 2–10 bars showing exhaustion, then a reclaim candle (body ≥ 0.35×ATR) closes back above the prior two highs → buy; target 1.3R. <code>CPullbackContinuationEngine.mqh:375-565</code></div></div>
+</div></section>
+
+<!-- ===== GAUNTLET ===== -->
+<section id="gauntlet"><div class="col">
+  <p class="eyebrow">Before any order is placed</p>
+  <h2><span class="sec-no">4</span>The safety-check gauntlet</h2>
+  <p class="lede">Spotting a possible trade is only the beginning. The idea then has to pass a wall of checks — like airport security with many gates. <strong>One "no" at any gate and the trade is cancelled for now.</strong></p>
+  <ol class="gauntlet">
+    <li><b>Is the kill switch on?</b> If the operator flipped the master "stop everything" switch, the bot does nothing.</li>
+    <li><b>Is trading halted for the day?</b> If a daily safety limit already tripped, no new trade. <span class="r">CRiskMonitor — daily-loss / max-trades halt</span></li>
+    <li><b>Is the market spiking abnormally?</b> On a sudden violent shock, the bot stands aside rather than trade a spike it can't trust.</li>
+    <li><b>Is this a low-quality time to trade?</b> If the session looks too thin or sloppy to execute well, the trade is blocked or its risk trimmed.</li>
+    <li><b>Is the cost of trading too high?</b> If the "spread" (the buy-vs-sell price gap you pay) is too wide, reject. <span class="r">InpMaxSpreadPoints = 50</span></li>
+    <li><b>Is the market flip-flopping?</b> If the market type changed more than twice in 4 hours — whipsaw chaos — it waits it out.</li>
+    <li><b>Is this an allowed session and hour?</b> The trade must fall inside the permitted windows.</li>
+    <li><b>Does the idea pass its own quality vetting?</b> Direction/trend/market-type checks, plus a minimum quality grade — anything too weak is thrown out.</li>
+    <li><b>Are we already holding too many trades?</b> At most <b>5</b> open at once. <span class="r">InpMaxPositions = 5</span></li>
+    <li><b>Is the stop a safe distance from the noise?</b> The protective stop must sit at least 3× the spread away. <span class="r">InpMinSLToSpreadRatio = 3.0</span></li>
+    <li><b>Is the reward worth the risk?</b> The potential gain must be at least <b>1.3×</b> the amount risked. <span class="r">InpMinRRRatio = 1.3</span></li>
+    <li><b>Would it breach the total-risk cap?</b> Across all open trades, money-at-risk can't exceed <b>5%</b> of the account; a trade that would bust that is shrunk to fit or rejected. <span class="r">InpMaxTotalExposure = 5.0</span></li>
+  </ol>
+  <div class="off"><span class="lab">One gate that ships OFF</span>There is also a <strong>news filter</strong> meant to make the bot stand flat around big scheduled announcements (like interest-rate decisions). On the default settings it is <strong>disabled</strong> — it only switches on alongside another optional module that is also off — so by default the bot does <em>not</em> stand aside for news. <span class="src" style="color:var(--off)"><code>CMarketContext.mqh:1031</code></span></div>
+</div></section>
+
+<!-- ===== MONEY MANAGEMENT ===== -->
+<section id="money"><div class="col">
+  <p class="eyebrow">How big is each trade?</p>
+  <h2><span class="sec-no">5</span>Money management — position sizing</h2>
+  <p class="lede">Imagine deciding, before you sit at a casino table, "tonight I'll lose at most $100 here" — then choosing chip sizes to fit. The bot sizes every trade that way, in a strict order.</p>
+  <p><strong>1.</strong> It first decides the <strong>dollars it's willing to lose</strong> on this one trade — a small slice of the account (the tier's risk %). On a $10,000 account, 1% = $100. &nbsp;<strong>2.</strong> It looks at the <strong>stop-loss distance</strong> — how far the "I was wrong" exit sits from entry. &nbsp;<strong>3.</strong> It works <strong>backwards to a position size</strong> so that if the stop is hit, the loss equals that pre-decided amount — not a penny more.</p>
+  <p class="plain">The key consequence: <b>a wider stop forces a smaller position; a tighter stop allows a bigger one.</b> The dollar risk stays the same either way — like risking $100 on a bet, but putting down fewer chips when each chip is riskier.</p>
+  <div class="rule-box"><span class="lab">Exact rule — the sizing formula</span><code>lots = risk_dollars ÷ (stop_distance × value-per-point)</code>, where <code>risk_dollars = balance × risk%</code> and the value-per-point is read live from the broker (so the math is in real dollars for whatever symbol you're on). The result is rounded down to the broker's step and clamped to its min/max. A trade needing &gt; 80% of free margin is refused. <span class="src"><code>CQualityTierRiskStrategy.mqh:314-421</code></span></div>
+  <div class="scroll-x"><table>
+    <thead><tr><th>Setup grade</th><th>Base risk %</th><th>On a $10,000 account</th></tr></thead>
+    <tbody>
+      <tr><td class="tier">A+ (best)</td><td class="num">1.5%</td><td>~$150</td></tr>
+      <tr><td class="tier">A</td><td class="num">1.0%</td><td>~$100</td></tr>
+      <tr><td class="tier">B+</td><td class="num">0.75%</td><td>~$75</td></tr>
+      <tr><td class="tier">B</td><td class="num">0.6%</td><td>~$60</td></tr>
+    </tbody>
+  </table></div>
+  <p>That base % is only the <em>starting point</em>. A set of situational <strong>dials</strong> then nudge it — almost always <em>down</em> — before the final size is computed: the <strong>session</strong> dial (London ×0.5, NY ×0.9), the <strong>regime</strong> dial (trend ×1.25, choppy ×0.6, volatile ×0.75), an automatic <strong>drawdown brake</strong> that eases off after a cold streak (down to ×0.70, never above 1.0), and a <strong>counter-trend halving</strong> (×0.5) when a trade fights the big-picture direction. Whatever the dials do, the hard cap in the next section is the last word.</p>
+  <div class="off"><span class="lab">Dials that ship off / inert</span>A consecutive-loss scaler is wired on but is a near-no-op in practice; a short-protection dial is set to ×1.0 (no effect); a Wednesday reducer and a trend-quality boost are off. None change live behavior.</div>
+</div></section>
+
+<!-- ===== RISK RAILS ===== -->
+<section id="rails"><div class="col">
+  <p class="eyebrow">The circuit breakers</p>
+  <h2><span class="sec-no">6</span>Risk management — the safety rails</h2>
+  <p class="lede">The dials <em>adjust</em> size. These limits are absolute <strong>stops</strong> that no setup quality or dial can override — the speed governor and emergency brake.</p>
+  <div class="rails">
+    <div class="rail"><div class="big">2%</div><div class="nm">Max risk per trade</div><div class="ds">No single trade may risk more than 2% of the account — the final risk is clamped down to it. Enforced twice.</div></div>
+    <div class="rail"><div class="big">−3%</div><div class="nm">Daily-loss halt</div><div class="ds">If account <em>equity</em> drops 3% below the day's start, all new trading stops until the next day. Because it watches equity, an open trade bleeding against you can trip it in real time. The single most important protection.</div></div>
+    <div class="rail"><div class="big">5</div><div class="nm">Max open positions</div><div class="ds">Never more than 5 trades at once (and at most 5 opened per day).</div></div>
+    <div class="rail"><div class="big">5%</div><div class="nm">Total-risk cap</div><div class="ds">Across <em>all</em> open trades, combined money-at-risk can't exceed 5% — five same-way gold trades are really one big bet. A new trade is shrunk to fit, or rejected.</div></div>
+  </div>
+  <p>Two more backstops: a <strong>consecutive-error halt</strong> (5 failed orders in a row stops trading — a sign something's broken), and the master <strong>emergency kill switch</strong>.</p>
+
+  <h3>What the bot will <em>not</em> do</h3>
+  <p>Two infamous ways traders blow up accounts: <strong>martingale</strong> ("double down after a loss" — bet $100, lose, bet $200, then $400, until one streak wipes you out) and <strong>grids</strong> (drop a ladder of orders and keep adding as price runs against you). <strong>This bot was specifically audited and confirmed to do neither.</strong></p>
+  <div class="rule-box"><span class="lab">Exact rule — confirmed absent</span>It <strong>never adds to a losing trade</strong>, <strong>never increases size after a loss</strong> (every result-based dial can only multiply by ≤ 1.0 — after a losing streak it bets <em>smaller</em>), <strong>never widens a stop-loss</strong> (the stop only ever ratchets toward safety), and runs <strong>no grid</strong> (entries are discrete — at most one new trade per hour). <span class="src">design-audit <code>DT-1 §20 — scored 5/5</code></span></div>
+</div></section>
+
+<!-- ===== MANAGE / EXITS ===== -->
+<section id="manage"><div class="col wide">
+  <p class="eyebrow">After the trade opens</p>
+  <h2><span class="sec-no">7</span>Exits &amp; the trailing system</h2>
+  <div class="col" style="padding:0">
+  <p class="lede">Once a trade is open, this is where the bot earns its keep. First a term you'll need: <strong>R = the amount risked on the trade</strong> (the entry-to-stop distance, in dollars). If a stop-out would lose $100, then 1R = $100, a "2R win" made $200, and milestones like "0.7R" mean price has travelled 70% of a risk-unit — in the <em>profit</em> direction.</p>
+  </div>
+
+  <div class="diagram"><div class="col" style="padding:0">
+    <svg viewBox="0 0 820 280" role="img" aria-label="Trade lifecycle: entry, early partial at 0.7R, break-even at 0.8R, partials at 1.3R and 1.8R, then a trailing runner.">
+      <!-- baseline grid -->
+      <line x1="60" y1="235" x2="800" y2="235" stroke="#E7E4DD" stroke-width="1"/>
+      <!-- price path rising -->
+      <polyline points="80,210 200,180 290,168 470,128 620,92 780,56" fill="none" stroke="#B8862E" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+      <!-- stop path: flat below entry, jumps to entry (BE) at 0.8R, then ratchets up under price -->
+      <polyline points="80,232 290,232 290,205 470,168 620,132 780,96" fill="none" stroke="#2E7D52" stroke-width="2" stroke-dasharray="6 5" stroke-linejoin="round"/>
+      <!-- milestone dots -->
+      <circle cx="80" cy="210" r="6" fill="#2B3340"/>
+      <circle cx="200" cy="180" r="6" fill="#B8862E"/>
+      <circle cx="290" cy="168" r="6" fill="#2E7D52"/>
+      <circle cx="470" cy="128" r="6" fill="#B8862E"/>
+      <circle cx="620" cy="92" r="6" fill="#B8862E"/>
+      <circle cx="780" cy="56" r="6" fill="#2B3340"/>
+      <!-- labels -->
+      <g font-family="ui-sans-serif,Segoe UI,Arial" font-size="12.5" fill="#1E2228" font-weight="600">
+        <text x="80" y="258" text-anchor="middle">Entry</text>
+        <text x="200" y="166" text-anchor="middle">TP0 · 0.7R</text>
+        <text x="290" y="258" text-anchor="middle" fill="#2E7D52">Break-even · 0.8R</text>
+        <text x="470" y="114" text-anchor="middle">TP1 · 1.3R</text>
+        <text x="620" y="78" text-anchor="middle">TP2 · 1.8R</text>
+        <text x="780" y="42" text-anchor="middle">Runner</text>
+      </g>
+      <g font-family="ui-sans-serif,Segoe UI,Arial" font-size="11.5" fill="#5E646E">
+        <text x="222" y="200">take 15%</text>
+        <text x="492" y="148">take 40%</text>
+        <text x="642" y="112">take 30%</text>
+        <text x="700" y="200" fill="#2E7D52">stop trails up ▲</text>
+      </g>
+    </svg>
+    <div class="cap">A winning trade's life: bank profit in slices, get to break-even fast, then let a runner ride behind a stop that only ever tightens.</div>
+  </div></div>
+
+  <div class="col" style="padding:0">
+  <h3>The stop-loss — set before the trade even opens</h3>
+  <p>The bot picks the price at which it will admit "this idea is dead" <em>before</em> entering, and puts it <strong>just past the spot where the trade's logic would be proven wrong</strong> — e.g. just below the low of the bullish pattern it bought. Because gold can wiggle $3–$5 for no reason, the stop is also pushed out to a <strong>minimum distance</strong> so normal "noise" can't trigger it; it uses the wider of {structural stop, noise floor}, and once set, the stop is <strong>never widened</strong>.</p>
+  <div class="rule-box"><span class="lab">Exact rule</span>Stop = the further-away of {just beyond the pattern, entry − minimum floor}; minimum floor <code>InpMinSLPoints = 800</code> points = <strong>$8.00</strong> on gold. Never widened — every update must be strictly safer or it's skipped. <span class="src"><code>CEngulfingEntry.mqh:179</code> · <code>CPositionCoordinator.mqh:2819-2893</code></span></div>
+
+  <h3>The take-profit ladder — banking profit in stages</h3>
+  <p>Rather than holding everything and hoping for the top, the bot sells in slices at planned milestones (like selling some apples now, some higher, some higher still, keeping a few to ride). What's left after the last rung is the <strong>runner</strong> — a small piece left open to chase a big trend, protected by the trailing stop.</p>
+  <div class="rule-box"><span class="lab">Exact rule — the ladder (all measured in R)</span><strong>TP0</strong> at 0.7R closes ~15% · <strong>TP1</strong> at 1.3R closes ~40% of the rest · <strong>TP2</strong> at 1.8R closes ~30% of the rest · the <strong>runner</strong> (no fixed target) trails. <span class="src"><code>UltimateTrader_Inputs.mqh:446-448,129-132</code></span></div>
+
+  <h3>Break-even — making a winner impossible to lose</h3>
+  <p>Once the trade has a decent cushion, the bot slides the stop up to roughly the entry price. From then on the worst likely outcome is about a scratch — like locking a safety clamp behind you as you climb.</p>
+  <div class="rule-box"><span class="lab">Exact rule</span>Break-even arms at <strong>0.8R</strong> of profit (after the TP0 nibble), moving the stop to entry + a small buffer. <span class="src"><code>CPositionCoordinator.mqh:2904-2937</code></span></div>
+
+  <h3>The trailing stop (Chandelier) — follows price, only ever tightens</h3>
+  <p>This is the headline of trade management. As a buy runs up, the stop <strong>follows behind it like a ratchet</strong> (a socket wrench or a roller-coaster bar — it clicks one way and physically can't loosen). The level sits a cushion below the recent high, and that cushion is sized by volatility (ATR): tight when gold is calm, wider when it's wild, so a normal swing won't shake the trade out. If price pulls back, the stop stays put.</p>
+  <div class="rule-box"><span class="lab">Exact rule</span><code>stop = highest recent high − (3 × ATR)</code> for a buy (mirrored for a sell). A new stop is accepted only if it's <em>better</em> than the current one and has moved a minimum amount — strictly ratchet-only. <span class="src"><code>CChandelierTrailing.mqh:146-207</code> · <code>InpTrailChandelierMult = 3.0</code></span></div>
+
+  <h3>Three other ways a trade ends</h3>
+  <p><strong>Time exit</strong> — if a trade just sits there going nowhere for about 3 days, it's closed ("a stale position is a stale opinion"). <strong>Weekend close</strong> — everything is flattened late Friday so the bot isn't caught across the weekend "gap" when gold reopens at a different price. <strong>Regime-aware exit</strong> — if the market's whole character clearly flips against the trade (a full 1-hour candle closing through the 50-period average the wrong way — real evidence, not a brief flicker), it bails.</p>
+  <div class="rule-box"><span class="lab">Exact rule</span>Time exit at <code>InpMaxPositionAgeHours = 72</code>h · weekend close Friday ≥ 20:00 · regime exit needs a closed H1 bar through EMA-50 against the position (not mere chop). <span class="src"><code>CMaxAgeExit.mqh</code> · <code>CPositionCoordinator.mqh:1712</code> · <code>CRegimeAwareExit.mqh:51-67</code></span></div>
+  </div>
+</div></section>
+
+<!-- ===== EXAMPLE ===== -->
+<section id="example"><div class="col">
+  <p class="eyebrow">Putting it together</p>
+  <h2><span class="sec-no">8</span>A worked example trade</h2>
+  <div class="off"><span class="lab">Illustrative only</span>Invented numbers to show the mechanics — not a real trade, not a recommendation, and it says nothing about whether such a trade would win or lose.</div>
+  <p>Account: <strong>$10,000</strong>. On gold, 1 point = $0.01, so a $1 move = 100 points.</p>
+  <p><strong>The hour opens.</strong> A fresh 1-hour candle closes. The bot reads the room: long-term trend <strong>up</strong>, market type <strong>trending</strong>, the calm part of New York. Good backdrop for a buy.</p>
+  <p><strong>A setup appears.</strong> The just-closed hour printed a <strong>bullish engulfing</strong> candle near <strong>$2,400.00</strong>. The pattern's low — the point that would prove the idea wrong — sits at <strong>$2,396.00</strong>.</p>
+  <p><strong>It runs the gauntlet.</strong> Kill switch off; not halted; no shock; session quality fine; spread normal; not flip-flopping; allowed hour; the setup grades as a solid tier; only 1 of 5 slots in use. All gates: pass.</p>
+  <p><strong>It sets the stop and checks the reward.</strong> Stop just below the pattern low, ~<strong>$2,395.50</strong> — a stop <em>distance</em> of about <strong>$4.50</strong>. The reward must be ≥ 1.3× that, and the laddered targets sit further out, so the check passes.</p>
+  <p><strong>It sizes the trade from the stop distance.</strong> For a solid setup it risks ~<strong>1%</strong> of equity = <strong>$100</strong>. With a $4.50 stop, that's about <strong>$100 ÷ $4.50 ≈ 22 ounces</strong> of gold (~0.22 of a 100-oz lot), rounded down. (The session/regime dials can trim that, and it must fit under the 5% total-risk ceiling — but the idea is constant: risk a small fixed amount, let the stop distance decide the size.)</p>
+  <p><strong>The order goes in</strong>, double-checking spread and price as it fires. Then the management ladder takes over:</p>
+  <ol class="gauntlet" style="counter-reset:g">
+    <li><b>Early partial (TP0).</b> At ~0.7R profit (near $2,403.15) it closes <b>15%</b> and pockets it — the trade has "paid for its parking."</li>
+    <li><b>Break-even.</b> At 0.8R it slides the stop up to about the entry price — the original $100 can no longer be given back.</li>
+    <li><b>More rungs.</b> If price keeps climbing it books <b>40%</b> at 1.3R and <b>30%</b> at 1.8R.</li>
+    <li><b>Trail the rest.</b> The runner rides a trailing stop that ratchets up behind price but never loosens — a rope you can pull tighter but never let out.</li>
+    <li><b>Final exit.</b> Price eventually turns and taps the trailing stop (or a housekeeping exit fires). The position closes, the result is logged, and the bot goes back to checking the shelf once an hour.</li>
+  </ol>
+  <div class="recap"><h3>The whole idea in one breath</h3><p>Read the market, let many scouts compete and pick the single best idea, make it survive a wall of safety checks, size it so a wrong guess costs a small fixed amount, then take profit in slices, get to break-even fast, and trail the rest with a stop that only ever moves in your favor — all decided fresh once an hour, with hard limits that pump the brakes long before the account is in danger.</p></div>
+</div></section>
+
+<!-- ===== GLOSSARY ===== -->
+<section id="glossary"><div class="col">
+  <p class="eyebrow">Reference</p>
+  <h2><span class="sec-no">9</span>Glossary</h2>
+  <dl class="gloss">
+    <dt>Candle / bar</dt><dd>One block on a chart summarizing a chunk of time (here, one hour): where price opened, closed, and its high/low. A "closed" candle is finished.</dd>
+    <dt>Pip / point</dt><dd>The smallest standard price step. On this bot's gold, 1 point = $0.01, so a $1 move = 100 points.</dd>
+    <dt>Spread</dt><dd>The small gap between the price you can buy at and sell at — a built-in cost of entering a trade.</dd>
+    <dt>ATR</dt><dd>Average True Range — how much price typically moves per bar lately; a "how bouncy is it?" meter.</dd>
+    <dt>ADX</dt><dd>A meter for how strong/trending the market is (any direction): high = a strong march, low = aimless drifting.</dd>
+    <dt>EMA</dt><dd>Exponential Moving Average — a smoothed average line; the 200-EMA is a long-term "are we above the tide line?" reference for whether buying is favored.</dd>
+    <dt>Trend / bias</dt><dd>The trend is which way price is generally heading; the bot's bias is the direction it's predisposed to trade (strongly tilted to buying gold).</dd>
+    <dt>Regime</dt><dd>The type of market now — trending, ranging, choppy, or volatile. It changes how boldly the bot acts.</dd>
+    <dt>Session</dt><dd>A major trading window by region — Asia, London, New York. Gold behaves differently in each.</dd>
+    <dt>Support / resistance</dt><dd>Price floors and ceilings — levels where price has tended to bounce (support) or stall and turn (resistance).</dd>
+    <dt>Liquidity</dt><dd>How easily you can trade without moving the price; lots = smooth/busy, thin = jumpy/harder.</dd>
+    <dt>Stop-loss (SL)</dt><dd>The pre-set "I was wrong, get me out" exit that caps a trade's loss.</dd>
+    <dt>Take-profit (TP)</dt><dd>A pre-set price where the bot cashes in some or all of a winning trade.</dd>
+    <dt>R / R-multiple</dt><dd>"R" is the amount risked on a trade. Everything is measured in Rs: a 1.3R target is 1.3× the risk; 0.8R profit is up 0.8 of a risk-unit.</dd>
+    <dt>Lot</dt><dd>The unit of trade size. A standard gold lot is 100 ounces; the bot trades fractions sized to the risk.</dd>
+    <dt>Risk %</dt><dd>The slice of the account the bot will lose on one trade if its stop is hit (~1% for a solid setup, hard-capped at 2%).</dd>
+    <dt>Drawdown</dt><dd>How far the account has dropped from its recent peak; the bot brakes as drawdown grows.</dd>
+    <dt>SMC</dt><dd>Smart Money Concepts — reading charts around where big institutional orders likely sit and how price hunts those zones; used as one quality check.</dd>
+  </dl>
+</div></section>
+
+<footer><div class="col">
+  <div><b>How the UltimateTrader gold bot works</b> — a plain-English explainer of the live default behavior. Mechanics only; no performance claims. Every "exact rule" is drawn from the source code (cited <span class="mono">file:line</span>). For the full technical decision graph see <span class="mono">trading-decision-flow.md</span>.</div>
+</div></footer>
+
+</div>
+
+</body>
+</html>
