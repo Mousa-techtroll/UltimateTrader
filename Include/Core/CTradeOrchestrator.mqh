@@ -36,6 +36,13 @@ private:
    CTradeLogger*         m_trade_logger;
    CPositionCoordinator* m_pos_coordinator;   // Fix 4.2: queried for aggregate open risk (exposure cap)
 
+   // TIER-2 cluster guard: why the LAST ExecuteSignal/ProcessConfirmedSignal
+   // call rejected ("" when it did not reject via a tagged decision). Cleared
+   // at the entry of BOTH public execution methods so a stale value can never
+   // leak across calls; callers key on "CLUSTER_GUARD" to keep guard rejects
+   // out of the consecutive-error halt circuit (they are decisions, not errors).
+   string                m_last_reject_reason;
+
    // Configuration
    double               m_min_rr_ratio;
    double               m_tp1_distance;
@@ -81,6 +88,7 @@ public:
       m_context = context;
       m_trade_logger = NULL;
       m_pos_coordinator = NULL;   // Fix 4.2: wired post-construction via SetPositionCoordinator
+      m_last_reject_reason = "";  // TIER-2 cluster guard reject tag
 
       m_min_rr_ratio = min_rr;
       m_tp1_distance = tp1_dist;
@@ -127,6 +135,11 @@ public:
    // Fix 4.2: inject the position coordinator so ExecuteSignal can read
    // aggregate open risk and enforce the InpMaxTotalExposure ceiling.
    void SetPositionCoordinator(CPositionCoordinator* coord) { m_pos_coordinator = coord; }
+
+   // TIER-2 cluster guard: reject tag of the LAST execution call ("" = none).
+   // "CLUSTER_GUARD" marks a same-family concentration reject the callers must
+   // NOT count as an execution error (see RecordExecutionError call sites).
+   string GetLastRejectReason() { return m_last_reject_reason; }
 
    //+------------------------------------------------------------------+
    //| Get Bollinger Band values for Chop Sniper TPs                     |
@@ -200,6 +213,10 @@ public:
       SPosition position;
       ZeroMemory(position);
 
+      // TIER-2: reset the reject tag on EVERY call so GetLastRejectReason()
+      // always describes THIS attempt (never a stale prior reject).
+      m_last_reject_reason = "";
+
       if(!signal.valid)
          return position;
 
@@ -216,6 +233,34 @@ public:
       bool counter_trend_reduced = false;
       double counter_trend_multiplier = 1.0;
       string risk_reason = "";
+
+      //================================================================
+      // TIER-2 (default OFF): SAME-DIRECTION CLUSTER GUARD
+      // Blocks a new entry while a SAME pattern-family + SAME-direction
+      // position is already open. Concentration control, NOT a PnL
+      // lever (measured: 128/929 entries were duplicates, net +$1,512
+      // — expect a PnL cost when enabled). Runs BEFORE any sizing.
+      // File signals are exempt (external book, own dedupe). A guard
+      // reject is a DECISION, not an execution error: the tag below
+      // lets callers skip RecordExecutionError() so the 5-strike
+      // consecutive-error halt circuit never counts it.
+      //================================================================
+      if(InpEnableClusterGuard && signal.source != SIGNAL_SOURCE_FILE &&
+         m_pos_coordinator != NULL &&
+         m_pos_coordinator.HasOpenSameFamily(signal.patternType, sig_type))
+      {
+         LogPrint(">>> CLUSTER GUARD REJECT: a ", EnumToString(signal.patternType),
+                  " ", (sig_type == SIGNAL_LONG) ? "LONG" : "SHORT",
+                  " position is already open — duplicate same-family entry blocked (",
+                  signal.comment, ")");
+         LogRiskAudit(signal, sig_type, requested_risk_pct,
+                      false, false, "CLUSTER_GUARD",
+                      adjusted_risk_pct, false,
+                      false, 1.0, final_risk_pct, 0, 0,
+                      "REJECT_CLUSTER_GUARD");
+         m_last_reject_reason = "CLUSTER_GUARD";
+         return position;
+      }
 
       // Use signal's symbol for file signals (multi-symbol CSV support)
       string trade_symbol = (signal.source == SIGNAL_SOURCE_FILE && signal.symbol != "") ?
@@ -797,6 +842,13 @@ public:
    {
       SPosition position;
       ZeroMemory(position);
+
+      // TIER-2: reset the reject tag here too — this method has early
+      // returns BEFORE it delegates to ExecuteSignal (invalid risk
+      // distance, BB-too-tight abort). Without this clear, a stale
+      // "CLUSTER_GUARD" from a prior call would misclassify those
+      // failures at the caller and wrongly skip RecordExecutionError().
+      m_last_reject_reason = "";
 
       LogPrint(">>> EXECUTING CONFIRMED TRADE: ", pending.pattern_name);
       LogPrint("    Quality: ", EnumToString(pending.quality));

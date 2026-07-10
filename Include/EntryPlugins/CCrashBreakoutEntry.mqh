@@ -38,6 +38,8 @@ private:
    double            m_extension_atr_mult;    // ATR multiplier for Rubber Band extension (2.0)
    double            m_rubber_band_sl_atr;    // SL ATR multiplier (1.5)
    double            m_rubber_band_min_adx;   // Min ADX for Rubber Band (25.0)
+   double            m_tp_extension;          // TIER-2: TP overshoot beyond the EMA21 mean,
+                                              // tp = ema21 - k*(entry-ema21); 0.0 = mean (identity)
    // DEAD MEMBERS (T0 2026-07-09): the 7 "(future use)" members below are write-only —
    // assigned in the ctor (:73-79) and never read. The InpCrash* inputs that plumb here
    // (RSICeiling/RSIFloor/MaxSpread/BufferPoints/StartHour/EndHour/DonchianPeriod) tune
@@ -64,12 +66,14 @@ public:
                        int buffer_points = 15,
                        int start_hour = 13,
                        int end_hour = 17,
-                       int donchian_period = 24)
+                       int donchian_period = 24,
+                       double tp_extension = 0.0)
    {
       m_context = context;
       m_extension_atr_mult = extension_atr_mult;
       m_rubber_band_sl_atr = sl_atr_mult;
       m_rubber_band_min_adx = min_adx;
+      m_tp_extension = tp_extension;
       m_rsi_ceiling = rsi_ceiling;
       m_rsi_floor = rsi_floor;
       m_max_spread = max_spread;
@@ -241,7 +245,10 @@ public:
          // RUBBER BAND SIGNAL: Short the overextension
          double entry = current_price;
          double sl = entry + (h1_atr * m_rubber_band_sl_atr);
-         double tp = h1_ema21;  // Target: the mean (EMA21)
+         // TIER-2 (InpCrashTPExtension): overshoot the mean by k x the
+         // entry-to-mean distance. At k=0.0 this is bit-identical to the
+         // old `tp = h1_ema21` (0.0*(entry-ema21) == +0.0; x - 0.0 == x).
+         double tp = h1_ema21 - m_tp_extension * (current_price - h1_ema21);
 
          double risk = sl - entry;
          double reward = entry - tp;

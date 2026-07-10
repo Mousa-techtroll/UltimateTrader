@@ -690,7 +690,8 @@ int OnInit()
       InpCrashATRMult, InpCrashSLATRMult, 25.0,
       InpCrashRSICeiling, InpCrashRSIFloor,
       InpCrashMaxSpread, InpCrashBufferPoints,
-      InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod);
+      InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod,
+      InpCrashTPExtension);
    RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
 
    // File-based signals (if enabled)
@@ -1904,6 +1905,23 @@ void OnTick()
                         position.tp1,
                         position.tp2);
                }
+               else if(g_tradeOrchestrator.GetLastRejectReason() == "CLUSTER_GUARD")
+               {
+                  // TIER-2 CLUSTER GUARD: a same-family concentration reject is
+                  // a DECISION, not an execution error — do NOT feed the
+                  // 5-strike consecutive-error halt circuit. The pending is
+                  // still live here (the shared post-attempt clear below runs
+                  // AFTER this branch), so log the lifecycle KILL row from the
+                  // in-scope copy directly via LogShadowPending — NOT via
+                  // ClearPendingSignalLogged, which would clear the pending a
+                  // first time and leave the shared clear below as a double.
+                  if(g_tradeLogger != NULL)
+                     g_tradeLogger.LogShadowPending(pending, "KILL", "CLUSTER_GUARD", "",
+                        (g_marketContext != NULL ? g_marketContext.GetCurrentRegime() : REGIME_UNKNOWN),
+                        (g_marketContext != NULL ? g_marketContext.GetATRCurrent() : 0.0),
+                        (g_marketContext != NULL ? g_marketContext.GetADXValue() : 0.0),
+                        pending.regime_risk_multiplier);
+               }
                else
                {
                   g_riskMonitor.RecordExecutionError();
@@ -2321,7 +2339,11 @@ void OnTick()
                   }
                   else
                   {
-                     g_riskMonitor.RecordExecutionError();
+                     // TIER-2 CLUSTER GUARD: a same-family concentration reject
+                     // is a DECISION, not an execution error — keep it out of
+                     // the 5-strike consecutive-error halt circuit.
+                     if(g_tradeOrchestrator.GetLastRejectReason() != "CLUSTER_GUARD")
+                        g_riskMonitor.RecordExecutionError();
                   }
                   } // end if(!probation_diverted)
                   } // end if(!entry_rejected)

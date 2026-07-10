@@ -103,6 +103,12 @@ private:
    string   m_gate_csv_filename;
    int      m_gate_csv_handle;
 
+   // TIER-2 SHADOW-KILL: signal-stage kill ledger (validator/volume rejects
+   // with replay-sufficient context). Lazy-created on first call — the flag
+   // (InpEnableShadowKillLog) gates the CALL SITES, so flag-off => no file.
+   string   m_shadowkill_csv_filename;
+   int      m_shadowkill_csv_handle;
+
    // Structured log file for system events
    string   m_log_filename;
    int      m_log_handle;
@@ -328,6 +334,8 @@ public:
       m_shadow_csv_handle = INVALID_HANDLE;
       m_gate_csv_filename = "";
       m_gate_csv_handle = INVALID_HANDLE;
+      m_shadowkill_csv_filename = "";
+      m_shadowkill_csv_handle = INVALID_HANDLE;
       m_log_filename = "";
       m_log_handle = INVALID_HANDLE;
       m_min_log_level = min_level;
@@ -1198,6 +1206,82 @@ public:
    }
 
    //+------------------------------------------------------------------+
+   //| TIER-2 SHADOW-KILL: decision-free ledger of signal-stage kills   |
+   //| (VALIDATOR / VOLUME rejects) with replay-sufficient context.     |
+   //| Lazy-created on the first call (mirrors LogGateScore) so it      |
+   //| never appears on the production path — InpEnableShadowKillLog    |
+   //| gates the call sites, flag OFF => method never invoked =>        |
+   //| no file, byte-identity preserved. Must NEVER influence a         |
+   //| trading decision. SigBarO/H/L/C = the just-closed H1 signal      |
+   //| candle. VolumeRatio: -1.0 = not computed / copy failed           |
+   //| (only the VOLUME stage carries a real ratio).                    |
+   //+------------------------------------------------------------------+
+   void LogShadowKill(const EntrySignal &sig, ENUM_SIGNAL_TYPE side,
+                      string kill_stage, string kill_reason, string detail,
+                      ENUM_REGIME_TYPE regime, double atr, double adx,
+                      int macro, double range48h, double volume_ratio)
+   {
+      // Lazy create on first call (keeps the production path file-side-effect free)
+      if(m_shadowkill_csv_handle == INVALID_HANDLE)
+      {
+         MqlDateTime dt;
+         TimeToStruct(TimeCurrent(), dt);
+         m_shadowkill_csv_filename = StringFormat("UltTrader_ShadowKills_%s_%04d%02d%02d_%02d%02d.csv",
+                                                  _Symbol, dt.year, dt.mon, dt.day, dt.hour, dt.min);
+         m_shadowkill_csv_handle = FileOpen(m_shadowkill_csv_filename, FILE_WRITE | FILE_CSV | FILE_COMMON, ',');
+         if(m_shadowkill_csv_handle == INVALID_HANDLE)
+         {
+            LogPrint("WARNING: Could not create shadow-kill file: ", m_shadowkill_csv_filename);
+            return;
+         }
+         FileWrite(m_shadowkill_csv_handle,
+                   "KillStage", "KillReason", "Detail", "SignalID", "BarTime",
+                   "Plugin", "Pattern", "PatternType", "Side", "RequiresConfirmation",
+                   "Regime", "ATR", "ADX", "MacroScore",
+                   "Ask", "Bid", "SpreadPoints",
+                   "EntryPrice", "StopLoss", "TP1", "TP2",
+                   "SigBarO", "SigBarH", "SigBarL", "SigBarC",
+                   "Range48h", "VolumeRatio");
+         LogPrint("CTradeLogger: Shadow-kill file created: ", m_shadowkill_csv_filename);
+      }
+
+      double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+      double spread_points = (point > 0) ? (ask - bid) / point : 0.0;
+
+      FileWrite(m_shadowkill_csv_handle,
+                SanitizeCSV(kill_stage),
+                SanitizeCSV(kill_reason),
+                SanitizeCSV(detail),
+                SanitizeCSV(sig.signal_id),
+                TimeToString(iTime(_Symbol, PERIOD_H1, 0), TIME_DATE | TIME_MINUTES),
+                SanitizeCSV(sig.plugin_name),
+                SanitizeCSV(sig.comment),
+                EnumToString(sig.patternType),
+                (side == SIGNAL_LONG) ? "LONG" : "SHORT",
+                sig.requiresConfirmation ? "YES" : "NO",
+                EnumToString(regime),
+                DoubleToString(atr, 2),
+                DoubleToString(adx, 1),
+                IntegerToString(macro),
+                DoubleToString(ask, _Digits),
+                DoubleToString(bid, _Digits),
+                DoubleToString(spread_points, 1),
+                DoubleToString(sig.entryPrice, _Digits),
+                DoubleToString(sig.stopLoss, _Digits),
+                DoubleToString(sig.takeProfit1, _Digits),
+                DoubleToString(sig.takeProfit2, _Digits),
+                DoubleToString(iOpen(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(iHigh(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(iLow(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(iClose(_Symbol, PERIOD_H1, 1), _Digits),
+                DoubleToString(range48h, 2),
+                DoubleToString(volume_ratio, 2));
+      FileFlush(m_shadowkill_csv_handle);
+   }
+
+   //+------------------------------------------------------------------+
    //| Track 0: Log risk decision ledger                                 |
    //+------------------------------------------------------------------+
    void LogRiskDecision(string signal_id, string plugin_name, string pattern,
@@ -1819,6 +1903,14 @@ public:
          FileClose(m_gate_csv_handle);
          m_gate_csv_handle = INVALID_HANDLE;
          LogPrint("CTradeLogger: GATE score file closed: ", m_gate_csv_filename);
+      }
+
+      // TIER-2 SHADOW-KILL: only ever opened when InpEnableShadowKillLog=true (lazy)
+      if(m_shadowkill_csv_handle != INVALID_HANDLE)
+      {
+         FileClose(m_shadowkill_csv_handle);
+         m_shadowkill_csv_handle = INVALID_HANDLE;
+         LogPrint("CTradeLogger: Shadow-kill file closed: ", m_shadowkill_csv_filename);
       }
 
       if(m_log_handle != INVALID_HANDLE)

@@ -1032,6 +1032,25 @@ public:
    }
 
    //+------------------------------------------------------------------+
+   //| TIER-2 cluster guard (InpEnableClusterGuard): is a same           |
+   //| pattern-family, same-direction position already open?             |
+   //| PATTERN_NONE never matches — adopted/unclassified positions       |
+   //| must not block anything.                                          |
+   //+------------------------------------------------------------------+
+   bool HasOpenSameFamily(ENUM_PATTERN_TYPE fam, ENUM_SIGNAL_TYPE dir)
+   {
+      if(fam == PATTERN_NONE)
+         return false;
+
+      for(int i = 0; i < m_position_count; i++)
+      {
+         if(m_positions[i].pattern_type == fam && m_positions[i].direction == dir)
+            return true;
+      }
+      return false;
+   }
+
+   //+------------------------------------------------------------------+
    //| Get position ticket by index                                      |
    //+------------------------------------------------------------------+
    ulong GetPositionTicket(int index)

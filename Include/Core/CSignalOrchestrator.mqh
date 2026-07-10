@@ -698,6 +698,14 @@ public:
                            "VALIDATOR", "REJECT",
                            (reject_reason != "") ? reject_reason : "VALIDATOR_FAILED",
                            0, SETUP_NONE, 0, 0.0, signal.requiresConfirmation, false);
+            // TIER-2 SHADOW-KILL (default OFF): decision-free replay row.
+            // VolumeRatio = -1.0 (not computed at the VALIDATOR stage).
+            if(InpEnableShadowKillLog && m_trade_logger != NULL)
+               m_trade_logger.LogShadowKill(signal, sig_type, "VALIDATOR",
+                  (reject_reason != "") ? reject_reason : "VALIDATOR_FAILED", "",
+                  regime, current_atr, current_adx, macro_score,
+                  (m_context != NULL) ? m_context.GetTrailing48hRange() : 0.0,
+                  -1.0);
             continue;
          }
 
@@ -708,6 +716,32 @@ public:
             AuditCandidate(signal, sig_type, regime, current_atr, current_adx, macro_score,
                            "VOLUME", "REJECT", "VOLUME_FILTER", 0,
                            SETUP_NONE, 0, 0.0, signal.requiresConfirmation, false);
+            // TIER-2 SHADOW-KILL (default OFF): decision-free replay row.
+            // Recompute the volume ratio READ-ONLY, mirroring
+            // CSignalValidator::ValidateVolumeSpread semantics exactly:
+            // signal bar volume[1] vs avg(volume[2..10]) on H1, ratio 0 when
+            // avg<=0; -1.0 sentinel when the copy fails here (the validator's
+            // copy-failure path PASSES, so it can never be the kill cause).
+            if(InpEnableShadowKillLog && m_trade_logger != NULL)
+            {
+               double kill_volume_ratio = -1.0;
+               long kill_volume[];
+               ArraySetAsSeries(kill_volume, true);
+               if(CopyTickVolume(_Symbol, PERIOD_H1, 0, 11, kill_volume) >= 11)
+               {
+                  long kill_sum_volume = 0;
+                  for(int kv = 2; kv <= 10; kv++)
+                     kill_sum_volume += kill_volume[kv];
+                  double kill_avg_volume = kill_sum_volume / 9.0;
+                  kill_volume_ratio = (kill_avg_volume > 0) ?
+                     (double)kill_volume[1] / kill_avg_volume : 0.0;
+               }
+               m_trade_logger.LogShadowKill(signal, sig_type, "VOLUME",
+                  "VOLUME_FILTER", "",
+                  regime, current_atr, current_adx, macro_score,
+                  (m_context != NULL) ? m_context.GetTrailing48hRange() : 0.0,
+                  kill_volume_ratio);
+            }
             continue;
          }
 

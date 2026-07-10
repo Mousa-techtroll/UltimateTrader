@@ -353,3 +353,31 @@ Even narrowed + downsized on the corrected-ATR stack, bearish engulfing repeats 
 **Disposition:** lever stays in source (default off, identity-verified) with this finding as documentation.
 
 **JOINT CONCLUSION — FIX-1 + FIX-2 (owner's mandate 2026-07-09):** both diagnosed pathologies are REAL (frozen first-tick stop floor; nonexistent BE mover) and both fixes are measured net-negative, because the book's profit engine (fast partial banking at tight stops, +$40k partials vs −$20k runners) is CO-ADAPTED to exactly these pathologies. Running total: SEVEN single-lever interventions on diagnosed issues (Friday, confirmation, TP ceiling, short book, exit ladder, stop floor, BE mover) have now failed at FIT or CONFIRM; only correctness fixes (ATR-pair, tier renorm, guards) ever passed. Any further attack on the stop/ladder complex must be a COUPLED redesign (stop anchor + ladder distances + BE/trail re-derived together in price/ATR terms, not R-of-a-widened-stop) — stok-level design work with a fresh FIT derivation, not a lever. SEPARATE live-robustness item that survives this kill: the first-tick point-scale freeze (UltimateTrader.mq5:217-244) makes live behavior start-date-dependent ($5.13 vs $17.28 floors for 2019 vs 2026 starts) — deserves a behavior-preserving refactor (e.g., scale re-derived per bar but with the FLOOR kept at the effective historical calibration) before any live deployment.
+
+---
+
+## TIER-2a PBC-disable arm — MEASURED KILL AT FIT
+**Date:** 2026-07-10 | Config-only (`InpEnablePullbackCont=false`, prevents construction+registration) on the committed tree (UltimateTrader_T0.ex5).
+| Leg (FIT 2019–2022) | Net | PF | Sharpe | EqDD | Trades |
+|---|---|---|---|---|---|
+| Baseline | $2,735.89 | 1.14 | 1.17 | 18.22% | 829 |
+| PBC-off | **$2,247.15 (−17.9%)** | 1.12 | 1.08 | 18.43% | 793 |
+**Verdict: KILL — PBC stays.** The "negative avg-R strategy" is dollars-positive and its removal degrades every headline metric: its winners land on later/larger balances, and its candidates' role in same-bar arbitration measured net-positive for the book. Eighth single-lever intervention to fail measurement. A PBC exit REBUILD (not removal) remains a Tier-3 candidate.
+
+---
+
+## TIER-2 arms — cluster guard KILLED at CONFIRM; crash-TP measured no-op; shadow-kill instrumentation VERIFIED
+**Date:** 2026-07-10 | Binary UltimateTrader_T2.ex5 (identity legs exact: FIT $2,735.89/829t at defaults; FULL $21,623.18/1878 with the kill-logger ON — decision-free proven).
+
+**A. Same-direction cluster guard (`InpEnableClusterGuard`, key=(pattern_type,direction), single chokepoint in ExecuteSignal covering immediate+confirmed; cluster rejects excluded from the consecutive-error halt circuit):**
+| Leg | Net | PF | Sharpe | EqDD | Verdict |
+|---|---|---|---|---|---|
+| FIT 2019–2022 | $3,090.51 (+13.0%) | 1.17 | 1.51 | 15.72% (−2.5pp) | pass → CONFIRM |
+| CONFIRM 2023–2026H1 | **$10,550.41 (−27.4%)** | 1.35 | 2.99 | **13.28% (WORSE +0.17pp)** | **KILL** |
+The 128 historical duplicates were net +$1,512 (2023–25 dups +$2.1k of compounding winners); blocking them costs net AND fails the concentration-control justification OOS (DD worse). Ninth single-lever kill; third FIT-mirage (+13%→−27%). Lever stays default-off documented. A per-family risk CAP (downsize, don't block) remains the Tier-3 refinement if concentration control is ever mandated.
+
+**B. Crash TP extension (`InpCrashTPExtension=0.5`):** FIT $2,708.23 (−1.0%), all metrics flat — the forensic prediction is now measured FACT: the TP channel is not the crash constraint (only 2/138 trades ever reached the mean; the binding constraint is the short-side chandelier clamp producing at-market stops seconds after entry — stop/ladder-complex territory, coupled-redesign only). Lever stays default-off documented.
+
+**C. Shadow-kill logger (`InpEnableShadowKillLog`):** full-range instrumentation leg reproduced the binding baseline TO THE CENT while capturing the COMPLETE signal-stage kill piles: 532 VALIDATOR_FAILED + 615 VOLUME_FILTER rows (matches the funnel audit exactly). Offline replay pricing of the Engulfing-449 and S6-81 piles in progress.
+
+**C (completed). Shadow-kill replay pricing (calibrated: LONG bias +0.024..+0.035 SE .026, r 0.85; SHORT +0.043..+0.074, r 0.61):** Engulfing-VOLUME pile [−0.032,−0.017]R bias-corrected even at the optimistic bracket → gate acquitted; dose-response INVERTED (near-miss band 0.9-1.0 = worst at −0.09R) → threshold-relax specifically refuted. S6-VALIDATOR pile center +0.18R but 95% CI spans zero on ~36 survivors (~$150/yr) + maximal replay-geometry error on its ultra-tight stops → no claim, no arm (binding sub-check identified for the record: PATTERN_FAILED_BREAK_REVERSAL missing from the TRENDING counter-trend structural-exception list, CSignalValidator ~:574-586). Crash-short VOLUME pile −0.12R kills → the gate demonstrably PAYS. All positive year-slices concentrate in 2024-25 (the record bull leg) — the curve-fit trap named. **TIER-2 COMPLETE: every cheap unmeasured lever is now measured. Kills: PBC-off, cluster guard (FIT+13%→CONF−27%, DD worse OOS), crash-TP (measured no-op). Acquittals: volume filter, S6 validator. Instrumentation adopted: shadow-kill logger (decision-free, to-the-cent).**

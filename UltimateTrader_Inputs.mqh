@@ -67,6 +67,7 @@ input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe b
 input double InpDailyLossLimit = 3.0;        // Daily loss limit % (halt trading)
 input double InpMaxLotMultiplier = 10.0;     // Max lot size multiplier — DEAD (sole consumer = never-constructed CQualityTierRiskStrategy; Action-3 DELETE 2026-07-08)
 input int    InpMaxPositions = 5;            // Max concurrent positions
+input bool   InpEnableClusterGuard = false;  // Block entry when a same pattern-family + same-direction position is open (measured: 128/929 entries were duplicates, net +$1,512 — this is CONCENTRATION control, expect PnL cost)
 input bool   InpAutoCloseOnChoppy = true;    // Auto-close in CHOPPY regime
 input bool   InpStructureBasedExit = false; // CONFIRMED IRRELEVANT: CHOPPY regime never occurs on gold (0/815 trades). Gate has nothing to gate.
 input bool   InpEnableCIScoring = true;     // CI(10) regime scoring: +1pt trend in low-CI, -1pt trend in high-CI
@@ -244,6 +245,7 @@ input int    InpCrashStartHour = 13;         // Start hour (GMT) — DEAD (see b
 input int    InpCrashEndHour = 17;           // End hour (GMT) — DEAD (see banner: no time-box is applied)
 input int    InpCrashDonchianPeriod = 24;    // Donchian period — DEAD (see banner: never read)
 input double InpCrashSLATRMult = 1.5;        // SL ATR multiplier (wired: was hardcoded as 1.5)
+input double InpCrashTPExtension = 0.0;      // TP overshoot beyond the EMA21 mean: tp = ema21 - k*(entry-ema21); 0 = mean (identity). Forensics 2026-07-10: only 2/138 trades ever reached the mean — the binding constraint is the short-side chandelier clamp, not the TP; this lever prices that fact.
 
 //--- Group 16: MACRO BIAS
 input group "══════ MACRO BIAS (DXY/VIX) ══════"
@@ -335,6 +337,7 @@ input bool   InpEnableAlerts = true;         // Enable alerts
 input bool   InpEnablePush = false;          // Enable push notifications
 input bool   InpEnableEmail = false;         // Enable email notifications
 input bool   InpEnableLogging = true;        // Enable trade logging
+input bool   InpEnableShadowKillLog = false; // Decision-free CSV of signal-stage kills (volume/validator) with replay-sufficient context
 
 //--- Group 26: EXECUTION REALISM (Phase 3.2)
 input group "══════ EXECUTION REALISM ══════"
