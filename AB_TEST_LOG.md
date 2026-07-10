@@ -493,3 +493,35 @@ Crash cohort n=138: ΔR +0.1872 (SE 0.0924), direct $+924.32 (2021 +$273 / 2022 
 **P0.6:** pending-order OrderOpen argument defect fixed (comment in the expiration slot — unreachable path, no pending producers exist); deviation set explicitly at 9 close/partial sites (10==10 no-op on record); [SlipGuard] log line; retcode+error forensics on previously-silent close failures; entry SL/TP tick-normalization gap DOCUMENTED as a flag-gated future lever (fixing = identity break; tester tolerated 2,020 trades). Compiler warnings 16→0, all semantics-preserving.
 **P0.5:** runtime capability manifest at OnInit — journal block + `UltTrader_Manifest_<symbol>.csv` (ENTRY/EXIT/TRAILING/LEVER/SCALE rows, owner designations, all default-off lever values, anchor + computed scale).
 **P6.3 (offline, `monte-carlo-validation.md` + `mc_validate.py`):** block-bootstrap DD p50/p90/p95 = 18.9/26.5/29.3%; **the 13.63% headline is a p7–p17 lucky-side draw; live DD budget ≈30% (p95); a 20% kill-switch fires on ~41% of healthy paths.** Book survives top-10-winner removal AND ex-2025 individually (first failure = combined, +$1.1k at 22.9% DD); worst-case adversarial sequencing bounded at 31.7% by the risk cap. **§D reduced tail risk** (P(DD>20%) 0.49→0.41, p95 31.3→29.3%) — adoption re-confirmed risk-side.
+
+---
+
+## CRH4 PRE-REGISTRATION — Crash regime gate D1∪H4 (entry-breadth program #1) — gates locked BEFORE implementation
+**Date:** 2026-07-10 | **Design:** `workflowAnalysis/entry-breadth-opportunity-map.md` Part B/D (B-1) | **Owner ratification:** recorded verbatim this date — "Only this one primary variant should be run initially."
+**Hypothesis:** the D1 EMA50<EMA200 gate is the crash engine's binder, not the stretch/ADX trigger (measured: 2026H1 had 401 stretch+ADX bars, D1 gate vetoed 100% — the cross printed 2026-07-08, after the window; 2023-05→10 leg also 0%). Adding H4 EMA50<EMA200 as an OR-gate extends the only short engine with proven positive economics (§D: avg R +0.212) into the missed bear legs. Everything else unchanged: EMA21-stretch 2.0×ATR, ADX≥25, volume gate, A+-only, risk reduction, trail suppressor, position management.
+**Change spec (one change, one binary `UltimateTrader_CRH4.ex5`):** new input `InpCrashRegimeGate` (0 = D1 cross only, BASELINE, default; 1 = D1 OR H4 cross), plumbed to `CCrashBreakoutEntry`. H4 EMA handles created ONLY when gate=1; default path creates no handles and reads no new buffers (identity by construction). Closed-bar [1] reads per Phase 6.9 convention. `m_bear_regime_active` semantics unchanged (D1-based).
+**Registered predictions (from the 96.5%-recall reconstruction, calibration 0.135 fills/signal-bar, stated as ≤):** full-window incremental ≈ +171 crash fills (FIT 2019–22 ≈ +69; CONFIRM 2023–26H1 ≈ +102; 2026H1 ≈ +24). Named risk cohort: ~39 est fills of 2024–25 bull-pullback shorts.
+**Baselines of record (suppressor-ON tree):** FULL identity $23,771.46 / 2,020 deals / 928 positions / EqDD 13.63%; FIT identity $3,148.70 / 448 positions; CONFIRM identity $15,457.04 (2023.01.01 start; cf. §D DARMCONF).
+
+**BINDING GATES (owner's set, verbatim intent; never softened after results):**
+- Identity run (gate=0): reproduce $23,771.46 and all 928 positions exactly.
+- FIT 2019–2022 (gate=1): (1) existing positions unchanged (off-cohort decisions identical); (2) incremental crash cohort avg R ≥ 0; (3) EqDD ≤ baseline +0.3pp; (4) no calendar year worse by >$500.
+- CONFIRM 2023–2026H1 (gate=1, run only if FIT passes): (1) net ≥ $15,457.04; (2) EqDD ≤ baseline +0.3pp; (3) ≥1 new crash fill in 2026H1; (4) 2026H1 calendar result not worse by >$500; (5) incremental 2024–2025 shorts ≥ −$750 combined; (6) ex-2025 result does not deteriorate; (7) off-cohort decisions identical.
+- Fail = close no-change. If the ONLY CONFIRM failure is clause (5), the single pre-registered fallback (B-3 correction-state gate, map Part B) may be proposed to the owner; nothing else. No parallel variants, no sweeps.
+**Report-only diagnostics (non-binding, to keep reads honest):** FIT/CONFIRM net deltas vs the ±$1,500 (2σ) single-run noise floor; 2025-share drift; incremental-cohort per-year decomposition; matched-cohort ΔR with SE.
+**Power honesty (registered):** FIT incremental cohort n≈69 → position-level SE ≈0.10R — the ΔR≥0 clause is a sanity floor, not a 2σ test; the binding OOS evidence is CONFIRM's coverage + risk-cohort + DD clauses (same shape that adjudicated §D at n=117/21).
+**Method notes:** cohort attribution by SignalID join of arm vs base Stats CSVs; off-cohort identity at decision level (exit time+price; lot-rounding $ compounding tolerated per §D precedent); per-arm CSV archiving mandatory (`_arm_archive/crh4_{ID,FITID,FIT,CONFID,CONF,FULL}`); state quarantined per leg; explicit ini values (cache trap).
+
+---
+
+## CRH4 (program B-1, crash D1∪H4 regime gate) — FIT STOP: 2 of 4 registered gates FAILED; program closes no-change
+**Date:** 2026-07-11 | Binary UltimateTrader_CRH4.ex5 (md5 49680e2…; identities exact: FULL $23,771.46/2,020/928; FIT $3,148.70/946). Archives `_arm_archive/crh4_{ID,FITID,FIT}`.
+| Gate (FIT, registered) | Required | Measured | Verdict |
+|---|---|---|---|
+| Off-cohort decision identity | 448 baseline positions bit-identical | **444/447 + 1 LOST** (3 PinBar SHORTs re-exited, 1 PinBar LONG never entered) | **FAIL** |
+| EqDD | ≤ 17.67% (base 17.37% + 0.3pp) | **19.18%** (+1.81pp) | **FAIL** |
+| No year worse > $500 | — | worst 2021 −$28 | pass |
+| Incremental crash ΔR ≥ 0 | sanity floor | +0.081 (SE 0.174, n=39 — noise-level, stated) | pass |
+Run-level context (not gates): net $3,929.02 (+24.8%), PF 1.16, Sharpe 1.37, every year's net improved or flat; incremental fills +39 vs ~+69 forecast (2019:12, 2020:20, 2021:6, 2022:1 — all Rubber Band, gate working as coded).
+**Why it still fails:** (1) the **additive-only premise is structurally false** — concurrent incremental crash shorts interact with baseline entries through exposure/slot/same-direction machinery (all 4 breaches are PinBars adjacent to new crash windows); without slot isolation no entry-breadth arm can claim scope cleanliness; (2) the added 2020 crash-short cluster deepens an equity valley: **+1.81pp EqDD for +$780 FIT net is exactly the risk-shape the gate exists to reject.** Per registration: any FIT gate failure = stop; the B-3 fallback license was CONFIRM-2024/25-cohort-specific and is NOT triggered. No CONFIRM spent.
+**Disposition:** lever stays in source (`InpCrashRegimeGate=0` default, identity-proven to the cent) with this finding as documentation. Any retry is a NEW registration and must solve BOTH failure modes a-priori: slot/exposure isolation for incremental entries + a DD-shaped dose control (e.g., cap concurrent incremental crash positions at 1). The 2026H1 hole remains open and priced ($3.8–7.6k); it was never reachable by the FIT window and dies untested here — a fact the owner may weigh in any retry decision.

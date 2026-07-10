@@ -167,6 +167,8 @@ Costing basis: fills/yr from Parts B/C; $/yr at book-typical capture and cohort-
 
 ### The one program to run first: B-1 (crash-engine H4-union gate)
 
+> **STATUS: RATIFIED — GO CONFIRMED 2026-07-11.** Owner-channel go ("Priority 1 — Test the Crash D1-or-H4 regime gate… the next development experiment", gate set recorded verbatim) with authorization confirmed by PM relay of 2026-07-11. Pre-registration of record: `AB_TEST_LOG.md` "CRH4 PRE-REGISTRATION" (gates locked before implementation). Only the primary variant runs; B-3 remains the single conditional fallback and requires PM approval before it may run.
+
 Why it wins every column: it is the **only candidate that attacks the #1 quantified hole** (bear-leg coverage without a D1 cross — 2026H1 = 3,529 $/oz at yield 0), on the **only entry engine with freshly measured positive per-trade economics** (§D: +0.212 avg R), with a **~5-line additive change**, a calibrated fill forecast (≤+171 fills, 96.5%-recall reconstruction), a-priori cohort-quality evidence (the incremental bear-leg bars are better raw material than the current cohort on the same yardstick), and a named, boundable risk cohort.
 
 **Pre-registerable gate set (frozen before any run):**

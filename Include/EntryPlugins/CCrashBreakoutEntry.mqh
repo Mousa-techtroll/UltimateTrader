@@ -30,6 +30,11 @@ private:
    int               m_handle_ema21_h1;
    int               m_handle_atr_h1;
    int               m_handle_adx_h1;
+   // CRH4 (pre-registered B-1): H4 death-cross handles. Created in Initialize()
+   // ONLY when m_regime_gate==1; the gate=0 path creates NO new handles and
+   // reads NO new buffers (identity by construction).
+   int               m_handle_ema50_h4;
+   int               m_handle_ema200_h4;
 
    // State
    bool              m_bear_regime_active;
@@ -40,6 +45,8 @@ private:
    double            m_rubber_band_min_adx;   // Min ADX for Rubber Band (25.0)
    double            m_tp_extension;          // TIER-2: TP overshoot beyond the EMA21 mean,
                                               // tp = ema21 - k*(entry-ema21); 0.0 = mean (identity)
+   int               m_regime_gate;           // CRH4: 0 = D1 death cross only (BASELINE),
+                                              // 1 = D1 OR H4 death cross (AB_TEST_LOG CRH4 PRE-REGISTRATION)
    // DEAD MEMBERS (T0 2026-07-09): the 7 "(future use)" members below are write-only —
    // assigned in the ctor (:73-79) and never read. The InpCrash* inputs that plumb here
    // (RSICeiling/RSIFloor/MaxSpread/BufferPoints/StartHour/EndHour/DonchianPeriod) tune
@@ -67,13 +74,15 @@ public:
                        int start_hour = 13,
                        int end_hour = 17,
                        int donchian_period = 24,
-                       double tp_extension = 0.0)
+                       double tp_extension = 0.0,
+                       int regime_gate = 0)
    {
       m_context = context;
       m_extension_atr_mult = extension_atr_mult;
       m_rubber_band_sl_atr = sl_atr_mult;
       m_rubber_band_min_adx = min_adx;
       m_tp_extension = tp_extension;
+      m_regime_gate = regime_gate;
       m_rsi_ceiling = rsi_ceiling;
       m_rsi_floor = rsi_floor;
       m_max_spread = max_spread;
@@ -89,6 +98,8 @@ public:
       m_handle_ema21_h1 = INVALID_HANDLE;
       m_handle_atr_h1 = INVALID_HANDLE;
       m_handle_adx_h1 = INVALID_HANDLE;
+      m_handle_ema50_h4 = INVALID_HANDLE;
+      m_handle_ema200_h4 = INVALID_HANDLE;
    }
 
    virtual string GetName() override    { return "CrashBreakoutEntry"; }
@@ -124,6 +135,23 @@ public:
          // Non-fatal: can still detect bear regime, just not Rubber Band
       }
 
+      // CRH4 (pre-registered B-1): H4 EMA handles ONLY when the widened gate is
+      // armed. gate=0 (BASELINE) creates no handles here — identity by construction.
+      if(m_regime_gate == 1)
+      {
+         m_handle_ema50_h4  = iMA(_Symbol, PERIOD_H4, 50, 0, MODE_EMA, PRICE_CLOSE);
+         m_handle_ema200_h4 = iMA(_Symbol, PERIOD_H4, 200, 0, MODE_EMA, PRICE_CLOSE);
+         if(m_handle_ema50_h4 == INVALID_HANDLE || m_handle_ema200_h4 == INVALID_HANDLE)
+         {
+            // Fatal on the arm: silently degrading gate=1 to D1-only would fake a
+            // baseline run as an arm run. Loud fail -> plugin not registered.
+            m_lastError = "CCrashBreakoutEntry: Failed to create H4 EMA handles (regime gate=1)";
+            Print(m_lastError);
+            return false;
+         }
+         Print("CCrashBreakoutEntry: CRH4 regime gate ARMED (D1 OR H4 death cross)");
+      }
+
       m_isInitialized = true;
       Print("CCrashBreakoutEntry initialized on ", _Symbol,
             " | Extension=", m_extension_atr_mult, "xATR SL=", m_rubber_band_sl_atr,
@@ -141,6 +169,8 @@ public:
       if(m_handle_ema21_h1 != INVALID_HANDLE)  { IndicatorRelease(m_handle_ema21_h1);  m_handle_ema21_h1 = INVALID_HANDLE; }
       if(m_handle_atr_h1 != INVALID_HANDLE)    { IndicatorRelease(m_handle_atr_h1);    m_handle_atr_h1 = INVALID_HANDLE; }
       if(m_handle_adx_h1 != INVALID_HANDLE)    { IndicatorRelease(m_handle_adx_h1);    m_handle_adx_h1 = INVALID_HANDLE; }
+      if(m_handle_ema50_h4 != INVALID_HANDLE)  { IndicatorRelease(m_handle_ema50_h4);  m_handle_ema50_h4 = INVALID_HANDLE; }
+      if(m_handle_ema200_h4 != INVALID_HANDLE) { IndicatorRelease(m_handle_ema200_h4); m_handle_ema200_h4 = INVALID_HANDLE; }
       m_isInitialized = false;
    }
 
@@ -195,6 +225,26 @@ public:
       double d1_close = iClose(_Symbol, PERIOD_D1, 1);  // Last closed D1 candle
 
       bool death_cross_exists = (ema50 < ema200);
+
+      // CRH4 (pre-registered B-1, AB_TEST_LOG "CRH4 PRE-REGISTRATION"): widen the
+      // regime gate to D1 OR H4 death cross. The H4 leg is evaluated ONLY when the
+      // D1 cross is false AND m_regime_gate==1 — the gate=0 path executes
+      // byte-identical logic (no new CopyBuffer calls). Closed-bar [1] reads on
+      // CLOSED H4 bars, same Phase 6.9 convention as the D1 reads above.
+      if(!death_cross_exists && m_regime_gate == 1)
+      {
+         if(m_handle_ema50_h4 == INVALID_HANDLE || m_handle_ema200_h4 == INVALID_HANDLE)
+            return signal;  // unreachable when Initialize() succeeded with gate=1
+
+         double ema50_h4_buf[], ema200_h4_buf[];
+         ArraySetAsSeries(ema50_h4_buf, true);
+         ArraySetAsSeries(ema200_h4_buf, true);
+         if(CopyBuffer(m_handle_ema50_h4, 0, 0, 2, ema50_h4_buf) < 2 ||
+            CopyBuffer(m_handle_ema200_h4, 0, 0, 2, ema200_h4_buf) < 2)
+            return signal;
+
+         death_cross_exists = (ema50_h4_buf[1] < ema200_h4_buf[1]);
+      }
 
       if(!death_cross_exists)
          return signal;  // No Death Cross = no signal from this plugin

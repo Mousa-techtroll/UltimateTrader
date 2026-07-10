@@ -246,6 +246,7 @@ input int    InpCrashEndHour = 17;           // End hour (GMT) — DEAD (see ban
 input int    InpCrashDonchianPeriod = 24;    // Donchian period — DEAD (see banner: never read)
 input double InpCrashSLATRMult = 1.5;        // SL ATR multiplier (wired: was hardcoded as 1.5)
 input double InpCrashTPExtension = 0.0;      // TP overshoot beyond the EMA21 mean: tp = ema21 - k*(entry-ema21); 0 = mean (identity). Forensics 2026-07-10: only 2/138 trades ever reached the mean — the binding constraint is the short-side chandelier clamp, not the TP; this lever prices that fact.
+input int    InpCrashRegimeGate = 0;         // 0 = D1 death cross only (BASELINE), 1 = D1 OR H4 death cross
 
 //--- Group 16: MACRO BIAS
 input group "══════ MACRO BIAS (DXY/VIX) ══════"

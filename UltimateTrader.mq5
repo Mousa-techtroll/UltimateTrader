@@ -830,7 +830,7 @@ int OnInit()
       InpCrashRSICeiling, InpCrashRSIFloor,
       InpCrashMaxSpread, InpCrashBufferPoints,
       InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod,
-      InpCrashTPExtension);
+      InpCrashTPExtension, InpCrashRegimeGate);
    RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
 
    // File-based signals (if enabled)
