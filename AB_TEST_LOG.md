@@ -412,3 +412,26 @@ The 128 historical duplicates were net +$1,512 (2023–25 dups +$2.1k of compoun
 - CONFIRM (single exam, best arm, never softened): net ≥ $14,535.35; EqDD ≤ 14.11%; trades ±2%; ΔR ≥ 0 full + ≥ +0.055 bound sub-cohort; no year worse >$500; 2025-share rise ≤3pp; ex-2025 not worse; TP0 invariant OOS.
 - Any FIT net gain >+20% = warning sign (mirage precedent), not a win.
 **Instrumentation rider (Phase 0):** Stats CSV gains decision-free columns S_pat/S_eff/R48/WidenFactor/CEGBound/RegimeAgeH4/Run48 (serves CEG gates + §B tape-gate offline verdict + quality_v2). FULL identity leg must reproduce $21,623.18/1,878t to the cent with the new columns present.
+
+---
+
+## CEG DIAGNOSTIC ARMS M/M3 — REGISTERED ABORT FIRED (twice); adoption arms HALTED pending owner ruling
+**Date:** 2026-07-10 | Binary UltimateTrader_CEG.ex5 (identities exact: FULL $21,623.18/1,878t with instrumentation live; FIT $2,735.89/829t). Harness ceg_run.sh; archives _arm_archive/ceg_{I,M,M3}.
+| Arm (FIT) | Net | PF | EqDD | Bound ΔR (SE) | TP0 fill | Bound hard-stops | Drift |
+|---|---|---|---|---|---|---|---|
+| I (identity) | $2,735.89 | 1.14 | 18.22% | — | 46.4% | 87 | — |
+| M (q=0.30 + c_trail=2.70) | −$811.63 | 0.95 | 29.32% | **−0.0285 (0.0353)** | 46.0% | 87→**102 ROSE** | 1.79% |
+| M3 (q=0.30, trail off) | $1,583.75 | 1.11 | 15.71% | **−0.0305 (0.0268)** | **33.7%** | 87→**40 falls** | 2.01% |
+**Registered abort #1 (ΔR_bound ≤ −0.026): FIRED on both variants.** Registered abort #3 (drift >1% on two arms): FIRED (sizing→exposure-cap ripples admitting ~6 extra entries/arm — economic feedback, not entry-code leakage; verified arm-only entries, not signal changes).
+**Mechanism decomposition (bound cohort, M):** base-HS→arm-live +30.2R (n=28) + base-HS→arm-HS +14.4R (n=59) = **survivability channel +44.6R CONFIRMED REAL**; base-live→arm-HS −14.9R + live→live −40.6R = **trail-inflation damage −55.5R** at 2–6× widen factors. M3 isolates the ladder: hard stops fall correctly (87→40) but **TP0 collapses via MIN-LOT VOLUME QUANTIZATION** (lots shrink 2–6× → 10% rungs < 0.01 min lot — a starvation channel NO ladder anchoring can fix at this dose on a $10k book) plus baseline-width trail scratching wide-stop positions pre-ladder.
+**Honest instrument notes:** registration assumed SE ≈0.013 (trade-level n≈830); realized position-level SE 0.027–0.035 — the abort margin (0.0025–0.0045R) is ~7–14× inside the noise; M3 bound 95% CI [−0.084, +0.023] spans zero. The tax at q=0.30 measured **dose-intrinsic** (quantization + no-valid-trail-width envelope breakdown), a channel that does not operate at the frozen adoption dose (q=0.137: p90 widen ≤1.50×, lots stay above quantization, bind 20.5%) where P2's only-ever-positive signal (+0.05 mild-bind) lives.
+**Disposition:** per registration the program CLOSES no-change unless the owner grants a K3′-style registered exception: ONE Arm-1 leg (q=0.137, c_trail=2.70) under the unchanged pre-registered gates (bound ΔR ≥ +0.055 at realized 2σ, TP0 within 2pp, drift ≤1%, EqDD/trade gates). Gates are NOT softened by this note; the exception decision is the owner's alone. All levers remain default-off; binding baseline untouched.
+
+---
+
+## SHADOW VERDICTS (zero runs): A+ tape-gate MEASURED-DEAD · quality_v2 v1 MEASURED-DEAD
+**Date:** 2026-07-10 | Source: `workflowAnalysis/shadow-verdicts-2026-07-10.md`, computed from the identity-verified ceg_FULLID instrumentation archive (reconciled to the cent) + H1 rates. Both preconditions were registered BEFORE any PnL was seen; both failed; zero tester legs spent — the designed expected-value outcome.
+**Tape gate (tier3 §B):** 59/532 A+ tagged (11.1%); tagged avg R **+0.1907** (needed ≤ −0.05), ex-2025 +0.0438 (needed ≤ 0); exact ×0.667 counterfactual **−$1,000.82 FULL** and DD path WORSE. The §B.1 selection-bias warning was decisive: conditions derived from the 40-worst-loss exhibit tag book-typical winners. T2 (thin tape) fires on 0/928 fills ever (min R48/med90 = 0.389 vs 0.35 threshold — even the Jun-2022 exhibit signaled at 0.739).
+**quality_v2 v1 (4-condition demote-only scorecard):** union 124 tagged (13.4%); clauses 2/3/4 FAIL — demoted cohort avg R +0.0990 ≈ the book's own +0.112 (PF 1.345 vs 1.347), saving −$954.50 (needed ≥ +$1,500), winner-foregone 2× loser-saving. T4 fires on exactly 36 fills — all Rubber Band crash scratches (+$21 total). The typed-conditions hypothesis in its v1 form is refuted: these observables do not separate bad risk from the book.
+**Consequences:** P2.2/P2.3 (re-tier/reallocation) die with it in this form — the non-ordinality of tiers (B+ > A+ > A) is real but NOT capturable by these signal-time tape/regime conditions; any future quality_v2 v2 needs genuinely new features (e.g. the GateScores axis decomposition), not new thresholds on these. Do-not-relitigate: T1/T2/T3/T4 thresholds and the ×0.667 demote at these definitions.
+**Instrumentation hygiene (next touch):** ceg_FULLID ENTRY rows are one column short vs header (EXIT rows align; all analysis used EXIT rows).

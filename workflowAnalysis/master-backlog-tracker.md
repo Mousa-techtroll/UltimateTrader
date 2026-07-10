@@ -10,7 +10,7 @@
 - ❌ **VARIANT KILLED** — the item (or its naive form) was measured and failed FIT/CONFIRM; do not re-run without a new design
 - ⬜ **NOT STARTED** — no material progress (related evidence noted where it exists)
 
-**Snapshot (34 items):** **4 ✅ done** (P0.2 registry-as-practice, P4.1 confirmation counterfactual, P4.2 rejected-candidate pricing, P5.1 input cleanup) · **12 🟡/📐 materially advanced** · 5 with ❌ measured-killed variants baked in · 13 ⬜ not started. Sub-item checkboxes mark completed work inside partial items.
+**Snapshot (34 items, updated 2026-07-10 post-CEG-diagnostics):** **5 ✅ done** (P0.2 registry-as-practice, P2.1 quality_v2 measured-dead-at-zero-cost, P4.1 confirmation counterfactual, P4.2 rejected-candidate pricing, P5.1 input cleanup) · **12 🟡/📐 materially advanced** (P1.4 CEG now implemented + diagnostics run, abort fired, owner ruling pending) · 5 with ❌ measured-killed variants baked in · 12 ⬜ not started. Sub-item checkboxes mark completed work inside partial items.
 **Campaign facts the plan should absorb:** 9 single-lever interventions measured-killed; 3 gates acquitted by calibrated replay; single-run FIT deltas carry **±$1,500 (2σ) path noise** (matched-cohort ΔR, SE ≈0.013 R/trade, is the fine-grained standard); the stop/ladder/trail defect is **decoupling**, not floor level; **FINDING 0**: the EA has *no active BE stop-mover* — the "BE trigger 1.2R" is a diagnostic flag only.
 
 ---
@@ -91,7 +91,13 @@
 - [ ] ⬜ **NOT STARTED** — fragments exist (RR≥1.3 gate live; shadow-kill logger provides the rejected-trade shadow-pricing plumbing the acceptance clause requires). Best sequenced inside/after CEG so the "effective stop" it evaluates is the coupled one.
 
 ### P1.4 — Unified exit-geometry engine
-- [ ] 📐 **DESIGNED — not implemented.** `tier3-design-doc.md` §A ("CEG") is this item: one entry-locked price-space unit driving stop floor, S_pat-anchored ladder, trail floored by `c_trail × S_eff`, broker-TP policy, sizing — with a derivation protocol (mechanism-falsification first arm; ≤6 FIT arms; matched-cohort ΔR gates; one unrelaxed CONFIRM) and an honest power statement. Estimated ~250–400 lines across 5 files. **This is the #1-ranked item and the campaign's only measured-open path to the capture ratio.** Awaiting owner go.
+- [ ] 🟡 **IMPLEMENTED + diagnostics run — REGISTERED ABORT FIRED; adoption arms halted pending owner ruling (2026-07-10).**
+  - [x] CEG unit implemented (commit `a20387b`, 339 lines/10 files, default-off): R48 stop floor, S_pat-anchored ladder, trail floor `c_trail × S_eff`, sizing on S_eff, gates on S_pat, persistence v6
+  - [x] FULL + FIT identity legs EXACT with Phase-0 instrumentation live (7 new Stats columns)
+  - [x] Constants frozen pre-arm from the FIT archive (`ceg-frozen-constants.md`: q_floor 0.137, q_dose 0.2014, c_trail 2.70)
+  - [x] Diagnostic arms M/M3 run: **survivability channel confirmed** (+44.6R; bound hard-stops 87→40) but bound ΔR −0.0285/−0.0305 ≤ the −0.026 abort line on both — tax at q=0.30 measured **dose-intrinsic** (min-lot ladder quantization TP0 46.4→33.7%; no valid trail width at 2–6× widen), entry-drift invariant also fired (1.8/2.0%)
+  - [ ] Arm 1 (q=0.137, the mild-bind dose where P2's only positive signal lives) — **requires an owner K3′-style exception to the fired abort; gates unchanged**
+  - Evidence: AB_TEST_LOG "CEG PROGRAM PRE-REGISTRATION" + "CEG DIAGNOSTIC ARMS M/M3" entries; archives `_arm_archive/ceg_{I,M,M3,FULLID}`.
 
 ### P1.5 — Controlled partial and runner experiment
 - [ ] 🟡 **PARTIAL, several cells ❌ MEASURED-KILLED — must re-run on CEG, not the current geometry.**
@@ -110,7 +116,11 @@
 # Phase 2 — Scoring, allocation, portfolio
 
 ### P2.1 — Typed quality_v2 model
-- [ ] ⬜ **NOT STARTED** — enabling evidence in hand: pattern score inputs are provably inert (tier buckets overwrite pre-arbitration); B+ (PF 1.42) outperforms A (PF ~1.07–1.09) — quality is measurably non-ordinal; SETUP_B unreachable; shorts bypass the TF/MR validator entirely (0 vs 532 rejects). The shadow-first requirement matches the house shadow-logger pattern (reuse it).
+- [x] ✅ **DONE — v1 spec'd, shadow-evaluated offline, and MEASURED-DEAD at zero run cost (2026-07-10).**
+  - [x] Spec: `quality-v2-spec.md` (demote-only 4-condition typed scorecard, registered arming precondition pre-PnL)
+  - [x] Offline exact sizing counterfactual on the identity-verified instrumentation archive: clauses 2/3/4 FAIL — demoted cohort avg R +0.099 ≈ the book's own +0.112; saving −$954.50; winner-foregone 2× loser-saving (`shadow-verdicts-2026-07-10.md`)
+  - Verdict: these signal-time tape/regime observables do NOT separate bad risk from the book. Any v2 retry needs genuinely new features (GateScores axis decomposition), not re-thresholding — T1–T4 at these definitions join the do-not-relitigate register.
+  - Same leg killed the tier3 §B A+ tape gate (tagged cohort +0.19 avg R, counterfactual −$1,000.82) → P3.2's suppressor remains the only §B/§D survivor awaiting owner sign-off.
 
 ### P2.2 — Quality monotonicity validation
 - [ ] 🟡 **PARTIAL (evidence only)** — census measured per-tier PF/avg-R (A+ 1.37 / A ~1.07 / B+ 1.42): **monotonicity already known broken at A vs B+**. Formal per-bucket × year × direction validation not built; blocked on P2.1's shadow output.
