@@ -21,7 +21,7 @@
 - [ ] ⬜ **$27,029 net target** — not attempted; every adopted change so far is correctness, not profit-seeking. **Update 2026-07-10: the exit-side path (P1.4 CEG) and the reallocation path (P2.1 quality_v2 v1) are both now measured-closed — the only remaining credible path is entry breadth (Tier-4 fork / P3.x new-engine work).**
 - [x] ✅ **Reproducibility gate** — identity-to-the-cent is the enforced house standard (every lever ships default-off with an identity leg).
 - [x] ✅ **Ex-2025 gate** — in force since ACTION-3b (ex-2025 +21% was an adoption criterion); 2025-share guard pre-registered in all protocols.
-- [ ] 🟡 **Best-trade-dependency gate** — used ad hoc (SL anomaly: “removing 2 trades flips the sign” was decisive); not yet an automated report (→ P0.4).
+- [x] ✅ **Best-trade-dependency gate** — now automated in `claude/gate/mc_validate.py` (P6.3): top-1/3/5/10 removal + ex-2025 + combined stress; the book survives all single cuts (first failure = combined, +$1.1k at 22.9% DD).
 - [ ] ⬜ **Cost stress / execution stress / portability / forward gates** — not built (→ P6.x).
 
 ---
@@ -55,15 +55,18 @@
   - [ ] Automate as a standard per-candidate report — using matched-cohort ΔR as the primary metric (net-$ deltas under ±$1,500 are unreadable)
 
 ### P0.5 — Runtime capability manifest
-- [ ] ⬜ **NOT STARTED** (runtime log) — but the *static* equivalent exists: `entry-strategies-report.md` census (LIVE/REGISTERED-MUTE/DEAD per module, verified against config+code) + the Tier-0 DEAD-input markings + `docs/LIVE-DEPLOYMENT-CHECKLIST.md`. A runtime manifest would make that knowledge self-verifying at init.
+- [x] ✅ **DONE 2026-07-10** (commit `b80b094`, identity exact) — OnInit manifest: journal block + `UltTrader_Manifest_<symbol>.csv` with ENTRY/EXIT/TRAILING plugin states, exit-owner designations, every default-off lever's live value, anchor + computed scale. The static census is now self-verifying at init.
 
 ### P0.6 — Execution-contract defects
-- [ ] ⬜ **NOT STARTED** (as scoped) — overlapping fixes already shipped: the Monday-01:00 stale-pending fills (retcode-10018 near-misses) are structurally eliminated (Action-7 staleness guard); halt/budget/pos-cap bypasses closed. Remaining: pending-order argument audit, slippage checks/logging, the 16 pre-existing compiler warnings (documented, not repaired), order forensics fields.
+- [x] ✅ **DONE 2026-07-10** (commit `b80b094`, identity exact)
+  - [x] Pending-order audit: OrderOpen expiration-slot defect fixed (unreachable path); stops/freeze-level compliance verified on market + modify paths
+  - [x] Deviation explicit at 9 close/partial sites; `[SlipGuard]` log; retcode/error forensics on silent close failures
+  - [x] Compiler warnings 16→0 (all semantics-preserving)
+  - [ ] Residual (documented, flag-gated future lever): entry SL/TP are not tick-normalized pre-send — fixing breaks identity; a strict live server could reject. Measure as its own arm before live if the broker requires it.
 
 ### P0.7 — Exit ownership matrix
-- [ ] 🟡 **PARTIAL** — *All facts established; ownership decisions not enacted.*
-  - Known (forensically verified): weekend close = **coordinator** (live) with the plugin dormant-duplicate; daily-loss = halt (live, coordinator); max-age plugin dormant (RXT-02) — ownership ambiguity flagged; regime/macro exits dormant; news exit = flatten plugin (default-off; recommended LIVE posture); broker TP = **measured load-bearing DD brake** (K3′), i.e. today it IS an active strategy exit on ~45% of fills, not just protection.
-  - Remaining: enact one-owner-per-function and delete/quarantine the duplicates.
+- [x] ✅ **DONE 2026-07-10** (commit `b80b094`, identity exact) — one-owner-per-function enacted, mark-don't-delete: 4 dormant exit plugins quarantined with named owners (daily-loss→CRiskMonitor · weekend→coordinator · regime→CRegimeRiskScaler geometry · news-flatten→itself, default-off). Broker TP remains the measured DD brake (K3′).
+  - ⚠️ **FINDING F1: max-age (72h) has NO live owner** — `InpMaxPositionAgeHours=72` has zero live readers; the believed management-path force-close does not exist. If a max-age exit is wanted, it is a NEW measured lever, not a repair.
 
 ---
 
@@ -192,8 +195,8 @@
 ### P6.2 — Multi-broker / alternate-feed validation
 - [ ] ⬜ **NOT STARTED.** Related: the deterministic anchor fix (P1.2) removed the biggest known cross-feed behavior divergence (start-price-dependent floors); the news CSV pipeline is feed-independent (UTC).
 
-### P6.3 — Monte Carlo and sequence stress
-- [ ] ⬜ **NOT STARTED** — foundational inputs exist: best-trade-removal sensitivity demonstrated (2 trades flip the SL comparison); the ±$1,500 2σ path-noise measurement is effectively the first sequence-stress datum; per-trade archives support permutation tests without new runs.
+### P6.3 — Monte Carlo / sequence stress
+- [x] ✅ **DONE 2026-07-10** (`monte-carlo-validation.md`, reproducible `mc_validate.py`, zero tester runs) — block-bootstrap DD p50/p90/p95 = 18.9/26.5/29.3%; the 13.63% backtest DD is a p7–p17 lucky-side draw; **live DD budget ≈30% (p95); a 20% kill-switch fires on ~41% of healthy paths**; survives top-10 removal and ex-2025; §D reduced tail risk (P(DD>20%) 0.49→0.41).
 
 ### P6.4 — Incremental risk scaling
 - [ ] ⬜ **NOT STARTED — correctly gated last.** Notes: the only sizing move so far was *down* (tier ×0.90, policy-driven); every sizing sweep in house history (OPT-2, A-demote-up-variants) came back KILL; the leverage question was explicitly deferred to the owner as portfolio-level (Tier-4 fork).
