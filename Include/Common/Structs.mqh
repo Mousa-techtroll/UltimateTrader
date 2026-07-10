@@ -206,7 +206,8 @@ struct SPosition
 
    // Tier-3 §D crash trail-suppressor latch (runtime-only, NOT persisted —
    // no state-file bump: recomputed from closed-bar history since entry, so
-   // it survives restarts by reconstruction).
+   // it survives restarts by reconstruction). Shared by SF-2 (bear-pin-short
+   // suppressor): a position is only ever one pattern, so one latch serves both.
    bool                   crash_trail_unlocked;    // a closed H1 bar closed below EMA21(H1) since entry
    datetime               crash_trail_last_bar;    // last closed H1 bar evaluated for the latch
 

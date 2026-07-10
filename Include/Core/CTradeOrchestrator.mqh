@@ -381,7 +381,14 @@ public:
       // R:R validation — skipped entirely for file signals (external source, not our quality call)
       if(m_min_rr_ratio > 0 && signal.source != SIGNAL_SOURCE_FILE)
       {
-         double reward = MathAbs(MathMax(tp1, tp2) - entry_price);
+         // SF-1 (InpRRGateSymmetric, default OFF — AB_TEST_LOG pre-registration):
+         // MathMax picks the FAR TP for longs but the NEAR TP for shorts (TPs sit
+         // below entry) — 26 short RR kills vs 1 long, 18 of them PBC shorts whose
+         // passing 1.8R TP2 was ignored. Symmetric reward = max |TP - entry| over
+         // SET TPs. Reward side only: gate_risk_distance (CEG S_pat) untouched.
+         double reward = InpRRGateSymmetric
+            ? SymmetricReward(tp1, tp2, entry_price)
+            : MathAbs(MathMax(tp1, tp2) - entry_price);
          double actual_rr = (gate_risk_distance > 0) ? reward / gate_risk_distance : 0;
 
          double effective_min_rr = m_min_rr_ratio;
@@ -1013,7 +1020,12 @@ public:
                " | TP2=", DoubleToString(final_tp2, 2));
 
       // Ensure minimum R:R
-      double reward = MathAbs(MathMax(final_tp1, final_tp2) - current_entry);
+      // SF-1 (InpRRGateSymmetric): same near/far-TP measurement idiom as the
+      // ExecuteSignal RR gate — gated behind the same input. Latent on the
+      // config of record (shorts never take the confirmed path).
+      double reward = InpRRGateSymmetric
+         ? SymmetricReward(final_tp1, final_tp2, current_entry)
+         : MathAbs(MathMax(final_tp1, final_tp2) - current_entry);
       if(risk_distance > 0 && m_min_rr_ratio > 0 && (reward / risk_distance) < m_min_rr_ratio)
       {
          double sign = (pending.signal_type == SIGNAL_LONG) ? 1.0 : -1.0;
@@ -1091,6 +1103,20 @@ private:
       }
 
       LogPrint("    Using FIXED TP multipliers (", m_tp1_distance, "x / ", m_tp2_distance, "x)");
+   }
+
+   //+------------------------------------------------------------------+
+   //| SF-1 helper (InpRRGateSymmetric only): direction-symmetric RR     |
+   //| reward — max |TP - entry| over SET TPs (tp > 0). The legacy       |
+   //| MathMax(tp1, tp2) price-pick measures the FAR TP for longs but    |
+   //| the NEAR TP for shorts. Ref: AB_TEST_LOG pre-registration.        |
+   //+------------------------------------------------------------------+
+   double SymmetricReward(double tp1, double tp2, double entry)
+   {
+      double reward = 0;
+      if(tp1 > 0) reward = MathMax(reward, MathAbs(tp1 - entry));
+      if(tp2 > 0) reward = MathMax(reward, MathAbs(tp2 - entry));
+      return reward;
    }
 
    //+------------------------------------------------------------------+

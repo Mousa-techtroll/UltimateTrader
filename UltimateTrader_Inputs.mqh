@@ -132,6 +132,7 @@ input double InpScaleAnchorPrice = 1282.43;  // TIER-1 (2026-07-09): fixed ancho
 input double InpMinSLRangePct = 0.0;         // FIX-1: min SL as fraction of trailing 48h H1 range (0 = off = baseline-identical). Replaces the frozen first-tick $-floor pathology (InpMinSLPoints x first-tick price scale = $5.13 for a 2019 start, held to $3,750 gold).
 input double InpMinRRRatio = 1.3;            // Minimum R:R ratio
 input double InpMinRRShortCrash = 1.30;      // REVERTED to match default (0.50 caused butterfly effects)
+input bool   InpRRGateSymmetric = false;     // SF-1: RR-gate reward = max |TP-entry| over set TPs, direction-symmetric (default off = legacy near-TP-for-shorts; AB_TEST_LOG short-fix pre-registration)
 input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
 input double InpMinRoomToObstacle = 2.0;     // Min room to structural obstacle (R-multiples)
 input int    InpRSIPeriod = 14;              // RSI period
@@ -619,3 +620,8 @@ input double InpCEGTrailFloor = 0.0;    // c_trail: chandelier trail-width floor
 // never suppressed. LONG crash positions are never suppressed (D.2).
 input group "══════ CRASH TRAIL-SUPPRESSOR (Tier-3 §D) ══════"
 input bool   InpCrashTrailSuppress = false; // Suppress crash-short trail ratchet until close < EMA21(H1) (default off, tier3-design-doc.md §D)
+// SF-2 (AB_TEST_LOG short-fix pre-registration): §D-mirror for bear-pin
+// shorts — same thesis zone, same latch, same suppression scope. Pin bars
+// share one PATTERN_PIN_BAR tag both directions; the SIGNAL_SHORT guard in
+// CPositionCoordinator scopes suppression to bear pins. Longs never suppressed.
+input bool   InpPinTrailSuppress = false;   // SF-2: suppress bear-pin-short trail ratchet until close < EMA21(H1) (default off, AB_TEST_LOG pre-registration)

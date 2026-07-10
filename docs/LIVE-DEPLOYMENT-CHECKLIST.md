@@ -1,9 +1,9 @@
 # LIVE DEPLOYMENT CHECKLIST — UltimateTrader
 
 **Status:** pre-live posture of record (updated 2026-07-10, §D adoption).
-**Binding backtest baseline:** $23,771.46 / PF 1.31 / Sharpe 2.28 / Eq-DD 13.63% (2019.01–2026.06 XAUUSD+ H1, real ticks — tag `baseline-23771-2026-07-10`, AB_TEST_LOG.md "§D CONFIRM PASS + FULL ADOPTION").
-**Config of record:** `risk_R90.ini` values (section 3) **plus `InpCrashTrailSuppress=true`** (Tier-3 §D adoption — the crash engine's trail ratchet is suppressed until the closed-H1 EMA21 thesis zone; without it the engine reverts to 0.1h at-market-stop scratches). Every item below is a measured decision — do not change any of it without a fresh A/B.
-**Partial-window comparisons:** the CONFIRM (2023-start) reference on current trees is $14,081.51 / 1,044t / EqDD 13.44%; the older $14,535.35 figure is pre-Tier-1-stale — do not benchmark against it.
+**Binding backtest baseline:** $23,856.89 / PF 1.31 / Sharpe 2.21 / Eq-DD 13.14% (2019.01–2026.06 XAUUSD+ H1, real ticks — tag `baseline-23856-2026-07-11`, AB_TEST_LOG.md "SHORT-FIX VERDICTS").
+**Config of record:** `risk_R90.ini` values (section 3) **plus `InpCrashTrailSuppress=true` and `InpRRGateSymmetric=true`** (Tier-3 §D + SF-1 adoptions — the crash engine's trail ratchet is suppressed until the closed-H1 EMA21 thesis zone; without it the engine reverts to 0.1h at-market-stop scratches). Every item below is a measured decision — do not change any of it without a fresh A/B.
+**Partial-window comparisons:** the CONFIRM (2023-start) reference on the config of record is $15,646.98 / 1,084t / EqDD 13.00% (suppressor-OFF diagnostic reference: $14,081.51); the older $14,535.35 figure is pre-Tier-1-stale — do not benchmark against it.
 
 ---
 

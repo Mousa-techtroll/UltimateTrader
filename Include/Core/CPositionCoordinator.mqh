@@ -2882,9 +2882,10 @@ private:
 
    //+------------------------------------------------------------------+
    //| Tier-3 §D helper: TRUE once ANY closed H1 bar since entry closed  |
-   //| below EMA21(H1) — the crash short's mean-reversion thesis zone.   |
-   //| Scans bar history since entry so the per-position latch is fully  |
-   //| recomputable after a restart (no state-file persistence needed).  |
+   //| below EMA21(H1) — the short's mean-reversion thesis zone. Shared  |
+   //| by §D crash shorts and SF-2 bear-pin shorts (same zone, same EMA  |
+   //| handle). Scans bar history since entry so the per-position latch  |
+   //| is fully recomputable after a restart (no state-file persistence).|
    //+------------------------------------------------------------------+
    bool CrashThesisReached(datetime entry_time)
    {
@@ -3004,7 +3005,18 @@ private:
       // are deliberately never suppressed: the engine is short-only in practice
       // and a mirrored close>EMA21 branch would be untested code (D.2).
       // Ref: workflowAnalysis/tier3-design-doc.md §D.
-      if(InpCrashTrailSuppress && pos.pattern_type == PATTERN_CRASH_BREAKOUT &&
+      // SF-2 (InpPinTrailSuppress, default OFF — AB_TEST_LOG pre-registration):
+      // the identical at-market-clamp geometry §D cured on crash shorts still
+      // executed on bear-pin shorts (93 STOPS_LEVEL clamp-sends, all Bearish
+      // Pin Bar, exits <=0.15R scratches). Same mechanism, same thesis zone,
+      // same per-position latch — a position is only ever one pattern. Pin
+      // bars stamp one shared PATTERN_PIN_BAR for both directions; the
+      // SIGNAL_SHORT guard scopes suppression to bear pins. Each pattern is
+      // gated by its OWN flag; longs are never suppressed under either.
+      bool trail_suppress_pattern =
+         (InpCrashTrailSuppress && pos.pattern_type == PATTERN_CRASH_BREAKOUT) ||
+         (InpPinTrailSuppress   && pos.pattern_type == PATTERN_PIN_BAR);
+      if(trail_suppress_pattern &&
          pos.direction == SIGNAL_SHORT && !pos.crash_trail_unlocked)
       {
          datetime crash_closed_bar = iTime(_Symbol, PERIOD_H1, 1);
