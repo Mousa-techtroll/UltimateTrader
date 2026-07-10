@@ -435,3 +435,23 @@ The 128 historical duplicates were net +$1,512 (2023–25 dups +$2.1k of compoun
 **quality_v2 v1 (4-condition demote-only scorecard):** union 124 tagged (13.4%); clauses 2/3/4 FAIL — demoted cohort avg R +0.0990 ≈ the book's own +0.112 (PF 1.345 vs 1.347), saving −$954.50 (needed ≥ +$1,500), winner-foregone 2× loser-saving. T4 fires on exactly 36 fills — all Rubber Band crash scratches (+$21 total). The typed-conditions hypothesis in its v1 form is refuted: these observables do not separate bad risk from the book.
 **Consequences:** P2.2/P2.3 (re-tier/reallocation) die with it in this form — the non-ordinality of tiers (B+ > A+ > A) is real but NOT capturable by these signal-time tape/regime conditions; any future quality_v2 v2 needs genuinely new features (e.g. the GateScores axis decomposition), not new thresholds on these. Do-not-relitigate: T1/T2/T3/T4 thresholds and the ×0.667 demote at these definitions.
 **Instrumentation hygiene (next touch):** ceg_FULLID ENTRY rows are one column short vs header (EXIT rows align; all analysis used EXIT rows).
+
+**OWNER RULINGS 2026-07-10 (recorded verbatim from the decision prompt):** (1) CEG — K3′-style registered exception GRANTED: ONE Arm-1 leg (q=0.137, c_trail=2.70, FIT) under the UNCHANGED pre-registered gates (bound ΔR ≥ +0.055, full ΔR ≥ 0, TP0 within 2pp, drift ≤1%, EqDD/trade/per-year gates); any gate failure closes CEG no-change, no appeal. (2) Tier-3 §D crash trail-suppressor — risk-posture sign-off GRANTED: implement `InpCrashTrailSuppress` (default off), FIT arm under the registered gates (crash-cohort ΔR ≥ +0.07, book EqDD ≤ +0.3pp, non-crash cohort ΔR == 0); own binary + fresh identity leg per one-change-per-binary discipline.
+
+---
+
+## CEG PROGRAM CLOSED NO-CHANGE — Arm 1 (owner-exception leg) failed the unchanged registered gates
+**Date:** 2026-07-10 | ceg_A1: q=0.137, c_trail=2.70, FIT | Archive `_arm_archive/ceg_A1`.
+| Metric | Gate | Measured | Verdict |
+|---|---|---|---|
+| Entry drift | ≤1% | **0.00%** (448/448 matched — the mild dose has zero exposure ripple) | pass |
+| Bound ΔR | ≥ +0.055 | +0.0112 (SE 0.056; CI spans ±0.11) | **FAIL** |
+| Full ΔR | ≥ 0 | **−0.0172** (SE 0.021) | **FAIL** |
+| EqDD | ≤ 19.22% | 20.72% | **FAIL** |
+| Per-year | none worse >$500 | 2019 −$724 | **FAIL** |
+| Bound hard-stops | must fall | 22→22; book 94→**122 ROSE** | FAIL |
+| TP0 fill | 46.4% ±2pp | 49.8% (+3.4pp) | violated (favorable direction, still a premise miss) |
+| Net/PF/Sharpe (context) | — | $1,600.15 / 1.08 / 0.60 vs $2,735.89 / 1.14 / 1.17 | — |
+**Mechanism (final):** the damage is the TRAIL floor, not the stop floor. Unbound cohort (74%, stops identical) degraded −0.0271 ± 0.0197 R/trade: c_trail=2.70 × S_pat lifted the chandelier on ~half of all fills (by construction of freezing at the median), converting trail-outs into deeper stops (book hard stops 94→122) and 2019 into a −$724 year. The stop-floor channel itself at the safe dose measured ≈0 (+0.011 bound, n=116, hard stops 22→22): at widen ≤1.5× there is nothing to rescue — the rescue economics live only at doses where min-lot quantization and trail-envelope breakdown destroy more than the rescues pay (Arms M/M3).
+**Program verdict (K3′ discipline, no appeal):** CEG CLOSES NO-CHANGE. Fallback of record (design §E.4) activates: keep the baseline, keep the instrumentation (identity-proven, serves future programs), redirect the strategic fork to ENTRY BREADTH. Consequences: §C short-exit profiles die with §A (same unit); P1.5's CEG-contingent middle variants die; the stop/ladder/trail complex is now MEASURED OUT — naive floors (FIX-1), coupled floors (CEG A1), large doses (M/M3), trail floors in S_eff units, BE movers, ladder re-weights, TP-ceiling lifts: every family member killed or closed. Do-not-relitigate: the entire stop-geometry family absent a fundamentally new mechanism (e.g. per-position adaptive volumes solving quantization, or entry-side change that alters the MAE distribution).
+**Salvage kept:** 7 instrumentation columns (decision-free, to-the-cent), ceg_gate.py matched-cohort tool, frozen-constants method, the ±noise-floor calibration (position-level SE ~0.02 full / ~0.056 bound at 26% bind — 2–4× the registration's assumption; future registrations must power-budget on POSITION-level n).

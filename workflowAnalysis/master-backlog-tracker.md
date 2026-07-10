@@ -10,7 +10,7 @@
 - ❌ **VARIANT KILLED** — the item (or its naive form) was measured and failed FIT/CONFIRM; do not re-run without a new design
 - ⬜ **NOT STARTED** — no material progress (related evidence noted where it exists)
 
-**Snapshot (34 items, updated 2026-07-10 post-CEG-diagnostics):** **5 ✅ done** (P0.2 registry-as-practice, P2.1 quality_v2 measured-dead-at-zero-cost, P4.1 confirmation counterfactual, P4.2 rejected-candidate pricing, P5.1 input cleanup) · **12 🟡/📐 materially advanced** (P1.4 CEG now implemented + diagnostics run, abort fired, owner ruling pending) · 5 with ❌ measured-killed variants baked in · 12 ⬜ not started. Sub-item checkboxes mark completed work inside partial items.
+**Snapshot (34 items, updated 2026-07-10 post-CEG-closure):** **6 resolved** (P0.2 registry-as-practice · P4.1 · P4.2 · P5.1 done; P1.4 CEG and P2.1 quality_v2 **fully executed and measured-closed** — the honest terminal state for a research item) · **11 🟡/📐 materially advanced** · 5 with ❌ measured-killed variants baked in · 12 ⬜ not started. Sub-item checkboxes mark completed work inside partial items. **Strategic consequence: exit-geometry and quality-reallocation paths are measured out; entry breadth is the remaining open path to the net target.**
 **Campaign facts the plan should absorb:** 9 single-lever interventions measured-killed; 3 gates acquitted by calibrated replay; single-run FIT deltas carry **±$1,500 (2σ) path noise** (matched-cohort ΔR, SE ≈0.013 R/trade, is the fine-grained standard); the stop/ladder/trail defect is **decoupling**, not floor level; **FINDING 0**: the EA has *no active BE stop-mover* — the "BE trigger 1.2R" is a diagnostic flag only.
 
 ---
@@ -18,7 +18,7 @@
 ## Baseline & gates
 
 - [x] ✅ **Audited baseline established and reproducible** — $21,623.18 / PF 1.31 / Eq-DD 13.68% / Sharpe 2.28 / 928 positions, reproduced to the cent 6+ times; config of record `risk_R90.ini`; tag `baseline-21623-2026-07-09`.
-- [ ] ⬜ **$27,029 net target** — not attempted; every adopted change so far is correctness, not profit-seeking. The measured-open paths to it are P1.4/P1.5 (CEG) and P2.x reallocation.
+- [ ] ⬜ **$27,029 net target** — not attempted; every adopted change so far is correctness, not profit-seeking. **Update 2026-07-10: the exit-side path (P1.4 CEG) and the reallocation path (P2.1 quality_v2 v1) are both now measured-closed — the only remaining credible path is entry breadth (Tier-4 fork / P3.x new-engine work).**
 - [x] ✅ **Reproducibility gate** — identity-to-the-cent is the enforced house standard (every lever ships default-off with an identity leg).
 - [x] ✅ **Ex-2025 gate** — in force since ACTION-3b (ex-2025 +21% was an adoption criterion); 2025-share guard pre-registered in all protocols.
 - [ ] 🟡 **Best-trade-dependency gate** — used ad hoc (SL anomaly: “removing 2 trades flips the sign” was decisive); not yet an automated report (→ P0.4).
@@ -91,13 +91,14 @@
 - [ ] ⬜ **NOT STARTED** — fragments exist (RR≥1.3 gate live; shadow-kill logger provides the rejected-trade shadow-pricing plumbing the acceptance clause requires). Best sequenced inside/after CEG so the "effective stop" it evaluates is the coupled one.
 
 ### P1.4 — Unified exit-geometry engine
-- [ ] 🟡 **IMPLEMENTED + diagnostics run — REGISTERED ABORT FIRED; adoption arms halted pending owner ruling (2026-07-10).**
-  - [x] CEG unit implemented (commit `a20387b`, 339 lines/10 files, default-off): R48 stop floor, S_pat-anchored ladder, trail floor `c_trail × S_eff`, sizing on S_eff, gates on S_pat, persistence v6
-  - [x] FULL + FIT identity legs EXACT with Phase-0 instrumentation live (7 new Stats columns)
-  - [x] Constants frozen pre-arm from the FIT archive (`ceg-frozen-constants.md`: q_floor 0.137, q_dose 0.2014, c_trail 2.70)
-  - [x] Diagnostic arms M/M3 run: **survivability channel confirmed** (+44.6R; bound hard-stops 87→40) but bound ΔR −0.0285/−0.0305 ≤ the −0.026 abort line on both — tax at q=0.30 measured **dose-intrinsic** (min-lot ladder quantization TP0 46.4→33.7%; no valid trail width at 2–6× widen), entry-drift invariant also fired (1.8/2.0%)
-  - [ ] Arm 1 (q=0.137, the mild-bind dose where P2's only positive signal lives) — **requires an owner K3′-style exception to the fired abort; gates unchanged**
-  - Evidence: AB_TEST_LOG "CEG PROGRAM PRE-REGISTRATION" + "CEG DIAGNOSTIC ARMS M/M3" entries; archives `_arm_archive/ceg_{I,M,M3,FULLID}`.
+- [x] ❌ **RESOLVED — CLOSED NO-CHANGE (2026-07-10). Fully executed: implemented, diagnosed, owner-exception adoption arm run, all registered gates failed.**
+  - [x] CEG unit implemented (commit `a20387b`, 339 lines/10 files, default-off, stays in source): R48 stop floor, S_pat-anchored ladder, trail floor, sizing on S_eff, persistence v6
+  - [x] FULL + FIT identity legs EXACT with Phase-0 instrumentation live (7 new Stats columns — KEPT)
+  - [x] Constants frozen pre-arm (`ceg-frozen-constants.md`); program pre-registered in the ledger
+  - [x] Diagnostic arms M/M3: survivability channel real (+44.6R; hard stops 87→40) but tax at q=0.30 is **dose-intrinsic** (min-lot ladder quantization; no valid trail width at 2–6× widen); registered abort fired
+  - [x] Owner-exception Arm 1 (q=0.137, c_trail=2.70): full ΔR −0.0172, EqDD 20.72%>gate, 2019 −$724, hard stops 94→122 — **the trail floor is a measured drag on the unbound 74%; the stop floor at safe doses measures ≈0**. Closed per K3′ discipline, no appeal.
+  - **Verdict of record: the entire stop/ladder/trail geometry family is measured out** (naive, coupled, mild, large, trail floors, BE, ladder re-weights, ceiling lifts). Do-not-relitigate absent a fundamentally new mechanism. Fallback of record (§E.4) activates: **Tier-4 strategic fork → ENTRY BREADTH**.
+  - Evidence: AB_TEST_LOG "CEG PROGRAM CLOSED NO-CHANGE"; archives `_arm_archive/ceg_{I,M,M3,A1,FULLID}`.
 
 ### P1.5 — Controlled partial and runner experiment
 - [ ] 🟡 **PARTIAL, several cells ❌ MEASURED-KILLED — must re-run on CEG, not the current geometry.**
