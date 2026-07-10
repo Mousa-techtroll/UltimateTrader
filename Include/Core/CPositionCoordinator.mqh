@@ -1839,6 +1839,7 @@ public:
 
                   CTrade tp_trade;
                   tp_trade.SetExpertMagicNumber(m_magic_number);
+                  tp_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation (CTrade default 10 == InpSlippage default — no-op on config of record)
                   if(close_lots < m_positions[i].remaining_lots)
                   {
                      if(tp_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
@@ -1897,6 +1898,7 @@ public:
                      {
                         CTrade tp2_trade;
                         tp2_trade.SetExpertMagicNumber(m_magic_number);
+                        tp2_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
                         if(tp2_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
                         {
                            m_positions[i].tp1_closed = true;
@@ -2129,6 +2131,7 @@ public:
                   {
                      CTrade tp0_trade;
                      tp0_trade.SetExpertMagicNumber(m_magic_number);
+                     tp0_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
 
                      bool closed = tp0_trade.PositionClosePartial(m_positions[i].ticket, close_lots);
                      if(closed)
@@ -2160,6 +2163,14 @@ public:
                                  " | Actual profit: $", DoubleToString(tp0_actual_profit, 2));
 
                         SaveOnStateChange();
+                     }
+                     else
+                     {
+                        // P0.6 order forensics (log-only): failed partial close was silent
+                        LogPrint("[TP0] Partial close FAILED: Ticket ", m_positions[i].ticket,
+                                 " | retcode=", tp0_trade.ResultRetcode(),
+                                 " (", tp0_trade.ResultComment(), ")",
+                                 " | lastError=", GetLastError());
                      }
                   }
                }
@@ -2196,6 +2207,7 @@ public:
                   {
                      CTrade tp1_trade;
                      tp1_trade.SetExpertMagicNumber(m_magic_number);
+                     tp1_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
 
                      bool closed_tp1 = tp1_trade.PositionClosePartial(m_positions[i].ticket, close_lots_tp1);
                      if(closed_tp1)
@@ -2227,6 +2239,14 @@ public:
                                  " | Actual profit: $", DoubleToString(tp1_actual_profit, 2));
 
                         SaveOnStateChange();
+                     }
+                     else
+                     {
+                        // P0.6 order forensics (log-only): failed partial close was silent
+                        LogPrint("[TP1] Partial close FAILED: Ticket ", m_positions[i].ticket,
+                                 " | retcode=", tp1_trade.ResultRetcode(),
+                                 " (", tp1_trade.ResultComment(), ")",
+                                 " | lastError=", GetLastError());
                      }
                   }
                }
@@ -2262,6 +2282,7 @@ public:
                   {
                      CTrade tp2_trade;
                      tp2_trade.SetExpertMagicNumber(m_magic_number);
+                     tp2_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
 
                      bool closed_tp2 = tp2_trade.PositionClosePartial(m_positions[i].ticket, close_lots_tp2);
                      if(closed_tp2)
@@ -2310,6 +2331,7 @@ public:
                            {
                               CTrade kill_trade;
                               kill_trade.SetExpertMagicNumber(m_magic_number);
+                              kill_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
                               if(kill_trade.PositionClose(m_positions[i].ticket))
                               {
                                  LogPrint("[RunnerKill] Runner closed at TP2: regime=",
@@ -2319,6 +2341,14 @@ public:
                               }
                            }
                         }
+                     }
+                     else
+                     {
+                        // P0.6 order forensics (log-only): failed partial close was silent
+                        LogPrint("[TP2] Partial close FAILED: Ticket ", m_positions[i].ticket,
+                                 " | retcode=", tp2_trade.ResultRetcode(),
+                                 " (", tp2_trade.ResultComment(), ")",
+                                 " | lastError=", GetLastError());
                      }
                   }
                }
@@ -2478,7 +2508,13 @@ public:
 
                CTrade stall_trade;
                stall_trade.SetExpertMagicNumber(m_magic_number);
-               stall_trade.PositionClose(m_positions[i].ticket);
+               stall_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
+               if(!stall_trade.PositionClose(m_positions[i].ticket))
+                  // P0.6 order forensics (log-only): failed close was silent
+                  LogPrint("[UniversalStall] Close FAILED: Ticket ", m_positions[i].ticket,
+                           " | retcode=", stall_trade.ResultRetcode(),
+                           " (", stall_trade.ResultComment(), ")",
+                           " | lastError=", GetLastError());
                continue;
             }
          }
@@ -2538,6 +2574,7 @@ public:
                   {
                      CTrade as_partial;
                      as_partial.SetExpertMagicNumber(m_magic_number);
+                     as_partial.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
                      if(as_partial.PositionClosePartial(m_positions[i].ticket, close_lots))
                      {
                         double as_actual_profit = 0.0;
@@ -3348,10 +3385,17 @@ private:
       // Use CTrade for position closing
       CTrade trade;
       trade.SetExpertMagicNumber(m_magic_number);
+      // P0.6: closes are MARKET orders — follow the configured deviation instead of
+      // relying on CTrade's hardcoded default (10). InpSlippage default is also 10,
+      // so this is a no-op on the config of record and on code defaults.
+      trade.SetDeviationInPoints(InpSlippage);
 
       if(!trade.PositionClose(ticket))
       {
-         LogPrint("ERROR: Failed to close position ", ticket, " - ", trade.ResultComment());
+         // P0.6 order forensics: numeric retcode + runtime error alongside the comment
+         LogPrint("ERROR: Failed to close position ", ticket, " - ", trade.ResultComment(),
+                  " | retcode=", trade.ResultRetcode(),
+                  " | lastError=", GetLastError());
          if(tracked_index >= 0 && m_trade_logger != NULL)
          {
             m_trade_logger.LogTradeLifecycleEvent(m_positions[tracked_index],

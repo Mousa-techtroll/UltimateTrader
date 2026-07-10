@@ -190,9 +190,14 @@ public:
       }
 
       // H4 slope/stack filter using own indicator handles
+      // P0.6 (warning 63): the former ArraySetAsSeries calls on these STATIC
+      // arrays were runtime no-ops (the AS_SERIES flag cannot be set on static
+      // arrays) — removed, preserving the long-measured NON-series indexing:
+      // [0] = older copied bar, [1] = current forming bar. NOTE (finding, not
+      // repaired): the comparisons below therefore read the FORMING bar where
+      // series indexing was apparently intended; changing the indexing would
+      // change behavior and is out of scope for a warnings pass.
       double ema_fast[2], ema_slow[2];
-      ArraySetAsSeries(ema_fast, true);
-      ArraySetAsSeries(ema_slow, true);
       if(CopyBuffer(m_handle_h4_fast, 0, 0, 2, ema_fast) < 2 ||
          CopyBuffer(m_handle_h4_slow, 0, 0, 2, ema_slow) < 2)
          return signal;
@@ -201,9 +206,9 @@ public:
       bool short_slope = (ema_fast[0] < ema_slow[0]) && (ema_fast[0] < ema_fast[1] - m_slope_buffer);
 
       // Keltner channel (last closed bar)
+      // P0.6 (warning 63): same as above — failing ArraySetAsSeries calls on
+      // static arrays removed; NON-series indexing preserved ([1] = forming bar).
       double ema_mid[2], atr_val[2];
-      ArraySetAsSeries(ema_mid, true);
-      ArraySetAsSeries(atr_val, true);
       if(CopyBuffer(m_handle_keltner_ema, 0, 0, 2, ema_mid) < 2 ||
          CopyBuffer(m_handle_keltner_atr, 0, 0, 2, atr_val) < 2)
          return signal;

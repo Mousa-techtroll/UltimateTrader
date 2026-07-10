@@ -801,6 +801,18 @@ public:
          if(point > 0.0)
             position.entry_slippage = MathAbs(position.executed_entry_price - position.requested_entry_price) / point;
 
+         // P0.6 slippage guard (log-only, decision-free): flag fills whose
+         // requested-vs-executed slip exceeds the live spread. Requested/
+         // ExecutedEntryPrice already land in the Stats CSV; this line makes
+         // the outliers greppable in the journal. Never feeds a decision.
+         double slip_guard_spread = (double)SymbolInfoInteger(trade_symbol, SYMBOL_SPREAD);
+         if(slip_guard_spread > 0.0 && position.entry_slippage > slip_guard_spread)
+            LogPrint("[SlipGuard] ticket ", position.ticket,
+                     " | slip ", DoubleToString(position.entry_slippage, 1),
+                     "pts > spread ", DoubleToString(slip_guard_spread, 1),
+                     "pts | requested=", DoubleToString(position.requested_entry_price, _Digits),
+                     " filled=", DoubleToString(position.executed_entry_price, _Digits));
+
          // CEG (Tier-3) stamps + Phase-0 instrumentation — signal-time values
          // propagate to the position at fill (trail floor + Stats-CSV columns)
          position.ceg_s_pat = signal.ceg_s_pat;

@@ -668,8 +668,15 @@ public:
       AddCsvField(entry_fields, DoubleToString(pos.exit_tp1_volume, 2));
       AddCsvField(entry_fields, DoubleToString(pos.exit_tp2_distance, 2));
       AddCsvField(entry_fields, DoubleToString(pos.exit_tp2_volume, 2));
+      // Empty exit-stats block on ENTRY rows: NINE header columns
+      // (ExitTime, ExitPrice, PnL_Money, PnL_R, HoldingHours, MAE, MFE, MAE_R, MFE_R).
+      // P0.6 hygiene fix (2026-07-10): this block wrote only 8 empties, so every
+      // ENTRY row was ONE column short of the 106-column header and every field
+      // from PartialCloseCount onward (incl. the 7 CEG instrumentation columns)
+      // was misaligned. EXIT rows were always correct. Decision-free formatting.
       AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
       AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, ""); AddCsvField(entry_fields, "");
+      AddCsvField(entry_fields, "");
       AddCsvField(entry_fields, IntegerToString(pos.partial_close_count));
       AddCsvField(entry_fields, DoubleToString(pos.partial_realized_pnl, 2));
       AddCsvField(entry_fields, "0.00");

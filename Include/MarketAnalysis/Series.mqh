@@ -175,7 +175,7 @@ string CSeries::PeriodDescription(const int val)
 bool CSeries::CheckLoadHistory(const int size)
   {
 //--- don't ask for load of its own data if it is an indicator
-   if(MQL5InfoInteger(MQL5_PROGRAM_TYPE)==PROGRAM_INDICATOR && Period()==m_period && Symbol()==m_symbol)
+   if(MQLInfoInteger(MQL_PROGRAM_TYPE)==PROGRAM_INDICATOR && Period()==m_period && Symbol()==m_symbol)  // P0.6: modern spelling (warning 89) — MQL5_* are identical-value deprecated aliases
       return(true);
    if(size>TerminalInfoInteger(TERMINAL_MAXBARS))
      {

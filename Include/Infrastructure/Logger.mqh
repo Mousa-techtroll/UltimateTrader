@@ -111,7 +111,7 @@ private:
          {
             // Get file size by seeking to the end
             FileSeek(fileHandle, 0, SEEK_END);
-            fileSize = FileTell(fileHandle);
+            fileSize = (long)FileTell(fileHandle);  // P0.6: explicit ulong->long (warning 43), value unchanged
             FileClose(fileHandle);
          }
          if(fileSize > m_maxFileSize)
@@ -232,7 +232,7 @@ private:
             
             // Get file size
             FileSeek(srcHandle, 0, SEEK_END);
-            long fileSize = FileTell(srcHandle);
+            long fileSize = (long)FileTell(srcHandle);  // P0.6: explicit ulong->long (warning 43), value unchanged
             FileSeek(srcHandle, 0, SEEK_SET);
             
             // Copy in chunks
@@ -240,7 +240,7 @@ private:
             for(long pos = 0; pos < fileSize; pos += BUFFER_SIZE)
             {
                int bytesToRead = (int)MathMin(BUFFER_SIZE, fileSize - pos);
-               int bytesRead = FileReadArray(srcHandle, buffer, 0, bytesToRead);
+               int bytesRead = (int)FileReadArray(srcHandle, buffer, 0, bytesToRead);  // P0.6: explicit uint->int (warning 43), value unchanged
                
                if(bytesRead <= 0)
                {
@@ -248,7 +248,7 @@ private:
                   break;
                }
                
-               int bytesWritten = FileWriteArray(dstHandle, buffer, 0, bytesRead);
+               int bytesWritten = (int)FileWriteArray(dstHandle, buffer, 0, bytesRead);  // P0.6: explicit uint->int (warning 43), value unchanged
                if(bytesWritten != bytesRead)
                {
                   copySucceeded = false;
@@ -531,7 +531,7 @@ public:
                   // Get file size by seeking to the end
                   if(FileSeek(tempFileHandle, 0, SEEK_END))
                   {
-                     long fileSize = FileTell(tempFileHandle);
+                     long fileSize = (long)FileTell(tempFileHandle);  // P0.6: explicit ulong->long (warning 43), value unchanged
                      rotationChecked = true;
                      
                      // Determine if rotation is needed

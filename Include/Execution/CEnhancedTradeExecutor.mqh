@@ -151,7 +151,7 @@ private:
       // Get symbol properties with validation
       data.point = SymbolInfoDouble(symbol, SYMBOL_POINT);
       data.digits = (int)SymbolInfoInteger(symbol, SYMBOL_DIGITS);
-      data.normalSpread = SymbolInfoInteger(symbol, SYMBOL_SPREAD);
+      data.normalSpread = (double)SymbolInfoInteger(symbol, SYMBOL_SPREAD);  // P0.6: explicit long->double (warning 43), value unchanged
 
       // Validate symbol properties
       if(data.point <= 0)
@@ -1541,15 +1541,23 @@ private:
                           double lotSize, double price, double stopLoss,
                           double takeProfit, string comment)
    {
+      // P0.6 pending-order argument audit (2026-07-10): the legacy call passed
+      // `comment` into CTrade::OrderOpen's `expiration` (datetime) slot — a
+      // string->number conversion (compiler warning 180) — so pending orders
+      // went out with an EMPTY comment (expiration itself was ignored under
+      // GTC). Correct slotting below: type_time=ORDER_TIME_GTC, expiration=0,
+      // comment last. No live caller reaches this path (every live action is a
+      // "BUY"/"SELL" market order) — verified unreachable on the config of record.
       return m_trade.OrderOpen(
          symbol,              // Symbol
          orderType,           // Order type
          lotSize,             // Volume
-         0,                   // Price (not used for market orders)
-         price,               // Stop price or limit price
+         0,                   // Limit price (stop-limit orders only)
+         price,               // Pending trigger/limit price
          stopLoss,            // Stop loss
          takeProfit,          // Take profit
-         0,                   // Expiration (0 means GTC)
+         ORDER_TIME_GTC,      // Expiration type: good-till-cancelled
+         0,                   // Expiration time (unused for GTC)
          comment              // Comment
       );
    }
@@ -2059,7 +2067,7 @@ public:
    //+------------------------------------------------------------------+
    bool CheckSpreadGate()
    {
-      double spread = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+      double spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);  // P0.6: explicit long->double (warning 43), value unchanged
       // Record spread sample
       int size = ArraySize(m_exec_metrics.spread_samples);
       ArrayResize(m_exec_metrics.spread_samples, size + 1);
@@ -2185,8 +2193,8 @@ public:
    double GetSessionExecutionQuality()
    {
       // Component 1: Historical session quality (existing logic)
-      MqlDateTime dt;
-      // Sprint 5B: GMT-aware execution metrics
+      // P0.6: removed unused `MqlDateTime dt;` (warning 31) — the hour comes
+      // from the session engine's GMT clock since Sprint 5B.
       int hour = (g_sessionEngine != NULL) ?
          g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
 

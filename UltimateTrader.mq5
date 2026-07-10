@@ -510,6 +510,145 @@ void ClearPendingSignalLogged(const SPendingSignal &p, string kill_reason, strin
 }
 
 //+------------------------------------------------------------------+
+//| P0.5 runtime capability manifest — decision-free logging          |
+//+------------------------------------------------------------------+
+void ManifestRow(const int handle, const string category, const string name,
+                 const string state, const string owner_or_value, const string detail)
+{
+   Print("[Manifest] ", category, " | ", name, " | ", state,
+         (owner_or_value != "" ? " | " + owner_or_value : ""),
+         (detail != "" ? " | " + detail : ""));
+   if(handle != INVALID_HANDLE)
+      FileWrite(handle, category, name, state, owner_or_value, detail);
+}
+
+bool IsRegisteredExitPlugin(CExitStrategy *plugin)
+{
+   for(int e = 0; e < g_exitPluginCount; e++)
+      if(g_exitPlugins[e] == plugin) return true;
+   return false;
+}
+
+//+------------------------------------------------------------------+
+//| Emit the one-block runtime capability manifest (P0.5).            |
+//| Called once at the END of OnInit, after ALL registration, so the  |
+//| static census (entry-strategies-report.md, exit-ownership matrix) |
+//| is self-verifying at init. Journal block + CSV                    |
+//| UltTrader_Manifest_<symbol>.csv in Common Files (same FILE_COMMON |
+//| convention as the CTradeLogger CSVs; fixed name = last-run-wins). |
+//| Pure logging — no value computed here feeds any trade decision.   |
+//+------------------------------------------------------------------+
+void EmitCapabilityManifest()
+{
+   string fname = StringFormat("UltTrader_Manifest_%s.csv", _Symbol);
+   int h = FileOpen(fname, FILE_WRITE | FILE_CSV | FILE_COMMON, ',');
+   if(h == INVALID_HANDLE)
+      Print("[Manifest] WARNING: could not create ", fname, " (err ", GetLastError(),
+            ") — journal block only");
+   else
+      FileWrite(h, "Category", "Name", "State", "OwnerOrValue", "Detail");
+
+   Print("[Manifest] ===== RUNTIME CAPABILITY MANIFEST (P0.5) =====");
+
+   // --- Entry plugins/engines actually registered with the orchestrator ---
+   for(int p = 0; p < g_entryPluginCount; p++)
+   {
+      if(g_entryPlugins[p] == NULL) continue;
+      ManifestRow(h, "ENTRY", g_entryPlugins[p].GetName(),
+                  (g_entryPlugins[p].IsEnabled() ? "ENABLED" : "DISABLED"),
+                  (g_entryPlugins[p].IsInitialized() ? "initialized" : "NOT-initialized"),
+                  "registered via RegisterEntryPlugin");
+   }
+   ManifestRow(h, "ENTRY", "FileEntry(independent)",
+               (g_fileEntry != NULL ? "ACTIVE" : "OFF"),
+               "InpSignalSource=" + EnumToString(InpSignalSource),
+               "bypasses orchestrator; inert in tester without CSV");
+
+   // --- Exit plugins with owner designation (P0.7 matrix) ---
+   ManifestRow(h, "EXIT", "DailyLossHaltExit",
+               (g_dailyLossExit != NULL && g_dailyLossExit.IsInitialized() ? "INITIALIZED" : "QUARANTINED-DORMANT"),
+               "owner=CRiskMonitor daily-loss halt (live)",
+               (IsRegisteredExitPlugin(g_dailyLossExit) ? "registered (init-latched)" : "not registered"));
+   ManifestRow(h, "EXIT", "WeekendCloseExit",
+               (g_weekendExit != NULL && g_weekendExit.IsInitialized() ? "INITIALIZED" : "QUARANTINED-DORMANT"),
+               "owner=CPositionCoordinator weekend close (InpCloseBeforeWeekend=" +
+                  (InpCloseBeforeWeekend ? "true" : "false") +
+                  " @" + IntegerToString(InpWeekendCloseHour) + ":00 server)",
+               (IsRegisteredExitPlugin(g_weekendExit) ? "registered (init-latched)" : "not registered"));
+   ManifestRow(h, "EXIT", "MaxAgeExit",
+               (g_maxAgeExit != NULL && g_maxAgeExit.IsInitialized() ? "INITIALIZED" : "QUARANTINED-DORMANT"),
+               "owner=NONE-LIVE (RXT-02: InpMaxPositionAgeHours=" +
+                  IntegerToString(InpMaxPositionAgeHours) + "h has no live reader)",
+               (IsRegisteredExitPlugin(g_maxAgeExit) ? "registered (init-latched)" : "not registered"));
+   ManifestRow(h, "EXIT", "RegimeAwareExit",
+               (g_regimeExit != NULL && g_regimeExit.IsInitialized() ? "INITIALIZED" : "QUARANTINED-DORMANT"),
+               "owner=CRegimeRiskScaler exit profiles (geometry); no live regime/macro flatten",
+               (IsRegisteredExitPlugin(g_regimeExit) ? "registered (init-latched)" : "not registered"));
+   ManifestRow(h, "EXIT", "NewsFlattenExit",
+               (g_newsFlattenExit != NULL && g_newsFlattenExit.IsInitialized() ? "INITIALIZED" : "NOT-INITIALIZED"),
+               "owner=THIS plugin (news-exit owner; default-off)",
+               "gated by InpNewsFilterEnable+InpNewsFlattenEnable");
+
+   // --- Trailing plugins (exclusive selection via InpTrailStrategy) ---
+   for(int t = 0; t < g_trailingPluginCount; t++)
+   {
+      if(g_trailingPlugins[t] == NULL) continue;
+      ManifestRow(h, "TRAILING", g_trailingPlugins[t].GetName(),
+                  (g_trailingPlugins[t].IsEnabled() ? "ENABLED" : "DISABLED"),
+                  "selector=InpTrailStrategy:" + EnumToString(InpTrailStrategy),
+                  (g_trailingPlugins[t] == g_newsTightenTrailing
+                     ? "news-tighten re-enable gated by news filter inputs" : ""));
+   }
+
+   // --- Default-off levers with current values ---
+   ManifestRow(h, "LEVER", "InpEnableCEG", (InpEnableCEG ? "ON" : "OFF"),
+               "FloorPct=" + DoubleToString(InpCEGFloorPct, 3) +
+               " TrailFloor=" + DoubleToString(InpCEGTrailFloor, 3), "Tier-3 CEG (closed no-change)");
+   ManifestRow(h, "LEVER", "InpCrashTrailSuppress", (InpCrashTrailSuppress ? "ON" : "OFF"),
+               "", "Tier-3 sD suppressor (adopted arm = ON in config of record)");
+   ManifestRow(h, "LEVER", "InpMinSLRangePct", DoubleToString(InpMinSLRangePct, 3),
+               "", "FIX-1 range-pct SL floor (0 = baseline-identical)");
+   ManifestRow(h, "LEVER", "InpEnableBEMover", (InpEnableBEMover ? "ON" : "OFF"),
+               "", "FIX-2 active BE mover (FINDING 0: flag-only when OFF)");
+   ManifestRow(h, "LEVER", "InpEnableClusterGuard", (InpEnableClusterGuard ? "ON" : "OFF"),
+               "", "same-family concentration block (measured KILL)");
+   ManifestRow(h, "LEVER", "InpCrashTPExtension", DoubleToString(InpCrashTPExtension, 3),
+               "", "crash TP overshoot beyond EMA21 mean (0 = identity)");
+   ManifestRow(h, "LEVER", "InpEnableShadowKillLog", (InpEnableShadowKillLog ? "ON" : "OFF"),
+               "", "decision-free signal-stage kill ledger");
+   ManifestRow(h, "LEVER", "InpNewsFilterEnable", (InpNewsFilterEnable ? "ON" : "OFF"),
+               "BlockEntries=" + (InpNewsBlockEntries ? "true" : "false") +
+               " Flatten=" + (InpNewsFlattenEnable ? "true" : "false") +
+               " Tighten=" + (InpNewsTightenEnable ? "true" : "false"),
+               "hybrid news gate (A/B'd net-negative; live-posture item)");
+   ManifestRow(h, "LEVER", "InpFridayEntryCutoffGMT", IntegerToString(InpFridayEntryCutoffGMT),
+               "", "0 = full Friday entry ban (baseline)");
+   ManifestRow(h, "LEVER", "InpEnableMultiStrategy", (InpEnableMultiStrategy ? "ON" : "OFF"),
+               "Trend=" + (InpEnableEngineTrend ? "on" : "off") +
+               " Reversal=" + (InpEnableEngineReversal ? "on" : "off") +
+               " Range=" + (InpEnableEngineRange ? "on" : "off") +
+               " Expansion=" + (InpEnableEngineExpansion ? "on" : "off"),
+               "4-engine scaffold master gate");
+
+   // --- Point-scale anchor + computed scale ---
+   ManifestRow(h, "SCALE", "InpScaleAnchorPrice", DoubleToString(InpScaleAnchorPrice, 2),
+               "AutoScale=" + (InpAutoScalePoints ? "true" : "false"),
+               "0 = legacy first-tick anchor");
+   ManifestRow(h, "SCALE", "g_pointScale", DoubleToString(g_pointScale, 4),
+               "scaledMinSL=" + DoubleToString(g_scaledMinSLPoints, 1) + "pts",
+               "computed in ComputePointScale()");
+
+   Print("[Manifest] ===== END MANIFEST (entries=", g_entryPluginCount,
+         " exits=", g_exitPluginCount, " trailing=", g_trailingPluginCount, ") =====");
+
+   if(h != INVALID_HANDLE)
+   {
+      FileClose(h);
+      Print("[Manifest] CSV written: ", fname, " (Common Files)");
+   }
+}
+
+//+------------------------------------------------------------------+
 //| Expert initialization function                                    |
 //+------------------------------------------------------------------+
 int OnInit()
@@ -836,22 +975,54 @@ int OnInit()
    g_newsFlattenExit = new CNewsFlattenExit(g_newsGate);
    g_newsFlattenExit.Initialize();
 
+   //================================================================
+   // [QUARANTINED-P0.7] ONE-OWNER-PER-EXIT-FUNCTION (enacted 2026-07-10)
+   // The four legacy exit plugins are DORMANT DUPLICATES: they are never
+   // Initialize()'d, so CheckForExitSignal() early-returns on
+   // !m_isInitialized on every call. Do NOT add Initialize() calls for
+   // them — that would wake a second owner for a function that already
+   // has one. Single owner of record per exit function:
+   //   DailyLossHaltExit -> owner: CRiskMonitor daily-loss halt (live).
+   //       The plugin would read the same GetDailyPnL() line but is
+   //       init-latched off.
+   //   WeekendCloseExit  -> owner: CPositionCoordinator weekend closure
+   //       (InpCloseBeforeWeekend / InpWeekendCloseHour, in
+   //       ManageOpenPositions).
+   //   MaxAgeExit        -> owner: NONE LIVE (RXT-02 resolved: no live
+   //       code reads InpMaxPositionAgeHours; this quarantined plugin is
+   //       the only implementation and stays dark).
+   //   RegimeAwareExit   -> owner: regime-adaptive exit GEOMETRY =
+   //       CRegimeRiskScaler exit profiles via the coordinator; there is
+   //       NO live regime/macro flatten exit (its macro-opposition leg
+   //       has no enable input of its own — the init latch covers it).
+   //   NewsFlattenExit   -> owner: THIS plugin (the designated news-exit
+   //       owner; default-off master InpNewsFilterEnable +
+   //       InpNewsFlattenEnable — live-posture item).
+   // Registration below is additionally gated on each plugin's existing
+   // enable input. NOTE: all four enable inputs default ON and are ON in
+   // the config of record, so on that config the plugins remain
+   // registered-but-latched (behavior identical); the never-initialized
+   // latch — not the registration gate — is the quarantine mechanism.
+   //================================================================
    ArrayResize(g_exitPlugins, 5);
-   g_exitPlugins[0] = g_dailyLossExit;
-   g_exitPlugins[1] = g_weekendExit;
-   g_exitPlugins[2] = g_maxAgeExit;
-   g_exitPlugins[3] = g_regimeExit;
-   g_exitPlugins[4] = g_newsFlattenExit;
-   g_exitPluginCount = 5;
-   Print("[Init] Exit Plugins: 5 (DailyLoss + Weekend + MaxAge + RegimeAware + NewsFlatten)");
+   if(InpEnableDailyLossHalt)     g_exitPlugins[g_exitPluginCount++] = g_dailyLossExit;   // [QUARANTINED-P0.7] duplicate of CRiskMonitor halt
+   if(InpEnableWeekendClose)      g_exitPlugins[g_exitPluginCount++] = g_weekendExit;     // [QUARANTINED-P0.7] duplicate of coordinator weekend close
+   if(InpMaxPositionAgeHours > 0) g_exitPlugins[g_exitPluginCount++] = g_maxAgeExit;      // [QUARANTINED-P0.7] no live owner (RXT-02)
+   if(InpAutoCloseOnChoppy)       g_exitPlugins[g_exitPluginCount++] = g_regimeExit;      // [QUARANTINED-P0.7] geometry owned by regime exit profiles
+   g_exitPlugins[g_exitPluginCount++] = g_newsFlattenExit;   // news-exit OWNER — always registered (self-gated on its inputs)
+   ArrayResize(g_exitPlugins, g_exitPluginCount);
+   Print("[Init] Exit Plugins: ", g_exitPluginCount,
+         " registered (news-exit owner + quarantined dormant duplicates; see [QUARANTINED-P0.7])");
 
    //================================================================
    // LAYER 5: Trailing Plugins
    //================================================================
    g_trailingPluginCount = 0;
 
-   g_atrTrailing        = new CATRTrailing(NULL, InpATRPeriod, InpTrailATRMult, g_scaledTrailMinProfit, g_scaledMinTrailMovement);
-   g_chandelierTrailing = new CChandelierTrailing(NULL, InpATRPeriod, InpTrailChandelierMult, InpBOChandelierLookback, g_scaledTrailMinProfit, g_scaledMinTrailMovement);
+   // P0.6: explicit (int) casts — the ctors take int min_profit; the implicit
+   // double->int truncation (warning 43) is the long-measured behavior, kept exact.
+   g_atrTrailing        = new CATRTrailing(NULL, InpATRPeriod, InpTrailATRMult, (int)g_scaledTrailMinProfit, g_scaledMinTrailMovement);
+   g_chandelierTrailing = new CChandelierTrailing(NULL, InpATRPeriod, InpTrailChandelierMult, InpBOChandelierLookback, (int)g_scaledTrailMinProfit, g_scaledMinTrailMovement);
    g_swingTrailing      = new CSwingTrailing(NULL, InpTrailSwingLookback);
    g_sarTrailing        = new CParabolicSARTrailing();
    g_steppedTrailing    = new CSteppedTrailing(NULL, InpATRPeriod, InpTrailStepSize);
@@ -1231,6 +1402,10 @@ int OnInit()
    Print("[CONFIG] MaxSpread=", InpMaxSpreadPoints,
          " | ShockDetect=", InpEnableShockDetection,
          " | MaxSlippage=", InpMaxSlippagePoints);
+
+   // P0.5: runtime capability manifest — decision-free, emitted after ALL
+   // registration completes (journal block + UltTrader_Manifest_<symbol>.csv).
+   EmitCapabilityManifest();
 
    return(INIT_SUCCEEDED);
 }
