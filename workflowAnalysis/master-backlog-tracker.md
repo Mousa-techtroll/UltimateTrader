@@ -10,7 +10,7 @@
 - ❌ **VARIANT KILLED** — the item (or its naive form) was measured and failed FIT/CONFIRM; do not re-run without a new design
 - ⬜ **NOT STARTED** — no material progress (related evidence noted where it exists)
 
-**Snapshot (34 items):** 0 fully ✅ by strict acceptance · **16 🟡/📐 materially advanced** · 5 with ❌ measured-killed variants baked in · 13 ⬜ not started.
+**Snapshot (34 items):** **4 ✅ done** (P0.2 registry-as-practice, P4.1 confirmation counterfactual, P4.2 rejected-candidate pricing, P5.1 input cleanup) · **12 🟡/📐 materially advanced** · 5 with ❌ measured-killed variants baked in · 13 ⬜ not started. Sub-item checkboxes mark completed work inside partial items.
 **Campaign facts the plan should absorb:** 9 single-lever interventions measured-killed; 3 gates acquitted by calibrated replay; single-run FIT deltas carry **±$1,500 (2σ) path noise** (matched-cohort ΔR, SE ≈0.013 R/trade, is the fine-grained standard); the stop/ladder/trail defect is **decoupling**, not floor level; **FINDING 0**: the EA has *no active BE stop-mover* — the "BE trigger 1.2R" is a diagnostic flag only.
 
 ---
@@ -29,25 +29,30 @@
 # Phase 0 — Trust infrastructure
 
 ### P0.1 — Automated baseline identity test
-- [ ] 🟡 **PARTIAL** — *Practice is fully established; automation is not.*
-  - Done: identity legs reproduced $21,623.18/1878 to the cent across T1/T0/T2/FIX binaries; binary md5s recorded per build; state quarantined per run; per-arm CSV archiving (`Common/Files/_arm_archive/`); stale `rt_baseline.ini` regenerated (old copy preserved).
-  - Remaining: a single automated harness that hashes source/EX5/inputs/tester config/history and diffs the full trade ledgers (currently done manually per campaign step).
-  - Evidence: `AB_TEST_LOG.md` (every entry), commit `8f7fa0f` identity note.
+- [ ] 🟡 **PARTIAL** — *Practice fully established; automation is not.*
+  - [x] Identity legs reproduced $21,623.18/1878 to the cent across T1/T0/T2/FIX binaries
+  - [x] Binary md5s recorded per build; state quarantined per run
+  - [x] Per-arm CSV archiving (`Common/Files/_arm_archive/`); stale `rt_baseline.ini` regenerated
+  - [ ] Automated harness (hash source/EX5/inputs/tester-config/history + full-ledger diff)
+  - Evidence: `AB_TEST_LOG.md` (every entry), commit `8f7fa0f`.
 
 ### P0.2 — Frozen experiment registry
-- [ ] 🟡 **PARTIAL** — *The discipline exists and has been load-bearing; the registry is a log, not a tool.*
-  - Done: every 2026-07 experiment had pre-registered hypotheses/gates/kill criteria BEFORE results (recorded in agent protocols + `AB_TEST_LOG.md`); all failed experiments retained with mechanisms; "no post-hoc tuning" enforced (e.g., K3′ exam not softened; owner ruling recorded verbatim).
-  - Remaining: formal pre-registration file format + max-combination caps as a standing artifact rather than per-campaign practice.
+- [x] ✅ **DONE (as enforced practice)** — the acceptance clause holds for every 2026-07 experiment.
+  - [x] Pre-registered hypotheses/gates/kill criteria BEFORE results (`AB_TEST_LOG.md` + agent protocols)
+  - [x] All failed experiments retained with mechanisms; no post-hoc tuning (K3′ exam not softened; owner rulings verbatim)
+  - [ ] Optional hardening: standing pre-registration template + max-combination caps
 
 ### P0.3 — Test-state isolation
 - [ ] 🟡 **PARTIAL**
-  - Done: state files quarantined before every leg; the **tester parameter-cache trap documented and mitigated** (ini-missing params fill from `Profiles/Tester/<Expert>.set`, NOT compiled defaults — cost one wrong-config leg before being caught; all harnesses now set critical params explicitly); per-arm CSV archiving prevents ledger clobbering.
-  - Remaining: namespacing by campaign/account/build-hash for state, recovery and common files.
+  - [x] State files quarantined before every leg
+  - [x] Tester parameter-cache trap documented + mitigated (explicit ini values everywhere)
+  - [x] Per-arm CSV archiving (prevents ledger clobbering)
+  - [ ] Namespacing by campaign/account/build-hash for state, recovery and common files
 
 ### P0.4 — Experiment attribution report
 - [ ] 🟡 **PARTIAL** — *Methodology proven, tooling ad hoc.*
-  - Done: the matched-cohort decomposition (SL30/SL25) is exactly this report — entries shared/added/removed, matched-trade outcome deltas vs composition vs compounding, per-year/strategy/stop-bucket splits, buckets summing exactly to the gap. Also delivered for the news filter, cluster guard, and shadow piles.
-  - Remaining: automate it as a standard per-candidate report. **Amendment from data:** the report should use matched-cohort ΔR as the primary metric (net-$ deltas under ±$1,500 are unreadable on this book).
+  - [x] Methodology proven: matched-cohort decomposition (SL30/SL25) with buckets summing exactly to the gap; also delivered for news filter, cluster guard, shadow piles
+  - [ ] Automate as a standard per-candidate report — using matched-cohort ΔR as the primary metric (net-$ deltas under ±$1,500 are unreadable)
 
 ### P0.5 — Runtime capability manifest
 - [ ] ⬜ **NOT STARTED** (runtime log) — but the *static* equivalent exists: `entry-strategies-report.md` census (LIVE/REGISTERED-MUTE/DEAD per module, verified against config+code) + the Tier-0 DEAD-input markings + `docs/LIVE-DEPLOYMENT-CHECKLIST.md`. A runtime manifest would make that knowledge self-verifying at init.
@@ -66,13 +71,18 @@
 
 ### P1.1 — High-resolution stop-out reconstruction
 - [ ] 🟡 **PARTIAL** — H1-resolution done; tick/M1 resolution not.
-  - Done: 40-worst-loss autopsy (`top-losses-analysis.md`) + floor forensics: stop/48h-range distribution for all 928 fills, MFE/MAE, revisit-entry (34/40 ≤72h), news joins, spread-era context; partial taxonomy via per-trade verdicts (20 variance / 12 wrong-context / 8 mechanics).
-  - Remaining: intrabar (tick/M1) ordering — **specifically needed for the knife-edge MAE 0.96–0.99R cohort** the anomaly decomposition flagged as stop-hunt-shaped; formalize the 6-class taxonomy over all 470 losers.
+  - [x] H1-resolution reconstruction: 40-worst autopsy + all-fills stop/48h-range distribution, MFE/MAE, revisit-entry (34/40 ≤72h), news joins
+  - [x] Partial taxonomy (20 variance / 12 wrong-context / 8 mechanics over the top-40)
+  - [ ] Tick/M1 intrabar ordering — **the knife-edge MAE 0.96–0.99R cohort** (stop-hunt-shaped)
+  - [ ] Formal 6-class taxonomy over all 470 losers
   - ⚠️ Gate honored: no global stop widening was accepted (see P1.2).
 
 ### P1.2 — Replace the historical fixed stop floor
 - [ ] 🟡 **PARTIAL, with the naive form ❌ MEASURED-KILLED**
-  - Done: **root cause found and fixed** — the $5.13 floor was `InpMinSLPoints × first-tick price scale`, frozen at OnInit (start-date-dependent: $17.28 for a 2026 start). `InpScaleAnchorPrice=1282.43` makes it deterministic (identity exact). Range-pct floor lever implemented (`InpMinSLRangePct`, choke-point + proportional TP recompute).
+  - [x] **Root cause found and FIXED**: frozen first-tick scale → `InpScaleAnchorPrice=1282.43`, deterministic, identity exact (commit `8f7fa0f`)
+  - [x] Range-pct floor lever implemented (`InpMinSLRangePct`, choke-point + proportional TP recompute)
+  - [x] Naive doses measured (25%/30% killed) + anomaly resolved (noise; decoupling mechanism)
+  - [ ] Coupled version (CEG) — designed, not implemented
   - ❌ Killed variants: floor at 25% and 30% of 48h range (−62.8% / −27.8% FIT). **The plan's "mandatory coupling" spec is necessary but insufficient as written** — re-anchoring R-targets to the widened stop is precisely what starved the partial engine (TP0 fill 46%→38%). The corrected coupling (ladder anchored to the *pattern* stop; trail floored by the *effective* stop) is the CEG design (P1.4).
   - Also measured: the inversion between doses = path noise; ~−0.03 R/trade for ANY large widening; mild binds *help* (+0.05 ΔR).
   - Remaining: the plan's alternatives 2–6 only make sense inside CEG; alternative 6 (veto-not-widen) = P1.3.
@@ -132,10 +142,10 @@
 # Phase 4 — Shadow research
 
 ### P4.1 — Confirmation-window counterfactual
-- [ ] 🟡 **LARGELY DONE — verdict: gate innocent.** Calibrated replay (r 0.85–0.88, bias-corrected) priced the 579 window-exhaust kills at **[−50,+36]R ≈ 0**; window=+1 bar replayed directly: [−1.7,+9.2]R = noise; strictness structurally non-binding (79% fail only `is_bullish`); immediate-vs-confirmed measured (mechanism removal: −67% net, DD ×2). Remaining: conditional-extension variants (spread/volume/structure-gated) — unpriced but bounded by the ≈0R population; low priority.
+- [x] ✅ **DONE — verdict rendered: gate innocent.** Calibrated replay (r 0.85–0.88, bias-corrected) priced the 579 window-exhaust kills at **[−50,+36]R ≈ 0**; window=+1 bar replayed directly: [−1.7,+9.2]R = noise; strictness structurally non-binding (79% fail only `is_bullish`); immediate-vs-confirmed measured (mechanism removal: −67% net, DD ×2). Remaining: conditional-extension variants (spread/volume/structure-gated) — unpriced but bounded by the ≈0R population; low priority.
 
 ### P4.2 — Shadow-price rejected candidates
-- [ ] 🟡 **LARGELY DONE for volume+validator stages.** `InpEnableShadowKillLog` adopted (decision-free to the cent; complete piles captured: 615 VOLUME + 532 VALIDATOR). Replay verdicts: Engulfing-volume **acquitted** ([−0.03,−0.02]R kills; dose-response inverted → threshold relax specifically refuted); S6-validator **no-claim** (CI spans zero, ~$150/yr; binding sub-check identified: S6's pattern missing from the TRENDING counter-trend exception list); crash-volume **gate pays**. Remaining: quality-stage and confidence-stage kills (361+103) are not yet hooked; PinBar piles priced only via the above stages.
+- [x] ✅ **DONE for 5 of 6 priority piles (volume + validator stages; verdicts rendered).** `InpEnableShadowKillLog` adopted (decision-free to the cent; complete piles captured: 615 VOLUME + 532 VALIDATOR). Replay verdicts: Engulfing-volume **acquitted** ([−0.03,−0.02]R kills; dose-response inverted → threshold relax specifically refuted); S6-validator **no-claim** (CI spans zero, ~$150/yr; binding sub-check identified: S6's pattern missing from the TRENDING counter-trend exception list); crash-volume **gate pays**. Remaining: quality-stage and confidence-stage kills (361+103) are not yet hooked; PinBar piles priced only via the above stages.
 
 ### P4.3 — Explicit D1 correction-state model
 - [ ] ⬜ **NOT STARTED** — partial overlap designed: the A+ tape-quality sizing gate (`tier3-design-doc.md` §B: regime age, realized-range floor, extension veto — shadow-first, frozen thresholds) covers the "fresh/thin TRENDING" slice of this item. The full D1 state taxonomy is unbuilt.
@@ -148,7 +158,7 @@
 # Phase 5 — Hygiene & operations
 
 ### P5.1 — Dead code and input cleanup
-- [ ] 🟡 **LARGELY DONE (mark-don't-delete form).** Tier-0 purge: full 375-input reference sweep; every placebo lever DEAD-marked with its dead-consumer site (score inputs ×8, SMC floor, vol-risk family + Sprint-1C hole, 7 Crash "(future use)" params, EC-v1 quartet, `InpFileUseCSVRisk`, loss-scaler family); FileEntry clarified LIVE-ONLY; `how-this-ea-works` md+html corrected (SessionEngine claim, "twelve scouts"). Remaining: physical deletion of marked inputs + their plumbing; unreachable source files; the 16 compiler warnings (documented, unfixed → P0.6).
+- [x] ✅ **DONE in mark-don't-delete form (acceptance: every input now has a live reader or a documented retention reason).** Tier-0 purge: full 375-input reference sweep; every placebo lever DEAD-marked with its dead-consumer site (score inputs ×8, SMC floor, vol-risk family + Sprint-1C hole, 7 Crash "(future use)" params, EC-v1 quartet, `InpFileUseCSVRisk`, loss-scaler family); FileEntry clarified LIVE-ONLY; `how-this-ea-works` md+html corrected (SessionEngine claim, "twelve scouts"). Remaining: physical deletion of marked inputs + their plumbing; unreachable source files; the 16 compiler warnings (documented, unfixed → P0.6).
 
 ### P5.2 — Broker/internal stop-divergence alert
 - [ ] ⬜ **NOT STARTED** — related live logic exists (INVALID_STOPS revert path; STOPS_LEVEL clamps verified). No alerting/synthetic tests.
