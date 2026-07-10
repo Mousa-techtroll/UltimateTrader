@@ -596,3 +596,15 @@ input double InpNewsTightenATRMult     = 1.0;    // Tightened SL distance = ATR(
 input string InpNewsCsvFile            = "NewsCalendar_USD.csv"; // Tester/fallback CSV (Common Files)
 input int    InpNewsWinterGMTOffset    = 2;      // Broker GMT offset in WINTER (Vantage: +2 / +3 US-summer; InpBrokerGMTOffset=3 is the SUMMER value)
 input bool   InpNewsServerFollowsUSDST = true;   // Server clock is NY-close aligned (+1h during US DST)
+
+//--- Group 48: CEG — COUPLED EXIT GEOMETRY (Tier-3)
+// Tier-3 coupled exit-geometry unit (workflowAnalysis/tier3-design-doc.md §A.1-A.3).
+// ALL default-off: at these defaults the build is byte-identical to baseline.
+// Mutually exclusive with the FIX-1 floor (InpMinSLRangePct): if both are set,
+// CEG wins and FIX-1 is skipped (one-time warning at the choke point). The
+// Phase-0 Stats-CSV columns (S_pat/S_eff/R48/WidenFactor/CEGBound/RegimeAgeH4/
+// Run48) are decision-free and stamped regardless of these flags.
+input group "══════ CEG — COUPLED EXIT GEOMETRY (Tier-3) ══════"
+input bool   InpEnableCEG     = false;  // Master: CEG stop floor + trail coupling (default off, Tier-3, tier3-design-doc.md)
+input double InpCEGFloorPct   = 0.0;    // q_floor: stop floor as fraction of trailing 48h H1 range (0 = never binds). S_eff = max(S_pat, q x R48); TPs stay S_pat-anchored (A.2)
+input double InpCEGTrailFloor = 0.0;    // c_trail: chandelier trail-width floor in S_eff_entry units (0 = off). eff_mult = max(eff_mult, c x S_eff/ATR_H1) (A.3)

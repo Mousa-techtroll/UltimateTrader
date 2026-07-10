@@ -66,6 +66,20 @@ public:
    // Regime-based exit: allow per-position multiplier override
    void SetMultiplier(double mult) { m_chandelier_mult = mult; }
 
+   // CEG (Tier-3): expose the trail's own ATR value — same handle and same
+   // closed-bar [1] shift the ratchet uses. Read-only, consumed by the
+   // coordinator's effective-mult floor. 0.0 when unavailable.
+   double GetTrailATR()
+   {
+      if(m_handle_atr == INVALID_HANDLE)
+         return 0.0;
+      double atr_buf[];
+      ArraySetAsSeries(atr_buf, true);
+      if(CopyBuffer(m_handle_atr, 0, 1, 1, atr_buf) <= 0)
+         return 0.0;
+      return atr_buf[0];
+   }
+
    //+------------------------------------------------------------------+
    //| Set market context                                                |
    //+------------------------------------------------------------------+

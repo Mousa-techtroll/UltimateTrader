@@ -54,6 +54,18 @@ private:
       return SESSION_NEWYORK;
    }
 
+   // CEG Phase-0: |close[1] - close[49]| on H1 — net 48h move at signal time.
+   // Same closed-bar idiom as CMarketContext::Update48hRange (bars 1..49).
+   // Pure read; 0.0 on short history. CSV-only (column Run48).
+   double ComputeRun48()
+   {
+      double closes[];
+      ArraySetAsSeries(closes, true);
+      if(CopyClose(_Symbol, PERIOD_H1, 1, 49, closes) < 49)
+         return 0.0;
+      return MathAbs(closes[0] - closes[48]);
+   }
+
    string BuildSignalId(string plugin_name, ENUM_SIGNAL_TYPE sig_type)
    {
       m_signal_sequence++;
@@ -116,6 +128,8 @@ private:
    // SetMinSLPoints from OnInit — the global is declared AFTER this include
    // so it is not directly visible here; same route as CSessionEngine).
    double               m_min_sl_points;
+   // CEG: one-time warning latch for the CEG-vs-FIX-1 conflict (both floors set)
+   bool                 m_ceg_conflict_warned;
 
    //--- Session/time filters
    bool                 m_trade_asia;
@@ -175,6 +189,7 @@ public:
       m_short_risk_multiplier = MathMax(0.0, short_risk_mult);
       m_confirmation_strictness = confirm_strictness;
       m_min_sl_points = 0.0;   // FIX-1: wired via SetMinSLPoints in OnInit
+      m_ceg_conflict_warned = false;
 
       m_trade_asia = trade_asia;
       m_trade_london = trade_london;
@@ -910,12 +925,62 @@ public:
                      best_smc_score, best_quality, best_quality_score,
                      best_signal.base_risk_pct, best_signal.requiresConfirmation, true);
 
+      // CEG Phase-0 instrumentation (ALWAYS stamped, no flag): signal-time
+      // geometry snapshot for the Stats CSV — S_pat/S_eff/R48/bound + regime
+      // age + net 48h move. Pure reads only (m_range48h is cached once per H1
+      // bar in CMarketContext::Update; GetRegimeAgeH4/ComputeRun48 are
+      // read-only). CEG-off: S_eff == S_pat and ceg_bound stays false.
+      double ceg_r48 = (m_context != NULL) ? m_context.GetTrailing48hRange() : 0.0;
+      best_signal.ceg_s_pat = MathAbs(best_signal.entryPrice - best_signal.stopLoss);
+      best_signal.ceg_s_eff = best_signal.ceg_s_pat;
+      best_signal.ceg_r48   = ceg_r48;
+      best_signal.ceg_bound = false;
+      best_signal.regime_age_h4 = (m_context != NULL) ? m_context.GetRegimeAgeH4() : -1;
+      best_signal.run48 = ComputeRun48();
+
+      // CEG (Tier-3, default OFF): S_pat-anchored stop floor. SECOND mode at
+      // the same choke point as FIX-1, mutually exclusive with it (CEG wins).
+      // S_pat = the stop distance as it stands here — pattern geometry incl.
+      // the plugin-level anchored $-floors, i.e. the baseline-identical
+      // definition. S_eff = max(S_pat, q_floor x R48). When the floor binds,
+      // ONLY the stop moves out: TP1/2/3 keep their S_pat-anchored prices
+      // (design A.2 — the ladder never re-anchors to the widened stop).
+      // Sizing reads the widened SL downstream (lots = risk$/S_eff, A.5);
+      // the RR / reward-room / entry-sanity gates read S_pat via the stamps
+      // (entry-census <=1% invariant, A.7.2).
+      bool ceg_mode = (InpEnableCEG && InpCEGFloorPct > 0.0);
+      if(ceg_mode && InpMinSLRangePct > 0.0 && !m_ceg_conflict_warned)
+      {
+         Print("[CEG] WARNING: InpMinSLRangePct > 0 ignored while CEG is enabled — CEG wins, legacy FIX-1 floor skipped");
+         m_ceg_conflict_warned = true;
+      }
+      if(ceg_mode)
+      {
+         if(m_context != NULL && best_signal.valid)
+         {
+            double s_pat = best_signal.ceg_s_pat;
+            double s_eff = MathMax(s_pat, InpCEGFloorPct * ceg_r48);
+            if(ceg_r48 > 0 && s_pat > 0 && s_eff > s_pat)
+            {
+               if(best_sig_type == SIGNAL_LONG)
+                  best_signal.stopLoss = best_signal.entryPrice - s_eff;
+               else
+                  best_signal.stopLoss = best_signal.entryPrice + s_eff;
+               best_signal.ceg_s_eff = s_eff;
+               best_signal.ceg_bound = true;
+               Print("[CEG] stop floored ", DoubleToString(s_pat, 2), " -> ", DoubleToString(s_eff, 2),
+                     " (R48=", DoubleToString(ceg_r48, 2),
+                     ", widen x", DoubleToString(s_eff / s_pat, 2),
+                     ") TPs stay S_pat-anchored | ", best_signal.comment);
+            }
+         }
+      }
       // FIX-1: volatility-anchored minimum stop. Single choke point AHEAD of both
       // the pending path (SL is snapshotted at StorePendingSignal below) and the
       // immediate-execution return. Structural no-op at InpMinSLRangePct == 0.
       // The file-signal path never passes through here (independent CFileEntry
       // route in UltimateTrader.mq5 OnTick — verified).
-      if(InpMinSLRangePct > 0.0 && m_context != NULL && best_signal.valid)
+      else if(InpMinSLRangePct > 0.0 && m_context != NULL && best_signal.valid)
       {
          double rng = m_context.GetTrailing48hRange();
          double floor_dist = MathMax(m_min_sl_points * _Point, InpMinSLRangePct * rng);
@@ -937,6 +1002,11 @@ public:
                best_signal.takeProfit2 = best_signal.entryPrice + (best_signal.takeProfit2 - best_signal.entryPrice) * k;
             if(best_signal.takeProfit3 > 0)
                best_signal.takeProfit3 = best_signal.entryPrice + (best_signal.takeProfit3 - best_signal.entryPrice) * k;
+            // CEG Phase-0: FIX-1 re-anchors ALL geometry proportionally, so the
+            // widened distance IS the effective pattern stop — refresh both
+            // stamps so the CSV reports the actual stop distance (decision-free).
+            best_signal.ceg_s_pat = floor_dist;
+            best_signal.ceg_s_eff = floor_dist;
             Print("[SLFloor] widened ", DoubleToString(old_dist, 2), " -> ", DoubleToString(floor_dist, 2),
                   " (", DoubleToString(100.0 * old_dist / rng, 1), "% of 48h range ", DoubleToString(rng, 2), ") ",
                   best_signal.comment);
@@ -1194,6 +1264,14 @@ private:
          m_pending_signal.day_type       = signal.day_type;
          m_pending_signal.engine_confluence = signal.engine_confluence;
          m_pending_signal.pending_bar_count = 0;  // Sprint 5D: init bar counter
+         // CEG stamps + Phase-0 instrumentation travel with the (possibly
+         // CEG-widened) stop_loss snapshotted above
+         m_pending_signal.ceg_s_pat      = signal.ceg_s_pat;
+         m_pending_signal.ceg_s_eff      = signal.ceg_s_eff;
+         m_pending_signal.ceg_r48        = signal.ceg_r48;
+         m_pending_signal.ceg_bound      = signal.ceg_bound;
+         m_pending_signal.regime_age_h4  = signal.regime_age_h4;
+         m_pending_signal.run48          = signal.run48;
 
          m_has_pending = true;
 

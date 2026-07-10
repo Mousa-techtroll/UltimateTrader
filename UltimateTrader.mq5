@@ -2173,6 +2173,12 @@ void OnTick()
                   {
                      double spread_val = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
                      double sl_dist_val = MathAbs(signal.entryPrice - signal.stopLoss);
+                     // CEG (Tier-3): sanity-gate the PATTERN stop, never the
+                     // CEG-widened effective stop — a widened SL must not let a
+                     // baseline-rejected tight-SL entry through (entry-census
+                     // invariant, design A.7.2). No-op when CEG off/unbound.
+                     if(signal.ceg_bound && signal.ceg_s_pat > 0)
+                        sl_dist_val = signal.ceg_s_pat;
                      if(sl_dist_val > 0 && sl_dist_val < spread_val * InpMinSLToSpreadRatio)
                      {
                         Print("[EntrySanity] REJECTED: SL=$", DoubleToString(sl_dist_val, 2),

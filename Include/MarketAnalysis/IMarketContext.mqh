@@ -81,6 +81,9 @@ public:
    // FIX-1: trailing 48h H1 range (highest high - lowest low over the last 48
    // CLOSED H1 bars). Backs the volatility-anchored minimum-SL floor.
    virtual double               GetTrailing48hRange()    { return 0; }
+   // CEG Phase-0 instrumentation: closed H4 bars since the regime classification
+   // last changed (-1 = unknown/not yet seeded). Purely observational.
+   virtual int                  GetRegimeAgeH4()         { return -1; }
    virtual double               GetCurrentRSI()          { return 50; }
 
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign)

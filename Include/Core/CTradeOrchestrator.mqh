@@ -331,7 +331,20 @@ public:
             risk_distance = min_stop_dist;
       }
 
-      if(risk_distance <= 0)
+      // CEG (Tier-3): every accept/reject + missing-TP fill below must evaluate
+      // the PATTERN stop distance (S_pat), never the CEG-widened effective stop.
+      // Bound trades keep S_pat-anchored TPs (design A.2), so denominating the
+      // RR / reward-room gates by S_eff would kill them and drift the entry
+      // census (A.7.2 <=1% invariant). Sizing stays on risk_distance — the
+      // ACTUAL widened SL (lots = tier-risk$/S_eff, A.5). The stamp delta
+      // reconstructs the unwidened distance exactly, independent of live-entry
+      // drift. No-op when CEG is off/unbound (delta 0) and for file signals
+      // (never stamped).
+      double gate_risk_distance = risk_distance;
+      if(signal.ceg_bound && signal.ceg_s_eff > signal.ceg_s_pat)
+         gate_risk_distance = risk_distance - (signal.ceg_s_eff - signal.ceg_s_pat);
+
+      if(risk_distance <= 0 || gate_risk_distance <= 0)
       {
          LogPrint("ERROR: Invalid risk distance - trade rejected");
          LogRiskAudit(signal, sig_type, requested_risk_pct,
@@ -347,28 +360,29 @@ public:
       double tp2 = signal.takeProfit2;
 
       // Only fill MISSING TPs — never overwrite provided ones
+      // (S_pat-based distance: filled TPs stay ladder-anchored per A.2)
       if(tp1 == 0 && tp2 == 0)
       {
-         CalculateDefaultTPs(sig_type, entry_price, risk_distance, tp1, tp2);
+         CalculateDefaultTPs(sig_type, entry_price, gate_risk_distance, tp1, tp2);
       }
       else if(tp1 == 0 && tp2 != 0)
       {
          // TP2 exists but TP1 missing — calculate TP1 only
          double sign = (sig_type == SIGNAL_LONG) ? 1.0 : -1.0;
-         tp1 = entry_price + sign * risk_distance * m_tp1_distance;
+         tp1 = entry_price + sign * gate_risk_distance * m_tp1_distance;
       }
       else if(tp1 != 0 && tp2 == 0)
       {
          // TP1 exists but TP2 missing — calculate TP2 only
          double sign = (sig_type == SIGNAL_LONG) ? 1.0 : -1.0;
-         tp2 = entry_price + sign * risk_distance * m_tp2_distance;
+         tp2 = entry_price + sign * gate_risk_distance * m_tp2_distance;
       }
 
       // R:R validation — skipped entirely for file signals (external source, not our quality call)
       if(m_min_rr_ratio > 0 && signal.source != SIGNAL_SOURCE_FILE)
       {
          double reward = MathAbs(MathMax(tp1, tp2) - entry_price);
-         double actual_rr = (risk_distance > 0) ? reward / risk_distance : 0;
+         double actual_rr = (gate_risk_distance > 0) ? reward / gate_risk_distance : 0;
 
          double effective_min_rr = m_min_rr_ratio;
 
@@ -402,13 +416,14 @@ public:
       // Reward-room obstacle check: reject if next structural obstacle is too close
       // This is a geometry filter, not a quality filter — checks whether the trade
       // destination is reachable, independent of entry signal strength.
-      if(InpEnableRewardRoom && InpMinRoomToObstacle > 0 && risk_distance > 0)
+      // (S_pat denominator under CEG — accept/reject census invariant, see above)
+      if(InpEnableRewardRoom && InpMinRoomToObstacle > 0 && gate_risk_distance > 0)
       {
          double nearest_obstacle = FindNearestObstacle(entry_price, sig_type);
          if(nearest_obstacle > 0)
          {
             double room = MathAbs(nearest_obstacle - entry_price);
-            double room_in_r = room / risk_distance;
+            double room_in_r = room / gate_risk_distance;
 
             if(room_in_r < InpMinRoomToObstacle)
             {
@@ -786,6 +801,15 @@ public:
          if(point > 0.0)
             position.entry_slippage = MathAbs(position.executed_entry_price - position.requested_entry_price) / point;
 
+         // CEG (Tier-3) stamps + Phase-0 instrumentation — signal-time values
+         // propagate to the position at fill (trail floor + Stats-CSV columns)
+         position.ceg_s_pat = signal.ceg_s_pat;
+         position.ceg_s_eff = signal.ceg_s_eff;
+         position.ceg_r48 = signal.ceg_r48;
+         position.ceg_bound = signal.ceg_bound;
+         position.regime_age_h4 = signal.regime_age_h4;
+         position.run48 = signal.run48;
+
          // v3.1 Phase D: Transfer engine telemetry fields
          position.engine_mode = signal.engine_mode;
          position.day_type = signal.day_type;
@@ -864,6 +888,23 @@ public:
       else
          risk_distance = pending.stop_loss - current_entry;
 
+      // CEG (Tier-3): when the stop floor widened this pending's SL, all TP
+      // derivation and accept/reject below must anchor to the PATTERN stop
+      // (design A.2 — the ladder never re-anchors to the widened stop) or the
+      // bound cohort gets S_eff-anchored TPs and a drifted entry census.
+      // tp_anchor_sl reconstructs the pre-widen SL price exactly from the
+      // stamp delta; execution + sizing keep pending.stop_loss (the widened
+      // S_eff stop) via exec_signal below. No-op when CEG is off/unbound.
+      double tp_anchor_sl = pending.stop_loss;
+      if(pending.ceg_bound && pending.ceg_s_eff > pending.ceg_s_pat)
+      {
+         double ceg_delta = pending.ceg_s_eff - pending.ceg_s_pat;
+         tp_anchor_sl = (pending.signal_type == SIGNAL_LONG)
+                        ? pending.stop_loss + ceg_delta
+                        : pending.stop_loss - ceg_delta;
+         risk_distance -= ceg_delta;   // S_pat-based distance for TP/RR math
+      }
+
       LogPrint("    Original Entry: ", pending.entry_price, " | Current Entry: ", current_entry);
       LogPrint("    SL: ", pending.stop_loss, " | Risk: ", DoubleToString(risk_distance, 2), " pts");
 
@@ -907,7 +948,7 @@ public:
          ENUM_REGIME_TYPE current_regime = m_context.GetCurrentRegime();
 
          SAdaptiveTPResult adaptive_result = m_adaptive_tp_manager.CalculateAdaptiveTPs(
-            pending.signal_type, current_entry, pending.stop_loss,
+            pending.signal_type, current_entry, tp_anchor_sl,
             current_regime, pending.pattern_type);
 
          final_tp1 = adaptive_result.tp1;
@@ -927,7 +968,7 @@ public:
             if(GetBollingerBands(bb_upper, bb_middle, bb_lower) && m_adaptive_tp_manager != NULL)
             {
                SAdaptiveTPResult bb_result = m_adaptive_tp_manager.CalculateBBBasedTPs(
-                  pending.signal_type, current_entry, pending.stop_loss,
+                  pending.signal_type, current_entry, tp_anchor_sl,
                   bb_upper, bb_middle, bb_lower);
 
                if(!bb_result.is_valid || bb_result.tp1 == 0.0)
@@ -993,6 +1034,14 @@ public:
       exec_signal.patternType = pending.pattern_type;
       exec_signal.setupQuality = pending.quality;
       exec_signal.source = SIGNAL_SOURCE_PATTERN;
+      // CEG stamps + Phase-0 instrumentation carry through confirmation so
+      // ExecuteSignal's S_pat gates and the position stamping see them
+      exec_signal.ceg_s_pat = pending.ceg_s_pat;
+      exec_signal.ceg_s_eff = pending.ceg_s_eff;
+      exec_signal.ceg_r48 = pending.ceg_r48;
+      exec_signal.ceg_bound = pending.ceg_bound;
+      exec_signal.regime_age_h4 = pending.regime_age_h4;
+      exec_signal.run48 = pending.run48;
 
       // Calculate risk based on quality, then re-apply session/regime multipliers
       double base_risk = GetRiskForQuality(pending.quality, pending.pattern_name);

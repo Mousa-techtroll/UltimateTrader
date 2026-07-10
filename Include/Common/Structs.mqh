@@ -194,6 +194,16 @@ struct SPosition
    double                 last_entry_locked_chandelier_mult; // Entry-stamped multiplier snapshot
    datetime               last_broker_trailing_time;      // Last successful broker SL modify
 
+   // CEG Tier-3 entry stamps + Phase-0 instrumentation (from EntrySignal at
+   // fill; persisted in state file v6). ceg_s_eff feeds the trail-width floor;
+   // all six feed the Stats-CSV columns. 0/-1 on adopted/pre-v6 positions.
+   double                 ceg_s_pat;               // pattern stop distance at signal time
+   double                 ceg_s_eff;               // effective stop distance (widened when ceg_bound)
+   double                 ceg_r48;                 // trailing 48h H1 range at signal time
+   bool                   ceg_bound;               // CEG floor widened the stop
+   int                    regime_age_h4;           // closed H4 bars since regime last changed
+   double                 run48;                   // net 48h H1 move at signal time
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -240,6 +250,12 @@ struct SPosition
       last_live_chandelier_mult = 0;
       last_entry_locked_chandelier_mult = 0;
       last_broker_trailing_time = 0;
+      ceg_s_pat = 0;
+      ceg_s_eff = 0;
+      ceg_r48 = 0;
+      ceg_bound = false;
+      regime_age_h4 = -1;
+      run48 = 0;
    }
 };
 
@@ -313,6 +329,18 @@ struct PersistedPosition
    // serialize a dynamic string member (it would write a pointer/garbage).
    double   tp3;
    double   entry_risk_amount;
+
+   // CEG Tier-3 (state file version 6): entry-stamped exit geometry + Phase-0
+   // instrumentation. v5-and-older files are rejected by the EXACT-MATCH version
+   // gate in LoadPositionState (broker-only fallback) — restored-from-broker
+   // positions carry 0 stamps, so the trail floor and the CSV columns degrade
+   // gracefully instead of mis-reading bytes.
+   double   ceg_s_pat;
+   double   ceg_s_eff;
+   double   ceg_r48;
+   bool     ceg_bound;
+   int      regime_age_h4;
+   double   run48;
 };
 
 //+------------------------------------------------------------------+
@@ -518,6 +546,15 @@ struct SPendingSignal
 
    // Sprint 5D: multi-bar confirmation window
    int                  pending_bar_count;    // Bars since signal stored as pending
+
+   // CEG Tier-3 stamps + Phase-0 instrumentation (snapshotted with the SL at
+   // StorePendingSignal, carried onto exec_signal at confirmation)
+   double               ceg_s_pat;
+   double               ceg_s_eff;
+   double               ceg_r48;
+   bool                 ceg_bound;
+   int                  regime_age_h4;
+   double               run48;
 };
 
 //+------------------------------------------------------------------+
@@ -566,6 +603,16 @@ struct EntrySignal
                                              // legacy-registered major engines (m_scorer==NULL) keep
                                              // the byte-identical legacy evaluator path.
 
+   // CEG Tier-3 geometry stamps + Phase-0 instrumentation. Stamped by the
+   // orchestrator at the stop-floor choke point on EVERY ranked winner
+   // (flag-independent); decision-free except where CEG explicitly reads them.
+   double              ceg_s_pat;            // pattern stop distance as it stood at the choke point
+   double              ceg_s_eff;            // effective stop distance (== ceg_s_pat unless the CEG floor bound)
+   double              ceg_r48;              // trailing 48h H1 range at signal time
+   bool                ceg_bound;            // true when the CEG floor widened the stop
+   int                 regime_age_h4;        // closed H4 bars since the regime classification last changed (-1 unknown)
+   double              run48;                // |close[1]-close[49]| H1 — net 48h move at signal time
+
    void Init()
    {
       valid = false;
@@ -598,6 +645,12 @@ struct EntrySignal
       day_type = DAY_TREND;
       major_engine = ENGINE_NONE;
       routed_engine = false;
+      ceg_s_pat = 0;
+      ceg_s_eff = 0;
+      ceg_r48 = 0;
+      ceg_bound = false;
+      regime_age_h4 = -1;
+      run48 = 0;
    }
 
    // Validate the signal data (from AICoder V1 CEntryStrategy)

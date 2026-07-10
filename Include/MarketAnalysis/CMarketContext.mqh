@@ -82,6 +82,12 @@ private:
    //    short CopyHigh/CopyLow read the PREVIOUS value is kept (never zeroed).
    double                    m_range48h;
 
+   //--- CEG Phase-0 instrumentation: regime-age tracker. Records the H4 bar
+   //    time at which GetCurrentRegime() last changed value. Decision-free —
+   //    read only via GetRegimeAgeH4() (Stats-CSV column RegimeAgeH4).
+   ENUM_REGIME_TYPE          m_regime_age_last;
+   datetime                  m_regime_change_h4_time;
+
    //--- Phase 2.4: HTF D1 dealing-range lookback (ICT IPDA 20-day window).
    //    The L1 LOCATION axis (dealing range / equilibrium / premium-discount)
    //    is DE-CORRELATED from the SL anchor: GetDealingRangeHigh/Low now derive
@@ -181,6 +187,8 @@ public:
       m_swing_high        = 0;
       m_swing_low         = 0;
       m_range48h          = 0;   // FIX-1: no data yet — floor lever stays inert until first Update()
+      m_regime_age_last   = REGIME_UNKNOWN;   // CEG Phase-0: seeded on first Update()
+      m_regime_change_h4_time = 0;            // CEG Phase-0: 0 => GetRegimeAgeH4() returns -1
       // m_dealing_range_d1_lookback assigned above from the constructor param.
       m_gmt_offset             = 0;       // Phase 3.6: resolved in Init()
       m_news_calendar_available = false;  // Phase 3.6: probed in Init()
@@ -350,6 +358,9 @@ public:
 
       //--- FIX-1: update cached trailing 48h H1 range (once per H1 bar)
       Update48hRange();
+
+      //--- CEG Phase-0: track regime-classification changes (decision-free)
+      UpdateRegimeAge();
 
       m_last_h1_bar = current_h1;
    }
@@ -738,6 +749,18 @@ public:
    virtual double GetSwingLow()
    {
       return m_swing_low;
+   }
+
+   // CEG Phase-0: closed H4 bars since the regime classification last changed.
+   // iBarShift of the recorded change-bar time: 0 = changed within the current
+   // forming H4 bar, 1 = one closed H4 bar ago, ... Pure read; -1 until the
+   // tracker is seeded (or on an iBarShift error).
+   virtual int GetRegimeAgeH4()
+   {
+      if(m_regime_change_h4_time == 0)
+         return -1;
+      int shift = iBarShift(_Symbol, PERIOD_H4, m_regime_change_h4_time, false);
+      return (shift < 0) ? -1 : shift;
    }
 
    // FIX-1: trailing 48h H1 range backing the volatility-anchored min-SL floor.
@@ -1185,5 +1208,21 @@ private:
       }
 
       m_range48h = hh - ll;
+   }
+
+   //+------------------------------------------------------------------+
+   //| CEG Phase-0: track when the regime classification last changed    |
+   //| Called once per H1 bar from Update() (after the classifier ran).  |
+   //| Pure reads (GetCurrentRegime + iTime); nothing in the decision    |
+   //| path consumes this state — GetRegimeAgeH4() is CSV-only.          |
+   //+------------------------------------------------------------------+
+   void UpdateRegimeAge()
+   {
+      ENUM_REGIME_TYPE reg = GetCurrentRegime();
+      if(reg != m_regime_age_last)
+      {
+         m_regime_age_last = reg;
+         m_regime_change_h4_time = iTime(_Symbol, PERIOD_H4, 0);
+      }
    }
 };

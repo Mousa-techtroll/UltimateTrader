@@ -414,6 +414,13 @@ public:
          AddCsvField(csv_header, "RunnerExitMode"); AddCsvField(csv_header, "RunnerPromotedInTrade"); AddCsvField(csv_header, "RunnerPromotionTime");
          AddCsvField(csv_header, "TrailSendPolicy"); AddCsvField(csv_header, "LastTrailGateReason"); AddCsvField(csv_header, "EffectiveChandelierMult");
          AddCsvField(csv_header, "LiveChandelierMult"); AddCsvField(csv_header, "EntryLockedChandelierMult"); AddCsvField(csv_header, "LastBrokerTrailTime");
+         // CEG Phase-0 instrumentation (Tier-3): appended at the END so existing
+         // parsers keep working. Decision-free, stamped on every position.
+         // CEG-off: S_pat==S_eff, WidenFactor=1.0, CEGBound=0. File-signal rows
+         // carry 0 stamps (the CSV route never passes the orchestrator choke point).
+         AddCsvField(csv_header, "S_pat"); AddCsvField(csv_header, "S_eff"); AddCsvField(csv_header, "R48");
+         AddCsvField(csv_header, "WidenFactor"); AddCsvField(csv_header, "CEGBound"); AddCsvField(csv_header, "RegimeAgeH4");
+         AddCsvField(csv_header, "Run48");
          WriteCsvFields(m_csv_handle, csv_header, false);
          LogPrint("CTradeLogger: CSV file created: ", m_csv_filename);
       }
@@ -703,6 +710,15 @@ public:
       AddCsvField(entry_fields, DoubleToString(pos.last_live_chandelier_mult, 2));
       AddCsvField(entry_fields, DoubleToString(pos.last_entry_locked_chandelier_mult, 2));
       AddCsvField(entry_fields, FormatOptionalTime(pos.last_broker_trailing_time));
+      // CEG Phase-0 instrumentation columns (appended at the END; see header)
+      double entry_widen_factor = (pos.ceg_s_pat > 0.0) ? pos.ceg_s_eff / pos.ceg_s_pat : 1.0;
+      AddCsvField(entry_fields, DoubleToString(pos.ceg_s_pat, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.ceg_s_eff, digits));
+      AddCsvField(entry_fields, DoubleToString(pos.ceg_r48, digits));
+      AddCsvField(entry_fields, DoubleToString(entry_widen_factor, 3));
+      AddCsvField(entry_fields, IntegerToString(pos.ceg_bound ? 1 : 0));
+      AddCsvField(entry_fields, IntegerToString(pos.regime_age_h4));
+      AddCsvField(entry_fields, DoubleToString(pos.run48, digits));
       WriteCsvFields(m_csv_handle, entry_fields, true);
 
       LogTradeLifecycleEvent(pos,
@@ -903,6 +919,15 @@ public:
       AddCsvField(exit_fields, DoubleToString(pos.last_live_chandelier_mult, 2));
       AddCsvField(exit_fields, DoubleToString(pos.last_entry_locked_chandelier_mult, 2));
       AddCsvField(exit_fields, FormatOptionalTime(pos.last_broker_trailing_time));
+      // CEG Phase-0 instrumentation columns (appended at the END; see header)
+      double exit_widen_factor = (pos.ceg_s_pat > 0.0) ? pos.ceg_s_eff / pos.ceg_s_pat : 1.0;
+      AddCsvField(exit_fields, DoubleToString(pos.ceg_s_pat, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.ceg_s_eff, digits));
+      AddCsvField(exit_fields, DoubleToString(pos.ceg_r48, digits));
+      AddCsvField(exit_fields, DoubleToString(exit_widen_factor, 3));
+      AddCsvField(exit_fields, IntegerToString(pos.ceg_bound ? 1 : 0));
+      AddCsvField(exit_fields, IntegerToString(pos.regime_age_h4));
+      AddCsvField(exit_fields, DoubleToString(pos.run48, digits));
       WriteCsvFields(m_csv_handle, exit_fields, true);
 
       LogTradeLifecycleEvent(pos,

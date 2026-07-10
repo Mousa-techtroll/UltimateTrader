@@ -41,7 +41,7 @@
 //| Constants for state persistence                                   |
 //+------------------------------------------------------------------+
 #define STATE_FILE_SIGNATURE  0x554C5452   // "ULTR"
-#define STATE_FILE_VERSION    5             // v5 (Phase 5.11): PersistedPosition adds tp3 + entry_risk_amount
+#define STATE_FILE_VERSION    6             // v6 (CEG Tier-3): PersistedPosition adds ceg_s_pat/s_eff/r48/bound + regime_age_h4/run48 (v5 added tp3 + entry_risk_amount)
 #define STATE_FILE_NAME       "UltimateTrader_State.bin"
 
 //+------------------------------------------------------------------+
@@ -233,6 +233,16 @@ private:
       pp.tp3               = pos.tp3;
       pp.entry_risk_amount = pos.entry_risk_amount;
 
+      // CEG Tier-3 (v6): persist the entry-stamped exit geometry + Phase-0
+      // instrumentation so the trail floor and the Stats-CSV exit row survive
+      // a restart with their entry-time values.
+      pp.ceg_s_pat      = pos.ceg_s_pat;
+      pp.ceg_s_eff      = pos.ceg_s_eff;
+      pp.ceg_r48        = pos.ceg_r48;
+      pp.ceg_bound      = pos.ceg_bound;
+      pp.regime_age_h4  = pos.regime_age_h4;
+      pp.run48          = pos.run48;
+
       return pp;
    }
 
@@ -282,14 +292,25 @@ private:
       pos.original_tp1 = (pp.original_tp1 != 0) ? pp.original_tp1 : pos.tp1;
 
       // Phase 5.11 (v5): restore the runner target + symbol-correct money risk basis.
-      // Only v5 files reach RestoreFromPersisted (v4 files are rejected up-front by the
-      // EXACT-MATCH version gate in LoadPositionState → broker-only fallback; the version
-      // byte, NOT the size check, is the deterministic discriminator — a large v4 file can
-      // exceed min_v5_size, so size-alone is insufficient), so these fields are
-      // authoritative; entry_risk_amount keeps CalculatePositionRiskDollars off the
-      // _Symbol-tick recompute that would re-break 5.1/5.3 for a foreign-symbol position.
+      // Only current-version files reach RestoreFromPersisted (older files are rejected
+      // up-front by the EXACT-MATCH version gate in LoadPositionState → broker-only
+      // fallback; the version byte, NOT the size check, is the deterministic
+      // discriminator — a large old file can exceed the min size, so size-alone is
+      // insufficient), so these fields are authoritative; entry_risk_amount keeps
+      // CalculatePositionRiskDollars off the _Symbol-tick recompute that would
+      // re-break 5.1/5.3 for a foreign-symbol position.
       pos.tp3               = pp.tp3;
       pos.entry_risk_amount = pp.entry_risk_amount;
+
+      // CEG Tier-3 (v6): restore the entry-stamped exit geometry + Phase-0
+      // instrumentation (pre-v6 files never reach here — broker-adopted
+      // positions keep the Init() defaults 0/-1, disabling the trail floor).
+      pos.ceg_s_pat      = pp.ceg_s_pat;
+      pos.ceg_s_eff      = pp.ceg_s_eff;
+      pos.ceg_r48        = pp.ceg_r48;
+      pos.ceg_bound      = pp.ceg_bound;
+      pos.regime_age_h4  = pp.regime_age_h4;
+      pos.run48          = pp.run48;
 
       // Derive stage_label from stage enum
       switch(pos.stage)
@@ -2863,6 +2884,28 @@ private:
       double effective_chand_mult = live_chand_mult;
       if(ShouldPreserveEntryLockedChandelierFloor(pos))
          effective_chand_mult = MathMax(effective_chand_mult, pos.last_entry_locked_chandelier_mult);
+
+      // CEG (Tier-3, default OFF): trail-width floor in the effective-stop unit
+      // (design A.3): trail_width = max(mult_regime x ATR_H1, c_trail x S_eff_entry),
+      // expressed as an effective-mult floor c_trail x S_eff / ATR_H1 using the SAME
+      // ATR the chandelier ratchets on (same handle, closed H1 bar [1]). Stacks with
+      // the entry-locked floor above — all floors take the max. No-op when the flag
+      // is off or the position carries no entry stamp (adopted/pre-v6: ceg_s_eff==0).
+      if(InpEnableCEG && InpCEGTrailFloor > 0.0 && pos.ceg_s_eff > 0.0)
+      {
+         for(int t = 0; t < m_trailing_count; t++)
+         {
+            CChandelierTrailing *ceg_chand = dynamic_cast<CChandelierTrailing*>(m_trailing_plugins[t]);
+            if(ceg_chand == NULL)
+               continue;
+            double ceg_atr = ceg_chand.GetTrailATR();
+            if(ceg_atr > 0.0)
+               effective_chand_mult = MathMax(effective_chand_mult,
+                                              InpCEGTrailFloor * pos.ceg_s_eff / ceg_atr);
+            break;
+         }
+      }
+
       pos.last_live_chandelier_mult = live_chand_mult;
       pos.last_effective_chandelier_mult = effective_chand_mult;
 
