@@ -90,6 +90,12 @@ private:
    int      m_last_regime_class;      // Last regime classification
    datetime m_last_regime_bar;        // Last bar time for hold counter
 
+   // Tier-3 §D: EMA21(H1) handle for the crash trail-suppressor. Lazy-created on
+   // first use (the default-off path creates nothing) and never released here —
+   // iMA handles are shared/refcounted (CCrashBreakoutEntry holds the same one);
+   // MT5 cleans up at EA deinit (Sprint 5E convention, see the iATR note below).
+   int      m_crash_ema21_h1;         // EMA21(H1) handle (Tier-3 §D)
+
    //+------------------------------------------------------------------+
    //| CRC32 lookup table (generated once, used for checksums)          |
    //+------------------------------------------------------------------+
@@ -966,6 +972,7 @@ public:
       m_regime_hold_bars = 0;
       m_last_regime_class = -1;
       m_last_regime_bar = 0;
+      m_crash_ema21_h1 = INVALID_HANDLE;
    }
 
    //+------------------------------------------------------------------+
@@ -2837,6 +2844,31 @@ private:
    }
 
    //+------------------------------------------------------------------+
+   //| Tier-3 §D helper: TRUE once ANY closed H1 bar since entry closed  |
+   //| below EMA21(H1) — the crash short's mean-reversion thesis zone.   |
+   //| Scans bar history since entry so the per-position latch is fully  |
+   //| recomputable after a restart (no state-file persistence needed).  |
+   //+------------------------------------------------------------------+
+   bool CrashThesisReached(datetime entry_time)
+   {
+      if(m_crash_ema21_h1 == INVALID_HANDLE)
+         m_crash_ema21_h1 = iMA(_Symbol, PERIOD_H1, 21, 0, MODE_EMA, PRICE_CLOSE);
+      if(m_crash_ema21_h1 == INVALID_HANDLE)
+         return false;   // no EMA data: thesis unconfirmed; position rides its stamped SL/TP
+
+      int entry_shift = iBarShift(_Symbol, PERIOD_H1, entry_time, false);
+      int count = MathMax(entry_shift, 1);   // closed bars [1..entry_shift] incl. the (now closed) entry bar
+      double ema_buf[], close_buf[];
+      ArraySetAsSeries(ema_buf, true);
+      ArraySetAsSeries(close_buf, true);
+      if(CopyBuffer(m_crash_ema21_h1, 0, 1, count, ema_buf) < count) return false;
+      if(CopyClose(_Symbol, PERIOD_H1, 1, count, close_buf) < count) return false;
+      for(int b = 0; b < count; b++)
+         if(close_buf[b] < ema_buf[b]) return true;
+      return false;
+   }
+
+   //+------------------------------------------------------------------+
    //| Apply all registered trailing stop plugins to a position          |
    //+------------------------------------------------------------------+
    void ApplyTrailingPlugins(SPosition &pos)
@@ -2920,6 +2952,32 @@ private:
          CChandelierTrailing *chandelier = dynamic_cast<CChandelierTrailing*>(m_trailing_plugins[t]);
          if(chandelier != NULL)
             chandelier.SetMultiplier(effective_chand_mult);
+      }
+
+      // Tier-3 §D (InpCrashTrailSuppress, default OFF): crash trail-suppressor.
+      // SHORT PATTERN_CRASH_BREAKOUT entries fire with price stretched ABOVE
+      // EMA21(H1), so the short chandelier proposes from lows far below price and
+      // the STOPS_LEVEL clamp turns it into an at-market stop seconds after entry
+      // (median hold 0.1h, D.1). Until a CLOSED H1 bar closes below EMA21(H1),
+      // skip ALL trailing proposals below (incl. the synthesized BE mover). The
+      // entry-stamped hard SL/TP are NEVER touched — the position may still
+      // resolve on them. Latch: once the thesis bar exists the position trails
+      // normally forever (a later bounce above the EMA cannot re-suppress;
+      // recomputed from bar history, so restarts are safe). LONG crash positions
+      // are deliberately never suppressed: the engine is short-only in practice
+      // and a mirrored close>EMA21 branch would be untested code (D.2).
+      // Ref: workflowAnalysis/tier3-design-doc.md §D.
+      if(InpCrashTrailSuppress && pos.pattern_type == PATTERN_CRASH_BREAKOUT &&
+         pos.direction == SIGNAL_SHORT && !pos.crash_trail_unlocked)
+      {
+         datetime crash_closed_bar = iTime(_Symbol, PERIOD_H1, 1);
+         if(crash_closed_bar != pos.crash_trail_last_bar)   // evaluate once per closed H1 bar
+         {
+            pos.crash_trail_last_bar = crash_closed_bar;
+            pos.crash_trail_unlocked = CrashThesisReached(pos.open_time);
+         }
+         if(!pos.crash_trail_unlocked)
+            return;   // pre-thesis: suppress the trail ratchet this tick
       }
 
       // FIX-2 (InpEnableBEMover): iteration t == -1 synthesizes the ACTIVE

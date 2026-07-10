@@ -10,7 +10,7 @@
 - ❌ **VARIANT KILLED** — the item (or its naive form) was measured and failed FIT/CONFIRM; do not re-run without a new design
 - ⬜ **NOT STARTED** — no material progress (related evidence noted where it exists)
 
-**Snapshot (34 items, updated 2026-07-10 post-CEG-closure):** **6 resolved** (P0.2 registry-as-practice · P4.1 · P4.2 · P5.1 done; P1.4 CEG and P2.1 quality_v2 **fully executed and measured-closed** — the honest terminal state for a research item) · **11 🟡/📐 materially advanced** · 5 with ❌ measured-killed variants baked in · 12 ⬜ not started. Sub-item checkboxes mark completed work inside partial items. **Strategic consequence: exit-geometry and quality-reallocation paths are measured out; entry breadth is the remaining open path to the net target.**
+**Snapshot (34 items, updated 2026-07-10 end-of-day):** **7 resolved** (+P3.2 crash suppressor ADOPTED — first net-positive adoption of the campaign; NEW BINDING BASELINE $23,771.46 / EqDD 13.63% / tag baseline-23771-2026-07-10) (P0.2 registry-as-practice · P4.1 · P4.2 · P5.1 done; P1.4 CEG and P2.1 quality_v2 **fully executed and measured-closed** — the honest terminal state for a research item) · **11 🟡/📐 materially advanced** · 5 with ❌ measured-killed variants baked in · 12 ⬜ not started. Sub-item checkboxes mark completed work inside partial items. **Strategic consequence: exit-geometry and quality-reallocation paths are measured out; entry breadth is the remaining open path to the net target.**
 **Campaign facts the plan should absorb:** 9 single-lever interventions measured-killed; 3 gates acquitted by calibrated replay; single-run FIT deltas carry **±$1,500 (2σ) path noise** (matched-cohort ΔR, SE ≈0.013 R/trade, is the fine-grained standard); the stop/ladder/trail defect is **decoupling**, not floor level; **FINDING 0**: the EA has *no active BE stop-mover* — the "BE trigger 1.2R" is a diagnostic flag only.
 
 ---
@@ -82,7 +82,7 @@
   - [x] **Root cause found and FIXED**: frozen first-tick scale → `InpScaleAnchorPrice=1282.43`, deterministic, identity exact (commit `8f7fa0f`)
   - [x] Range-pct floor lever implemented (`InpMinSLRangePct`, choke-point + proportional TP recompute)
   - [x] Naive doses measured (25%/30% killed) + anomaly resolved (noise; decoupling mechanism)
-  - [ ] Coupled version (CEG) — designed, not implemented
+  - [x] Coupled version (CEG) — implemented, measured, **CLOSED NO-CHANGE** (see P1.4; the stop-floor channel at safe doses measures ≈0)
   - ❌ Killed variants: floor at 25% and 30% of 48h range (−62.8% / −27.8% FIT). **The plan's "mandatory coupling" spec is necessary but insufficient as written** — re-anchoring R-targets to the widened stop is precisely what starved the partial engine (TP0 fill 46%→38%). The corrected coupling (ladder anchored to the *pattern* stop; trail floored by the *effective* stop) is the CEG design (P1.4).
   - Also measured: the inversion between doses = path noise; ~−0.03 R/trade for ANY large widening; mild binds *help* (+0.05 ΔR).
   - Remaining: the plan's alternatives 2–6 only make sense inside CEG; alternative 6 (veto-not-widen) = P1.3.
@@ -143,7 +143,12 @@
 - [ ] 🟡 **PARTIAL** — whole-engine PBC-off **❌ KILLED** (−17.9% FIT: dollars-positive despite avg-R −0.03; arbitration role net-positive). The plan's *short-side-only* variants (off / half-risk / stronger alignment / MR exit profile) remain untested and are still plausible (PBC shorts measured negative in isolation). Low cost: variants 1–2 are config-only if a direction-scoped lever is added (~5 lines).
 
 ### P3.2 — Crash / Rubber Band economic redesign
-- [ ] 🟡 **PARTIAL** — measured: TP-extension lever **no-op** (2/138 trades ever reached the mean); **binding constraint = short-side chandelier clamp** (at-market stops seconds after entry; median hold 0.1h); crash volume-gate **pays** (−0.12R kills — do not relax); plugin RR floor mechanically dead (min RR 1.34 by construction). Trail-suppressor arm specced (`tier3-design-doc.md` §D) — **awaiting owner sign-off** (bounded worst case ≈−$2–3k; the 79%-WR scratch pattern may be the edge). Untested: reduced risk, partial-at-mean, max-hold, slot-empty ablation.
+- [x] ✅ **RESOLVED — trail-suppressor ADOPTED 2026-07-10 (new binding baseline $23,771.46).**
+  - [x] Mechanics fully measured: TP-extension no-op (2/138 reached the mean); binding constraint = short-side chandelier clamp (at-market stops, median hold 0.1h); volume-gate pays (do not relax)
+  - [x] `InpCrashTrailSuppress` implemented (suppress trail ratchet until closed-H1 < EMA21 thesis zone), FIT PASS (crash ΔR +0.181, EqDD −0.85pp, scope surgical), CONFIRM PASS (+9.8% net, +0.05pp DD, decisions bit-identical off-cohort), FULL adopted: engine avg R +0.027→+0.212, median hold 0.1h→5.6h, +$924 direct +$1,244 compounding
+  - [x] Stale CONFIRM reference exposed and corrected (post-Tier-1 CONFIRM baseline of record: $14,081.51/1,044t/13.44%)
+  - ⚠️ Honesty note: the engine fired 0× in 2026H1 — this fixes the engine where it fires; it does not create 2026H1 bear coverage
+  - Remaining (unblocked, unranked): reduced risk / partial-at-mean / max-hold variants — now measurable on a working engine
 
 ### P3.3 — London-short review
 - [ ] ⬜ **NOT STARTED** — evidence on file: London shorts −0.60R over 88 (one artifact era); London 0.5× sizing is documented design-intent ("−27% PnL" when applied to confirmed). Correctly sequenced after P2.1 shadow.

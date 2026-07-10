@@ -204,6 +204,12 @@ struct SPosition
    int                    regime_age_h4;           // closed H4 bars since regime last changed
    double                 run48;                   // net 48h H1 move at signal time
 
+   // Tier-3 §D crash trail-suppressor latch (runtime-only, NOT persisted —
+   // no state-file bump: recomputed from closed-bar history since entry, so
+   // it survives restarts by reconstruction).
+   bool                   crash_trail_unlocked;    // a closed H1 bar closed below EMA21(H1) since entry
+   datetime               crash_trail_last_bar;    // last closed H1 bar evaluated for the latch
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -256,6 +262,8 @@ struct SPosition
       ceg_bound = false;
       regime_age_h4 = -1;
       run48 = 0;
+      crash_trail_unlocked = false;
+      crash_trail_last_bar = 0;
    }
 };
 

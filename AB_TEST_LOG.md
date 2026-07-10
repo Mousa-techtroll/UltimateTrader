@@ -455,3 +455,32 @@ The 128 historical duplicates were net +$1,512 (2023–25 dups +$2.1k of compoun
 **Mechanism (final):** the damage is the TRAIL floor, not the stop floor. Unbound cohort (74%, stops identical) degraded −0.0271 ± 0.0197 R/trade: c_trail=2.70 × S_pat lifted the chandelier on ~half of all fills (by construction of freezing at the median), converting trail-outs into deeper stops (book hard stops 94→122) and 2019 into a −$724 year. The stop-floor channel itself at the safe dose measured ≈0 (+0.011 bound, n=116, hard stops 22→22): at widen ≤1.5× there is nothing to rescue — the rescue economics live only at doses where min-lot quantization and trail-envelope breakdown destroy more than the rescues pay (Arms M/M3).
 **Program verdict (K3′ discipline, no appeal):** CEG CLOSES NO-CHANGE. Fallback of record (design §E.4) activates: keep the baseline, keep the instrumentation (identity-proven, serves future programs), redirect the strategic fork to ENTRY BREADTH. Consequences: §C short-exit profiles die with §A (same unit); P1.5's CEG-contingent middle variants die; the stop/ladder/trail complex is now MEASURED OUT — naive floors (FIX-1), coupled floors (CEG A1), large doses (M/M3), trail floors in S_eff units, BE movers, ladder re-weights, TP-ceiling lifts: every family member killed or closed. Do-not-relitigate: the entire stop-geometry family absent a fundamentally new mechanism (e.g. per-position adaptive volumes solving quantization, or entry-side change that alters the MAE distribution).
 **Salvage kept:** 7 instrumentation columns (decision-free, to-the-cent), ceg_gate.py matched-cohort tool, frozen-constants method, the ±noise-floor calibration (position-level SE ~0.02 full / ~0.056 bound at 26% bind — 2–4× the registration's assumption; future registrations must power-budget on POSITION-level n).
+
+---
+
+## TIER-3 §D CRASH TRAIL-SUPPRESSOR — FIT PASS (all three registered gates); CONFIRM gates registered BEFORE the exam
+**Date:** 2026-07-10 | Binary UltimateTrader_CRASHD.ex5 (= committed tree + `InpCrashTrailSuppress`, default-off; FIT identity EXACT $2,735.89/829t). Owner risk-posture sign-off recorded above. Archives `_arm_archive/ceg_{DI,DARM}`.
+| Gate (FIT) | Required | Measured | Verdict |
+|---|---|---|---|
+| Crash-cohort ΔR | ≥ +0.07 | **+0.1808** (SE 0.096, n=117) | PASS |
+| Book EqDD | ≤ 18.52% | **17.37%** (−0.85pp improved) | PASS |
+| Non-crash scope | == 0 | −0.0000 (SE 0.0017; $+1.85 on 331) | PASS |
+Run level: net $3,148.70 (+15.1%), PF 1.14, Sharpe 1.17, 448/448 positions matched, drift 0.00%. **Mechanism confirmed:** median crash hold 0.1h→5.6h, WR 78%→48%, avg R +0.027→+0.212, engine net $512.69→$924.40 — the broker-clamped at-market stop was suppressing the engine's entire reversion thesis; suppression converts scratches into real ±R outcomes at positive expectancy, concentrated 2021 (+$273) / 2022 (+$139) — the bear windows it exists for.
+**CONFIRM gates (registered NOW, 2023.01.01–2026.06.27, never softened):** identity leg must equal $14,535.35/1,029t; arm gates: net ≥ $14,535.35; EqDD ≤ 13.41% (13.11% + 0.3pp §D tolerance); non-crash cohort ΔR == 0; crash-cohort ΔR ≥ 0 (POWER HONESTY: CONFIRM crash cohort n ≈ 21 — SE ~0.2; this clause is a sanity floor, not a 2σ test; the binding OOS clauses are net/DD/scope); 2026H1 window inspected explicitly; no calendar year worse by > $500.
+
+---
+
+## §D CONFIRM PASS + STALE-REFERENCE CORRECTION + FULL ADOPTION — NEW BINDING BASELINE $23,771.46
+**Date:** 2026-07-10 | Archives `_arm_archive/ceg_{DICONF,DARMCONF,REFCHK,DFULL}`.
+**Stale-reference finding (independent of the arm, exposed by the identity leg):** DICONF (flags off) = $14,081.51/1,044t/EqDD 13.44% ≠ the registered $14,535.35/1,029t. REFCHK (pre-CEG committed binary `2fba0e2`, 2023 start) reproduces $14,081.51/1,044 TO THE CENT → zero leak in the CEG/§D tree; the $14,535.35 reference is PRE-TIER-1 (the anchor fix intentionally changed standalone-2023-start floors). **New CONFIRM baseline of record (post-Tier-1 trees): $14,081.51 / PF 1.37 / Sharpe 2.98 / EqDD 13.44% / 1,044t.** Consequence: the registered EqDD constant (13.41% = stale 13.11%+0.3pp) sits BELOW the identity leg itself — a void, unpassable constant. The exam is judged on both readings below; nothing else was touched.
+**CONFIRM verdict:** net $15,457.04 — passes BOTH the stale ($14,535.35) and true (+9.8%) bars; EqDD 13.49% = base+0.05pp (≤ +0.3pp signed-off tolerance; fails only the void 13.41% constant); non-crash scope CLEAN at decision level (460/460 identical exit time+price; $-delta = lot-rounding compounding only); crash ΔR +0.2226 (n=21, sanity floor); all years positive; Sharpe 2.98→3.14, PF 1.37→1.38. **PASS.**
+**FULL adoption leg (2019–2026H1, suppressor ON):**
+| | Old baseline | NEW BASELINE | Δ |
+|---|---|---|---|
+| Net | $21,623.18 | **$23,771.46** | **+9.9%** |
+| PF / Sharpe | 1.31 / 2.28 | 1.31 / 2.28 | = |
+| EqDD | 13.68% ($4,855.91) | **13.63% ($5,166.99)** | −0.05pp (abs +$311 on +10% equity) |
+| BalDD | 11.68% | 11.70% | ≈ |
+| Trades / positions | 1,878 / 928 | 2,020 / 928 | same entries, more partial fills |
+Crash cohort n=138: ΔR +0.1872 (SE 0.0924), direct $+924.32 (2021 +$273 / 2022 +$139 / 2023 +$513); non-crash 790/790 exits bit-identical (compounding $+1,244). **HONESTY NOTE:** the crash engine fired 0 times in 2026H1 on every path — the suppressor fixes the engine where it fires; it does NOT create 2026H1 bear coverage. Tenth single-lever arm of the campaign, FIRST ADOPTION with a net gain (all prior adoptions were correctness/renorm).
+**Config of record:** risk_R90 + `InpCrashTrailSuppress=true`. Tag: baseline-23771-2026-07-10. The clamp lesson inverted cleanly: the at-market-stop pathology WAS the whole story (D.3 risk #2 refuted by measurement — unclamped WR 48% at payoff sufficient for avg R +0.212).

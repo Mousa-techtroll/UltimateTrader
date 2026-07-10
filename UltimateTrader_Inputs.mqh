@@ -608,3 +608,13 @@ input group "══════ CEG — COUPLED EXIT GEOMETRY (Tier-3) ═══
 input bool   InpEnableCEG     = false;  // Master: CEG stop floor + trail coupling (default off, Tier-3, tier3-design-doc.md)
 input double InpCEGFloorPct   = 0.0;    // q_floor: stop floor as fraction of trailing 48h H1 range (0 = never binds). S_eff = max(S_pat, q x R48); TPs stay S_pat-anchored (A.2)
 input double InpCEGTrailFloor = 0.0;    // c_trail: chandelier trail-width floor in S_eff_entry units (0 = off). eff_mult = max(eff_mult, c x S_eff/ATR_H1) (A.3)
+
+//--- Group 49: CRASH TRAIL-SUPPRESSOR (Tier-3 §D)
+// Tier-3 §D arm (workflowAnalysis/tier3-design-doc.md §D.2). Default-off: at
+// this default the build is byte-identical to baseline. When ON, SHORT
+// PATTERN_CRASH_BREAKOUT positions skip all trailing-plugin proposals until a
+// CLOSED H1 bar closes below EMA21(H1) — the mean-reversion thesis zone — then
+// trail normally (latched per position). The entry-stamped hard SL/TP are
+// never suppressed. LONG crash positions are never suppressed (D.2).
+input group "══════ CRASH TRAIL-SUPPRESSOR (Tier-3 §D) ══════"
+input bool   InpCrashTrailSuppress = false; // Suppress crash-short trail ratchet until close < EMA21(H1) (default off, tier3-design-doc.md §D)

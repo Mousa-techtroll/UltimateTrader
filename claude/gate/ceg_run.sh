@@ -38,7 +38,7 @@ done
 echo "state files relocated (clean start)"
 
 cp "$TMPL" "$INI"
-sed -i "s|^Expert=.*|Expert=UltimateTrader_CEG.ex5|" "$INI"
+sed -i "s|^Expert=.*|Expert=${CEG_EXPERT:-UltimateTrader_CEG.ex5}|" "$INI"
 sed -i "s|^Report=.*|Report=ceg_${TAG}|" "$INI"
 sed -i "s|^FromDate=.*|FromDate=${FROM}|" "$INI"
 sed -i "s|^ToDate=.*|ToDate=${TO}|" "$INI"
@@ -58,6 +58,7 @@ set_kv InpMinSLRangePct 0.0
 set_kv InpEnableCEG false
 set_kv InpCEGFloorPct 0.0
 set_kv InpCEGTrailFloor 0.0
+set_kv InpCrashTrailSuppress true   # ADOPTED 2026-07-10 (config of record)
 
 for kv in "$@"; do set_kv "${kv%%=*}" "${kv#*=}"; done
 
