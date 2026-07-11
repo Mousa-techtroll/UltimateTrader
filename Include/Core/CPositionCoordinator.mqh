@@ -41,8 +41,23 @@
 //| Constants for state persistence                                   |
 //+------------------------------------------------------------------+
 #define STATE_FILE_SIGNATURE  0x554C5452   // "ULTR"
-#define STATE_FILE_VERSION    6             // v6 (CEG Tier-3): PersistedPosition adds ceg_s_pat/s_eff/r48/bound + regime_age_h4/run48 (v5 added tp3 + entry_risk_amount)
+#define STATE_FILE_VERSION    7             // v7 (SB-0.1): PersistedPosition adds is_sleeve + sleeve_family[16]; sleeve ledger block appended after mode-perf records (v6 added CEG stamps)
 #define STATE_FILE_NAME       "UltimateTrader_State.bin"
+
+//+------------------------------------------------------------------+
+//| [SB-0.1] Sleeve accounting ledger block (state file v7)           |
+//| Appended AFTER the mode-performance records. Fixed-size POD for   |
+//| FileWriteStruct/FileReadStruct. Open/per-family sleeve risk is    |
+//| NOT persisted here — it is recomputed from the restored is_sleeve |
+//| positions; only the realized ledger needs durability.             |
+//+------------------------------------------------------------------+
+struct PersistedSleeveState
+{
+   double   realized_pnl;        // cumulative realized sleeve P&L ($)
+   double   hwm;                 // high-water mark of realized_pnl ($)
+   double   daily_realized_loss; // realized sleeve loss today ($, >= 0)
+   datetime daily_anchor;        // server day the daily counter belongs to
+};
 
 //+------------------------------------------------------------------+
 //| CPositionCoordinator - Manages position array and lifecycle      |
@@ -95,6 +110,15 @@ private:
    // iMA handles are shared/refcounted (CCrashBreakoutEntry holds the same one);
    // MT5 cleans up at EA deinit (Sprint 5E convention, see the iATR note below).
    int      m_crash_ema21_h1;         // EMA21(H1) handle (Tier-3 §D)
+
+   // [SB-0.1] Sleeve accounting ledger — realized side only (open sleeve risk
+   // is recomputed live from the tagged positions). Persisted in the state
+   // file v7 block; server-day rollover for the daily counter. NOTHING here
+   // feeds a baseline decision: the ledger gates SLEEVE entries only.
+   double   m_sleeve_realized_pnl;    // cumulative realized sleeve P&L ($)
+   double   m_sleeve_hwm;             // high-water mark of the cum P&L ($)
+   double   m_sleeve_daily_loss;      // realized sleeve loss today ($, >= 0)
+   datetime m_sleeve_day_anchor;      // server day the daily counter belongs to
 
    //+------------------------------------------------------------------+
    //| CRC32 lookup table (generated once, used for checksums)          |
@@ -249,6 +273,14 @@ private:
       pp.regime_age_h4  = pos.regime_age_h4;
       pp.run48          = pos.run48;
 
+      // [SB-0.1] (v7): sleeve tag. Fixed ASCII buffer (dynamic strings cannot
+      // be serialized — signal_id precedent); ZeroMemory above guarantees the
+      // null terminator for the CharArrayToString round-trip.
+      pp.is_sleeve = pos.is_sleeve;
+      int fam_len = MathMin(StringLen(pos.sleeve_family), 15);
+      for(int fc = 0; fc < fam_len; fc++)
+         pp.sleeve_family[fc] = (char)StringGetCharacter(pos.sleeve_family, fc);
+
       return pp;
    }
 
@@ -317,6 +349,14 @@ private:
       pos.ceg_bound      = pp.ceg_bound;
       pos.regime_age_h4  = pp.regime_age_h4;
       pos.run48          = pp.run48;
+
+      // [SB-0.1] (v7): restore the sleeve tag so a restarted sleeve position
+      // stays excluded from the baseline counts and keeps feeding the sleeve
+      // caps. Pre-v7 files never reach here (EXACT-MATCH version gate) —
+      // broker-adopted positions keep is_sleeve=false (counted as BASELINE:
+      // fail-closed — baseline can only trade less, never more).
+      pos.is_sleeve      = pp.is_sleeve;
+      pos.sleeve_family  = CharArrayToString(pp.sleeve_family);
 
       // Derive stage_label from stage enum
       switch(pos.stage)
@@ -973,6 +1013,12 @@ public:
       m_last_regime_class = -1;
       m_last_regime_bar = 0;
       m_crash_ema21_h1 = INVALID_HANDLE;
+
+      // [SB-0.1] sleeve ledger starts fresh; LoadPositionState (v7) restores it
+      m_sleeve_realized_pnl = 0.0;
+      m_sleeve_hwm = 0.0;
+      m_sleeve_daily_loss = 0.0;
+      m_sleeve_day_anchor = 0;
    }
 
    //+------------------------------------------------------------------+
@@ -1043,6 +1089,128 @@ public:
    int GetPositionCount() { return m_position_count; }
 
    //+------------------------------------------------------------------+
+   //| [SB-0.1] Baseline-only position count. Every BASELINE accept/     |
+   //| reject that compares against InpMaxPositions reads THIS count so  |
+   //| a sleeve position can never displace or block a baseline entry    |
+   //| (the CRH4 off-cohort breach mechanism: exposure/slot coupling).   |
+   //| With zero sleeve positions it equals GetPositionCount() exactly — |
+   //| identity by arithmetic, no flag check needed.                     |
+   //+------------------------------------------------------------------+
+   int GetBaselinePositionCount()
+   {
+      int n = 0;
+      for(int i = 0; i < m_position_count; i++)
+         if(!m_positions[i].is_sleeve)
+            n++;
+      return n;
+   }
+
+   //+------------------------------------------------------------------+
+   //| [SB-0.1] Sleeve-only census + open-risk sums (gateway checks).    |
+   //| These are the ONLY counts that see sleeve positions besides the   |
+   //| account exposure ceiling (GetTotalOpenRiskPct — registered        |
+   //| exception, deliberately inclusive).                               |
+   //+------------------------------------------------------------------+
+   int GetSleevePositionCount()
+   {
+      int n = 0;
+      for(int i = 0; i < m_position_count; i++)
+         if(m_positions[i].is_sleeve)
+            n++;
+      return n;
+   }
+
+   double GetSleeveOpenRiskPct(double equity)
+   {
+      if(equity <= 0.0)
+         return 0.0;
+      double risk_dollars = 0.0;
+      for(int i = 0; i < m_position_count; i++)
+         if(m_positions[i].is_sleeve)
+            risk_dollars += CalculatePositionRiskDollars(m_positions[i]);
+      return (risk_dollars / equity) * 100.0;
+   }
+
+   double GetSleeveFamilyOpenRiskPct(string family, double equity)
+   {
+      if(equity <= 0.0)
+         return 0.0;
+      double risk_dollars = 0.0;
+      for(int i = 0; i < m_position_count; i++)
+         if(m_positions[i].is_sleeve && m_positions[i].sleeve_family == family)
+            risk_dollars += CalculatePositionRiskDollars(m_positions[i]);
+      return (risk_dollars / equity) * 100.0;
+   }
+
+   //+------------------------------------------------------------------+
+   //| [SB-0.1] Sleeve ledger: realized P&L / HWM / daily loss with      |
+   //| server-day rollover. RecordSleeveClose is called from the two     |
+   //| close paths for is_sleeve positions only; persistence rides the   |
+   //| existing SaveOnStateChange calls in those paths.                  |
+   //+------------------------------------------------------------------+
+   void CheckSleeveDayReset()
+   {
+      MqlDateTime now_dt, anchor_dt;
+      TimeToStruct(TimeCurrent(), now_dt);
+      TimeToStruct(m_sleeve_day_anchor, anchor_dt);
+      if(m_sleeve_day_anchor == 0 ||
+         now_dt.day != anchor_dt.day || now_dt.mon != anchor_dt.mon ||
+         now_dt.year != anchor_dt.year)
+      {
+         m_sleeve_daily_loss = 0.0;
+         m_sleeve_day_anchor = TimeCurrent();
+      }
+   }
+
+   void RecordSleeveClose(double total_trade_pnl)
+   {
+      CheckSleeveDayReset();
+      m_sleeve_realized_pnl += total_trade_pnl;
+      m_sleeve_hwm = MathMax(m_sleeve_hwm, m_sleeve_realized_pnl);
+      if(total_trade_pnl < 0.0)
+         m_sleeve_daily_loss += -total_trade_pnl;
+   }
+
+   //+------------------------------------------------------------------+
+   //| [SB-0.1] Sleeve halt state: DD cap (cum realized P&L drop from    |
+   //| its HWM, as % of account balance) and daily realized-loss cap.    |
+   //| Gates NEW sleeve entries ONLY — never touches open positions and  |
+   //| never feeds a baseline decision. Ambiguity resolved: "% of        |
+   //| account" = current ACCOUNT_BALANCE at check time; ledger is       |
+   //| realized-only (partials count at final close).                    |
+   //+------------------------------------------------------------------+
+   bool IsSleeveHalted(string &reason)
+   {
+      CheckSleeveDayReset();
+      double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+      if(balance <= 0.0)
+      {
+         reason = "BALANCE_UNREADABLE";   // fail-closed
+         return true;
+      }
+      double dd_dollars = m_sleeve_hwm - m_sleeve_realized_pnl;
+      if(InpSleeveMaxDDPct > 0.0 && dd_dollars >= balance * InpSleeveMaxDDPct / 100.0)
+      {
+         reason = StringFormat("DD_HALT dd$=%.2f >= %.2f%% of balance %.2f",
+                               dd_dollars, InpSleeveMaxDDPct, balance);
+         return true;
+      }
+      if(InpSleeveMaxDailyLossPct > 0.0 &&
+         m_sleeve_daily_loss >= balance * InpSleeveMaxDailyLossPct / 100.0)
+      {
+         reason = StringFormat("DAILY_LOSS_HALT loss$=%.2f >= %.2f%% of balance %.2f",
+                               m_sleeve_daily_loss, InpSleeveMaxDailyLossPct, balance);
+         return true;
+      }
+      reason = "";
+      return false;
+   }
+
+   double GetSleeveRealizedPnL() { return m_sleeve_realized_pnl; }
+   double GetSleeveHWM()         { return m_sleeve_hwm; }
+   double GetSleeveDailyLoss()   { CheckSleeveDayReset(); return m_sleeve_daily_loss; }
+
+   //+------------------------------------------------------------------+
    //| Total open risk as % of equity (fix 4.2 exposure cap)            |
    //|  Sums the SAME per-position risk-dollar model used elsewhere     |
    //|  (CalculatePositionRiskDollars), divides by equity, x100.        |
@@ -1072,6 +1240,13 @@ public:
 
       for(int i = 0; i < m_position_count; i++)
       {
+         // [SB-0.1] sleeve positions must never trip the BASELINE same-family
+         // concurrency guard (CRH4 lesson: incremental entries altered baseline
+         // decisions through exactly this concurrency machinery). Sleeve
+         // concurrency is bounded by the sleeve's own caps instead. With zero
+         // sleeve positions open this loop is bit-identical to baseline.
+         if(m_positions[i].is_sleeve)
+            continue;
          if(m_positions[i].pattern_type == fam && m_positions[i].direction == dir)
             return true;
       }
@@ -1132,7 +1307,10 @@ public:
       }
 
       // PBC multi-cycle: notify trade opened (match both first-cycle and re-entry labels)
-      if(m_pbc_engine != NULL &&
+      // [SB-0.1] !is_sleeve: a future sleeve engine reusing a PBC-like label must
+      // not feed the BASELINE PBC cycle state (which alters baseline re-entries).
+      // With zero sleeve positions the condition is bit-identical to baseline.
+      if(!position.is_sleeve && m_pbc_engine != NULL &&
          (StringFind(position.pattern_name, "Pullback Continuation") >= 0 ||
           StringFind(position.pattern_name, "PBC ReEntry") >= 0))
          m_pbc_engine.NotifyTradeOpened(position.direction, position.entry_price);
@@ -1241,6 +1419,16 @@ public:
       // Write mode perf records
       for(int i = 0; i < total_mode_records; i++)
          FileWriteStruct(handle, all_mode_perf[i]);
+
+      // [SB-0.1] (v7): sleeve accounting ledger — appended after the mode-perf
+      // records. Always written so every v7 file has a fixed trailer layout.
+      PersistedSleeveState sleeve_state;
+      ZeroMemory(sleeve_state);
+      sleeve_state.realized_pnl        = m_sleeve_realized_pnl;
+      sleeve_state.hwm                 = m_sleeve_hwm;
+      sleeve_state.daily_realized_loss = m_sleeve_daily_loss;
+      sleeve_state.daily_anchor        = m_sleeve_day_anchor;
+      FileWriteStruct(handle, sleeve_state);
 
       FileClose(handle);
 
@@ -1384,6 +1572,28 @@ public:
                m_expansion_engine.ImportModePerformance(mode_records, mode_perf_count);
 
             LogPrint("LoadPositionState: Restored ", mode_perf_count, " mode performance records");
+         }
+      }
+
+      // [SB-0.1] (v7): restore the sleeve accounting ledger. The EXACT-MATCH
+      // version gate above guarantees a v7 trailer. A short read (truncated
+      // file) leaves the ledger fresh — the sleeve DD/daily caps re-arm from
+      // zero (documented residual: a corrupted file forgets a DD breach);
+      // baseline behavior is unaffected either way.
+      if(header.version >= 7)
+      {
+         PersistedSleeveState sleeve_state;
+         ZeroMemory(sleeve_state);
+         if(FileReadStruct(handle, sleeve_state) == sizeof(PersistedSleeveState))
+         {
+            m_sleeve_realized_pnl = sleeve_state.realized_pnl;
+            m_sleeve_hwm          = sleeve_state.hwm;
+            m_sleeve_daily_loss   = sleeve_state.daily_realized_loss;
+            m_sleeve_day_anchor   = sleeve_state.daily_anchor;
+            LogPrint("LoadPositionState: [Sleeve] ledger restored | cum=$",
+                     DoubleToString(m_sleeve_realized_pnl, 2),
+                     " hwm=$", DoubleToString(m_sleeve_hwm, 2),
+                     " dailyLoss=$", DoubleToString(m_sleeve_daily_loss, 2));
          }
       }
 
@@ -1778,8 +1988,17 @@ public:
       {
          double sum_mae_r = 0, sum_mfe_r = 0;
          int stalled = 0;
+         int ec_count = 0;   // [SB-0.1] baseline-only census for the EC feed
          for(int j = 0; j < m_position_count; j++)
          {
+            // [SB-0.1] EC v3 multiplies BASELINE risk (CTradeOrchestrator::
+            // ExecuteSignal) — sleeve positions must not shift its open-trade
+            // stress inputs. Only-sleeve-open matches today's zero-positions
+            // semantics (no update, EC keeps its last values). With zero
+            // sleeve positions: ec_count == m_position_count, sums identical.
+            if(m_positions[j].is_sleeve)
+               continue;
+            ec_count++;
             double risk_dist = MathAbs(m_positions[j].entry_price - m_positions[j].original_sl);
             if(risk_dist > 0)
             {
@@ -1793,11 +2012,12 @@ public:
             if(bars_open >= 8 && m_positions[j].mfe < risk_dist * 0.30)
                stalled++;
          }
-         g_ecController.UpdateOpenTradeMetrics(
-            m_position_count,
-            sum_mae_r / m_position_count,
-            sum_mfe_r / m_position_count,
-            stalled);
+         if(ec_count > 0)
+            g_ecController.UpdateOpenTradeMetrics(
+               ec_count,
+               sum_mae_r / ec_count,
+               sum_mfe_r / ec_count,
+               stalled);
       }
 
       // Process each position in reverse order (safe removal)
@@ -2772,7 +2992,9 @@ private:
       }
 
       // PBC multi-cycle: notify trade closed with real exit data
-      if(m_pbc_engine != NULL &&
+      // [SB-0.1] !is_sleeve: sleeve closes must not feed the BASELINE PBC
+      // cycle state (alters baseline re-entry decisions).
+      if(!m_positions[index].is_sleeve && m_pbc_engine != NULL &&
          (StringFind(m_positions[index].pattern_name, "Pullback Continuation") >= 0 ||
           StringFind(m_positions[index].pattern_name, "PBC ReEntry") >= 0))
          m_pbc_engine.NotifyTradeClosed(exit_price, profit);
@@ -2785,8 +3007,10 @@ private:
       // (runner profit + realized partials), not the runner leg alone. A trade
       // that banked TP1/TP2 then closed its runner red is a NET WINNER and must
       // NOT increment the loss streak / de-risk the book. Aligns with EC v3.
+      // [SB-0.1] !is_sleeve: the consecutive-loss scaler sizes BASELINE trades —
+      // a sleeve loss streak must not de-risk (or a sleeve win re-risk) the book.
       double total_trade_pnl = profit + m_positions[index].partial_realized_pnl;
-      if(m_quality_risk_strategy != NULL)
+      if(m_quality_risk_strategy != NULL && !m_positions[index].is_sleeve)
          m_quality_risk_strategy.RecordTradeResult(total_trade_pnl);
 
       // DISABLED: Mode result tracking was added by analyst (Bug 3 fix) but activates
@@ -2797,7 +3021,10 @@ private:
       // makes kill logic work where it was previously non-functional.
 
       // Sprint 0A: Record at plugin level for auto-kill and dynamic weighting
-      if(m_signal_orchestrator != NULL)
+      // [SB-0.1] !is_sleeve: the plugin auto-kill/weighting gate governs BASELINE
+      // entry plugins — a sleeve family sharing (or containing) a baseline plugin
+      // name must never move a baseline plugin's kill/weight state.
+      if(m_signal_orchestrator != NULL && !m_positions[index].is_sleeve)
       {
          string plugin_name = m_positions[index].engine_name;
          if(plugin_name == "")
@@ -2807,6 +3034,7 @@ private:
       }
 
       // Sprint 0B: Record at strategy level for per-strategy CSV export
+      // (RecordStrategyTrade stays INCLUSIVE — telemetry-only, decision-free)
       if(m_trade_logger != NULL)
       {
          double risk_dollars_strat = CalculatePositionRiskDollars(m_positions[index]);
@@ -2815,8 +3043,24 @@ private:
             m_positions[index].pattern_name, total_trade_pnl, r_mult_strat);
 
          // EC v3: record R-multiple with pattern name for strategy-weighted EC
-         if(g_ecController != NULL)
+         // [SB-0.1] !is_sleeve: EC v3 multiplies BASELINE risk — sleeve results
+         // must not move its equity-curve EMAs or strategy-group adjustments.
+         if(g_ecController != NULL && !m_positions[index].is_sleeve)
             g_ecController.RecordClosedTradeR(r_mult_strat, m_positions[index].pattern_name);
+      }
+
+      // [SB-0.1] Sleeve ledger + journal line (gates SLEEVE entries only;
+      // persistence rides the SaveOnStateChange below).
+      if(m_positions[index].is_sleeve)
+      {
+         RecordSleeveClose(total_trade_pnl);
+         Print("[Sleeve] CLOSE ticket=", m_positions[index].ticket,
+               " family=", m_positions[index].sleeve_family,
+               " pnl=", DoubleToString(total_trade_pnl, 2),
+               " | cum=", DoubleToString(m_sleeve_realized_pnl, 2),
+               " hwm=", DoubleToString(m_sleeve_hwm, 2),
+               " dd$=", DoubleToString(m_sleeve_hwm - m_sleeve_realized_pnl, 2),
+               " dailyLoss$=", DoubleToString(m_sleeve_daily_loss, 2));
       }
 
       // Remove from array
@@ -3476,15 +3720,34 @@ private:
          // trade is a NET WINNER and must not de-risk the book. RemovePosition is
          // below, so m_positions[i] is still valid. runner_r_multiple stays the
          // runner leg for per-mode RecordModeResult (separate, intentional).
-         if(m_quality_risk_strategy != NULL)
+         // [SB-0.1] !is_sleeve: same exclusion as HandleClosedPosition — the
+         // consecutive-loss scaler sizes BASELINE trades only.
+         if(m_quality_risk_strategy != NULL && !m_positions[i].is_sleeve)
             m_quality_risk_strategy.RecordTradeResult(total_trade_pnl);
 
          if(m_trade_logger != NULL)
             m_trade_logger.RecordStrategyTrade(
                m_positions[i].pattern_name, total_trade_pnl, total_r_multiple);
 
+         // [SB-0.1] Sleeve ledger + journal line (mirrors HandleClosedPosition;
+         // SaveOnStateChange at the end of this method persists it).
+         if(m_positions[i].is_sleeve)
+         {
+            RecordSleeveClose(total_trade_pnl);
+            Print("[Sleeve] CLOSE ticket=", m_positions[i].ticket,
+                  " family=", m_positions[i].sleeve_family,
+                  " pnl=", DoubleToString(total_trade_pnl, 2),
+                  " | cum=", DoubleToString(m_sleeve_realized_pnl, 2),
+                  " hwm=", DoubleToString(m_sleeve_hwm, 2),
+                  " dd$=", DoubleToString(m_sleeve_hwm - m_sleeve_realized_pnl, 2),
+                  " dailyLoss$=", DoubleToString(m_sleeve_daily_loss, 2));
+         }
+
          ENUM_ENGINE_MODE mode = m_positions[i].engine_mode;
-         if(mode != MODE_NONE)
+         // [SB-0.1] mode != MODE_NONE gate extended: sleeve closes must not feed
+         // the engines' per-mode performance/auto-disable state (baseline
+         // decision input when a sleeve engine reuses a mode id).
+         if(mode != MODE_NONE && !m_positions[i].is_sleeve)
          {
             if(m_liquidity_engine != NULL &&
                (mode == MODE_DISPLACEMENT || mode == MODE_OB_RETEST ||

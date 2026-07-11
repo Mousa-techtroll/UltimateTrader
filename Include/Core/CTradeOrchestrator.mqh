@@ -627,6 +627,13 @@ public:
       if(m_pos_coordinator != NULL && InpMaxTotalExposure > 0.0 && final_risk_pct > 0.0)
       {
          double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+         // [SB-0.1] GetTotalOpenRiskPct DELIBERATELY includes sleeve positions:
+         // the account-wide exposure ceiling is the one registered exception
+         // where the baseline path sees sleeve risk (SB pre-registration:
+         // "account exposure ceiling binding"). The sleeve's own tighter caps
+         // (InpSleeveMaxTotalRiskPct=0.40% vs this 5% ceiling) make a
+         // sleeve-caused baseline rescale/reject a designed safety event, not
+         // a leak. All other baseline counts exclude sleeve positions.
          double open_risk = m_pos_coordinator.GetTotalOpenRiskPct(equity);
 
          if(open_risk + final_risk_pct > InpMaxTotalExposure)
@@ -1082,6 +1089,205 @@ public:
          exec_signal.riskPercent *= exec_signal.regime_risk_multiplier;
 
       return ExecuteSignal(exec_signal);
+   }
+
+   //+------------------------------------------------------------------+
+   //| [SB-0.1] SLEEVE ENTRY GATEWAY — the ONLY entry path for            |
+   //| experimental short-sleeve engines (AB_TEST_LOG "SB PROGRAM         |
+   //| PRE-REGISTRATION" + workflowAnalysis/short-book-tracker.md).       |
+   //| No callers exist in this build (zero sleeve engines): with the     |
+   //| master ON or OFF, behavior is bit-identical to baseline.           |
+   //|                                                                    |
+   //| Check order (every reject logs "[Sleeve] REJECT <reason>"):        |
+   //|  1. master (InpEnableShortSleeve)                                  |
+   //|  2. signal validity                                                |
+   //|  3. direction == SHORT only                                        |
+   //|  4. sleeve position count < InpSleeveMaxPositions (count check ⇒   |
+   //|     no-second-until-first-closes at max=1, generalizes above it)   |
+   //|  5. slot reservation: baseline positions <= InpMaxPositions −      |
+   //|     InpSleeveSlotReserve (sleeve never consumes the last slots     |
+   //|     baseline entries might need — CRH4 lesson)                     |
+   //|  6. sleeve total + per-family open-risk caps                       |
+   //|  7. sleeve DD / daily-loss halts (coordinator ledger)              |
+   //|  8. account-level halts (daily-loss + consecutive-error backstops  |
+   //|     — read-only; stricter for the sleeve, never looser)            |
+   //|  9. account-wide exposure ceiling + all existing execution checks  |
+   //|     via ExecuteSignal (InpMaxTotalExposure REMAINS binding on      |
+   //|     sleeve entries — the registered exception where sleeve         |
+   //|     positions stay counted)                                        |
+   //|                                                                    |
+   //| Deliberate NON-calls after a sleeve fill/failure (baseline         |
+   //| protection — each is a BASELINE accept/reject input):              |
+   //|  - g_riskMonitor.IncrementTradesToday()  (shared daily budget      |
+   //|    feeds CanTrade() on the baseline path)                          |
+   //|  - g_riskMonitor.RecordExecutionSuccess()/RecordExecutionError()   |
+   //|    (5-strike consecutive-error halt circuit)                       |
+   //| The sleeve does NOT gate on the daily trade budget either — it     |
+   //| neither consumes nor is throttled by it (documented resolution).   |
+   //+------------------------------------------------------------------+
+   SPosition ExecuteSleeveSignal(EntrySignal &signal, string family)
+   {
+      SPosition position;
+      ZeroMemory(position);
+
+      if(!InpEnableShortSleeve)
+      {
+         LogPrint("[Sleeve] REJECT MASTER_OFF (InpEnableShortSleeve=false)");
+         return position;
+      }
+      if(!signal.valid)
+      {
+         LogPrint("[Sleeve] REJECT INVALID_SIGNAL");
+         return position;
+      }
+      if(signal.action != "SELL" && signal.action != "sell")
+      {
+         LogPrint("[Sleeve] REJECT DIRECTION_NOT_SHORT (action=", signal.action,
+                  ") — the sleeve is SHORT-only by registration");
+         return position;
+      }
+      if(m_pos_coordinator == NULL)
+      {
+         LogPrint("[Sleeve] REJECT NO_COORDINATOR (fail-closed)");
+         return position;
+      }
+      if(m_pos_coordinator.GetSleevePositionCount() >= InpSleeveMaxPositions)
+      {
+         LogPrint("[Sleeve] REJECT SLEEVE_POSCAP (",
+                  m_pos_coordinator.GetSleevePositionCount(), "/",
+                  InpSleeveMaxPositions, " open)");
+         return position;
+      }
+      if(m_pos_coordinator.GetBaselinePositionCount() > InpMaxPositions - InpSleeveSlotReserve)
+      {
+         LogPrint("[Sleeve] REJECT SLOT_RESERVE (baseline=",
+                  m_pos_coordinator.GetBaselinePositionCount(),
+                  " > cap ", InpMaxPositions, " - reserve ", InpSleeveSlotReserve,
+                  ") — sleeve never displaces baseline slots");
+         return position;
+      }
+
+      // Sleeve risk band: engines may pass a LOWER risk (e.g. reduced-risk
+      // states); anything unset/above the band is clamped to InpSleeveRiskPct.
+      // Downstream ExecuteSignal adjustments (EC, counter-trend, exposure
+      // rescale) only ever reduce further on the config of record.
+      double sleeve_risk = (signal.riskPercent > 0.0)
+                           ? MathMin(signal.riskPercent, InpSleeveRiskPct)
+                           : InpSleeveRiskPct;
+
+      double equity = AccountInfoDouble(ACCOUNT_EQUITY);
+      double sleeve_open = m_pos_coordinator.GetSleeveOpenRiskPct(equity);
+      if(InpSleeveMaxTotalRiskPct > 0.0 &&
+         sleeve_open + sleeve_risk > InpSleeveMaxTotalRiskPct)
+      {
+         LogPrint("[Sleeve] REJECT TOTAL_RISK_CAP (open ",
+                  DoubleToString(sleeve_open, 2), "% + candidate ",
+                  DoubleToString(sleeve_risk, 2), "% > ",
+                  DoubleToString(InpSleeveMaxTotalRiskPct, 2), "%)");
+         return position;
+      }
+      double family_open = m_pos_coordinator.GetSleeveFamilyOpenRiskPct(family, equity);
+      if(InpSleeveMaxFamilyRiskPct > 0.0 &&
+         family_open + sleeve_risk > InpSleeveMaxFamilyRiskPct)
+      {
+         LogPrint("[Sleeve] REJECT FAMILY_RISK_CAP (family=", family, " open ",
+                  DoubleToString(family_open, 2), "% + candidate ",
+                  DoubleToString(sleeve_risk, 2), "% > ",
+                  DoubleToString(InpSleeveMaxFamilyRiskPct, 2), "%)");
+         return position;
+      }
+
+      string sleeve_halt_reason = "";
+      if(m_pos_coordinator.IsSleeveHalted(sleeve_halt_reason))
+      {
+         LogPrint("[Sleeve] REJECT ", sleeve_halt_reason,
+                  " — sleeve halted for new entries (open positions untouched)");
+         return position;
+      }
+      if(g_riskMonitor != NULL && g_riskMonitor.IsTradingHalted())
+      {
+         LogPrint("[Sleeve] REJECT ACCOUNT_HALTED — account-level halt backstop",
+                  " applies to the sleeve too (stricter, never looser)");
+         return position;
+      }
+
+      // Route through the SINGLE existing execution chokepoint: RR gate,
+      // reward-room, sizing, counter-trend cut, and the account-wide
+      // InpMaxTotalExposure ceiling all still apply (never bypassed).
+      signal.riskPercent  = sleeve_risk;
+      signal.audit_origin = "SLEEVE";
+      position = ExecuteSignal(signal);
+
+      if(position.ticket > 0)
+      {
+         // Full lifecycle population — mirrors the immediate path in
+         // UltimateTrader.mq5 so sleeve positions are managed by the normal
+         // coordinator machinery (exits/trailing per spec SB-0.1 §5).
+         position.stage = STAGE_INITIAL;
+         position.original_lots = position.lot_size;
+         position.remaining_lots = position.lot_size;
+         position.stage_label = "INITIAL";
+         position.mae = 0;
+         position.mfe = 0;
+         position.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+         position.entry_session = (int)GetCurrentTradingSession();
+         position.bar_time_at_entry = iTime(_Symbol, PERIOD_H1, 0);
+         position.entry_regime = (m_context != NULL) ? (int)m_context.GetCurrentRegime() : 0;
+         position.confirmation_used = false;
+         position.original_sl = position.stop_loss;
+         position.original_tp1 = position.tp1;
+         position.signal_id = signal.signal_id;
+         if(position.engine_name == "")
+            position.engine_name = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
+
+         // Regime exit profile stamp (same as baseline entries — sleeve
+         // positions use the normal exit machinery for now)
+         if(g_regimeScaler != NULL && g_regimeScaler.IsExitEnabled() && m_context != NULL)
+         {
+            SRegimeRiskScore rScore = g_regimeScaler.Evaluate(m_context);
+            SRegimeExitProfile ep = g_regimeScaler.GetExitProfile(rScore.riskClass);
+            position.exit_regime_class = (int)rScore.riskClass;
+            position.exit_be_trigger = ep.beTrigger;
+            position.exit_chandelier_mult = ep.chandelierMult;
+            position.exit_tp0_distance = ep.tp0Distance;
+            position.exit_tp0_volume = ep.tp0Volume;
+            position.exit_tp1_distance = ep.tp1Distance;
+            position.exit_tp1_volume = ep.tp1Volume;
+            position.exit_tp2_distance = ep.tp2Distance;
+            position.exit_tp2_volume = ep.tp2Volume;
+         }
+
+         // The sleeve tag — set BEFORE AddPosition so every count/exclusion
+         // site and the state file see it from the first save.
+         position.is_sleeve = true;
+         position.sleeve_family = family;
+
+         m_pos_coordinator.AddPosition(position);
+
+         // [SB-0.1] deliberately NOT called here (see header comment):
+         // g_riskMonitor.IncrementTradesToday() / RecordExecutionSuccess().
+
+         if(m_trade_logger != NULL)
+            m_trade_logger.LogTradeEntry(position, position.entry_risk_amount);
+
+         LogPrint("[Sleeve] OPEN ticket=", position.ticket,
+                  " family=", family,
+                  " risk=", DoubleToString(position.initial_risk_pct, 2),
+                  "% lots=", DoubleToString(position.lot_size, 2),
+                  " | sleeveOpen=", m_pos_coordinator.GetSleevePositionCount(),
+                  "/", InpSleeveMaxPositions);
+      }
+      else
+      {
+         // [SB-0.1] execution-layer reject (RR gate / exposure ceiling /
+         // executor failure — see the risk-audit row). Deliberately NOT fed
+         // into g_riskMonitor.RecordExecutionError(): a sleeve failure must
+         // never advance the BASELINE 5-strike consecutive-error halt.
+         LogPrint("[Sleeve] REJECT EXEC_LAYER (family=", family,
+                  ") — see risk-audit row; not counted into the error-halt circuit");
+      }
+
+      return position;
    }
 
 private:

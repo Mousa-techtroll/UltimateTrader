@@ -211,6 +211,17 @@ struct SPosition
    bool                   crash_trail_unlocked;    // a closed H1 bar closed below EMA21(H1) since entry
    datetime               crash_trail_last_bar;    // last closed H1 bar evaluated for the latch
 
+   // [SB-0.1] Experimental short-sleeve tag (runtime + persisted, state file
+   // v7). is_sleeve positions are opened ONLY through the sleeve gateway
+   // (CTradeOrchestrator::ExecuteSleeveSignal) and are EXCLUDED from every
+   // BASELINE accept/reject count — position cap, same-family cluster guard,
+   // EC v3 feeds, plugin/risk performance recording, daily trade budget,
+   // consecutive-error circuit. They are counted ONLY by the sleeve's own
+   // caps plus the account-wide exposure ceiling (InpMaxTotalExposure —
+   // the registered exception). Baseline positions: false / "".
+   bool                   is_sleeve;               // opened via the sleeve gateway
+   string                 sleeve_family;           // sleeve strategy family tag ("" = none)
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -265,6 +276,8 @@ struct SPosition
       run48 = 0;
       crash_trail_unlocked = false;
       crash_trail_last_bar = 0;
+      is_sleeve = false;
+      sleeve_family = "";
    }
 };
 
@@ -350,6 +363,14 @@ struct PersistedPosition
    bool     ceg_bound;
    int      regime_age_h4;
    double   run48;
+
+   // [SB-0.1] (state file version 7): sleeve tag. sleeve_family is a fixed
+   // ASCII buffer because FileWriteStruct cannot serialize a dynamic string
+   // member (the signal_id precedent above). Empty/false on baseline
+   // positions. Persisting the family keeps the per-family sleeve risk cap
+   // enforceable across restarts while a sleeve position is open.
+   bool     is_sleeve;
+   char     sleeve_family[16];
 };
 
 //+------------------------------------------------------------------+

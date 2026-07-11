@@ -10,7 +10,11 @@
 ## Phase 0 — Short-side infrastructure
 
 ### SB-0.1 — Dedicated experimental short sleeve (CRITICAL)
-- [ ] ⬜ → in implementation 2026-07-11
+- [x] ✅ **DONE 2026-07-11** (engines-off + on-empty acceptance met; engines-on clause measured with the first engine)
+  - [x] Gateway `CTradeOrchestrator::ExecuteSleeveSignal` — 10-step check order (master/direction/poscap/slot-reserve/risk caps/DD+daily halts/account backstops → ExecuteSignal chokepoint, exposure ceiling never bypassed)
+  - [x] 13 baseline count/exposure sites EXCLUDED (audit table in the implementation report; includes HasOpenSameFamily — the CRH4 breach mechanism); 2 registered-inclusive exceptions (account exposure ceiling, equity-coupled daily halt)
+  - [x] Position tagging (is_sleeve + family), state file v6→v7, Stats CSV 106→108, manifest SLEEVE rows, sleeve P&L/DD/daily ledger persisted
+  - [x] **Identity EXACT both ways: OFF and ON-empty = $23,856.89/2,053/952 to the cent** (ceg_SLVID/ceg_SLVON)
 - Scope: independent short-research sleeve — master switch + per-sleeve limits (max 1 experimental position; incremental risk 0.25–0.40%; sleeve DD cap; daily sleeve loss cap; per-family risk cap; position-slot reservation so no baseline displacement; same-direction concurrency cap; account exposure ceiling still binding; independent sleeve DD tracking; sleeve-tagged positions + separate direct/interaction P&L reporting).
 - Existing assets: CRH4's slot-isolation lesson (off-cohort breach mechanism identified: exposure/slot interactions through pos-cap and same-direction machinery); §D/SF harness + cohort analyzer; manifest logging conventions.
 - **Acceptance (registered):** engines OFF → 952 positions reproduce exactly, net/DD/lifecycle logs match binding baseline. Sleeve ON with no engine → still identity. Engine ON (later phases) → baseline decisions identical; every sleeve position identifiable; direct + interaction P&L separately reported.
@@ -28,7 +32,13 @@
 ## Phase 1 — Correction-state and bear-event detection
 
 ### SB-1.1 — Correction & Bear Event state model (CRITICAL)
-- [ ] ⬜ → offline prototype in progress 2026-07-11
+- [ ] 🟡 **OFFLINE SHADOW COMPLETE — all 4 registered clauses PASS (first frozen set, revision unused); awaiting owner approval for the EA-side shadow stamp + CREV use**
+  - [x] Frozen rule set (sb11-state-model.md, MQL5-implementable) + deterministic prototype + 44,437-bar state ledger (sb11_states.csv)
+  - [x] Detection lead vs D1 cross: E5 134d / E8 110d / E4 66d earlier
+  - [x] 2024–25 false-positive audit: 1 genuine 3-day mislabel (3.6% bear-label share of bull bars)
+  - [x] Stability: 40 bear episodes/7.5y, median 11.5d (rule: gate on family+severity, BEAR_RALLY overlay churns)
+  - [x] State×results join: BEAR_TRANSITION shorts +0.403 avg R (n=53) = best cell in the book; BULL_PULLBACK/VOLATILE = short-veto states; **CREV dose inversion of record: full risk in BEAR_TRANSITION, reduced in BEAR_TREND**
+  - [ ] Owner approval → EA-side decision-free state stamp (identity-gated) → unlocks SB-1.2
 - 8 states (BULL_TREND, BULL_PULLBACK, ACTIVE_CORRECTION, BEAR_TRANSITION, BEAR_TREND, BEAR_RALLY, VOLATILE_TRANSITION, RANGE); interpretable feature set (D1/H4 EMA structure+slope, H4 LH/LL sequence, support breaks + failed reclaims, distance from swing high, multi-day RoC, ATR expansion, consecutive bear closes, % closes below H4 EMAs, recovery strength, ADX); transparent state score + transition logic; hysteresis (min H4 bars, separate entry/exit thresholds, state age, transition confidence).
 - Deployment: SHADOW ONLY first — offline Python prototype on the H1/H4/D1 rates, validated against the hand-labeled episode table (market-structure doc E1–E8), then long/short results measured by state, then (only if approved) an EA-side shadow stamp (decision-free column, identity leg).
 - **Acceptance (registered):** 2023 + 2026H1 corrections detected materially earlier than the D1 death cross (reference: cross printed 2021-03-04 for E2, 11 days after 2026H1 ended for E8); 2024–25 bull pullbacks NOT systematically labeled bear; transitions stable enough to trade; zero live decision changes during shadow.

@@ -60,6 +60,7 @@ set_kv InpCEGFloorPct 0.0
 set_kv InpCEGTrailFloor 0.0
 set_kv InpCrashTrailSuppress true   # ADOPTED 2026-07-10 (config of record)
 set_kv InpRRGateSymmetric true   # ADOPTED 2026-07-11 (SF-1, config of record)
+set_kv InpEnableShortSleeve false
 set_kv InpPinTrailSuppress false
 
 for kv in "$@"; do set_kv "${kv%%=*}" "${kv#*=}"; done

@@ -421,6 +421,9 @@ public:
          AddCsvField(csv_header, "S_pat"); AddCsvField(csv_header, "S_eff"); AddCsvField(csv_header, "R48");
          AddCsvField(csv_header, "WidenFactor"); AddCsvField(csv_header, "CEGBound"); AddCsvField(csv_header, "RegimeAgeH4");
          AddCsvField(csv_header, "Run48");
+         // [SB-0.1] sleeve tag columns — appended at the END so existing
+         // parsers keep working. Decision-free. Baseline rows stamp 0 / empty.
+         AddCsvField(csv_header, "Sleeve"); AddCsvField(csv_header, "SleeveFamily");
          WriteCsvFields(m_csv_handle, csv_header, false);
          LogPrint("CTradeLogger: CSV file created: ", m_csv_filename);
       }
@@ -726,6 +729,9 @@ public:
       AddCsvField(entry_fields, IntegerToString(pos.ceg_bound ? 1 : 0));
       AddCsvField(entry_fields, IntegerToString(pos.regime_age_h4));
       AddCsvField(entry_fields, DoubleToString(pos.run48, digits));
+      // [SB-0.1] sleeve tag columns (see header)
+      AddCsvField(entry_fields, pos.is_sleeve ? "1" : "0");
+      AddCsvField(entry_fields, SanitizeCSV(pos.sleeve_family));
       WriteCsvFields(m_csv_handle, entry_fields, true);
 
       LogTradeLifecycleEvent(pos,
@@ -935,6 +941,9 @@ public:
       AddCsvField(exit_fields, IntegerToString(pos.ceg_bound ? 1 : 0));
       AddCsvField(exit_fields, IntegerToString(pos.regime_age_h4));
       AddCsvField(exit_fields, DoubleToString(pos.run48, digits));
+      // [SB-0.1] sleeve tag columns (see header)
+      AddCsvField(exit_fields, pos.is_sleeve ? "1" : "0");
+      AddCsvField(exit_fields, SanitizeCSV(pos.sleeve_family));
       WriteCsvFields(m_csv_handle, exit_fields, true);
 
       LogTradeLifecycleEvent(pos,

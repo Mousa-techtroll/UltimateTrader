@@ -625,3 +625,25 @@ input bool   InpCrashTrailSuppress = false; // Suppress crash-short trail ratche
 // share one PATTERN_PIN_BAR tag both directions; the SIGNAL_SHORT guard in
 // CPositionCoordinator scopes suppression to bear pins. Longs never suppressed.
 input bool   InpPinTrailSuppress = false;   // SF-2: suppress bear-pin-short trail ratchet until close < EMA21(H1) (default off, AB_TEST_LOG pre-registration)
+
+//--- Group 50: SB EXPERIMENTAL SHORT SLEEVE
+// SB-0.1 (AB_TEST_LOG "SB PROGRAM PRE-REGISTRATION" + workflowAnalysis/
+// short-book-tracker.md). Containment layer for FUTURE experimental SHORT
+// engines (CREV etc.): positions opened via the sleeve gateway
+// (CTradeOrchestrator::ExecuteSleeveSignal) can never alter baseline
+// decisions — excluded from every baseline accept/reject count (grep
+// [SB-0.1] for the audited sites), no daily-trade-budget consumption, no
+// consecutive-error feed, slot-reserved below the position cap. The
+// account-wide exposure ceiling (InpMaxTotalExposure) REMAINS binding on
+// sleeve entries (the registered exception). Zero engines exist in this
+// build: master ON or OFF, behavior is identical to baseline by
+// registration (registered acceptance: FULL identity both ways).
+input group "══════ SB EXPERIMENTAL SHORT SLEEVE ══════"
+input bool   InpEnableShortSleeve      = false; // Master: experimental short sleeve (OFF = all sleeve code paths dead)
+input int    InpSleeveMaxPositions     = 1;     // Max concurrent experimental sleeve positions (count check = no second until first closes at 1)
+input double InpSleeveRiskPct          = 0.30;  // Per-position incremental risk % (owner band 0.25-0.40; engines may pass lower, never higher)
+input double InpSleeveMaxFamilyRiskPct = 0.40;  // Max total open risk % per sleeve strategy family
+input double InpSleeveMaxTotalRiskPct  = 0.40;  // Max total concurrent open sleeve risk %
+input double InpSleeveMaxDDPct         = 2.0;   // Sleeve DD cap: realized cum-P&L drop from HWM as % of balance -> halt NEW sleeve entries (log only, positions untouched)
+input double InpSleeveMaxDailyLossPct  = 1.0;   // Daily realized sleeve loss cap (% of balance, server-day rollover) -> halt sleeve entries for the day
+input int    InpSleeveSlotReserve      = 2;     // Sleeve opens ONLY when baseline positions <= InpMaxPositions - this (never consumes baseline's last slots)

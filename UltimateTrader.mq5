@@ -630,6 +630,27 @@ void EmitCapabilityManifest()
                " Expansion=" + (InpEnableEngineExpansion ? "on" : "off"),
                "4-engine scaffold master gate");
 
+   // --- SB-0.1 experimental short sleeve (decision-free census) ---
+   ManifestRow(h, "SLEEVE", "InpEnableShortSleeve", (InpEnableShortSleeve ? "ON" : "OFF"),
+               "MaxPos=" + IntegerToString(InpSleeveMaxPositions) +
+               " Risk=" + DoubleToString(InpSleeveRiskPct, 2) + "%" +
+               " FamCap=" + DoubleToString(InpSleeveMaxFamilyRiskPct, 2) + "%" +
+               " TotCap=" + DoubleToString(InpSleeveMaxTotalRiskPct, 2) + "%",
+               "SB-0.1 containment layer; ZERO sleeve engines in this build");
+   ManifestRow(h, "SLEEVE", "SleeveGuards",
+               "DDCap=" + DoubleToString(InpSleeveMaxDDPct, 2) + "%" +
+               " DailyLossCap=" + DoubleToString(InpSleeveMaxDailyLossPct, 2) + "%" +
+               " SlotReserve=" + IntegerToString(InpSleeveSlotReserve),
+               "opens only when baseline pos <= " +
+                  IntegerToString(InpMaxPositions - InpSleeveSlotReserve),
+               "gateway=CTradeOrchestrator::ExecuteSleeveSignal");
+   ManifestRow(h, "SLEEVE", "SleeveLedger",
+               "RealizedPnL=" + DoubleToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleeveRealizedPnL() : 0.0, 2),
+               "HWM=" + DoubleToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleeveHWM() : 0.0, 2) +
+               " DailyLoss=" + DoubleToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleeveDailyLoss() : 0.0, 2) +
+               " OpenSleevePos=" + IntegerToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleevePositionCount() : 0),
+               "persisted in state file v7 (server-day daily rollover)");
+
    // --- Point-scale anchor + computed scale ---
    ManifestRow(h, "SCALE", "InpScaleAnchorPrice", DoubleToString(InpScaleAnchorPrice, 2),
                "AutoScale=" + (InpAutoScalePoints ? "true" : "false"),
@@ -1760,7 +1781,9 @@ void OnTick()
                accepted_sig.riskPercent *= g_breakoutProbation.session_mult;
                accepted_sig.riskPercent *= g_breakoutProbation.regime_mult;
 
-               if(g_posCoordinator.GetPositionCount() < InpMaxPositions &&
+               // [SB-0.1] baseline-only count: a sleeve position must never
+               // consume a baseline slot (identical when no sleeve positions).
+               if(g_posCoordinator.GetBaselinePositionCount() < InpMaxPositions &&
                   !g_riskMonitor.IsTradingHalted() && g_riskMonitor.CanTrade())
                {
                   SPosition pos_bp = g_tradeOrchestrator.ExecuteSignal(accepted_sig);
@@ -1928,14 +1951,17 @@ void OnTick()
 	                                  (g_riskMonitor.IsTradingHalted() ? "YES" : "NO"),
 	                                  g_riskMonitor.GetTradesToday(), InpMaxTradesPerDay));
 	               }
-	               else if(g_posCoordinator.GetPositionCount() >= InpMaxPositions)
+	               // [SB-0.1] baseline-only count: sleeve positions are excluded
+	               // from the confirmed-path position cap (CRH4 lesson —
+	               // identical when no sleeve positions are open).
+	               else if(g_posCoordinator.GetBaselinePositionCount() >= InpMaxPositions)
 	               {
 	                  Print("[ConfPositionCap] confirmed entry blocked — positions=",
-	                        g_posCoordinator.GetPositionCount(), "/", InpMaxPositions,
+	                        g_posCoordinator.GetBaselinePositionCount(), "/", InpMaxPositions,
 	                        " (", pending.pattern_name, ")");
 	                  ClearPendingSignalLogged(pending, "GUARD_POSCAP",
 	                     StringFormat("positions=%d/%d",
-	                                  g_posCoordinator.GetPositionCount(), InpMaxPositions));
+	                                  g_posCoordinator.GetBaselinePositionCount(), InpMaxPositions));
 	               }
 	               else if(ShouldBlockLongExtensionCore(pending.signal_type == SIGNAL_LONG,
 	                                              SymbolInfoDouble(_Symbol, SYMBOL_ASK),
@@ -2262,7 +2288,9 @@ void OnTick()
             if(signal.valid)
             {
                // Check position limits
-               if(g_posCoordinator.GetPositionCount() < InpMaxPositions)
+               // [SB-0.1] baseline-only count: sleeve positions never consume
+               // baseline slots (identical when no sleeve positions are open).
+               if(g_posCoordinator.GetBaselinePositionCount() < InpMaxPositions)
                {
                   // Note: confirmation is handled internally by CSignalOrchestrator.
                   // If the signal required confirmation, CheckForNewSignals() returns
@@ -2617,9 +2645,11 @@ void OnTick()
    // in BOTH mode with defaults file trades were unlimited per day. CanTrade() also
    // re-checks the OR'd halt flags (4.4). Orphan-adoption below is NOT gated (re-tracking
    // an existing broker fill is not a new entry).
+   // [SB-0.1] baseline-only count: the file book is part of the BASELINE book —
+   // sleeve positions must not gate it (identical when no sleeve positions).
    if((InpSignalSource == SIGNAL_SOURCE_BOTH || InpSignalSource == SIGNAL_SOURCE_FILE) &&
       g_fileEntry != NULL &&
-      g_posCoordinator.GetPositionCount() < InpMaxPositions &&
+      g_posCoordinator.GetBaselinePositionCount() < InpMaxPositions &&
       !g_riskMonitor.IsTradingHalted() &&
       g_riskMonitor.CanTrade())
    {
