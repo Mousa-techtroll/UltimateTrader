@@ -673,6 +673,24 @@ input bool   InpEnableCREV              = false; // Enable CREV sleeve engine (n
 input group "══════ SB-2.1 CONT (SHORT CONTINUATION) ══════"
 input bool   InpEnableCONT              = false; // Enable CONT sleeve engine (needs InpEnableShortSleeve too; OFF = all CONT paths dead)
 
+//--- Group 50d: SB-TMF (third sleeve engine — SHORT transition mean-fade)
+// spec workflowAnalysis/sb-tmf-spec.md (frozen). Keeps the STRICT bear-family
+// state gate (LEDGER severity in {2,3,4}) but uses a LENIENT trigger (any
+// down-close back below EMA21 after the rally tagged the mean — no wick, no
+// fractal conjunction, no min-rally-size) — the anti-starvation fix vs the
+// strict-trigger CREV/CONT. Banks the ENTIRE position at ~1R (no runner, no
+// chandelier), 48h max-hold. Routes ONLY through the sleeve gateway (family
+// ="TMF"); every TMF path is behind BOTH InpEnableShortSleeve AND InpEnableTMF,
+// so with either OFF the build is byte-identical to baseline (g_tmfEntry stays
+// NULL). All other TMF constants are compile-time frozen in CTMFEntry (not
+// sweepable levers). FIT run (Fork A): set InpShortOnlyMode=true,
+// InpEnableShortSleeve=true, InpEnableTMF=true, InpBearStateSource=LEDGER,
+// InpRRGateSymmetric=true, InpSleeveMaxPositions=5, InpSleeveRiskPct=0.35,
+// InpSleeveMaxFamilyRiskPct=1.75, InpSleeveMaxTotalRiskPct=1.75,
+// InpSleeveSlotReserve=0.
+input group "══════ SB-TMF (SHORT MEAN-FADE) ══════"
+input bool   InpEnableTMF               = false; // Enable TMF sleeve engine (needs InpEnableShortSleeve too; OFF = all TMF paths dead)
+
 input group "══════ SB BEAR-STATE STAMP (SB-1.1, SHADOW) ══════"
 input bool   InpBearStateLedger        = false; // Write per-H1-bar bear-state ledger UltTrader_BearStates_<sym>.csv (decision-free; OFF = no file). Stats-CSV columns always stamped.
 input ENUM_BEAR_STATE_SOURCE InpBearStateSource = BEAR_SRC_COMPUTED; // Bear-state SOURCE: COMPUTED = in-EA CBearStateModel (live); LEDGER = read frozen validated states from InpBearStateFile (CREV). Load failure under LEDGER is FATAL.

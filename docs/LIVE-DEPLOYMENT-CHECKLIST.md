@@ -78,4 +78,18 @@ Seven single-lever interventions on diagnosed issues failed at FIT or CONFIRM; o
 
 ---
 
+## 6. Short-book development options (default OFF; live posture = leave OFF unless activating for a bear regime)
+
+The 2026-07-11 short campaign produced validated, default-off machinery. The binding baseline ($23,856.89) is the DUAL book with ALL of these OFF; they are dormant options, not part of the live default.
+
+| Lever | State | Guidance |
+|---|---|---|
+| `InpShortOnlyMode` | dev/maintenance mode | Disables ALL long entries (one gate). For short-book development/measurement only. **Live = false.** |
+| `InpEnableShortSleeve` + `InpEnableTMF` | **TMF v2 — validated bear-insurance** | Transition Mean-Fade short engine, routed via the sleeve (baseline-isolated, zero long-book impact). **Validated over 2004–2026: +15.27R, positive in the 2011–15 & 2016–18 bears, benches to ZERO fills in bulls (fired 0 in 2023–25).** Edge is THIN + not statistically significant (E[R] +0.037, t≈0.8); 2008-style spike crashes are a miss (monetizes sustained grinds only). **D1 death-cross gate is MANDATORY** (removing it flips 22y from +15R to −35R by shorting the bull). Dose peaks at sev4 (BEAR_TREND). If activating for an anticipated sustained bear: enable sleeve+TMF with `InpSleeveRiskPct≤0.35`, run SMALL. In the current secular bull it sits dormant — enabling it costs ~nothing but does ~nothing until a real bear. |
+| CREV / CONT (`InpEnableCREV`/`InpEnableCONT`), CRH4 gate, `InpPinTrailSuppress` | **measured-dead** | Rally-fade & continuation short engines — starved or fired-and-lost. Leave OFF. Do not relitigate (see AB_TEST_LOG "SB SHORT-PARTICIPATION PROGRAM — CLOSED"). |
+
+**Key finding of record (gate-value study, 22y):** gold-short gates were largely INVERTED — over-extension veto, room≥1.2R, lower-high, volume, session filters all *destroy* value; the gates that work are close<EMA50/EMA200 + D1-death-cross + not-Friday, and the exit (winner-clipping) was the true ceiling. Gold shorts carry edge ONLY in sustained bears (absent from the 2019–2026 tester feed) — which is why the EA "fails in bear years" was invisible to the backtest. See `workflowAnalysis/{gate-value-study,tmf-v2-longhistory-validation}.md`.
+
+---
+
 *Cross-references: `AB_TEST_LOG.md` (all A/B evidence), `workflowAnalysis/improvement-campaign-report.md` (campaign narrative), `docs/03-Risk-Model.md`.*

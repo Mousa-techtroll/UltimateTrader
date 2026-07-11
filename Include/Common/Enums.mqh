@@ -118,7 +118,14 @@ enum ENUM_PATTERN_TYPE
    // .pattern_type serializes as int). Distinct from PATTERN_CREV_FADE and
    // PATTERN_CRASH_BREAKOUT on purpose — reusing either would trip that
    // pattern's scoped exit branch / trail-suppressor and pollute telemetry.
-   PATTERN_CONT_SHORT              // CONT lower-high continuation short (sleeve)
+   PATTERN_CONT_SHORT,             // CONT lower-high continuation short (sleeve)
+
+   // SB-TMF experimental short sleeve — Transition Mean-Fade short. Appended at
+   // the END so no existing ordinals shift (PersistedPosition.pattern_type
+   // serializes as int). Distinct from PATTERN_CREV_FADE / PATTERN_CONT_SHORT /
+   // PATTERN_CRASH_BREAKOUT on purpose — reusing any would trip that pattern's
+   // scoped exit branch / trail-suppressor and pollute telemetry.
+   PATTERN_TMF_FADE               // TMF transition mean-fade short (sleeve)
 };
 
 //+------------------------------------------------------------------+

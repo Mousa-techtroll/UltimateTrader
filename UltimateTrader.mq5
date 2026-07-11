@@ -59,6 +59,7 @@
 #include "Include/EntryPlugins/CCrashBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CCrevEntry.mqh"
 #include "Include/EntryPlugins/CContinuationEntry.mqh"
+#include "Include/EntryPlugins/CTMFEntry.mqh"
 #include "Include/EntryPlugins/CFileEntry.mqh"
 #include "Include/EntryPlugins/CDisplacementEntry.mqh"
 #include "Include/EntryPlugins/CSessionBreakoutEntry.mqh"
@@ -148,6 +149,7 @@ CVolatilityBreakoutEntry *g_volBreakoutEntry = NULL;
 CCrashBreakoutEntry    *g_crashEntry         = NULL;
 CCrevEntry             *g_crevEntry          = NULL;   // SB-1.2 CREV sleeve engine (NULL unless sleeve+CREV masters ON)
 CContinuationEntry     *g_contEntry          = NULL;   // SB-2.1 CONT sleeve engine (NULL unless sleeve+CONT masters ON)
+CTMFEntry              *g_tmfEntry           = NULL;   // SB-TMF sleeve engine (NULL unless sleeve+TMF masters ON)
 CFileEntry             *g_fileEntry          = NULL;
 CDisplacementEntry     *g_displacementEntry  = NULL;
 CSessionBreakoutEntry  *g_sessionBreakout    = NULL;
@@ -654,6 +656,13 @@ void EmitCapabilityManifest()
                " DailyLoss=" + DoubleToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleeveDailyLoss() : 0.0, 2) +
                " OpenSleevePos=" + IntegerToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleevePositionCount() : 0),
                "persisted in state file v7 (server-day daily rollover)");
+   // SB-TMF engine census (mirrors the SLEEVE containment rows above). Fork A
+   // sleeve routing (family "TMF"); g_tmfEntry stays NULL and every TMF path is
+   // dead unless BOTH InpEnableShortSleeve AND InpEnableTMF are ON.
+   ManifestRow(h, "SLEEVE", "InpEnableTMF", (InpEnableTMF ? "ON" : "OFF"),
+               "master2=InpEnableShortSleeve=" + (InpEnableShortSleeve ? "ON" : "OFF") +
+               " | engine=SB-TMF transition mean-fade short",
+               "routes via ExecuteSleeveSignal(sig,\"TMF\"); NULL+dead when either master OFF -> baseline byte-identical");
 
    // --- SB-1.1 shadow bear-state stamp (decision-free census) ---
    ManifestRow(h, "STATE", "BearStateModel", "ENABLED (SHADOW)",
@@ -899,6 +908,24 @@ int OnInit()
          Print("[Init] FAILED to initialize CONT sleeve engine — disabling");
          delete g_contEntry;
          g_contEntry = NULL;
+      }
+   }
+
+   // SB-TMF (third experimental SHORT sleeve engine — transition mean-fade).
+   // Created + initialized ONLY when BOTH masters are ON — g_tmfEntry stays NULL
+   // otherwise, so the OnTick sleeve driver is dead and the build is byte-
+   // identical to baseline. NOT a baseline entry plugin: NEVER registered via
+   // RegisterEntryPlugin (the signal orchestrator must never rank it into the
+   // baseline path — Fork A routing). Driven exclusively by the sleeve gateway
+   // in OnTick (family "TMF").
+   if(InpEnableShortSleeve && InpEnableTMF)
+   {
+      g_tmfEntry = new CTMFEntry(GetPointer(g_marketContext));
+      if(g_tmfEntry != NULL && !g_tmfEntry.Initialize())
+      {
+         Print("[Init] FAILED to initialize TMF sleeve engine — disabling");
+         delete g_tmfEntry;
+         g_tmfEntry = NULL;
       }
    }
 
@@ -1647,6 +1674,7 @@ void OnDeinit(const int reason)
    if(g_rangeBoxDetector != NULL)  { g_rangeBoxDetector.Deinit(); delete g_rangeBoxDetector; }
    if(g_volBreakoutEntry != NULL)  { g_volBreakoutEntry.Deinitialize(); delete g_volBreakoutEntry; }
    if(g_crashEntry != NULL)        { g_crashEntry.Deinitialize(); delete g_crashEntry; }
+   if(g_tmfEntry != NULL)          { g_tmfEntry.Deinitialize();  delete g_tmfEntry;  g_tmfEntry  = NULL; }
    if(g_contEntry != NULL)         { g_contEntry.Deinitialize(); delete g_contEntry; g_contEntry = NULL; }
    if(g_crevEntry != NULL)         { g_crevEntry.Deinitialize(); delete g_crevEntry; g_crevEntry = NULL; }
    if(g_fileEntry != NULL)         { g_fileEntry.Deinitialize(); delete g_fileEntry; }
@@ -2651,6 +2679,24 @@ void OnTick()
             SPosition contPos = g_tradeOrchestrator.ExecuteSleeveSignal(contSig, "CONT");
             if(contPos.ticket > 0)
                g_contEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §10 stamp traded-impulse + last-entry bar
+         }
+      }
+
+      // [SB-TMF] Third sleeve driver (spec §11), alongside the CREV/CONT drivers
+      // above. Same containment: routes EXCLUSIVELY through the SB-0.1 sleeve
+      // gateway (family "TMF") — never the baseline entry path (Fork A). Dead
+      // unless BOTH masters ON and g_tmfEntry exists (identity by construction).
+      if(InpEnableShortSleeve && InpEnableTMF && g_tmfEntry != NULL)
+      {
+         // §7 post-loss cooldown anchor (coordinator stamps TMF losses).
+         g_tmfEntry.SetLastLossBar(g_posCoordinator.GetTmfLastLossBar());
+
+         EntrySignal tmfSig = g_tmfEntry.CheckForEntrySignal();   // closed-bar; <=1 signal
+         if(tmfSig.valid)
+         {
+            SPosition tmfPos = g_tradeOrchestrator.ExecuteSleeveSignal(tmfSig, "TMF");
+            if(tmfPos.ticket > 0)
+               g_tmfEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §7 stamp faded-high + last-entry bar
          }
       }
    }

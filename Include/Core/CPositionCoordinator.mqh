@@ -125,6 +125,9 @@ private:
    // SB-2.1 CONT: iTime(H1,1) at the close of the last CONT position that
    // finished R<0. Feeds the plugin's post-loss cooldown (§10). Runtime-only.
    datetime m_cont_last_loss_bar;
+   // SB-TMF: iTime(H1,1) at the close of the last TMF position that finished
+   // R<0. Feeds the plugin's post-loss cooldown (§7). Runtime-only.
+   datetime m_tmf_last_loss_bar;
 
    //+------------------------------------------------------------------+
    //| CRC32 lookup table (generated once, used for checksums)          |
@@ -1027,6 +1030,7 @@ public:
       m_sleeve_day_anchor = 0;
       m_crev_last_loss_bar = 0;
       m_cont_last_loss_bar = 0;
+      m_tmf_last_loss_bar = 0;
    }
 
    //+------------------------------------------------------------------+
@@ -1223,6 +1227,9 @@ public:
    // SB-2.1 CONT: bar time of the last losing CONT close (0 = none). Read by
    // the OnTick sleeve driver to feed the CONT post-loss cooldown (§10).
    datetime GetContLastLossBar() { return m_cont_last_loss_bar; }
+   // SB-TMF: bar time of the last losing TMF close (0 = none). Read by the
+   // OnTick sleeve driver to feed the TMF post-loss cooldown (§7).
+   datetime GetTmfLastLossBar() { return m_tmf_last_loss_bar; }
 
    //+------------------------------------------------------------------+
    //| Total open risk as % of equity (fix 4.2 exposure cap)            |
@@ -2075,6 +2082,21 @@ public:
          if(m_positions[i].is_sleeve && m_positions[i].pattern_type == PATTERN_CONT_SHORT)
          {
             ManageContPosition(i);
+            continue;
+         }
+
+         // [SB-TMF] Pattern-scoped exit OWNER (Fork A guard: is_sleeve AND the
+         // TMF pattern). SIMPLER than CREV/CONT: a SINGLE 100% close at the near
+         // target, the 48h max-hold, and NO partials / NO lower-high trail / NO
+         // chandelier EVER (§6). Excluded from the normal R-ladder, early-
+         // invalidation/stall systems, chandelier trailing and generic exit
+         // plugins (the `continue`). Chandelier suppression is thus PERMANENT for
+         // TMF and never unlocks. The whole branch is dead when InpEnableShort
+         // Sleeve/InpEnableTMF are OFF (no TMF position can exist) -> baseline
+         // byte-identical.
+         if(m_positions[i].is_sleeve && m_positions[i].pattern_type == PATTERN_TMF_FADE)
+         {
+            ManageTMFPosition(i);
             continue;
          }
 
@@ -3111,6 +3133,10 @@ private:
          // family "CONT". No other family/baseline touched.
          if(m_positions[index].sleeve_family == "CONT" && total_trade_pnl < 0.0)
             m_cont_last_loss_bar = iTime(_Symbol, PERIOD_H1, 1);
+         // SB-TMF §7: identical post-loss cooldown anchor, scoped to family
+         // "TMF". No other family/baseline touched.
+         if(m_positions[index].sleeve_family == "TMF" && total_trade_pnl < 0.0)
+            m_tmf_last_loss_bar = iTime(_Symbol, PERIOD_H1, 1);
          Print("[Sleeve] CLOSE ticket=", m_positions[index].ticket,
                " family=", m_positions[index].sleeve_family,
                " pnl=", DoubleToString(total_trade_pnl, 2),
@@ -3529,6 +3555,62 @@ private:
    }
 
    //+------------------------------------------------------------------+
+   //| [SB-TMF] Full TMF lifecycle manager (spec §6/§12). SIMPLER than    |
+   //| ManageCrevPosition/ManageContPosition — a SINGLE 100% close at the |
+   //| FULL 1R target (fast harvest), plus the 48h max-hold. NO partials, |
+   //| NO lower-high trail, NO chandelier EVER (no FindTwoRecentPivotHighs).|
+   //| v2 (gate-value study §6, the #1 lever): the harvest banks at the    |
+   //| FULL 1R target = position.tp2 (= entry-1R) — v1's swing-low clip     |
+   //| MAX(recentH1Low, entry-1R) capped winners at avgWin +0.36R and is    |
+   //| GONE. position.tp1 = far_tp (FAR, 1.5R broker TP backstop — left in  |
+   //| place, never cleared; there is no runner). Called ONLY for is_sleeve |
+   //| TMF positions (Fork A dispatch guard).                              |
+   //+------------------------------------------------------------------+
+   void ManageTMFPosition(int i)
+   {
+      double cur_price = PositionGetDouble(POSITION_PRICE_CURRENT);   // ASK for a short
+
+      // Keep bars_since_entry current (CSV telemetry) — the normal updater at
+      // the tail of the loop is skipped for TMF.
+      datetime cur_bar = iTime(_Symbol, PERIOD_H1, 0);
+      int bars_open = 0;
+      if(m_positions[i].bar_time_at_entry > 0 && cur_bar > m_positions[i].bar_time_at_entry)
+         bars_open = (int)((cur_bar - m_positions[i].bar_time_at_entry) / PeriodSeconds(PERIOD_H1));
+      m_positions[i].bars_since_entry = bars_open;
+
+      // MAE/MFE (SHORT).
+      {
+         double adverse   = cur_price - m_positions[i].entry_price;
+         double favorable = m_positions[i].entry_price - cur_price;
+         if(adverse   > 0 && adverse   > m_positions[i].mae) m_positions[i].mae = adverse;
+         if(favorable > 0 && favorable > m_positions[i].mfe) m_positions[i].mfe = favorable;
+      }
+
+      // §6 Max-hold: force-close all remaining lots after 48 closed H1 bars.
+      if(bars_open >= 48)   // TMF_MAXHOLD_H
+      {
+         StampExitRequest(m_positions[i], "TMF_MAXHOLD", StringFormat("bars=%d", bars_open));
+         ClosePosition(m_positions[i].ticket, "TMF_MAXHOLD");
+         return;
+      }
+
+      // §6 v2 harvest (gate-value study §6, the #1 lever): bank the ENTIRE
+      // position (100%) at the FULL 1R target = pos.tp2 (= entry-1R). v2 DROPPED
+      // the swing-low clip — v1 banked at MAX(recentH1Low, entry-1R) (the nearer
+      // price), capping winners at avgWin +0.36R; banking at the full 1R is worth
+      // +0.016R unconditionally and flips the 2011-2015 bear positive. NOT a
+      // partial, NOT a runner. The FAR broker TP (pos.tp1 = far_tp, 1.5R) is the
+      // pure backstop below it, left in place (never cleared — there is no
+      // runner). NO lower-high trail, NO chandelier EVER (§6).
+      double tmf_target = m_positions[i].tp2;   // FULL 1R harvest (entry-1R, no clip)
+      if(tmf_target > 0.0 && cur_price <= tmf_target)
+      {
+         ClosePosition(m_positions[i].ticket, "TMF_TARGET");   // 100% — no partial, no runner
+         return;
+      }
+   }
+
+   //+------------------------------------------------------------------+
    //| [SB-1.2 CREV] The two most-recent confirmed H1 pivot highs (5-bar |
    //| fractal, index>=3 = closed +2 confirmation). newest = the most    |
    //| recent, prev = the one before it. Returns false when <2 exist.    |
@@ -3567,8 +3649,15 @@ private:
       // short: its ONLY SL ratchet is the LH trail in ManageContPosition; it
       // must NEVER receive a chandelier / synthesized-BE proposal. Scoped to the
       // CONT pattern — dead for baseline/CREV/other sleeves.
+      // [SB-TMF] Same permanent suppression for the transition mean-fade: TMF
+      // banks the full position at the near target with NO SL ratchet at all
+      // (no runner) — a chandelier proposing from lows far below would clamp to
+      // an at-market stop (the §D pathology). ManageTMFPosition `continue`s
+      // before this call is reached; this is the belt-and-suspenders guard.
+      // Scoped to the TMF pattern — dead for baseline/CREV/CONT/other sleeves.
       if(pos.is_sleeve && (pos.pattern_type == PATTERN_CREV_FADE ||
-                           pos.pattern_type == PATTERN_CONT_SHORT))
+                           pos.pattern_type == PATTERN_CONT_SHORT ||
+                           pos.pattern_type == PATTERN_TMF_FADE))
          return;
 
       bool state_changed = false;

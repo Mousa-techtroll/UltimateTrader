@@ -70,3 +70,9 @@
 
 ## Sequencing of record
 SB-0.1 (sleeve) → SB-1.1 (offline shadow → approval) → SB-0.3 (validator, sleeve-scoped) + SB-0.2 (ledger columns) → SB-1.2 (CREV, first sleeve arm) → SB-2.1 → SB-2.2. One engine measured at a time; each on its own binary per one-change-per-binary; the sleeve master + all engines default-off forever in source.
+
+## SHORT-ONLY MODE + TMF (2026-07-11) — the resolution
+- [x] Short-only mode (`InpShortOnlyMode`) implemented, identity-exact, zero long fills. Short-only baseline: current short book alone +$3,034 / PF 1.16 / EqDD 10.82%.
+- [x] Gate-value study (22y, owner-directed) — OVERTURNED the gauntlet: over-ext/room≥1.2/lower-high/volume/session all DESTROY value (neg lift every era); real gates = close<EMA50 + close<EMA200 + D1-death-cross + not-Friday; the EXIT (winner-clip) was the true ceiling.
+- [x] TMF v2 rebuilt from the study (minimal gates + full-1R exit) + validated over 2004-2026: **regime-correct bear-insurance** — +15.27R/22y, positive in 2011-15 + 2016-18 bears, benches cleanly in bulls, death-cross essential. Thin/not-significant (t≈0.8); 2008 spike-crash a miss. Default-off.
+- [ ] DISPOSITION PENDING (owner): adopt TMF v2 default-off as bear-insurance (+ free sev4 dose re-order) & re-integrate into the dual book as an isolated sleeve, vs iterate further.
