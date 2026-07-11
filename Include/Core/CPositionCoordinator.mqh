@@ -119,6 +119,9 @@ private:
    double   m_sleeve_hwm;             // high-water mark of the cum P&L ($)
    double   m_sleeve_daily_loss;      // realized sleeve loss today ($, >= 0)
    datetime m_sleeve_day_anchor;      // server day the daily counter belongs to
+   // SB-1.2 CREV: iTime(H1,1) at the close of the last CREV position that
+   // finished R<0. Feeds the plugin's post-loss cooldown (§9). Runtime-only.
+   datetime m_crev_last_loss_bar;
 
    //+------------------------------------------------------------------+
    //| CRC32 lookup table (generated once, used for checksums)          |
@@ -1019,6 +1022,7 @@ public:
       m_sleeve_hwm = 0.0;
       m_sleeve_daily_loss = 0.0;
       m_sleeve_day_anchor = 0;
+      m_crev_last_loss_bar = 0;
    }
 
    //+------------------------------------------------------------------+
@@ -1209,6 +1213,9 @@ public:
    double GetSleeveRealizedPnL() { return m_sleeve_realized_pnl; }
    double GetSleeveHWM()         { return m_sleeve_hwm; }
    double GetSleeveDailyLoss()   { CheckSleeveDayReset(); return m_sleeve_daily_loss; }
+   // SB-1.2 CREV: bar time of the last losing CREV close (0 = none). Read by
+   // the OnTick sleeve driver to feed the CREV post-loss cooldown (§9).
+   datetime GetCrevLastLossBar() { return m_crev_last_loss_bar; }
 
    //+------------------------------------------------------------------+
    //| Total open risk as % of equity (fix 4.2 exposure cap)            |
@@ -2027,6 +2034,23 @@ public:
          {
             // Position no longer exists (closed by SL/TP)
             HandleClosedPosition(i);
+            continue;
+         }
+
+         // [SB-1.2 CREV] Pattern-scoped exit OWNER. CREV positions get CREV's
+         // own price-based partials (50/30), the lower-high structure trail,
+         // and the 48h max-hold — and are EXCLUDED from the normal R-ladder,
+         // early-invalidation/stall systems, chandelier trailing and generic
+         // exit plugins (the `continue` below). Chandelier suppression is thus
+         // PERMANENT for CREV: ManageCrevPosition owns the only SL ratchet
+         // (the LH trail) and ApplyTrailingPlugins is never reached (a
+         // belt-and-suspenders guard there returns early too). Scoped to
+         // is_sleeve CREV positions, so baseline + other sleeve families are
+         // byte-identical; the whole branch is dead when InpEnableShortSleeve
+         // is OFF (no CREV position can exist).
+         if(m_positions[i].is_sleeve && m_positions[i].pattern_type == PATTERN_CREV_FADE)
+         {
+            ManageCrevPosition(i);
             continue;
          }
 
@@ -3054,6 +3078,11 @@ private:
       if(m_positions[index].is_sleeve)
       {
          RecordSleeveClose(total_trade_pnl);
+         // SB-1.2 CREV §9: stamp the post-loss cooldown anchor when a CREV
+         // position finished R<0 (total realized P&L is the exact R<0 proxy —
+         // risk>0). Scoped to family "CREV"; no other family/baseline touched.
+         if(m_positions[index].sleeve_family == "CREV" && total_trade_pnl < 0.0)
+            m_crev_last_loss_bar = iTime(_Symbol, PERIOD_H1, 1);
          Print("[Sleeve] CLOSE ticket=", m_positions[index].ticket,
                " family=", m_positions[index].sleeve_family,
                " pnl=", DoubleToString(total_trade_pnl, 2),
@@ -3153,8 +3182,200 @@ private:
    //+------------------------------------------------------------------+
    //| Apply all registered trailing stop plugins to a position          |
    //+------------------------------------------------------------------+
+   //+------------------------------------------------------------------+
+   //| [SB-1.2 CREV] Full CREV lifecycle manager (spec §8). Owns:        |
+   //|   - MAE/MFE tracking                                               |
+   //|   - price-based partials: 50% at TP1_price (near), 30% at         |
+   //|     TP2_price (far); runner = remaining 20%                        |
+   //|   - lower-high structure trail (the ONLY SL ratchet; down-only)   |
+   //|   - 48h max-hold force-close                                       |
+   //| The signal stamped position.tp2 = TP1_price (near) and            |
+   //| position.tp1 = TP2_price (far, also the broker TP). Broker TP is  |
+   //| cleared at the TP1 partial so the runner rides the LH trail with  |
+   //| no fixed target (§8). Called ONLY for is_sleeve CREV positions.   |
+   //+------------------------------------------------------------------+
+   void ManageCrevPosition(int i)
+   {
+      double cur_price = PositionGetDouble(POSITION_PRICE_CURRENT);   // ASK for a short
+      double min_lot   = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+      double spread_price = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
+
+      // Keep bars_since_entry current (CSV telemetry) — the normal updater at
+      // the tail of the loop is skipped for CREV.
+      datetime cur_bar = iTime(_Symbol, PERIOD_H1, 0);
+      int bars_open = 0;
+      if(m_positions[i].bar_time_at_entry > 0 && cur_bar > m_positions[i].bar_time_at_entry)
+         bars_open = (int)((cur_bar - m_positions[i].bar_time_at_entry) / PeriodSeconds(PERIOD_H1));
+      m_positions[i].bars_since_entry = bars_open;
+
+      // MAE/MFE (SHORT).
+      {
+         double adverse   = cur_price - m_positions[i].entry_price;
+         double favorable = m_positions[i].entry_price - cur_price;
+         if(adverse   > 0 && adverse   > m_positions[i].mae) m_positions[i].mae = adverse;
+         if(favorable > 0 && favorable > m_positions[i].mfe) m_positions[i].mfe = favorable;
+      }
+
+      // §8 Max-hold: force-close all remaining lots after 48 closed H1 bars.
+      if(bars_open >= 48)   // MAXHOLD_H
+      {
+         StampExitRequest(m_positions[i], "CREV_MAXHOLD", StringFormat("bars=%d", bars_open));
+         ClosePosition(m_positions[i].ticket, "CREV_MAXHOLD");
+         return;
+      }
+
+      double crev_tp1_price = m_positions[i].tp2;   // NEAR target (TP1_price) -> 50%
+      double crev_tp2_price = m_positions[i].tp1;   // FAR target  (TP2_price) -> 30% (broker TP)
+
+      // --- TP1 partial: 50% of original at the NEAR target ---
+      if(!m_positions[i].tp0_closed && crev_tp1_price > 0.0 && cur_price <= crev_tp1_price)
+      {
+         double close_lots = NormalizeLots(m_positions[i].original_lots * 0.50, _Symbol);
+         if(close_lots < min_lot) close_lots = min_lot;
+         if(close_lots > m_positions[i].remaining_lots - min_lot)
+            close_lots = m_positions[i].remaining_lots - min_lot;
+         if(close_lots >= min_lot)
+         {
+            CTrade tp1_trade;
+            tp1_trade.SetExpertMagicNumber(m_magic_number);
+            tp1_trade.SetDeviationInPoints(InpSlippage);
+            if(tp1_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
+            {
+               double p_profit = 0.0, p_price = cur_price; datetime p_time = TimeCurrent();
+               double p_vol = close_lots; ulong p_ticket = 0;
+               GetLatestExitDeal(m_positions[i].ticket, p_ticket, p_profit, p_price, p_time, p_vol);
+               m_positions[i].tp0_closed = true;
+               m_positions[i].tp0_lots = close_lots;
+               m_positions[i].tp0_profit = p_profit;
+               m_positions[i].tp0_time = p_time;
+               m_positions[i].remaining_lots -= close_lots;
+               m_positions[i].stage = STAGE_TP0_HIT;
+               m_positions[i].stage_label = "CREV_TP1";
+               RegisterPartialClose(m_positions[i], "TP0_PARTIAL", "CREV_TP1",
+                                    close_lots, p_profit, p_price, p_time);
+               // Clear the broker TP so the runner rides the LH trail (§8: the
+               // runner has no fixed target). Keep the (ratcheting) SL.
+               tp1_trade.PositionModify(m_positions[i].ticket, m_positions[i].stop_loss, 0.0);
+               LogPrint("[CREV_TP1] 50% close ticket=", m_positions[i].ticket,
+                        " @ ", DoubleToString(cur_price, _Digits),
+                        " | remaining=", DoubleToString(m_positions[i].remaining_lots, 2),
+                        " | broker TP cleared (runner rides LH trail)");
+               SaveOnStateChange();
+            }
+         }
+      }
+      // --- TP2 partial: 30% of original at the FAR target ---
+      else if(m_positions[i].tp0_closed && !m_positions[i].tp1_closed &&
+              crev_tp2_price > 0.0 && cur_price <= crev_tp2_price)
+      {
+         double close_lots = NormalizeLots(m_positions[i].original_lots * 0.30, _Symbol);
+         if(close_lots < min_lot) close_lots = min_lot;
+         if(close_lots > m_positions[i].remaining_lots - min_lot)
+            close_lots = m_positions[i].remaining_lots - min_lot;
+         if(close_lots >= min_lot)
+         {
+            CTrade tp2_trade;
+            tp2_trade.SetExpertMagicNumber(m_magic_number);
+            tp2_trade.SetDeviationInPoints(InpSlippage);
+            if(tp2_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
+            {
+               double p_profit = 0.0, p_price = cur_price; datetime p_time = TimeCurrent();
+               double p_vol = close_lots; ulong p_ticket = 0;
+               GetLatestExitDeal(m_positions[i].ticket, p_ticket, p_profit, p_price, p_time, p_vol);
+               m_positions[i].tp1_closed = true;
+               m_positions[i].tp1_lots = close_lots;
+               m_positions[i].tp1_profit = p_profit;
+               m_positions[i].tp1_time = p_time;
+               m_positions[i].remaining_lots -= close_lots;
+               m_positions[i].stage = STAGE_TP1_HIT;
+               m_positions[i].stage_label = "CREV_TP2";
+               RegisterPartialClose(m_positions[i], "TP1_PARTIAL", "CREV_TP2",
+                                    close_lots, p_profit, p_price, p_time);
+               LogPrint("[CREV_TP2] 30% close ticket=", m_positions[i].ticket,
+                        " @ ", DoubleToString(cur_price, _Digits),
+                        " | remaining(runner)=", DoubleToString(m_positions[i].remaining_lots, 2));
+               SaveOnStateChange();
+            }
+         }
+      }
+
+      // --- Lower-high structure trail (§8): the ONLY SL ratchet, down-only ---
+      double atr = 0.0;
+      {
+         double atr_buf[]; ArraySetAsSeries(atr_buf, true);
+         int atr_h = iATR(_Symbol, PERIOD_H1, 14);   // shared handle (refcounted)
+         if(atr_h != INVALID_HANDLE && CopyBuffer(atr_h, 0, 1, 1, atr_buf) > 0)
+            atr = atr_buf[0];   // closed bar [1]
+      }
+      double p_new = 0.0, p_prev = 0.0;
+      if(atr > 0.0 && FindTwoRecentPivotHighs(p_new, p_prev) && p_new < p_prev)
+      {
+         double candidateSL = p_new + 0.5 * atr + spread_price;   // TRAIL_BUF = 0.5 (§8)
+         // SHORT SL only ever ratchets DOWN (tightens), and must stay above the
+         // current price to be a valid stop.
+         if(candidateSL < m_positions[i].stop_loss && candidateSL > cur_price)
+         {
+            double old_sl = m_positions[i].stop_loss;
+            CTrade trail_trade;
+            trail_trade.SetExpertMagicNumber(m_magic_number);
+            trail_trade.SetDeviationInPoints(InpSlippage);
+            double cur_tp = PositionGetDouble(POSITION_TP);
+            if(trail_trade.PositionModify(m_positions[i].ticket, candidateSL, cur_tp))
+            {
+               m_positions[i].stop_loss = candidateSL;
+               m_positions[i].trailing_internal_updates++;
+               m_positions[i].trailing_broker_updates++;
+               m_positions[i].last_trailing_time = TimeCurrent();
+               m_positions[i].last_trailing_from_sl = old_sl;
+               m_positions[i].last_trailing_to_sl = candidateSL;
+               m_positions[i].last_trailing_reason = "CREV_LH_TRAIL";
+               LogPrint("[CREV_LH_TRAIL] ticket=", m_positions[i].ticket,
+                        " SL ", DoubleToString(old_sl, _Digits), " -> ",
+                        DoubleToString(candidateSL, _Digits),
+                        " (LH=", DoubleToString(p_new, _Digits), ")");
+               SaveOnStateChange();
+            }
+         }
+      }
+   }
+
+   //+------------------------------------------------------------------+
+   //| [SB-1.2 CREV] The two most-recent confirmed H1 pivot highs (5-bar |
+   //| fractal, index>=3 = closed +2 confirmation). newest = the most    |
+   //| recent, prev = the one before it. Returns false when <2 exist.    |
+   //+------------------------------------------------------------------+
+   bool FindTwoRecentPivotHighs(double &newest, double &prev)
+   {
+      const int need = 30;
+      double H[]; ArraySetAsSeries(H, true);
+      if(CopyHigh(_Symbol, PERIOD_H1, 0, need, H) < need)
+         return false;
+      int found = 0;
+      for(int i = 3; i <= need - 3; i++)
+      {
+         if(H[i] > H[i-1] && H[i] > H[i+1] && H[i] >= H[i-2] && H[i] >= H[i+2])
+         {
+            if(found == 0) { newest = H[i]; found = 1; }
+            else           { prev   = H[i]; return true; }
+         }
+      }
+      return false;
+   }
+
    void ApplyTrailingPlugins(SPosition &pos)
    {
+      // [SB-1.2 CREV] PERMANENT chandelier suppression. A CREV rally-fade sits
+      // near/above the H1 mean at entry, so a chandelier proposing from lows far
+      // below would clamp to an at-market stop seconds after entry (the §D
+      // pathology). CREV's ONLY SL ratchet is the lower-high structure trail in
+      // ManageCrevPosition; it must NEVER receive a chandelier (or synthesized
+      // BE) proposal. Unlike §D's gate-then-release latch, this NEVER unlocks.
+      // In practice CREV never reaches here (the management loop owns it and
+      // `continue`s before this call); this is a defensive, permanent guard for
+      // any other call path. Scoped to CREV — dead for baseline/other sleeves.
+      if(pos.is_sleeve && pos.pattern_type == PATTERN_CREV_FADE)
+         return;
+
       bool state_changed = false;
 
       // Dynamic trailing: adapt Chandelier multiplier to LIVE regime (not entry-locked)

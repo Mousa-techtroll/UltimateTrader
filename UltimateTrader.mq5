@@ -57,6 +57,7 @@
 #include "Include/MarketAnalysis/CRangeBoxDetector.mqh"
 #include "Include/EntryPlugins/CVolatilityBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CCrashBreakoutEntry.mqh"
+#include "Include/EntryPlugins/CCrevEntry.mqh"
 #include "Include/EntryPlugins/CFileEntry.mqh"
 #include "Include/EntryPlugins/CDisplacementEntry.mqh"
 #include "Include/EntryPlugins/CSessionBreakoutEntry.mqh"
@@ -144,6 +145,7 @@ CFailedBreakReversal   *g_failedBreakRev     = NULL;
 CRangeBoxDetector      *g_rangeBoxDetector   = NULL;
 CVolatilityBreakoutEntry *g_volBreakoutEntry = NULL;
 CCrashBreakoutEntry    *g_crashEntry         = NULL;
+CCrevEntry             *g_crevEntry          = NULL;   // SB-1.2 CREV sleeve engine (NULL unless sleeve+CREV masters ON)
 CFileEntry             *g_fileEntry          = NULL;
 CDisplacementEntry     *g_displacementEntry  = NULL;
 CSessionBreakoutEntry  *g_sessionBreakout    = NULL;
@@ -862,6 +864,23 @@ int OnInit()
       InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod,
       InpCrashTPExtension, InpCrashRegimeGate);
    RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
+
+   // SB-1.2 CREV (experimental SHORT sleeve engine). Created + initialized ONLY
+   // when BOTH masters are ON — g_crevEntry stays NULL otherwise, so the OnTick
+   // sleeve driver is dead and the build is byte-identical to baseline. NOT a
+   // baseline entry plugin: it is NEVER registered via RegisterEntryPlugin (the
+   // signal orchestrator must never rank it into the baseline path). It is driven
+   // exclusively by the sleeve gateway in OnTick.
+   if(InpEnableShortSleeve && InpEnableCREV)
+   {
+      g_crevEntry = new CCrevEntry(GetPointer(g_marketContext));
+      if(g_crevEntry != NULL && !g_crevEntry.Initialize())
+      {
+         Print("[Init] FAILED to initialize CREV sleeve engine — disabling");
+         delete g_crevEntry;
+         g_crevEntry = NULL;
+      }
+   }
 
    // File-based signals (if enabled)
    // File signals ALWAYS run independently (never through orchestrator).
@@ -1608,6 +1627,7 @@ void OnDeinit(const int reason)
    if(g_rangeBoxDetector != NULL)  { g_rangeBoxDetector.Deinit(); delete g_rangeBoxDetector; }
    if(g_volBreakoutEntry != NULL)  { g_volBreakoutEntry.Deinitialize(); delete g_volBreakoutEntry; }
    if(g_crashEntry != NULL)        { g_crashEntry.Deinitialize(); delete g_crashEntry; }
+   if(g_crevEntry != NULL)         { g_crevEntry.Deinitialize(); delete g_crevEntry; g_crevEntry = NULL; }
    if(g_fileEntry != NULL)         { g_fileEntry.Deinitialize(); delete g_fileEntry; }
    if(g_displacementEntry != NULL) { g_displacementEntry.Deinitialize(); delete g_displacementEntry; }
    if(g_sessionBreakout != NULL)   { g_sessionBreakout.Deinitialize(); delete g_sessionBreakout; }
@@ -2570,6 +2590,30 @@ void OnTick()
          }
       }
       } // end if(!friday_entry_blocked) — Sprint 3D + ACTION-5 hour gate
+
+      //=== [SB-1.2 CREV] EXPERIMENTAL SHORT-SLEEVE ENTRY DRIVER (new H1 bar) ===
+      // Spec §12b. Runs AFTER g_stateManager.UpdateMarketState() (bear-state
+      // ledger advanced) and AFTER the baseline entry logic (baseline slot
+      // counts current). Routes EXCLUSIVELY through the SB-0.1 sleeve gateway —
+      // never the baseline entry path. The gateway owns max-1 / slot-reserve /
+      // risk / DD / halts (CREV supplies only the signal + family + dose).
+      // Dead unless BOTH masters ON and the engine exists (identity by
+      // construction). Deliberately OUTSIDE the baseline friday/halt/budget
+      // gates: the sleeve is independent of the baseline daily-trade budget
+      // (gateway header), and its own account-halt backstop still applies.
+      if(InpEnableShortSleeve && InpEnableCREV && g_crevEntry != NULL)
+      {
+         // §9 post-loss cooldown anchor (coordinator stamps CREV losses).
+         g_crevEntry.SetLastLossBar(g_posCoordinator.GetCrevLastLossBar());
+
+         EntrySignal crevSig = g_crevEntry.CheckForEntrySignal();   // closed-bar; <=1 signal
+         if(crevSig.valid)
+         {
+            SPosition crevPos = g_tradeOrchestrator.ExecuteSleeveSignal(crevSig, "CREV");
+            if(crevPos.ticket > 0)
+               g_crevEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §9 stamp faded-high + last-entry bar
+         }
+      }
    }
 
    //=== ADOPT UNTRACKED BROKER POSITIONS (every tick) ===

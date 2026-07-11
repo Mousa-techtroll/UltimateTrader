@@ -105,7 +105,13 @@ enum ENUM_PATTERN_TYPE
 
    // S3/S6 Range Structure patterns (AGRE v2)
    PATTERN_RANGE_EDGE_FADE,        // S3: Validated range box edge sweep-and-reclaim
-   PATTERN_FAILED_BREAK_REVERSAL   // S6: Failed breakout spike-and-snap reversal
+   PATTERN_FAILED_BREAK_REVERSAL,  // S6: Failed breakout spike-and-snap reversal
+
+   // SB-1.2 experimental short sleeve. Appended at the END so no existing
+   // ordinal shifts (PersistedPosition.pattern_type serializes as an int).
+   // Distinct from PATTERN_CRASH_BREAKOUT on purpose — reusing it would trip
+   // the §D InpCrashTrailSuppress branch and pollute crash telemetry.
+   PATTERN_CREV_FADE               // CREV correction-state rally-fade short (sleeve)
 };
 
 //+------------------------------------------------------------------+
@@ -367,6 +373,31 @@ ENUM_BEAR_STATE StringToBearState(string s)
    if(s == "BEAR_TRANSITION")     return BEAR_STATE_BEAR_TRANSITION;
    if(s == "BEAR_TREND")          return BEAR_STATE_BEAR_TREND;
    return BEAR_STATE_BULL_TREND;
+}
+
+//+------------------------------------------------------------------+
+//| SB-1.2 CREV: STATIC severity of a bear-state label (owner AMENDED |
+//| gate — AB_TEST_LOG "SB-1.2 CREV gate AMENDED", 2026-07-11). The   |
+//| CREV state gate is severity >= 2 (= BEAR_FAMILY, includes         |
+//| BEAR_RALLY), NOT the spec's original 3-label set. This map is the |
+//| SEVERITY table in sb11_state_model.py verbatim — a pure function  |
+//| of the label, so NO ledger regeneration is needed. DECISION-FREE  |
+//| for baseline: only CREV (behind InpEnableCREV) reads it.          |
+//+------------------------------------------------------------------+
+int BearStateSeverity(ENUM_BEAR_STATE s)
+{
+   switch(s)
+   {
+      case BEAR_STATE_BULL_TREND:          return 0;
+      case BEAR_STATE_RANGE:               return 0;
+      case BEAR_STATE_BULL_PULLBACK:       return 1;
+      case BEAR_STATE_VOLATILE_TRANSITION: return 1;
+      case BEAR_STATE_ACTIVE_CORRECTION:   return 2;
+      case BEAR_STATE_BEAR_RALLY:          return 2;
+      case BEAR_STATE_BEAR_TRANSITION:     return 3;
+      case BEAR_STATE_BEAR_TREND:          return 4;
+   }
+   return 0;
 }
 
 //+------------------------------------------------------------------+

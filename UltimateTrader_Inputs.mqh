@@ -648,6 +648,18 @@ input double InpSleeveMaxDDPct         = 2.0;   // Sleeve DD cap: realized cum-P
 input double InpSleeveMaxDailyLossPct  = 1.0;   // Daily realized sleeve loss cap (% of balance, server-day rollover) -> halt sleeve entries for the day
 input int    InpSleeveSlotReserve      = 2;     // Sleeve opens ONLY when baseline positions <= InpMaxPositions - this (never consumes baseline's last slots)
 
+//--- Group 50b: SB-1.2 CREV (first sleeve engine — SHORT rally-fade)
+// spec workflowAnalysis/sb12-crev-spec.md (frozen). State gate AMENDED to
+// severity>=2 (AB_TEST_LOG "SB-1.2 CREV gate AMENDED"). Routes ONLY through
+// the sleeve gateway; every CREV path is behind BOTH InpEnableShortSleeve
+// AND InpEnableCREV, so with either OFF the build is byte-identical to
+// baseline. All other CREV constants are compile-time frozen in CCrevEntry
+// (not sweepable levers). FIT run: set InpEnableShortSleeve=true,
+// InpEnableCREV=true, InpSleeveRiskPct=0.35, InpBearStateSource=LEDGER,
+// InpRRGateSymmetric=true (so the FAR structural TP satisfies the RR gate).
+input group "══════ SB-1.2 CREV (SHORT RALLY-FADE) ══════"
+input bool   InpEnableCREV              = false; // Enable CREV sleeve engine (needs InpEnableShortSleeve too; OFF = all CREV paths dead)
+
 input group "══════ SB BEAR-STATE STAMP (SB-1.1, SHADOW) ══════"
 input bool   InpBearStateLedger        = false; // Write per-H1-bar bear-state ledger UltTrader_BearStates_<sym>.csv (decision-free; OFF = no file). Stats-CSV columns always stamped.
 input ENUM_BEAR_STATE_SOURCE InpBearStateSource = BEAR_SRC_COMPUTED; // Bear-state SOURCE: COMPUTED = in-EA CBearStateModel (live); LEDGER = read frozen validated states from InpBearStateFile (CREV). Load failure under LEDGER is FATAL.
