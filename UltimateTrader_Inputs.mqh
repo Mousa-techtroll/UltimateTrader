@@ -650,3 +650,5 @@ input int    InpSleeveSlotReserve      = 2;     // Sleeve opens ONLY when baseli
 
 input group "══════ SB BEAR-STATE STAMP (SB-1.1, SHADOW) ══════"
 input bool   InpBearStateLedger        = false; // Write per-H1-bar bear-state ledger UltTrader_BearStates_<sym>.csv (decision-free; OFF = no file). Stats-CSV columns always stamped.
+input ENUM_BEAR_STATE_SOURCE InpBearStateSource = BEAR_SRC_COMPUTED; // Bear-state SOURCE: COMPUTED = in-EA CBearStateModel (live); LEDGER = read frozen validated states from InpBearStateFile (CREV). Load failure under LEDGER is FATAL.
+input string InpBearStateFile          = "BearStates_XAUUSD.csv"; // LEDGER source filename in terminal Common\Files (used only when InpBearStateSource=LEDGER).

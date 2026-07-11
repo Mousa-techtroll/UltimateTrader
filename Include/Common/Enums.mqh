@@ -350,4 +350,37 @@ string BearStateToString(ENUM_BEAR_STATE s)
    return "BULL_TREND";
 }
 
+//--- Reverse of BearStateToString: canonical label string -> enum.
+//    Used by the ledger SOURCE (CBearStateLedger) to decode the frozen
+//    Python-validated State column. Unknown/blank -> neutral BULL_TREND.
+ENUM_BEAR_STATE StringToBearState(string s)
+{
+   StringTrimLeft(s);
+   StringTrimRight(s);
+   StringToUpper(s);
+   if(s == "BULL_TREND")          return BEAR_STATE_BULL_TREND;
+   if(s == "BULL_PULLBACK")       return BEAR_STATE_BULL_PULLBACK;
+   if(s == "RANGE")               return BEAR_STATE_RANGE;
+   if(s == "VOLATILE_TRANSITION") return BEAR_STATE_VOLATILE_TRANSITION;
+   if(s == "ACTIVE_CORRECTION")   return BEAR_STATE_ACTIVE_CORRECTION;
+   if(s == "BEAR_RALLY")          return BEAR_STATE_BEAR_RALLY;
+   if(s == "BEAR_TRANSITION")     return BEAR_STATE_BEAR_TRANSITION;
+   if(s == "BEAR_TREND")          return BEAR_STATE_BEAR_TREND;
+   return BEAR_STATE_BULL_TREND;
+}
+
+//+------------------------------------------------------------------+
+//| SB-1.1: which SOURCE backs the CMarketContext bear-state getters. |
+//| COMPUTED = the in-EA CBearStateModel (live path, current default);|
+//| LEDGER   = frozen Python-validated states read from a CSV in      |
+//|            Common\Files (CREV experiment: drive off the exact      |
+//|            validated labels, not the ~97.4%-faithful in-EA model). |
+//| The getter INTERFACE is identical; only the backing switches.     |
+//+------------------------------------------------------------------+
+enum ENUM_BEAR_STATE_SOURCE
+{
+   BEAR_SRC_COMPUTED = 0,   // in-EA CBearStateModel (default / live)
+   BEAR_SRC_LEDGER   = 1    // CSV of validated states in Common\Files
+};
+
 #endif // ULTIMATETRADER_ENUMS_MQH

@@ -653,8 +653,9 @@ void EmitCapabilityManifest()
 
    // --- SB-1.1 shadow bear-state stamp (decision-free census) ---
    ManifestRow(h, "STATE", "BearStateModel", "ENABLED (SHADOW)",
-               "model=SB-1.1 v1.00 | ledger=" + (InpBearStateLedger ? "ON" : "OFF"),
-               "CBearStateModel — Stats-CSV BearState/BearScore/BearStateAgeH4 + UltTrader_BearStates_<sym>.csv; ZERO decision-path readers");
+               "model=SB-1.1 v1.00 | source=" + (InpBearStateSource == BEAR_SRC_LEDGER ? "LEDGER" : "COMPUTED") +
+               " | ledger=" + (InpBearStateLedger ? "ON" : "OFF"),
+               "Bear-state SOURCE feeds Stats-CSV BearState/BearScore/BearStateAgeH4 + UltTrader_BearStates_<sym>.csv; ZERO decision-path readers");
 
    // --- Point-scale anchor + computed scale ---
    ManifestRow(h, "SCALE", "InpScaleAnchorPrice", DoubleToString(InpScaleAnchorPrice, 2),

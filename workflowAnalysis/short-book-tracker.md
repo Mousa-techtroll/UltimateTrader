@@ -32,7 +32,7 @@
 ## Phase 1 — Correction-state and bear-event detection
 
 ### SB-1.1 — Correction & Bear Event state model (CRITICAL)
-- [ ] 🟡 **OFFLINE SHADOW COMPLETE — all 4 registered clauses PASS (first frozen set, revision unused); awaiting owner approval for the EA-side shadow stamp + CREV use**
+- [x] ✅ **DONE (offline validated + EA-side ledger-as-data 100% verified)** — was: **OFFLINE SHADOW COMPLETE — all 4 registered clauses PASS (first frozen set, revision unused); awaiting owner approval for the EA-side shadow stamp + CREV use**
   - [x] Frozen rule set (sb11-state-model.md, MQL5-implementable) + deterministic prototype + 44,437-bar state ledger (sb11_states.csv)
   - [x] Detection lead vs D1 cross: E5 134d / E8 110d / E4 66d earlier
   - [x] 2024–25 false-positive audit: 1 genuine 3-day mislabel (3.6% bear-label share of bull bars)
@@ -41,7 +41,7 @@
   - [x] Owner approved 2026-07-11 (dose ruling: spec as written — reduced risk BEAR_TRANSITION, full BEAR_TREND; measured +0.403R inversion recorded, not acted pre-evidence)
   - [~] EA-side in-binary state model built (CBearStateModel, decision-free, identity exact) but reproduces Python only ~97.4% (mature) — per-feature scoring drift + 2019 warmup; kept as the LIVE-PORT SEED (WIP, commit 91c6043)
   - [x] **Architecture decision (owner 2026-07-11): LEDGER-AS-DATA** — CREV backtest reads the frozen validated `sb11_states.csv` (staged as Common/Files/BearStates_XAUUSD.csv) as a tester file (exact by construction, news-filter hybrid precedent); in-EA model fidelity is a separate live-port task verified on full history. Removes state fidelity as a CREV confound.
-  - [ ] Ledger-source reader (InpBearStateSource=LEDGER, strict no-look-ahead closed-bar lookup) — in implementation → then 100%-match verification → unlocks SB-1.2
+  - [x] ✅ Ledger-source reader done + VERIFIED 100.0000% (44,266/44,266 state+full-row vs sb11_states.csv); both identity legs exact. **SB-1.1 DONE — CREV consumes exact validated states.**
 - 8 states (BULL_TREND, BULL_PULLBACK, ACTIVE_CORRECTION, BEAR_TRANSITION, BEAR_TREND, BEAR_RALLY, VOLATILE_TRANSITION, RANGE); interpretable feature set (D1/H4 EMA structure+slope, H4 LH/LL sequence, support breaks + failed reclaims, distance from swing high, multi-day RoC, ATR expansion, consecutive bear closes, % closes below H4 EMAs, recovery strength, ADX); transparent state score + transition logic; hysteresis (min H4 bars, separate entry/exit thresholds, state age, transition confidence).
 - Deployment: SHADOW ONLY first — offline Python prototype on the H1/H4/D1 rates, validated against the hand-labeled episode table (market-structure doc E1–E8), then long/short results measured by state, then (only if approved) an EA-side shadow stamp (decision-free column, identity leg).
 - **Acceptance (registered):** 2023 + 2026H1 corrections detected materially earlier than the D1 death cross (reference: cross printed 2021-03-04 for E2, 11 days after 2026H1 ended for E8); 2024–25 bull pullbacks NOT systematically labeled bear; transitions stable enough to trade; zero live decision changes during shadow.

@@ -14,7 +14,8 @@
 #include "CVolatilityRegimeManager.mqh"
 #include "CMomentumFilter.mqh"
 #include "CNewsGate.mqh"   // NEWS FILTER: shared event engine (IsDataDay delegates when wired)
-#include "CBearStateModel.mqh"   // SB-1.1 shadow bear-state stamp (decision-free)
+#include "CBearStateModel.mqh"   // SB-1.1 shadow bear-state stamp (computed, decision-free)
+#include "CBearStateLedger.mqh"  // SB-1.1 LEDGER source: frozen validated states (decision-free)
 
 //+------------------------------------------------------------------+
 //| CMarketContext - Concrete implementation of IMarketContext        |
@@ -114,6 +115,13 @@ private:
    //    (Stats-CSV columns + ledger + manifest). DECISION-FREE.
    CBearStateModel          *m_bear_state_model;
 
+   //--- SB-1.1 LEDGER source (owned, created ONLY when source=LEDGER). Serves
+   //    the frozen Python-validated states behind the SAME getters. The source
+   //    switch is entirely inside the getters; the computed model still runs
+   //    (it is the live-port seed) but under LEDGER nothing consumes it.
+   CBearStateLedger         *m_bear_state_ledger;
+   ENUM_BEAR_STATE_SOURCE    m_bear_source;
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -200,6 +208,8 @@ public:
       m_news_calendar_available = false;  // Phase 3.6: probed in Init()
       m_news_gate              = NULL;    // NEWS FILTER: wired by OnInit via SetNewsGate()
       m_bear_state_model       = NULL;    // SB-1.1: created in Init()
+      m_bear_state_ledger      = NULL;    // SB-1.1: created in Init() only when source=LEDGER
+      m_bear_source            = BEAR_SRC_COMPUTED; // SB-1.1: default = in-EA computed model
    }
 
    //+------------------------------------------------------------------+
@@ -313,8 +323,24 @@ public:
       ProbeNewsCalendar();
 
       //--- SB-1.1: shadow bear-state model (decision-free). Never fails the
-      //    init — a NULL model just yields the interface defaults.
+      //    init — a NULL model just yields the interface defaults. It stays
+      //    the live-port seed and keeps running regardless of the source.
       m_bear_state_model = new CBearStateModel();
+
+      //--- SB-1.1 LEDGER source: when selected, load the frozen validated
+      //    states now. Load failure is FATAL (return false -> INIT_FAILED):
+      //    NEVER silently fall back to COMPUTED — that would confound CREV.
+      m_bear_source = (ENUM_BEAR_STATE_SOURCE)InpBearStateSource;
+      if(m_bear_source == BEAR_SRC_LEDGER)
+      {
+         m_bear_state_ledger = new CBearStateLedger();
+         if(m_bear_state_ledger == NULL || !m_bear_state_ledger.Initialize(InpBearStateFile))
+         {
+            Print("[BearState] FATAL: source=LEDGER but '", InpBearStateFile,
+                  "' failed to load — refusing silent fallback to COMPUTED");
+            return false;
+         }
+      }
 
       m_initialized = success;
 
@@ -373,9 +399,14 @@ public:
       //--- CEG Phase-0: track regime-classification changes (decision-free)
       UpdateRegimeAge();
 
-      //--- SB-1.1: refresh the shadow bear-state stamp (decision-free)
+      //--- SB-1.1: refresh the shadow bear-state stamp (decision-free).
+      //    The computed model always runs (live-port seed / its own CSV
+      //    columns); the ledger source runs too when selected, and the
+      //    getters below pick which one the Stats-CSV/ledger consume.
       if(m_bear_state_model != NULL)
          m_bear_state_model.Update();
+      if(m_bear_state_ledger != NULL)
+         m_bear_state_ledger.Update();
 
       m_last_h1_bar = current_h1;
    }
@@ -399,7 +430,8 @@ public:
          m_handle_ma200_h1 = INVALID_HANDLE;
       }
 
-      if(m_bear_state_model != NULL) { delete m_bear_state_model; m_bear_state_model = NULL; }
+      if(m_bear_state_model != NULL)  { delete m_bear_state_model;  m_bear_state_model = NULL; }
+      if(m_bear_state_ledger != NULL) { delete m_bear_state_ledger; m_bear_state_ledger = NULL; }
 
       m_initialized = false;
       LogPrint("CMarketContext: All components deinitialized");
@@ -787,22 +819,43 @@ public:
    }
 
    // SB-1.1 shadow bear-state stamp (DECISION-FREE — CSV/ledger/manifest only).
+   //    Interface is identical for both sources; only the backing switches.
+   //    LEDGER serves the frozen validated states; COMPUTED (default) serves
+   //    the in-EA CBearStateModel exactly as before.
    virtual ENUM_BEAR_STATE GetBearState()
    {
+      if(m_bear_source == BEAR_SRC_LEDGER && m_bear_state_ledger != NULL)
+         return m_bear_state_ledger.GetState();
       return (m_bear_state_model != NULL) ? m_bear_state_model.GetState() : BEAR_STATE_BULL_TREND;
    }
    virtual int GetBearScore()
    {
+      if(m_bear_source == BEAR_SRC_LEDGER && m_bear_state_ledger != NULL)
+         return m_bear_state_ledger.GetScore();
       return (m_bear_state_model != NULL) ? m_bear_state_model.GetScore() : 0;
    }
    virtual int GetBearStateAgeH4()
    {
+      if(m_bear_source == BEAR_SRC_LEDGER && m_bear_state_ledger != NULL)
+         return m_bear_state_ledger.GetAgeH4();
       return (m_bear_state_model != NULL) ? m_bear_state_model.GetAgeH4() : 0;
    }
-   // SB-1.1: enable the per-bar shadow ledger (wired by OnInit from InpBearStateLedger).
+   // SB-1.1: enable the per-bar shadow ledger dump (wired by OnInit from
+   //    InpBearStateLedger). Route the dump to the ACTIVE source and mute the
+   //    inactive one so exactly ONE writer owns UltTrader_BearStates_<sym>.csv
+   //    — under LEDGER the dump then reflects the ledger lookup (diffable vs
+   //    the source CSV); under COMPUTED it is byte-identical to before.
    void SetBearStateLedger(bool en)
    {
-      if(m_bear_state_model != NULL) m_bear_state_model.SetLedgerEnabled(en);
+      if(m_bear_source == BEAR_SRC_LEDGER)
+      {
+         if(m_bear_state_ledger != NULL) m_bear_state_ledger.SetLedgerEnabled(en);
+         if(m_bear_state_model  != NULL) m_bear_state_model.SetLedgerEnabled(false);
+      }
+      else
+      {
+         if(m_bear_state_model  != NULL) m_bear_state_model.SetLedgerEnabled(en);
+      }
    }
 
    virtual double GetCurrentRSI()
