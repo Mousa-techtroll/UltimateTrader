@@ -63,6 +63,7 @@ set_kv InpRRGateSymmetric true   # ADOPTED 2026-07-11 (SF-1, config of record)
 set_kv InpEnableShortSleeve false
 set_kv InpBearStateLedger false
 set_kv InpBearStateSource 0
+set_kv InpShortOnlyMode false
 set_kv InpEnableShortSleeve false
 set_kv InpEnableCREV false
 set_kv InpSleeveRiskPct 0.30

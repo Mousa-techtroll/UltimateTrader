@@ -613,6 +613,12 @@ public:
          if(sig_type == SIGNAL_NONE)
             continue;
 
+         // SHORT-ONLY DEV MODE (cosmetic): skip long candidates so they don't
+         // consume ranking/confirmation cycles. Optimization only — the universal
+         // gate in CTradeOrchestrator::ExecuteSignal is the guarantee. Dead when OFF.
+         if(InpShortOnlyMode && sig_type == SIGNAL_LONG)
+            continue;
+
          signal.signal_id = BuildSignalId(signal.plugin_name, sig_type);
          signal.audit_origin = signal.requiresConfirmation ? "PENDING" : "IMMEDIATE";
          signal.base_risk_pct = 0;

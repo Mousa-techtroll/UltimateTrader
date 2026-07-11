@@ -222,6 +222,16 @@ public:
 
       ENUM_SIGNAL_TYPE sig_type = (signal.action == "BUY" || signal.action == "buy") ?
                                    SIGNAL_LONG : SIGNAL_SHORT;
+
+      // SHORT-ONLY DEV MODE: single universal long-disable choke point. Every
+      // execution path (baseline winner, confirmed-pending via ProcessConfirmedSignal,
+      // file signals, probation) funnels through ExecuteSignal, so this one gate
+      // guarantees zero long fills regardless of source. Returns the empty/failed
+      // SPosition (ticket==0) exactly like the other early rejects below. Dead when
+      // OFF (default) => baseline byte-identical.
+      if(InpShortOnlyMode && sig_type == SIGNAL_LONG)
+         return position;
+
       double requested_risk_pct = signal.riskPercent;
       double adjusted_risk_pct = requested_risk_pct;
       double final_risk_pct = requested_risk_pct;

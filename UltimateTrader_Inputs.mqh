@@ -677,3 +677,12 @@ input group "══════ SB BEAR-STATE STAMP (SB-1.1, SHADOW) ═══�
 input bool   InpBearStateLedger        = false; // Write per-H1-bar bear-state ledger UltTrader_BearStates_<sym>.csv (decision-free; OFF = no file). Stats-CSV columns always stamped.
 input ENUM_BEAR_STATE_SOURCE InpBearStateSource = BEAR_SRC_COMPUTED; // Bear-state SOURCE: COMPUTED = in-EA CBearStateModel (live); LEDGER = read frozen validated states from InpBearStateFile (CREV). Load failure under LEDGER is FATAL.
 input string InpBearStateFile          = "BearStates_XAUUSD.csv"; // LEDGER source filename in terminal Common\Files (used only when InpBearStateSource=LEDGER).
+
+input group "══════ SHORT-ONLY DEV MODE ══════"
+// TEMPORARY maintenance/development mode. When TRUE, disables ALL long entries
+// (every generation + execution path) so short strategies can be developed and
+// measured in isolation on the full risk budget. Default OFF = live dual book
+// untouched (baseline byte-identical). Enforced at the single execution choke
+// point in CTradeOrchestrator::ExecuteSignal; the generation-side skip in
+// CSignalOrchestrator is a cosmetic cycle-saver only.
+input bool   InpShortOnlyMode          = false; // Short-only dev mode: block ALL long entries (OFF = live dual book, baseline-identical)
