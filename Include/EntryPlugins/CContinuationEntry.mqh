@@ -285,22 +285,27 @@ private:
       if(TwoRecentPivotHighs(h4H, CONT_H4_LOOKBACK, SH4, SH4prev) < 2) return;
       if(!(SH4 < SH4prev)) return;                 // rally high not below prior H4 swing high
 
-      //--- §2 H1 impulse -> lower low. IL = most recent confirmed H1 pivot
-      //    low (index>=3); ILprev = the prior one; require IL < ILprev.
+      //--- §3 Retrace / lower high FIRST (v2 anchoring). The structure is
+      //    discovered newest->oldest in series index: LH1 (pullback lower
+      //    high) -> IL (impulse low it bounced from) -> SH0 (pre-impulse
+      //    swing high). LH1 = the MOST-RECENT confirmed H1 pivot high (scan i
+      //    from 3 upward, index>=3 so it is a confirmed fractal).
+      double LH1 = 0.0; int lh1_idx = -1;
+      for(int i = 3; i <= CONT_L_LH; i++)
+         if(IsPivotHigh(h1H, i)) { LH1 = h1H[i]; lh1_idx = i; break; }
+      if(lh1_idx < 0) return;                      // no pullback lower high formed yet
+
+      //--- §2 Impulse low = the confirmed H1 pivot low immediately OLDER than
+      //    LH1 (first pivot low at series index > lh1_idx). This is the low
+      //    the pullback bounced from = the resumption-BOS trigger level.
       int    il_idx = -1;
       double IL = 0.0;
-      for(int i = 3; i <= CONT_L_LH; i++)
+      for(int i = lh1_idx + 1; i <= CONT_L_LH; i++)
          if(IsPivotLow(h1L, i)) { IL = h1L[i]; il_idx = i; break; }
-      if(il_idx < 0) return;                       // no impulse low in window
+      if(il_idx < 0) return;                       // no impulse low older than LH1
 
-      double ILprev = 0.0; bool haveILprev = false;
-      for(int i = il_idx + 1; i <= CONT_L_LH; i++)
-         if(IsPivotLow(h1L, i)) { ILprev = h1L[i]; haveILprev = true; break; }
-      if(!haveILprev)     return;
-      if(!(IL < ILprev))  return;                  // not a lower low -> no impulse
-
-      //--- SH0 = pre-impulse swing high = most recent confirmed H1 pivot
-      //    high OLDER than IL (series index > il_idx).
+      //--- SH0 = pre-impulse swing high = the confirmed H1 pivot high OLDER
+      //    than IL (first pivot high at series index > il_idx).
       double SH0 = 0.0; bool haveSH0 = false;
       for(int i = il_idx + 1; i <= CONT_L_LH; i++)
          if(IsPivotHigh(h1H, i)) { SH0 = h1H[i]; haveSH0 = true; break; }
@@ -308,13 +313,6 @@ private:
 
       double impulse = SH0 - IL;                   // measured impulse (SH0 above IL)
       if(impulse < CONT_X_IMP * atr) return;       // impulse too small -> chop, not a leg
-
-      //--- §3 Retrace / lower high. LH1 = most recent confirmed H1 pivot high
-      //    NEWER than IL (series index < il_idx, index>=3).
-      double LH1 = 0.0; int lh1_idx = -1;
-      for(int i = 3; i < il_idx; i++)
-         if(IsPivotHigh(h1H, i)) { LH1 = h1H[i]; lh1_idx = i; break; }
-      if(lh1_idx < 0) return;                      // no lower high formed yet
 
       //--- §4 Valid lower high: LH1 < SH0 AND retr in [0.382, 0.886] -------
       double retr = (impulse > 0.0) ? (LH1 - IL) / impulse : 0.0;

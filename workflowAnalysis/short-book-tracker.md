@@ -57,11 +57,12 @@
 ## Phase 2 — Genuine bearish continuation
 
 ### SB-2.1 — H4/H1 lower-high continuation engine (VERY HIGH)
-- [~] v1 implemented but STRUCTURAL BUG: 0 fills/7.5y (IL=most-recent-pivot-low leaves no room for a confirmed newer LH1). Continuation thesis UNTESTED. Sleeve validated 6th run. Bug fix = anchor on the impulse leg, not most-recent pivot. Default-off. Original spec:
+- [x] ❌ v1 bug (0 fills) → v2 bug-fixed but STILL STARVED (2 fills, 0 in 2022 bear leg). Over-ext-veto hypothesis refuted (89% of bear bars pass). Starvation = irreducible structure conjunction (same as CREV). Default-off. **SHORT-PARTICIPATION PROGRAM CLOSED measured-hard** — see AB_TEST_LOG 'SB SHORT-PARTICIPATION PROGRAM — CLOSED'. Banked: SF-1 (adopted), sleeve (7 runs isolation-exact), state model (100%). Original spec:
 - [ ] ⬜ — the intended primary professional short strategy. H4 structure (LL + rally below prior swing high + bearish momentum, state-gated) + H1 setup (impulse LL → retrace to EMA21/50/broken support/38–62% → lower high → continuation trigger). **Owner rule of record: bearish candle patterns ONLY as final trigger inside validated structure — never generic bearish Engulfing alone.** Stop above pullback high + spread/structure buffer; TP1 prior low/1R, TP2 next H4 support, runner only while state bearish.
 - Acceptance: positive avg R FIT+CONFIRM; positive in >1 bearish leg; no bull-pullback loss cluster; ≥20–30 fills before production consideration; no single-year majority.
 
 ### SB-2.2 — Breakdown & failed-reclaim engine (HIGH)
+- [x] ❌ NOT PURSUED — program closed measured-hard after 6 engines (CONT/CREV/CRH4/SF-2); nearest cousin breakdown-retest measured PF 0.57. Revisit only with a fundamentally new mechanism (new registration).
 - [ ] ⬜ — NOTE the market-structure agent's a-priori sim measured naive breakdown-retest at PF 0.57 (gold reclaims its levels). The owner's spec differs in the load-bearing detail: entry on FAILED reclaim (reclaim attempted and rejected), not on the retest touch — this is the variant the sim did NOT price. Registered as one entry variant only (first bearish close after failed reclaim); min breakout size vs ATR, volume/momentum, room after costs, not into next support, state ≠ BULL_PULLBACK; per-level cooldown, no repeat entries on the same level.
 - Acceptance: incremental avg R positive; stable across ≥2 bearish periods; no slippage cliff; no duplicate entries per level.
 
