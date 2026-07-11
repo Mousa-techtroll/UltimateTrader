@@ -424,6 +424,9 @@ public:
          // [SB-0.1] sleeve tag columns — appended at the END so existing
          // parsers keep working. Decision-free. Baseline rows stamp 0 / empty.
          AddCsvField(csv_header, "Sleeve"); AddCsvField(csv_header, "SleeveFamily");
+         // [SB-1.1] shadow bear-state stamp — appended at the END. Decision-free.
+         AddCsvField(csv_header, "BearState"); AddCsvField(csv_header, "BearScore");
+         AddCsvField(csv_header, "BearStateAgeH4");
          WriteCsvFields(m_csv_handle, csv_header, false);
          LogPrint("CTradeLogger: CSV file created: ", m_csv_filename);
       }
@@ -732,6 +735,10 @@ public:
       // [SB-0.1] sleeve tag columns (see header)
       AddCsvField(entry_fields, pos.is_sleeve ? "1" : "0");
       AddCsvField(entry_fields, SanitizeCSV(pos.sleeve_family));
+      // [SB-1.1] shadow bear-state stamp columns (see header)
+      AddCsvField(entry_fields, BearStateToString(pos.bear_state));
+      AddCsvField(entry_fields, IntegerToString(pos.bear_score));
+      AddCsvField(entry_fields, IntegerToString(pos.bear_state_age_h4));
       WriteCsvFields(m_csv_handle, entry_fields, true);
 
       LogTradeLifecycleEvent(pos,
@@ -944,6 +951,10 @@ public:
       // [SB-0.1] sleeve tag columns (see header)
       AddCsvField(exit_fields, pos.is_sleeve ? "1" : "0");
       AddCsvField(exit_fields, SanitizeCSV(pos.sleeve_family));
+      // [SB-1.1] shadow bear-state stamp columns (see header)
+      AddCsvField(exit_fields, BearStateToString(pos.bear_state));
+      AddCsvField(exit_fields, IntegerToString(pos.bear_score));
+      AddCsvField(exit_fields, IntegerToString(pos.bear_state_age_h4));
       WriteCsvFields(m_csv_handle, exit_fields, true);
 
       LogTradeLifecycleEvent(pos,

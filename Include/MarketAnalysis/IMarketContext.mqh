@@ -84,6 +84,11 @@ public:
    // CEG Phase-0 instrumentation: closed H4 bars since the regime classification
    // last changed (-1 = unknown/not yet seeded). Purely observational.
    virtual int                  GetRegimeAgeH4()         { return -1; }
+   // SB-1.1 shadow bear-state stamp (DECISION-FREE — read only by the Stats-CSV
+   // columns, the per-bar ledger, and the manifest; never on a trade path).
+   virtual ENUM_BEAR_STATE      GetBearState()           { return BEAR_STATE_BULL_TREND; }
+   virtual int                  GetBearScore()           { return 0; }
+   virtual int                  GetBearStateAgeH4()      { return 0; }
    virtual double               GetCurrentRSI()          { return 50; }
 
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign)

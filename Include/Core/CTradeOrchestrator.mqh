@@ -835,6 +835,11 @@ public:
          position.ceg_bound = signal.ceg_bound;
          position.regime_age_h4 = signal.regime_age_h4;
          position.run48 = signal.run48;
+         // SB-1.1 shadow bear-state stamp: signal-time snapshot onto the position
+         // (written on both Stats-CSV rows). DECISION-FREE.
+         position.bear_state        = signal.bear_state;
+         position.bear_score        = signal.bear_score;
+         position.bear_state_age_h4 = signal.bear_state_age_h4;
 
          // v3.1 Phase D: Transfer engine telemetry fields
          position.engine_mode = signal.engine_mode;
@@ -1073,6 +1078,10 @@ public:
       exec_signal.ceg_bound = pending.ceg_bound;
       exec_signal.regime_age_h4 = pending.regime_age_h4;
       exec_signal.run48 = pending.run48;
+      // SB-1.1 shadow bear-state stamp (decision-free)
+      exec_signal.bear_state        = pending.bear_state;
+      exec_signal.bear_score        = pending.bear_score;
+      exec_signal.bear_state_age_h4 = pending.bear_state_age_h4;
 
       // Calculate risk based on quality, then re-apply session/regime multipliers
       double base_risk = GetRiskForQuality(pending.quality, pending.pattern_name);

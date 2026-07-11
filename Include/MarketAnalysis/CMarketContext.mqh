@@ -14,6 +14,7 @@
 #include "CVolatilityRegimeManager.mqh"
 #include "CMomentumFilter.mqh"
 #include "CNewsGate.mqh"   // NEWS FILTER: shared event engine (IsDataDay delegates when wired)
+#include "CBearStateModel.mqh"   // SB-1.1 shadow bear-state stamp (decision-free)
 
 //+------------------------------------------------------------------+
 //| CMarketContext - Concrete implementation of IMarketContext        |
@@ -108,6 +109,11 @@ private:
    bool                      m_news_calendar_available;
    CNewsGate                *m_news_gate;   // NEWS FILTER: shared event engine (borrowed, not owned)
 
+   //--- SB-1.1 shadow bear-state model (owned). Updated once per H1 bar in
+   //    Update(); read only via GetBearState/GetBearScore/GetBearStateAgeH4
+   //    (Stats-CSV columns + ledger + manifest). DECISION-FREE.
+   CBearStateModel          *m_bear_state_model;
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -193,6 +199,7 @@ public:
       m_gmt_offset             = 0;       // Phase 3.6: resolved in Init()
       m_news_calendar_available = false;  // Phase 3.6: probed in Init()
       m_news_gate              = NULL;    // NEWS FILTER: wired by OnInit via SetNewsGate()
+      m_bear_state_model       = NULL;    // SB-1.1: created in Init()
    }
 
    //+------------------------------------------------------------------+
@@ -305,6 +312,10 @@ public:
       ResolveGMTOffset();
       ProbeNewsCalendar();
 
+      //--- SB-1.1: shadow bear-state model (decision-free). Never fails the
+      //    init — a NULL model just yields the interface defaults.
+      m_bear_state_model = new CBearStateModel();
+
       m_initialized = success;
 
       if(success)
@@ -362,6 +373,10 @@ public:
       //--- CEG Phase-0: track regime-classification changes (decision-free)
       UpdateRegimeAge();
 
+      //--- SB-1.1: refresh the shadow bear-state stamp (decision-free)
+      if(m_bear_state_model != NULL)
+         m_bear_state_model.Update();
+
       m_last_h1_bar = current_h1;
    }
 
@@ -383,6 +398,8 @@ public:
          IndicatorRelease(m_handle_ma200_h1);
          m_handle_ma200_h1 = INVALID_HANDLE;
       }
+
+      if(m_bear_state_model != NULL) { delete m_bear_state_model; m_bear_state_model = NULL; }
 
       m_initialized = false;
       LogPrint("CMarketContext: All components deinitialized");
@@ -767,6 +784,25 @@ public:
    virtual double GetTrailing48hRange()
    {
       return m_range48h;
+   }
+
+   // SB-1.1 shadow bear-state stamp (DECISION-FREE — CSV/ledger/manifest only).
+   virtual ENUM_BEAR_STATE GetBearState()
+   {
+      return (m_bear_state_model != NULL) ? m_bear_state_model.GetState() : BEAR_STATE_BULL_TREND;
+   }
+   virtual int GetBearScore()
+   {
+      return (m_bear_state_model != NULL) ? m_bear_state_model.GetScore() : 0;
+   }
+   virtual int GetBearStateAgeH4()
+   {
+      return (m_bear_state_model != NULL) ? m_bear_state_model.GetAgeH4() : 0;
+   }
+   // SB-1.1: enable the per-bar shadow ledger (wired by OnInit from InpBearStateLedger).
+   void SetBearStateLedger(bool en)
+   {
+      if(m_bear_state_model != NULL) m_bear_state_model.SetLedgerEnabled(en);
    }
 
    virtual double GetCurrentRSI()

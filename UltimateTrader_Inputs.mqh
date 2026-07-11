@@ -647,3 +647,6 @@ input double InpSleeveMaxTotalRiskPct  = 0.40;  // Max total concurrent open sle
 input double InpSleeveMaxDDPct         = 2.0;   // Sleeve DD cap: realized cum-P&L drop from HWM as % of balance -> halt NEW sleeve entries (log only, positions untouched)
 input double InpSleeveMaxDailyLossPct  = 1.0;   // Daily realized sleeve loss cap (% of balance, server-day rollover) -> halt sleeve entries for the day
 input int    InpSleeveSlotReserve      = 2;     // Sleeve opens ONLY when baseline positions <= InpMaxPositions - this (never consumes baseline's last slots)
+
+input group "══════ SB BEAR-STATE STAMP (SB-1.1, SHADOW) ══════"
+input bool   InpBearStateLedger        = false; // Write per-H1-bar bear-state ledger UltTrader_BearStates_<sym>.csv (decision-free; OFF = no file). Stats-CSV columns always stamped.

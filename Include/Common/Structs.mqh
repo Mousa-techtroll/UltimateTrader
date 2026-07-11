@@ -222,6 +222,14 @@ struct SPosition
    bool                   is_sleeve;               // opened via the sleeve gateway
    string                 sleeve_family;           // sleeve strategy family tag ("" = none)
 
+   // SB-1.1 shadow bear-state stamp (runtime-only, NOT persisted — same class
+   // as crash_trail_unlocked above; a restored-from-broker position writes the
+   // Init() defaults on its EXIT row). Snapshotted from the signal at fill and
+   // written on both Stats-CSV rows. DECISION-FREE: no trade path reads these.
+   ENUM_BEAR_STATE        bear_state;
+   int                    bear_score;
+   int                    bear_state_age_h4;
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -278,6 +286,9 @@ struct SPosition
       crash_trail_last_bar = 0;
       is_sleeve = false;
       sleeve_family = "";
+      bear_state = BEAR_STATE_BULL_TREND;
+      bear_score = 0;
+      bear_state_age_h4 = 0;
    }
 };
 
@@ -585,6 +596,11 @@ struct SPendingSignal
    bool                 ceg_bound;
    int                  regime_age_h4;
    double               run48;
+
+   // SB-1.1 shadow bear-state stamp (carried through confirmation; decision-free)
+   ENUM_BEAR_STATE      bear_state;
+   int                  bear_score;
+   int                  bear_state_age_h4;
 };
 
 //+------------------------------------------------------------------+
@@ -643,6 +659,13 @@ struct EntrySignal
    int                 regime_age_h4;        // closed H4 bars since the regime classification last changed (-1 unknown)
    double              run48;                // |close[1]-close[49]| H1 — net 48h move at signal time
 
+   // SB-1.1 shadow bear-state stamp (DECISION-FREE — snapshotted at the choke
+   // point, carried to the position, written on both Stats-CSV rows; never read
+   // by any trade decision).
+   ENUM_BEAR_STATE     bear_state;
+   int                 bear_score;
+   int                 bear_state_age_h4;
+
    void Init()
    {
       valid = false;
@@ -681,6 +704,9 @@ struct EntrySignal
       ceg_bound = false;
       regime_age_h4 = -1;
       run48 = 0;
+      bear_state = BEAR_STATE_BULL_TREND;
+      bear_score = 0;
+      bear_state_age_h4 = 0;
    }
 
    // Validate the signal data (from AICoder V1 CEntryStrategy)

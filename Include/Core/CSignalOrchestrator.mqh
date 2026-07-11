@@ -938,6 +938,12 @@ public:
       best_signal.regime_age_h4 = (m_context != NULL) ? m_context.GetRegimeAgeH4() : -1;
       best_signal.run48 = ComputeRun48();
 
+      // SB-1.1 shadow bear-state stamp (DECISION-FREE — snapshot only, never
+      // read on a trade path; feeds the Stats-CSV BearState* columns).
+      best_signal.bear_state        = (m_context != NULL) ? m_context.GetBearState()      : BEAR_STATE_BULL_TREND;
+      best_signal.bear_score        = (m_context != NULL) ? m_context.GetBearScore()      : 0;
+      best_signal.bear_state_age_h4 = (m_context != NULL) ? m_context.GetBearStateAgeH4() : 0;
+
       // CEG (Tier-3, default OFF): S_pat-anchored stop floor. SECOND mode at
       // the same choke point as FIX-1, mutually exclusive with it (CEG wins).
       // S_pat = the stop distance as it stands here — pattern geometry incl.
@@ -1272,6 +1278,10 @@ private:
          m_pending_signal.ceg_bound      = signal.ceg_bound;
          m_pending_signal.regime_age_h4  = signal.regime_age_h4;
          m_pending_signal.run48          = signal.run48;
+         // SB-1.1 shadow bear-state stamp travels through confirmation (decision-free)
+         m_pending_signal.bear_state        = signal.bear_state;
+         m_pending_signal.bear_score        = signal.bear_score;
+         m_pending_signal.bear_state_age_h4 = signal.bear_state_age_h4;
 
          m_has_pending = true;
 

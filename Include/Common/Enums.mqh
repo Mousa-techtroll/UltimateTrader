@@ -313,4 +313,41 @@ enum ENUM_MAJOR_ENGINE
    ENGINE_EXPANSION          // (4) Breakout / Expansion
 };
 
+//+------------------------------------------------------------------+
+//| SB-1.1 Correction & Bear-Event state (SHADOW-ONLY)               |
+//| 8-state model from workflowAnalysis/sb11-state-model.md, ported  |
+//| verbatim by CBearStateModel. DECISION-FREE: never read on any    |
+//| trade path — only the Stats-CSV columns, the per-bar ledger, and |
+//| the manifest consume it. Ordinals are stable; string names below |
+//| are the doc's canonical labels (what the Python ledger writes).  |
+//+------------------------------------------------------------------+
+enum ENUM_BEAR_STATE
+{
+   BEAR_STATE_BULL_TREND = 0,     // S=0 bull-side default
+   BEAR_STATE_BULL_PULLBACK,      // S=0 sub-state (dd20 pullback)
+   BEAR_STATE_RANGE,              // S=0 sub-state (low-ADX range)
+   BEAR_STATE_VOLATILE_TRANSITION,// S=0 sub-state (ATR expansion)
+   BEAR_STATE_ACTIVE_CORRECTION,  // S=2
+   BEAR_STATE_BEAR_RALLY,         // S>=2 recovery overlay
+   BEAR_STATE_BEAR_TRANSITION,    // S=3
+   BEAR_STATE_BEAR_TREND          // S=4 (D1-confirmed)
+};
+
+//--- Canonical label string (exact match to sb11_states.csv State column)
+string BearStateToString(ENUM_BEAR_STATE s)
+{
+   switch(s)
+   {
+      case BEAR_STATE_BULL_TREND:          return "BULL_TREND";
+      case BEAR_STATE_BULL_PULLBACK:       return "BULL_PULLBACK";
+      case BEAR_STATE_RANGE:               return "RANGE";
+      case BEAR_STATE_VOLATILE_TRANSITION: return "VOLATILE_TRANSITION";
+      case BEAR_STATE_ACTIVE_CORRECTION:   return "ACTIVE_CORRECTION";
+      case BEAR_STATE_BEAR_RALLY:          return "BEAR_RALLY";
+      case BEAR_STATE_BEAR_TRANSITION:     return "BEAR_TRANSITION";
+      case BEAR_STATE_BEAR_TREND:          return "BEAR_TREND";
+   }
+   return "BULL_TREND";
+}
+
 #endif // ULTIMATETRADER_ENUMS_MQH

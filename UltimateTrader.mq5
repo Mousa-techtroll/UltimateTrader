@@ -651,6 +651,11 @@ void EmitCapabilityManifest()
                " OpenSleevePos=" + IntegerToString(g_posCoordinator != NULL ? g_posCoordinator.GetSleevePositionCount() : 0),
                "persisted in state file v7 (server-day daily rollover)");
 
+   // --- SB-1.1 shadow bear-state stamp (decision-free census) ---
+   ManifestRow(h, "STATE", "BearStateModel", "ENABLED (SHADOW)",
+               "model=SB-1.1 v1.00 | ledger=" + (InpBearStateLedger ? "ON" : "OFF"),
+               "CBearStateModel — Stats-CSV BearState/BearScore/BearStateAgeH4 + UltTrader_BearStates_<sym>.csv; ZERO decision-path readers");
+
    // --- Point-scale anchor + computed scale ---
    ManifestRow(h, "SCALE", "InpScaleAnchorPrice", DoubleToString(InpScaleAnchorPrice, 2),
                "AutoScale=" + (InpAutoScalePoints ? "true" : "false"),
@@ -745,6 +750,9 @@ int OnInit()
    }
    g_newsGate.Initialize();
    g_marketContext.SetNewsGate(g_newsGate);
+
+   // SB-1.1: enable the decision-free per-bar bear-state ledger (default OFF).
+   g_marketContext.SetBearStateLedger(InpBearStateLedger);
 
    g_stateManager = new CMarketStateManager(g_marketContext);
 
