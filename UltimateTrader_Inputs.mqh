@@ -660,6 +660,19 @@ input int    InpSleeveSlotReserve      = 2;     // Sleeve opens ONLY when baseli
 input group "══════ SB-1.2 CREV (SHORT RALLY-FADE) ══════"
 input bool   InpEnableCREV              = false; // Enable CREV sleeve engine (needs InpEnableShortSleeve too; OFF = all CREV paths dead)
 
+//--- Group 50c: SB-2.1 CONT (second sleeve engine — SHORT lower-high CONTINUATION)
+// spec workflowAnalysis/sb21-continuation-spec.md (frozen). The owner's
+// designated PRIMARY short: sells the resumption of the down-leg (break below
+// the pullback-origin low IL) inside a validated bear structure — the opposite
+// stance to CREV's fade. Routes ONLY through the sleeve gateway (family="CONT");
+// every CONT path is behind BOTH InpEnableShortSleeve AND InpEnableCONT, so with
+// either OFF the build is byte-identical to baseline (g_contEntry stays NULL).
+// All other CONT constants are compile-time frozen in CContinuationEntry (not
+// sweepable levers). FIT run: set InpEnableShortSleeve=true, InpEnableCONT=true,
+// InpSleeveRiskPct=0.35, InpBearStateSource=LEDGER, InpRRGateSymmetric=true.
+input group "══════ SB-2.1 CONT (SHORT CONTINUATION) ══════"
+input bool   InpEnableCONT              = false; // Enable CONT sleeve engine (needs InpEnableShortSleeve too; OFF = all CONT paths dead)
+
 input group "══════ SB BEAR-STATE STAMP (SB-1.1, SHADOW) ══════"
 input bool   InpBearStateLedger        = false; // Write per-H1-bar bear-state ledger UltTrader_BearStates_<sym>.csv (decision-free; OFF = no file). Stats-CSV columns always stamped.
 input ENUM_BEAR_STATE_SOURCE InpBearStateSource = BEAR_SRC_COMPUTED; // Bear-state SOURCE: COMPUTED = in-EA CBearStateModel (live); LEDGER = read frozen validated states from InpBearStateFile (CREV). Load failure under LEDGER is FATAL.

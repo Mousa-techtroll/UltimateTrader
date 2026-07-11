@@ -111,7 +111,14 @@ enum ENUM_PATTERN_TYPE
    // ordinal shifts (PersistedPosition.pattern_type serializes as an int).
    // Distinct from PATTERN_CRASH_BREAKOUT on purpose — reusing it would trip
    // the §D InpCrashTrailSuppress branch and pollute crash telemetry.
-   PATTERN_CREV_FADE               // CREV correction-state rally-fade short (sleeve)
+   PATTERN_CREV_FADE,              // CREV correction-state rally-fade short (sleeve)
+
+   // SB-2.1 experimental short sleeve — H4/H1 lower-high CONTINUATION short.
+   // Appended at the END so no existing ordinals shift (PersistedPosition
+   // .pattern_type serializes as int). Distinct from PATTERN_CREV_FADE and
+   // PATTERN_CRASH_BREAKOUT on purpose — reusing either would trip that
+   // pattern's scoped exit branch / trail-suppressor and pollute telemetry.
+   PATTERN_CONT_SHORT              // CONT lower-high continuation short (sleeve)
 };
 
 //+------------------------------------------------------------------+

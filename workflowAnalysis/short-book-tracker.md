@@ -57,6 +57,7 @@
 ## Phase 2 — Genuine bearish continuation
 
 ### SB-2.1 — H4/H1 lower-high continuation engine (VERY HIGH)
+- [~] v1 implemented but STRUCTURAL BUG: 0 fills/7.5y (IL=most-recent-pivot-low leaves no room for a confirmed newer LH1). Continuation thesis UNTESTED. Sleeve validated 6th run. Bug fix = anchor on the impulse leg, not most-recent pivot. Default-off. Original spec:
 - [ ] ⬜ — the intended primary professional short strategy. H4 structure (LL + rally below prior swing high + bearish momentum, state-gated) + H1 setup (impulse LL → retrace to EMA21/50/broken support/38–62% → lower high → continuation trigger). **Owner rule of record: bearish candle patterns ONLY as final trigger inside validated structure — never generic bearish Engulfing alone.** Stop above pullback high + spread/structure buffer; TP1 prior low/1R, TP2 next H4 support, runner only while state bearish.
 - Acceptance: positive avg R FIT+CONFIRM; positive in >1 bearish leg; no bull-pullback loss cluster; ≥20–30 fills before production consideration; no single-year majority.
 

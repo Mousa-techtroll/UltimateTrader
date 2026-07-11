@@ -58,6 +58,7 @@
 #include "Include/EntryPlugins/CVolatilityBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CCrashBreakoutEntry.mqh"
 #include "Include/EntryPlugins/CCrevEntry.mqh"
+#include "Include/EntryPlugins/CContinuationEntry.mqh"
 #include "Include/EntryPlugins/CFileEntry.mqh"
 #include "Include/EntryPlugins/CDisplacementEntry.mqh"
 #include "Include/EntryPlugins/CSessionBreakoutEntry.mqh"
@@ -146,6 +147,7 @@ CRangeBoxDetector      *g_rangeBoxDetector   = NULL;
 CVolatilityBreakoutEntry *g_volBreakoutEntry = NULL;
 CCrashBreakoutEntry    *g_crashEntry         = NULL;
 CCrevEntry             *g_crevEntry          = NULL;   // SB-1.2 CREV sleeve engine (NULL unless sleeve+CREV masters ON)
+CContinuationEntry     *g_contEntry          = NULL;   // SB-2.1 CONT sleeve engine (NULL unless sleeve+CONT masters ON)
 CFileEntry             *g_fileEntry          = NULL;
 CDisplacementEntry     *g_displacementEntry  = NULL;
 CSessionBreakoutEntry  *g_sessionBreakout    = NULL;
@@ -879,6 +881,24 @@ int OnInit()
          Print("[Init] FAILED to initialize CREV sleeve engine — disabling");
          delete g_crevEntry;
          g_crevEntry = NULL;
+      }
+   }
+
+   // SB-2.1 CONT (second experimental SHORT sleeve engine — the owner's
+   // designated PRIMARY short). Created + initialized ONLY when BOTH masters
+   // are ON — g_contEntry stays NULL otherwise, so the OnTick sleeve driver is
+   // dead and the build is byte-identical to baseline. NOT a baseline entry
+   // plugin: NEVER registered via RegisterEntryPlugin (the signal orchestrator
+   // must never rank it into the baseline path). Driven exclusively by the
+   // sleeve gateway in OnTick (family "CONT").
+   if(InpEnableShortSleeve && InpEnableCONT)
+   {
+      g_contEntry = new CContinuationEntry(GetPointer(g_marketContext));
+      if(g_contEntry != NULL && !g_contEntry.Initialize())
+      {
+         Print("[Init] FAILED to initialize CONT sleeve engine — disabling");
+         delete g_contEntry;
+         g_contEntry = NULL;
       }
    }
 
@@ -1627,6 +1647,7 @@ void OnDeinit(const int reason)
    if(g_rangeBoxDetector != NULL)  { g_rangeBoxDetector.Deinit(); delete g_rangeBoxDetector; }
    if(g_volBreakoutEntry != NULL)  { g_volBreakoutEntry.Deinitialize(); delete g_volBreakoutEntry; }
    if(g_crashEntry != NULL)        { g_crashEntry.Deinitialize(); delete g_crashEntry; }
+   if(g_contEntry != NULL)         { g_contEntry.Deinitialize(); delete g_contEntry; g_contEntry = NULL; }
    if(g_crevEntry != NULL)         { g_crevEntry.Deinitialize(); delete g_crevEntry; g_crevEntry = NULL; }
    if(g_fileEntry != NULL)         { g_fileEntry.Deinitialize(); delete g_fileEntry; }
    if(g_displacementEntry != NULL) { g_displacementEntry.Deinitialize(); delete g_displacementEntry; }
@@ -2612,6 +2633,24 @@ void OnTick()
             SPosition crevPos = g_tradeOrchestrator.ExecuteSleeveSignal(crevSig, "CREV");
             if(crevPos.ticket > 0)
                g_crevEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §9 stamp faded-high + last-entry bar
+         }
+      }
+
+      // [SB-2.1 CONT] Second sleeve driver (spec §12b), alongside the CREV
+      // driver above. Same containment: routes EXCLUSIVELY through the SB-0.1
+      // sleeve gateway (family "CONT") — never the baseline entry path. Dead
+      // unless BOTH masters ON and g_contEntry exists (identity by construction).
+      if(InpEnableShortSleeve && InpEnableCONT && g_contEntry != NULL)
+      {
+         // §10 post-loss cooldown anchor (coordinator stamps CONT losses).
+         g_contEntry.SetLastLossBar(g_posCoordinator.GetContLastLossBar());
+
+         EntrySignal contSig = g_contEntry.CheckForEntrySignal();   // closed-bar; <=1 signal
+         if(contSig.valid)
+         {
+            SPosition contPos = g_tradeOrchestrator.ExecuteSleeveSignal(contSig, "CONT");
+            if(contPos.ticket > 0)
+               g_contEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §10 stamp traded-impulse + last-entry bar
          }
       }
    }
