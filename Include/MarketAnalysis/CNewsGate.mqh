@@ -23,6 +23,8 @@
 
 #property strict
 
+#include "../Utils/CTimeOffset.mqh"   // DST-1: single source of truth for the US-DST math
+
 //--- Tier semantics (baked into the CSV by the exporter; re-derived live)
 //    1 = FOMC decision/statement/presser, NFP, CPI      (widest windows)
 //    2 = other HIGH-importance USD + explicit includes  (standard windows)
@@ -159,21 +161,14 @@ public:
    //| US DST membership of a UTC instant                                |
    //| Starts 2nd Sunday of March 07:00 UTC (02:00 ET),                  |
    //| ends 1st Sunday of November 06:00 UTC (02:00 EDT).                |
+   //| DST-1: forwards to CTimeOffset (the single source of truth). This |
+   //| body was lifted verbatim into CTimeOffset::IsUsDst — behavior is  |
+   //| byte-identical; the public API is preserved for ExportNewsCalendar|
+   //| and ModelOffsetHours below.                                       |
    //+------------------------------------------------------------------+
    static bool IsUsDst(datetime utc_time)
    {
-      MqlDateTime dt;
-      TimeToStruct(utc_time, dt);
-      if(dt.mon < 3 || dt.mon > 11)  return false;
-      if(dt.mon > 3 && dt.mon < 11)  return true;
-
-      if(dt.mon == 3)
-      {
-         datetime start = NthSundayUtc(dt.year, 3, 2) + 7*3600;
-         return (utc_time >= start);
-      }
-      datetime end = NthSundayUtc(dt.year, 11, 1) + 6*3600;
-      return (utc_time < end);
+      return CTimeOffset::IsUsDst(utc_time);
    }
 
    //+------------------------------------------------------------------+
@@ -432,19 +427,9 @@ public:
    }
 
 private:
-   //+------------------------------------------------------------------+
-   //| Nth Sunday of a month, 00:00 UTC                                  |
-   //+------------------------------------------------------------------+
-   static datetime NthSundayUtc(int year, int month, int nth)
-   {
-      MqlDateTime dt;
-      dt.year = year; dt.mon = month; dt.day = 1;
-      dt.hour = 0; dt.min = 0; dt.sec = 0;
-      datetime first = StructToTime(dt);
-      TimeToStruct(first, dt);                       // fills day_of_week
-      int first_sunday = 1 + ((7 - dt.day_of_week) % 7);
-      return first + (first_sunday - 1 + 7 * (nth - 1)) * 86400;
-   }
+   //--- DST-1: NthSundayUtc() removed — it lived ONLY inside IsUsDst(),
+   //    which now forwards to CTimeOffset (the single source of the US-DST
+   //    boundary math). No other CNewsGate site referenced it.
 
    //+------------------------------------------------------------------+
    //| GMT hour of a server time (per-date model offset in tester,       |

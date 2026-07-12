@@ -11,6 +11,7 @@
 #include "../PluginSystem/IMarketContext.mqh"
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
+#include "../Utils/CTimeOffset.mqh"   // DST-1 (BUG-2): shared US-DST broker-offset resolver
 
 //+------------------------------------------------------------------+
 //| Internal trade data structure for file parsing                   |
@@ -80,11 +81,20 @@ private:
    int               m_pendingTradeIdx;
    string            m_pendingTradeKey;
 
-   //--- EET timezone offset: GMT+2 winter, GMT+3 summer (EU DST rules)
-   //    Most forex brokers (IC Markets, Vantage, etc.) use this timezone
-   //    DST: last Sunday of March → GMT+3, last Sunday of October → GMT+2
+   //--- Broker GMT offset for a CSV signal timestamp: GMT+2 winter, GMT+3 summer.
+   //    DST-1 (BUG-2 fix): the broker data follows the US DST calendar (2nd Sun Mar
+   //    / 1st Sun Nov), NOT the EU one (last Sun Mar / last Sun Oct) this used to use.
+   //    When InpTesterDSTFix is ON (default) we delegate to CTimeOffset — the same
+   //    single-source US-DST resolver the session/news clocks use. When OFF we fall
+   //    back to the LEGACY EU-DST calendar so the binary reproduces the frozen baseline
+   //    exactly. (Inert on the config of record: no telegram_signals.csv is loaded, so
+   //    this converter is never called — the unify is for the file-injection path.)
    int GetEETOffset(datetime dt)
    {
+      if(InpTesterDSTFix)
+         return CTimeOffset::BrokerGMTOffset(dt);   // US-DST, single source of truth
+
+      // ---- LEGACY EU-DST path (last Sun Mar → +3, last Sun Oct → +2) ----
       MqlDateTime mdt;
       TimeToStruct(dt, mdt);
       int month = mdt.mon;

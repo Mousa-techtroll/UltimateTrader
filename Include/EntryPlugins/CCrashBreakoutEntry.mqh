@@ -15,6 +15,9 @@
 //+------------------------------------------------------------------+
 //| CCrashBreakoutEntry - Death Cross + Rubber Band pattern          |
 //| Compatible: Any regime (only activates when bear regime detected) |
+//| Fires all hours (NO time-of-day gate). Phase-0.5 Option A: the    |
+//| former 13:00-17:00 GMT window (m_start_hour/m_end_hour) was dead  |
+//| code and has been removed — all-hours firing is intended.         |
 //| Detection:                                                        |
 //|   1) Death Cross: D1 EMA50 < EMA200, Close < EMA50              |
 //|   2) Rubber Band: Price > EMA21 + N*ATR in Death Cross, ADX>25  |
@@ -47,16 +50,17 @@ private:
                                               // tp = ema21 - k*(entry-ema21); 0.0 = mean (identity)
    int               m_regime_gate;           // CRH4: 0 = D1 death cross only (BASELINE),
                                               // 1 = D1 OR H4 death cross (AB_TEST_LOG CRH4 PRE-REGISTRATION)
-   // DEAD MEMBERS (T0 2026-07-09): the 7 "(future use)" members below are write-only —
-   // assigned in the ctor (:73-79) and never read. The InpCrash* inputs that plumb here
-   // (RSICeiling/RSIFloor/MaxSpread/BufferPoints/StartHour/EndHour/DonchianPeriod) tune
-   // nothing: no RSI band, spread cap, buffer, GMT time-box, or Donchian channel is applied.
+   // DEAD MEMBERS (T0 2026-07-09): the 5 "(future use)" members below are write-only —
+   // assigned in the ctor and never read. The InpCrash* inputs that plumb here
+   // (RSICeiling/RSIFloor/MaxSpread/BufferPoints/DonchianPeriod) tune nothing: no RSI
+   // band, spread cap, buffer, or Donchian channel is applied by the live Rubber Band logic.
+   // Phase-0.5 (crash-window cleanup, Option A): the former m_start_hour/m_end_hour
+   // (documented 13:00-17:00 GMT window) and their InpCrashStartHour/InpCrashEndHour inputs
+   // were removed — the engine fires all hours (no time-of-day gate ever existed here).
    double            m_rsi_ceiling;           // RSI ceiling (future use — never read)
    double            m_rsi_floor;             // RSI floor (future use — never read)
    int               m_max_spread;            // Max spread points (future use — never read)
    int               m_buffer_points;         // Buffer points (future use — never read)
-   int               m_start_hour;            // Start hour GMT (future use — never read)
-   int               m_end_hour;              // End hour GMT (future use — never read)
    int               m_donchian_period;       // Donchian period (future use — never read)
 
 public:
@@ -71,8 +75,6 @@ public:
                        double rsi_floor = 25.0,
                        int max_spread = 40,
                        int buffer_points = 15,
-                       int start_hour = 13,
-                       int end_hour = 17,
                        int donchian_period = 24,
                        double tp_extension = 0.0,
                        int regime_gate = 0)
@@ -87,8 +89,6 @@ public:
       m_rsi_floor = rsi_floor;
       m_max_spread = max_spread;
       m_buffer_points = buffer_points;
-      m_start_hour = start_hour;
-      m_end_hour = end_hour;
       m_donchian_period = donchian_period;
 
       m_bear_regime_active = false;

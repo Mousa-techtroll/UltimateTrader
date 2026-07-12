@@ -94,6 +94,19 @@ input int    InpWeekendCloseHour = 20;       // Weekend close hour (server time)
 input int    InpMaxTradesPerDay = 5;         // Max trades per day
 input int    InpBrokerGMTOffset = 3;         // Broker GMT offset (summer DST) — used for CSV signal time conversion
 
+//--- Group 2b: DST / TIMEZONE CORRECTION (Phase-0.5 DST-1)
+input group "══════ DST / TIMEZONE CORRECTION ══════"
+// DST-1 (phase0-gmt-dst-validation.md BUG-1/BUG-2): TESTER-ONLY broker-offset fix.
+//  TRUE (default, corrected): CSessionEngine / CMarketContext / CFileEntry resolve the
+//    broker GMT offset PER-TIMESTAMP on the US-DST calendar (+2 winter / +3 summer) via
+//    CTimeOffset. In US-winter the effective offset drops 3→2, so every GMT-keyed session
+//    window (London/NY risk mult, session-engine phases, Asia validator) activates 1 hour
+//    EARLIER in server/wall-clock time than the legacy run (computed GMT hour +1 per bar).
+//  FALSE (legacy): fixed InpBrokerGMTOffset=3 summer fallback + EU-DST in CFileEntry —
+//    reproduces the frozen $23,856.89 baseline exactly.
+//  The LIVE auto-detected path (TimeCurrent()-TimeGMT()) is NEVER affected by this flag.
+input bool   InpTesterDSTFix = true;         // DST-1: tester DST offset fix (true=US-DST corrected, false=legacy fixed+3)
+
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"
 input double InpShortRiskMultiplier = 1.0;   // Short protection OFF for Test 5
@@ -233,17 +246,17 @@ input double InpVolExtremeSLMult = 0.70;     // Extreme vol SL multiplier — DE
 input group "══════ CRASH DETECTOR (BEAR HUNTER) ══════"
 input bool   InpEnableCrashDetector = true;  // Enable crash detector
 input double InpCrashATRMult = 2.0;          // Crash ATR multiplier (wired: was hardcoded as 2.0)
-// ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09): the 7 inputs below plumb into CCrashBreakoutEntry ctor
-// params whose members are declared "(future use)" and NEVER read (CCrashBreakoutEntry.mqh:45-51
-// — write-only stores at :73-79). No RSI band, spread cap, buffer, time-box, or Donchian channel
-// is applied by the live Rubber Band logic. Only InpCrashATRMult and InpCrashSLATRMult are live.
-// WIRE or DELETE.
+// ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09): the 5 inputs below plumb into CCrashBreakoutEntry ctor
+// params whose members are declared "(future use)" and NEVER read. No RSI band, spread cap,
+// buffer, or Donchian channel is applied by the live Rubber Band logic. Only InpCrashATRMult
+// and InpCrashSLATRMult are live. WIRE or DELETE.
+// Phase-0.5 (crash-window cleanup, Option A): InpCrashStartHour/InpCrashEndHour were REMOVED —
+// they drove the never-read m_start_hour/m_end_hour (documented 13:00-17:00 GMT window that was
+// never enforced). The crash engine fires all hours; removal is behavior-neutral (unread inputs).
 input double InpCrashRSICeiling = 45.0;      // RSI ceiling — DEAD (see banner: never read)
 input double InpCrashRSIFloor = 25.0;        // RSI floor — DEAD (see banner: never read)
 input int    InpCrashMaxSpread = 40;         // Max spread (points) — DEAD (see banner: never read)
 input int    InpCrashBufferPoints = 15;      // Buffer points — DEAD (see banner: never read)
-input int    InpCrashStartHour = 13;         // Start hour (GMT) — DEAD (see banner: no time-box is applied)
-input int    InpCrashEndHour = 17;           // End hour (GMT) — DEAD (see banner: no time-box is applied)
 input int    InpCrashDonchianPeriod = 24;    // Donchian period — DEAD (see banner: never read)
 input double InpCrashSLATRMult = 1.5;        // SL ATR multiplier (wired: was hardcoded as 1.5)
 input double InpCrashTPExtension = 0.0;      // TP overshoot beyond the EMA21 mean: tp = ema21 - k*(entry-ema21); 0 = mean (identity). Forensics 2026-07-10: only 2/138 trades ever reached the mean — the binding constraint is the short-side chandelier clamp, not the TP; this lever prices that fact.
@@ -297,7 +310,7 @@ input int    InpScoreBearLiqSweep = 38;      // Bearish Liquidity Sweep score �
 input group "══════ MARKET REGIME FILTERS ══════"
 input bool   InpEnableConfidenceScoring = true; // Enable confidence scoring
 input int    InpMinPatternConfidence = 40;      // Min pattern confidence
-input bool   InpUseDaily200EMA = true;          // Use D1 200 EMA filter
+input bool   InpUseDaily200EMA = true;          // Use H1 200-EMA "tide" filter (long-term; key kept as *Daily* for config compat — actual value is H1, see CMarketContext.mqh:313)
 
 //--- Group 20: SESSION FILTERS
 input group "══════ HYBRID SESSION FILTERS ══════"

@@ -16,6 +16,7 @@
 #include "Include/Common/Enums.mqh"
 #include "Include/Common/Structs.mqh"
 #include "Include/Common/Utils.mqh"
+#include "Include/Utils/CTimeOffset.mqh"   // DST-1: single authoritative US-DST broker-offset resolver
 
 // Input Parameters (must be before plugins that reference input variables)
 #include "UltimateTrader_Inputs.mqh"
@@ -872,7 +873,7 @@ int OnInit()
       InpCrashATRMult, InpCrashSLATRMult, 25.0,
       InpCrashRSICeiling, InpCrashRSIFloor,
       InpCrashMaxSpread, InpCrashBufferPoints,
-      InpCrashStartHour, InpCrashEndHour, InpCrashDonchianPeriod,
+      InpCrashDonchianPeriod,
       InpCrashTPExtension, InpCrashRegimeGate);
    RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
 

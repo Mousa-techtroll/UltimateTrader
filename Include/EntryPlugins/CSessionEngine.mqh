@@ -14,6 +14,7 @@
 #include "../PluginSystem/IMarketContext.mqh"
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
+#include "../Utils/CTimeOffset.mqh"   // DST-1: shared US-DST broker-offset resolver
 
 //+------------------------------------------------------------------+
 //| CSessionEngine - 5-mode time-gated session engine                |
@@ -41,6 +42,10 @@ private:
    int m_lc_start;          // 16 (London Close reversal)
    int m_lc_end;            // 17
    int m_gmt_offset;        // Broker GMT offset
+   bool m_tester_dst_fix;   // DST-1: when true (tester + InpTesterDSTFix), resolve the
+                            // offset PER-TIMESTAMP via CTimeOffset instead of the fixed
+                            // frozen m_gmt_offset. Stays false live and when the flag is
+                            // off, so those paths use m_gmt_offset EXACTLY as before.
 
    // Mode enable flags
    bool m_enable_london_bo;
@@ -99,6 +104,7 @@ public:
       m_lc_start = 16;
       m_lc_end = 17;
       m_gmt_offset = gmt_offset;
+      m_tester_dst_fix = false;   // DST-1: armed only in Initialize() (tester + flag on)
 
       m_enable_london_bo = true;
       m_enable_ny_cont = true;
@@ -322,10 +328,32 @@ public:
          {
             // Use the constructor-provided offset or a broker-typical default
             // The constructor sets m_gmt_offset from the gmt_offset parameter.
-            // If that's also 0, use 2 (GMT+2, common for forex brokers).
             if(m_gmt_offset == 0)
-               m_gmt_offset = InpBrokerGMTOffset;  // Sprint 5B: configurable fallback (was hardcoded 2)
-            Print("[SessionEngine] Backtester mode: using GMT+", m_gmt_offset, " (TimeGMT unreliable in tester)");
+            {
+               if(InpTesterDSTFix)
+               {
+                  // DST-1 FIX (default): the broker clock is +2 winter / +3 summer
+                  // on the US-DST calendar. GetGMTHour()/GetGMTOffset() now resolve
+                  // this PER-TIMESTAMP via CTimeOffset. m_gmt_offset below is only a
+                  // seed for the init log — it is NOT read once m_tester_dst_fix is
+                  // set (the getters recompute from the bar time). In US-winter the
+                  // effective offset becomes 2 (not the legacy fixed 3), so every
+                  // GMT-keyed session window activates 1h EARLIER in server/wall-clock
+                  // time (i.e. the computed GMT hour for a given bar is +1 vs the
+                  // buggy run). Summer (offset already 3) is unchanged.
+                  m_tester_dst_fix = true;
+                  m_gmt_offset = CTimeOffset::BrokerGMTOffset(TimeCurrent());
+                  Print("[SessionEngine] Backtester mode: DST-aware offset ON (InpTesterDSTFix) — GMT+",
+                        m_gmt_offset, " at start, resolved per-bar (US-DST +2 winter / +3 summer)");
+               }
+               else
+               {
+                  // LEGACY behavior: fixed summer offset, no DST (reproduces frozen baseline).
+                  m_gmt_offset = InpBrokerGMTOffset;  // Sprint 5B: configurable fallback (was hardcoded 2)
+                  Print("[SessionEngine] Backtester mode: LEGACY fixed GMT+", m_gmt_offset,
+                        " (InpTesterDSTFix=false — TimeGMT unreliable in tester)");
+               }
+            }
          }
       }
 
@@ -459,9 +487,12 @@ public:
    //+------------------------------------------------------------------+
    int GetGMTHour(datetime server_time)
    {
+      // DST-1: per-timestamp offset when the tester fix is armed; otherwise the
+      // frozen m_gmt_offset (live auto-detect, or legacy fixed fallback) — EXACT.
+      int offset = m_tester_dst_fix ? CTimeOffset::BrokerGMTOffset(server_time) : m_gmt_offset;
       MqlDateTime dt;
       TimeToStruct(server_time, dt);
-      int hour = dt.hour - m_gmt_offset;
+      int hour = dt.hour - offset;
       if(hour < 0) hour += 24;
       if(hour >= 24) hour -= 24;
       return hour;
@@ -469,8 +500,15 @@ public:
 
    //+------------------------------------------------------------------+
    //| GetGMTOffset - return current broker GMT offset                    |
+   //| DST-1: consumers (IsAsiaSession/IsSessionAllowed in Utils.mqh) also |
+   //| evaluate at TimeCurrent(), so resolving here at TimeCurrent() keeps |
+   //| the offset consistent with the instant they read. Live / flag-off  |
+   //| return the frozen m_gmt_offset unchanged.                          |
    //+------------------------------------------------------------------+
-   int GetGMTOffset() { return m_gmt_offset; }
+   int GetGMTOffset()
+   {
+      return m_tester_dst_fix ? CTimeOffset::BrokerGMTOffset(TimeCurrent()) : m_gmt_offset;
+   }
 
 private:
    void EvaluateModeKill(int idx)

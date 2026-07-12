@@ -14,6 +14,7 @@
 #include "CVolatilityRegimeManager.mqh"
 #include "CMomentumFilter.mqh"
 #include "CNewsGate.mqh"   // NEWS FILTER: shared event engine (IsDataDay delegates when wired)
+#include "../Utils/CTimeOffset.mqh"   // DST-1: shared US-DST broker-offset resolver
 #include "CBearStateModel.mqh"   // SB-1.1 shadow bear-state stamp (computed, decision-free)
 #include "CBearStateLedger.mqh"  // SB-1.1 LEDGER source: frozen validated states (decision-free)
 
@@ -107,6 +108,9 @@ private:
    //    FALSE (e.g. in the Strategy Tester, where CalendarValueHistory returns -1/err 4014)
    //    → fall back to the STATIC blackout schedule. Never throws.
    int                       m_gmt_offset;
+   bool                      m_tester_dst_fix;   // DST-1: tester + InpTesterDSTFix → GMTHourOf()
+                                                 // resolves the offset per-timestamp via CTimeOffset.
+                                                 // False live / flag-off → frozen m_gmt_offset (EXACT).
    bool                      m_news_calendar_available;
    CNewsGate                *m_news_gate;   // NEWS FILTER: shared event engine (borrowed, not owned)
 
@@ -205,6 +209,7 @@ public:
       m_regime_change_h4_time = 0;            // CEG Phase-0: 0 => GetRegimeAgeH4() returns -1
       // m_dealing_range_d1_lookback assigned above from the constructor param.
       m_gmt_offset             = 0;       // Phase 3.6: resolved in Init()
+      m_tester_dst_fix         = false;   // DST-1: armed only in ResolveGMTOffset() (tester + flag)
       m_news_calendar_available = false;  // Phase 3.6: probed in Init()
       m_news_gate              = NULL;    // NEWS FILTER: wired by OnInit via SetNewsGate()
       m_bear_state_model       = NULL;    // SB-1.1: created in Init()
@@ -1040,14 +1045,30 @@ private:
       m_gmt_offset = (int)(offset_seconds / 3600);
       if(m_gmt_offset == 0)
       {
-         // TimeGMT() is unreliable in the tester (== TimeCurrent()); use the
-         // EA-wide configurable broker offset, the same fallback the session
-         // engine uses, so both clocks agree.
+         // TimeGMT() is unreliable in the tester (== TimeCurrent()).
          if((bool)MQLInfoInteger(MQL_TESTER))
-            m_gmt_offset = InpBrokerGMTOffset;
+         {
+            if(InpTesterDSTFix)
+            {
+               // DST-1 FIX (default): resolve the broker offset PER-TIMESTAMP in
+               // GMTHourOf() via CTimeOffset (US-DST +2 winter / +3 summer). The
+               // seed below is only for the log line. This news-flat path is gated
+               // behind InpEnableMultiStrategy (constant-false on the config of
+               // record → byte-identical there); the fix matters on the flag-on leg.
+               m_tester_dst_fix = true;
+               m_gmt_offset = CTimeOffset::BrokerGMTOffset(TimeCurrent());
+            }
+            else
+            {
+               // LEGACY: fixed summer offset, no DST — same fallback the session
+               // engine uses, so both clocks agree on the frozen baseline.
+               m_gmt_offset = InpBrokerGMTOffset;
+            }
+         }
       }
       LogPrint("CMarketContext: news-flat GMT offset = ", m_gmt_offset,
-               " (tester=", (bool)MQLInfoInteger(MQL_TESTER), ")");
+               " (tester=", (bool)MQLInfoInteger(MQL_TESTER),
+               " dst_fix=", m_tester_dst_fix, ")");
    }
 
    //--- Probe the economic calendar ONCE; print the event count (mandatory).
@@ -1076,9 +1097,12 @@ private:
    //--- GMT hour / minute of a server time, using the resolved offset.
    int GMTHourOf(datetime server_time)
    {
+      // DST-1: per-timestamp offset when the tester fix is armed; otherwise the
+      // frozen m_gmt_offset (live auto-detect, or legacy fixed fallback) — EXACT.
+      int offset = m_tester_dst_fix ? CTimeOffset::BrokerGMTOffset(server_time) : m_gmt_offset;
       MqlDateTime dt;
       TimeToStruct(server_time, dt);
-      int hour = dt.hour - m_gmt_offset;
+      int hour = dt.hour - offset;
       if(hour < 0)  hour += 24;
       if(hour >= 24) hour -= 24;
       return hour;
