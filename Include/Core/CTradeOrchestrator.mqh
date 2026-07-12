@@ -48,7 +48,7 @@ private:
    double               m_tp1_distance;
    double               m_tp2_distance;
    bool                 m_use_adaptive_tp;
-   bool                 m_use_daily_200ema;
+   bool                 m_use_h1_200ema;     // long-term tide (H1 200-EMA); fed by input InpUseDaily200EMA (key kept for config compat)
    int                  m_magic_number;
 
    // Notification settings
@@ -94,7 +94,7 @@ public:
       m_tp1_distance = tp1_dist;
       m_tp2_distance = tp2_dist;
       m_use_adaptive_tp = use_adaptive_tp;
-      m_use_daily_200ema = use_200ema;
+      m_use_h1_200ema = use_200ema;
       m_magic_number = magic_number;
 
       m_enable_alerts = alerts;
@@ -586,7 +586,7 @@ public:
       }
 
       // Counter-trend risk reduction via 200 EMA (skip for file signals)
-      if(m_use_daily_200ema && m_context != NULL && signal.source != SIGNAL_SOURCE_FILE)
+      if(m_use_h1_200ema && m_context != NULL && signal.source != SIGNAL_SOURCE_FILE)
       {
          double ma200 = m_context.GetMA200Value();
          if(ma200 > 0)

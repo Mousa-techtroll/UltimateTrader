@@ -6,3 +6,12 @@ Reports/
 
 # Machine-local Claude Code settings
 .claude/settings.local.json
+compile_log.txt
+compile_rename.txt
+
+# Generated backtest archives — reproducible from scripts, NOT versioned (Part 4)
+claude/gate/GateScores_*.csv
+claude/gate/Stats_*.csv
+claude/gate/TradeEvents_*.csv
+claude/gate/tmp_*.csv
+claude/gate/p65/

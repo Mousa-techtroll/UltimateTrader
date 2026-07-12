@@ -24,7 +24,7 @@ private:
 
    // Configuration parameters
    bool                 m_use_h4_primary;
-   bool                 m_use_daily_200ema;
+   bool                 m_use_h1_200ema;     // long-term tide (H1 200-EMA); fed by input InpUseDaily200EMA (key kept for config compat)
    double               m_rsi_overbought;
    double               m_rsi_oversold;
    double               m_validation_strong_adx;
@@ -52,7 +52,7 @@ public:
    {
       m_context = context;
       m_use_h4_primary = use_h4;
-      m_use_daily_200ema = use_200ema;
+      m_use_h1_200ema = use_200ema;
       m_rsi_overbought = rsi_ob;
       m_rsi_oversold = rsi_os;
       m_validation_strong_adx = strong_adx;
@@ -344,8 +344,8 @@ public:
       ENUM_TREND_DIRECTION primary_trend = m_use_h4_primary ? h4 : daily;
       string primary_name = m_use_h4_primary ? "H4" : "D1";
 
-      // Daily 200 EMA Smart Filter
-      if(m_use_daily_200ema && m_context != NULL)
+      // H1 200-EMA (long-term tide) Smart Filter
+      if(m_use_h1_200ema && m_context != NULL)
       {
          double ma200_val = m_context.GetMA200Value();
          double current_bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
