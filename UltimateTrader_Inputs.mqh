@@ -244,7 +244,8 @@ input double InpVolExtremeSLMult = 0.70;     // Extreme vol SL multiplier — DE
 
 //--- Group 15: CRASH DETECTOR
 input group "══════ CRASH DETECTOR (BEAR HUNTER) ══════"
-input bool   InpEnableCrashDetector = true;  // Enable crash detector
+input bool   InpEnableCrashDetector = true;  // Enable crash detector (SHARED bear-regime signal → validator/orchestrator/router; NOT just Crash entry)
+input bool   InpEnableCrashEntry    = true;  // Enable Crash/Rubber-Band ENTRY engine only (default true=identity; false ablates Crash trades, detector stays on — Crash regime-control campaign)
 input double InpCrashATRMult = 2.0;          // Crash ATR multiplier (wired: was hardcoded as 2.0)
 // ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09): the 5 inputs below plumb into CCrashBreakoutEntry ctor
 // params whose members are declared "(future use)" and NEVER read. No RSI band, spread cap,
@@ -261,6 +262,9 @@ input int    InpCrashDonchianPeriod = 24;    // Donchian period — DEAD (see ba
 input double InpCrashSLATRMult = 1.5;        // SL ATR multiplier (wired: was hardcoded as 1.5)
 input double InpCrashTPExtension = 0.0;      // TP overshoot beyond the EMA21 mean: tp = ema21 - k*(entry-ema21); 0 = mean (identity). Forensics 2026-07-10: only 2/138 trades ever reached the mean — the binding constraint is the short-side chandelier clamp, not the TP; this lever prices that fact.
 input int    InpCrashRegimeGate = 0;         // 0 = D1 death cross only (BASELINE), 1 = D1 OR H4 death cross
+input bool   InpCrashRequireFallingEMA50 = false; // Arm B: gate Crash entry on a FALLING D1 EMA50 (EMA50[1] < EMA50[6], 5-day slope < 0). default false = identity
+input bool   InpCrashRequireFreshDeathCross = false; // Arm C: gate Crash entry on a FRESH D1 death-cross (bars since cross-down < InpCrashFreshDCBars). default false = identity
+input int    InpCrashFreshDCBars = 150;      // Arm C: freshness window in closed D1 bars (broad; NOT to be optimized)
 
 //--- Group 16: MACRO BIAS
 input group "══════ MACRO BIAS (DXY/VIX) ══════"

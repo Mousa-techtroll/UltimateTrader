@@ -874,8 +874,10 @@ int OnInit()
       InpCrashRSICeiling, InpCrashRSIFloor,
       InpCrashMaxSpread, InpCrashBufferPoints,
       InpCrashDonchianPeriod,
-      InpCrashTPExtension, InpCrashRegimeGate);
-   RegisterEntryPlugin(g_crashEntry,      InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
+      InpCrashTPExtension, InpCrashRegimeGate,
+      InpCrashRequireFallingEMA50,
+      InpCrashRequireFreshDeathCross, InpCrashFreshDCBars);
+   RegisterEntryPlugin(g_crashEntry,      InpEnableCrashEntry && InpEnableCrashDetector && g_profileEnableCrashBreakout && register_patterns);
 
    // SB-1.2 CREV (experimental SHORT sleeve engine). Created + initialized ONLY
    // when BOTH masters are ON — g_crevEntry stays NULL otherwise, so the OnTick
