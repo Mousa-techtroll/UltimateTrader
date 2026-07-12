@@ -836,6 +836,21 @@ public:
             continue;
          }
 
+         // Engulfing SETUP_A tier block — same tier-inversion as PBC. Engulfing's A
+         // band is negative R in all 4 tested windows (macro-contaminated: marginal
+         // patterns lifted into A by MacroScore), while A+/B+ are positive. Engine-
+         // SPECIFIC (Crash/MACross/PinBar A tiers are healthy — no global A rule).
+         // Default off = identity.
+         if(InpEngulfingBlockSetupA && quality == SETUP_A &&
+            signal.plugin_name == "EngulfingEntry")
+         {
+            LogPrint(">>> ENGULFING REJECTED: SETUP_A tier blocked");
+            AuditCandidate(signal, sig_type, regime, current_atr, current_adx, macro_score,
+                           "QUALITY", "REJECT", "ENGULFING_SETUP_A_BLOCKED", smc_score,
+                           quality, 0, 0.0, signal.requiresConfirmation, false);
+            continue;
+         }
+
          // Rubber Band A/A+ gate: reject B+ quality (B+ loses -4.0R across 22 trades)
          if(g_profileRubberBandAPlusOnly && quality == SETUP_B_PLUS &&
             StringFind(signal.comment, "Rubber Band") >= 0)
