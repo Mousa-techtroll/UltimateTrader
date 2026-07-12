@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>04 · Competition &amp; the Gauntlet — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html" aria-current="page"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">Choosing one winner</a></li>
+        <li><a href="#s2">The one-hour confirmation</a></li>
+        <li><a href="#s3">The twelve-gate gauntlet</a></li>
+        <li><a href="#g-env" class="sub">Environment (gates 1–7)</a></li>
+        <li><a href="#g-merit" class="sub">The idea's merit (gate 8)</a></li>
+        <li><a href="#g-geo" class="sub">Geometry &amp; exposure (9–12)</a></li>
+        <li><a href="#s4">The gate that ships off</a></li>
+        <li><a href="#s5">What the gauntlet really does</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 04 / 07 · Links 03–04</div>
+        <h1>Competition &amp; the Gauntlet</h1>
+        <p class="dek">Two links of the chain happen here. First the scouts <b>compete</b> — even if five shout "yes", only the single highest-scoring idea is hired that hour. Then that one winner must clear a <b>wall of twelve safety gates</b>, in order. A "no" at any gate cancels the trade outright. This is the bot's immune system, and it's worth understanding gate by gate.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>Choosing one winner</h2>
+        <p class="lead">Every "yes" from the panel is scored 0–10 on how well it fits the room, then graded. Only the top-scoring idea per hour survives to face the gauntlet.</p>
+        <div class="prose">
+          <p>The score is built from a handful of honest questions: does the setup <b>agree with the trend</b> across the daily, 4-hour and hourly charts? Does it <b>fit the current market mood</b> (bold in a trend, cautious in chop)? Is the <b>macro backdrop</b> aligned? How <b>strong and clean is the pattern</b> itself? And a penalty is subtracted for choppiness. Those add up to a number, and the number lands the idea in a grade — <b>A+</b>, <b>A</b>, <b>B+</b>, or "rejected."</p>
+          <p>The grade isn't just a label; it earns the idea the right to risk slightly more money. Here's the mapping (the exact percentages come from the account's configured risk profile):</p>
+        </div>
+        <div class="tiers">
+          <div class="tier"><div class="badge-t">A+</div><div class="lbl">Top-grade setup</div><div class="bar"><i style="width:100%"></i></div><div class="r">1.35%</div></div>
+          <div class="tier"><div class="badge-t">A</div><div class="lbl">Strong setup</div><div class="bar"><i style="width:67%"></i></div><div class="r">0.90%</div></div>
+          <div class="tier"><div class="badge-t">B+</div><div class="lbl">Decent setup</div><div class="bar"><i style="width:50%"></i></div><div class="r">0.68%</div></div>
+        </div>
+        <div class="prose">
+          <p>Only that single graded winner moves on. Everyone else's idea is dropped until the next hour — which is why the bot rarely opens more than one new trade an hour even when the market is busy. Ties are broken by the raw score, so the "best" is always unambiguous.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s2">
+        <h2>The one-hour confirmation</h2>
+        <p class="lead">Many winners don't enter immediately — they wait <b>one more hour</b> for a confirmation candle to close in the pattern's favour before committing real money.</p>
+        <div class="prose">
+          <p>A pattern on the just-closed candle is a strong hint, but a hint can still fail. So for most setups the bot waits for the <em>next</em> hourly candle to close past the pattern's trigger level in the intended direction. If that next candle confirms, the trade goes ahead; if it disappoints, the idea is quietly abandoned. Better to miss a trade than take a fake one — this single extra hour of patience filters out a lot of false starts.</p>
+          <div class="callout">
+            <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span>
+            <div><p><b>Who skips it, and why.</b> Short trades act immediately — for a sell, the "confirming" bounce would usually never come (in a rising market the very next candle tends to pop back up), so waiting is self-defeating. Mean-reversion trades and a few precise scouts (the range and expansion strategies) also trade on their trigger without the extra hour, because their edge is in acting fast at the turn.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s3">
+        <h2>The twelve-gate gauntlet</h2>
+        <p class="lead">Spotting a trade is only the beginning. The single winning idea must now pass all twelve of these checks, in order — and a single failure cancels it until next hour. The twelve fall into three natural stages.</p>
+
+        <!-- GROUP A -->
+        <div class="gate-group" id="g-env">
+          <div class="gate-group-h"><h3>Stage one — is it even safe to trade right now?</h3><span class="gg-tag">gates 1–7</span></div>
+          <p class="gg-intro">These seven gates say nothing about the trade idea itself. They ask whether <b>the moment and the machine</b> are fit to trade at all — mostly quick account or clock checks, with a couple that take the market's temperature.</p>
+          <div class="gates-x">
+
+            <div class="gate-x">
+              <div class="gx-num">01</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Kill switch on?</h4><div class="gx-tf"><span class="tf">setting</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>The operator's master "stop everything" switch. If a human has flipped it off, the bot does nothing — no new trades, no exceptions. It's the big red button on the factory wall.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A single master-enable flag checked at the very top of the routine. When off, the whole signal path is skipped for the bar. No chart, no data — a pure operator setting.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">02</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Trading halted for the day?</h4><div class="gx-tf"><span class="tf">account</span><span class="tf">clock</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>Some days are just bad, and the bot knows to stop digging. If it has already lost too much today, or hit its cap on the number of trades, it benches itself until tomorrow — like a disciplined gambler who walks away at a preset loss limit.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>The risk monitor tracks the day's equity change and the number of trades opened today. If equity is down about <b>3%</b> on the day, or the daily trade budget is used up, a halt flag blocks all new entries until the server date rolls over. It watches <em>live</em> equity, so an open loser can trip it intraday.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">03</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Abnormal price shock?</h4><div class="gx-tf"><span class="tf">H1</span><span class="tf">M5</span><span class="tf">live</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>If gold has just done something violent — a sudden spike or a liquidity air-pocket — the bot steps back rather than trading into chaos. Entering right after a shock is like merging onto a motorway during a pile-up.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A three-part shock detector: it divides the just-closed <b>hourly</b> bar's range by the 4-hour regime ATR, divides a <b>5-minute</b> "fast-leg" range by the hourly ATR, and compares the <b>live</b> spread to a rolling 20-sample baseline. If any of the three exceeds its threshold, the bar is flagged as shocked and the trade stands aside.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">04</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Low-quality time to trade?</h4><div class="gx-tf"><span class="tf">clock</span><span class="tf">H1</span><span class="tf">live</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>Not every hour fills orders cleanly. If this session has recently shown poor execution — fills at bad prices, thin activity, wide costs — the bot treats it as a low-quality window and passes. Like avoiding the checkout line that keeps jamming.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A session-execution-quality score built from the recent per-session <b>slippage</b> history, the current hour's <b>tick-volume</b> (a liquidity proxy), and the <b>live</b> spread. Below a quality threshold the entry is blocked; nearer the edge it can instead trim the trade's size.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">05</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Cost too high?</h4><div class="gx-tf"><span class="tf">live</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>Every trade pays a small entry cost called the spread. When that cost is bloated — which happens at quiet hours or around news — the bot refuses, because an oversized cost eats the edge before the trade even starts.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A hard spread gate: the live bid–ask spread in points is compared against a fixed ceiling (the max-spread setting, <b>50 points</b> on gold). Over the ceiling → reject. A pure live-quote check with no chart read.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">06</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Market flip-flopping?</h4><div class="gx-tf"><span class="tf">H4</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>If the market can't make up its mind — flipping between "trending" and "choppy" every hour — the bot waits for it to settle. Trading a market that keeps changing character is a fast way to get whipsawed.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A regime-thrash cooldown: it counts how many times the <b>4-hour</b> regime label has changed recently, and if it has flipped <b>more than twice in a 4-hour</b> span, a cooldown blocks entries until the classification stabilises.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">07</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Allowed session &amp; hour?</h4><div class="gx-tf"><span class="tf">clock · GMT</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>The bot only trades during certain windows, and specific erratic hours can be switched off entirely. This gate confirms the current time is on the permitted list.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>Two clock checks — the session gate (is the current GMT hour inside an enabled Asia / London / New-York window?) and an optional skip-hours list (specific hours to always avoid; off by default). Both read the server/GMT clock, never a candle.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- GROUP B -->
+        <div class="gate-group" id="g-merit">
+          <div class="gate-group-h"><h3>Stage two — is the idea actually good?</h3><span class="gg-tag">gate 8</span></div>
+          <p class="gg-intro">A single gate, but the deepest one — and by far the biggest filter in the whole system. This is where the trade idea has to <b>prove its own quality</b>, and where most candidates die.</p>
+          <div class="gates-x">
+            <div class="gate-x">
+              <div class="gx-num">08</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Passes its own quality vetting?</h4><div class="gx-tf"><span class="tf">H1</span><span class="tf">H4</span><span class="tf">D1</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>The idea has to earn its place. Does it agree with the trend on the bigger charts? Does the market's structure back it up? Is the pattern strong and confident, not a half-hearted shape? And does it score a good enough grade? Weak, marginal, or trend-fighting ideas are cut right here — this is the gate that keeps the bot buying genuine strength rather than noise.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A stacked validator known as the "long-bias ladder." It checks the hourly <b>200-EMA</b> against live price, the alignment of the <b>4-hour and daily</b> trends, the <b>4-hour ADX</b> trend-strength, and smart-money <b>structure</b> on the hourly chart. Breakout-class patterns get an extra <b>tick-volume</b> confirmation. It also enforces a minimum <b>pattern confidence</b> and a minimum <b>grade</b> (anything below B+ is rejected).</p>
+                <p class="gx-p tech"><span class="gx-lab tech">In the backtest</span>This one stage removed more candidates than all the others combined — roughly <b>615</b> cut for a weak volume signal, <b>532</b> for failing the trend/structure ladder, <b>361</b> for scoring below grade, and <b>103</b> for low pattern confidence over the 7.5-year run.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GROUP C -->
+        <div class="gate-group" id="g-geo">
+          <div class="gate-group-h"><h3>Stage three — does the trade make sense on paper?</h3><span class="gg-tag">gates 9–12</span></div>
+          <p class="gg-intro">The idea has passed. Four final sanity checks now confirm the <b>mechanics</b> of the actual trade stack up — its slot, its stop, its reward, and the account's total exposure.</p>
+          <div class="gates-x">
+
+            <div class="gate-x">
+              <div class="gx-num">09</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Too many positions open?</h4><div class="gx-tf"><span class="tf">count</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>The bot never lets itself get over-committed. It holds at most five trades at once; if all five slots are full, a new idea simply waits, however good it looks.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A hard position-count cap (<b>max 5</b> concurrent, and at most 5 opened per day). The open-position count is compared to the limit before execution; at the limit, the entry is rejected. Pure count, no chart.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">10</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Stop safely clear of the noise?</h4><div class="gx-tf"><span class="tf">live</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>A stop-loss placed too close to the current price gets clipped by ordinary market jitter, turning a fine trade into a needless loss. This gate makes sure the stop sits far enough away to breathe.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>The distance from entry to the proposed stop must be at least <b>three times the current spread</b>. If the setup's stop is tighter than that, the trade is rejected as too fragile — a live-spread-versus-stop-distance geometry check.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">11</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Reward worth the risk?</h4><div class="gx-tf"><span class="tf">geometry · R</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>Before committing, the bot checks that the potential reward is meaningfully bigger than the risk — at least 1.3 to 1. A trade that risks a dollar to make a dollar isn't worth the friction and cost.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>The reward-to-risk gate: it measures the distance from entry to the take-profit target against the distance from entry to the stop, and the ratio must be <b>≥ 1.3</b>. Below that, reject. Pure price geometry — no timeframe involved.</p>
+              </div>
+            </div>
+
+            <div class="gate-x">
+              <div class="gx-num">12</div>
+              <div class="gx-body">
+                <div class="gx-head"><h4>Within the total-risk cap?</h4><div class="gx-tf"><span class="tf">account %</span></div></div>
+                <p class="gx-p"><span class="gx-lab plain">In plain terms</span>Even five good trades can add up to too much risk at once. This final gate checks the combined risk of everything open plus the new trade; if it would exceed 5% of the account, the new trade is shrunk to fit — or dropped.</p>
+                <p class="gx-p tech"><span class="gx-lab tech">Technically</span>The aggregate-exposure cap. It sums the open risk across all live positions plus the candidate's risk; if the total tops <b>5%</b> of account equity, the position is either scaled down to fit under the cap or rejected outright.</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s4">
+        <h2>The gate that ships off</h2>
+        <p class="lead">One notable gate is disabled by default: a news filter.</p>
+        <div class="prose">
+          <p>A filter meant to make the bot stand flat around big scheduled announcements — interest-rate decisions, inflation reports, jobs numbers — ships <b>switched off</b> on the default configuration. Those releases can move gold violently in seconds, jumping right through a resting stop-loss.</p>
+          <p>It's off because it's tied to a broader module that is also off, and because turning it on is a deliberate live-trading decision reviewed on its own merits rather than a default assumption. When enabled, it reads the broker's economic calendar (with a static fallback list) and flattens or stands aside around the highest-impact events. Worth knowing it exists — and that, by default, the bot does <em>not</em> automatically dodge news.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s5">
+        <h2>What the gauntlet really does</h2>
+        <p class="lead">It's tempting to assume all this filtering must be throwing away a fortune in good trades. The honest answer is the opposite.</p>
+        <div class="prose">
+          <p>Across the 7.5-year test, of roughly <b>3,300 candidate ideas</b> that reached this stage, the gates and the one-hour confirmation removed about half before a single trade was placed. But when those rejected ideas are priced out — asked "what would you have earned if we'd let you through?" — the answer clusters around <b>break-even</b>. The gauntlet isn't strangling winners; it's removing a large pile of coin-flip trades that would have added churn, cost and drawdown without adding profit.</p>
+          <p>That's the quiet purpose of the whole wall: not to catch more trades, but to make sure the ones that survive are genuinely worth the risk — and to keep the account calm while it waits. A surviving idea now moves to the most mechanical link of all: deciding how big to bet. That's the next chapter — <a href="05-sizing.html" style="color:var(--gold-deep)">Sizing the Trade</a>.</p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="03-the-scouts.html"><span class="pl">← Previous</span><span class="pt">03 · The Scouts</span></a>
+        <a class="pager next" href="05-sizing.html"><span class="pl">Next chapter →</span><span class="pt">05 · Sizing the Trade</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

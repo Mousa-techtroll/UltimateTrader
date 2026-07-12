@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>How the Gold Bot Works — A Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#chain">The execution chain</a></li>
+        <li><a href="#contents">Chapters</a></li>
+        <li><a href="#appendix">Appendix</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="cover">
+      <section class="cover-hero" id="overview">
+        <div class="inner">
+          <div class="eyebrow">A field manual for a gold-trading machine</div>
+          <h1>How the gold bot works, <span class="g">one chapter at a time.</span></h1>
+          <p class="lede">This is an <b>automated trading program</b> — a "bot" — that buys and sells gold on its own, around the clock. It doesn't guess or chase every price flicker. Once an hour it runs the <b>same disciplined routine</b>, start to finish. This book explains that routine in plain language, no trading background needed — a chapter for each link in the chain.</p>
+          <div class="statband reveal">
+            <div class="stat"><div class="v">1<small>/hour</small></div><div class="l">One trade decision per finished hourly candle — never mid-hour</div></div>
+            <div class="stat"><div class="v">7</div><div class="l">Chart timeframes watched at once, from weekly tide to 5-minute detail</div></div>
+            <div class="stat"><div class="v">12</div><div class="l">Specialist "scout" strategies on the panel — though 3 do most of the work</div></div>
+            <div class="stat"><div class="v">12</div><div class="l">Safety gates every trade must clear — one "no" cancels it</div></div>
+            <div class="stat"><div class="v">≤2<small>% risk</small></div><div class="l">The most the account can lose on any single trade, enforced twice</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chain-sec reveal" id="chain">
+        <div class="chain-head">
+          <div class="kick">The chain of execution</div>
+          <h2>From a hunch to a managed trade, in seven links</h2>
+          <p>Every trade that ever gets placed walks this exact chain in order. A break at any link and the idea is dropped until next hour. Each link is a chapter of this book.</p>
+        </div>
+        <div class="chain">
+          <div class="link"><span class="dot"></span><h4>Read the room</h4><p>Size up the trend, the market's mood, the backdrop and the clock.</p></div>
+          <div class="link"><span class="dot"></span><h4>Interview the scouts</h4><p>Ask every specialist strategy: "do you see your setup right now?"</p></div>
+          <div class="link"><span class="dot"></span><h4>Pick the best one</h4><p>Score every "yes" and hire exactly one — the strongest idea this hour.</p></div>
+          <div class="link"><span class="dot"></span><h4>Run the gauntlet</h4><p>Put it through a wall of safety checks; one failure cancels it.</p></div>
+          <div class="link"><span class="dot"></span><h4>Size to the risk</h4><p>Work backwards from the stop so a loss costs a fixed, small amount.</p></div>
+          <div class="link"><span class="dot"></span><h4>Enter</h4><p>Place the order, re-checking the live price and spread one last time.</p></div>
+          <div class="link"><span class="dot"></span><h4>Manage &amp; exit</h4><p>Bank profit in slices, trail a runner, and close on the exit rules.</p></div>
+        </div>
+      </section>
+
+      <section class="toc-sec reveal" id="contents">
+        <div class="kick">Table of contents</div>
+        <div class="toc">
+          <a class="toc-card" href="01-heartbeat.html"><div class="tc-n">01</div><div><h3>The Heartbeat</h3><p>Why the bot thinks once an hour, what a "closed candle" is, and the loop it runs every time.</p><div class="tc-parts">Once an hour · Closed vs forming · The hourly loop · The timeframes</div></div></a>
+          <a class="toc-card" href="02-reading-the-room.html"><div class="tc-n">02</div><div><h3>Reading the Room</h3><p>The four-part picture of the market — direction bias, mood, macro backdrop and session — built before any trade.</p><div class="tc-parts">Bias · Regime · Macro · Session</div></div></a>
+          <a class="toc-card" href="03-the-scouts.html"><div class="tc-n">03</div><div><h3>The Scouts</h3><p>Every entry strategy explained plainly, grouped into four families — what each sees and why it's a sound idea.</p><div class="tc-parts">Candle · Range · Breakout · Engines</div></div></a>
+          <a class="toc-card" href="04-gauntlet.html"><div class="tc-n">04</div><div><h3>Competition &amp; the Gauntlet</h3><p>How one winner is chosen each hour, then the wall of twelve safety gates it must clear.</p><div class="tc-parts">Scoring · Confirmation · 12 gates</div></div></a>
+          <a class="toc-card" href="05-sizing.html"><div class="tc-n">05</div><div><h3>Sizing the Trade</h3><p>Deciding the loss first — the position-size formula, the situational dials, and the hard rails.</p><div class="tc-parts">The formula · Dials · Rails · Never-do</div></div></a>
+          <a class="toc-card" href="06-exits.html"><div class="tc-n">06</div><div><h3>Managing the Exit</h3><p>The stop that only tightens, the profit ladder, the trailing runner explained in detail, and three housekeeping exits.</p><div class="tc-parts">Stop · Ladder · Trailing · Housekeeping</div></div></a>
+          <a class="toc-card" href="07-example.html"><div class="tc-n">07</div><div><h3>Start to Finish</h3><p>One illustrative trade walking the whole chain — plus a reference desk of timeframes and terms.</p><div class="tc-parts">Worked trade · Timeframes · Glossary</div></div></a>
+        </div>
+
+        <div id="appendix">
+          <a class="appendix-card" href="backtest.html">
+            <div class="ac-n">A</div>
+            <div><h3>Appendix · Backtest Results</h3><p>The latest full 7.5-year real-tick backtest — headline metrics, how it compares to simply holding gold, and where the profit comes from.</p><div class="tc-parts" style="font-family:var(--font-mono);font-size:.72rem;color:var(--text-3);margin-top:10px">Latest baseline · vs buy-and-hold · per-strategy · by year</div></div>
+          </a>
+        </div>
+      </section>
+
+      <footer class="cover-foot">
+        <p class="disc">A plain-language field manual describing the bot's <b style="color:var(--text-2)">default behaviour</b>, verified against the source code. It explains mechanics only — no profit, win-rate or return is claimed or implied. Trading carries risk; nothing here is financial advice.</p>
+        <p style="margin-top:14px;font-family:var(--font-mono);font-size:.74rem;letter-spacing:.04em">UltimateTrader · XAUUSD · H1 heartbeat</p>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

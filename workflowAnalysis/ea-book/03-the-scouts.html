@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>03 · The Scouts — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html" aria-current="page"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">How the panel works</a></li>
+        <li><a href="#s2" class="sub">Candle-shape scouts</a></li>
+        <li><a href="#s3" class="sub">Range scouts</a></li>
+        <li><a href="#s4" class="sub">Breakout scouts</a></li>
+        <li><a href="#s5" class="sub">Multi-mode engines</a></li>
+        <li><a href="#s6">The honest reality</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 03 / 07 · Link 02</div>
+        <h1>The Scouts</h1>
+        <p class="dek">Picture the bot as a hiring manager who, once an hour, interviews a panel of <b>specialist scouts</b>. Each is an expert in exactly one chart shape. The manager asks them all "do you see your setup?", scores every yes, and hires the single best. This chapter meets every scout — what it looks for, how it works, and why it's a sound idea.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>How the panel works</h2>
+        <p class="lead">Twelve scouts sit on the panel, grouped into four families. They don't all fire independently — they <b>compete</b>, and only one is hired per hour.</p>
+        <div class="prose">
+          <p>Each hour, every scout examines the just-closed candle and either stays silent or raises its hand with a setup. Each "yes" is scored on how well it fits the room from the previous chapter — trend agreement, market mood, macro tilt, pattern strength — and graded. The highest-scoring idea is hired; the rest are dropped until next hour. Chapter 4 covers that scoring and selection in detail; here we focus on the scouts themselves.</p>
+          <p>Two labels appear on every card below. <b>Direction</b> tells you whether a scout can bet up (long), down (short), or both. <b>Status</b> tells you what it actually does in practice — because, as you'll see, being on the panel and actually playing are two different things.</p>
+        </div>
+        <div class="filter" id="filter">
+          <span class="lab">Filter</span>
+          <button class="chip" data-f="all" aria-pressed="true">All 12</button>
+          <button class="chip" data-f="live" aria-pressed="false">Active</button>
+          <button class="chip" data-f="mute" aria-pressed="false">Dormant</button>
+          <button class="chip" data-f="off" aria-pressed="false">Switched off</button>
+        </div>
+
+        <!-- Family: candle-shape -->
+        <div class="family" id="s2" style="scroll-margin-top:20px">
+          <div class="family-head"><h3>Candle-shape scouts</h3><span class="cnt">4 scouts · the workhorses</span>
+            <p>The simplest and most reliable readers: they judge the market from the shape of the just-finished hourly candle, always in agreement with the bigger 4-hour trend. Three of these do the overwhelming majority of the bot's actual trading.</p></div>
+          <div class="scouts">
+            <article class="scout" data-status="live">
+              <div class="top"><h4>Pin Bar</h4><span class="st live">Active</span></div>
+              <p class="sees">A candle with a long tail and a small body — price stabbed one way and got slapped straight back.</p>
+              <p class="body">During the hour, price pushed hard in one direction, then reversed and closed near where it started, leaving a long "rejection wick". The bot buys when the tail points <em>down</em> (sellers were rejected) inside an uptrend, and sells the mirror image — but never during New York, where short pin bars historically misfire.</p>
+              <div class="why"><b>Why it works:</b> a long rejection wick marks the exact spot where a push ran out of buyers or sellers. Entering as the reversal confirms lets the bot ride the bounce with a tight, logical stop just past the rejected extreme.</div>
+              <div class="meta"><span class="badge long">Long</span><span class="badge short">Short</span><span class="tag">candlestick</span><span class="tag">trend-following</span><span class="tag">session</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 trend gate</span><span class="tf">GMT clock</span></div><code>rejection wick &gt; 1.5 × body,
+opposing wick &lt; 0.8 × body,
+close in the top/bottom 30% of range.
+Bearish side blocked from 13:00 GMT (NY).</code><span class="src">CPinBarEntry.mqh · reads the closed hourly candle</span></div></details>
+            </article>
+
+            <article class="scout" data-status="live">
+              <div class="top"><h4>Engulfing</h4><span class="st live">Active</span></div>
+              <p class="sees">A single up-candle that completely swallows the previous down-candle — buyers overpowering sellers.</p>
+              <p class="body">In one hour, buyers fully reversed and overwhelmed the prior hour's sellers: the new candle's body wraps the whole of the last one. A clean flip of control. It only fires when the 4-hour trend already agrees, so it's catching continuation, not fighting the tide. Long only on the default settings.</p>
+              <div class="why"><b>Why it works:</b> a full engulf is one of the least ambiguous signs that control has changed hands. Pairing it with the higher-timeframe uptrend filters out random noise and keeps the bot buying strength.</div>
+              <div class="meta"><span class="badge long">Long</span><span class="tag">candlestick</span><span class="tag">momentum</span><span class="tag">volume-checked</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 trend gate</span></div><code>signal candle's body ≥ 80% engulfs
+the prior opposite candle's body,
+body &gt; 0.3 × ATR, 4-hour trend agrees.</code><span class="src">CEngulfingEntry.mqh · a tick-volume check is its main filter</span></div></details>
+            </article>
+
+            <article class="scout" data-status="live">
+              <div class="top"><h4>MA Cross</h4><span class="st live">Active</span></div>
+              <p class="sees">A fast 10-hour average crossing up through a slow 21-hour average — "momentum just turned up."</p>
+              <p class="body">The classic trend trigger: the short-term average lifting through the longer-term one signals recent momentum has flipped upward. It fires only in a clearly trending market and is blocked during New York. Long only — the downward-cross version was measured to lose money and removed from the code.</p>
+              <div class="why"><b>Why it works:</b> fewer but stronger signals. It fires several times less often than the other candle scouts, yet each trade carries more follow-through — the payoff of waiting for a cleaner, harder-to-fake trigger.</div>
+              <div class="meta"><span class="badge long">Long</span><span class="tag">momentum</span><span class="tag">trend-following</span><span class="tag">session</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 trend gate</span></div><code>MA(10) was ≤ MA(21) two bars ago
+and is above it on the last closed bar,
+trending regime only, New-York-blocked.</code><span class="src">CMACrossEntry.mqh · bearish cross removed at source</span></div></details>
+            </article>
+
+            <article class="scout" data-status="mute">
+              <div class="top"><h4>Displacement</h4><span class="st mute">Dormant</span></div>
+              <p class="sees">A stop-hunt followed by a big, decisive drive the other way.</p>
+              <p class="body">Price first dips below a recent low to trip other traders' stop orders, then a large "power candle" closes back above it — the signature of big money grabbing cheap liquidity and then revealing its true direction. The bot enters after the trap, using the failed level as its stop.</p>
+              <div class="why"><b>Why it's a good idea:</b> trading <em>after</em> the trap, not into it, catches the real move with a clean invalidation point. In practice an hourly candle that large right after a sweep is so rare on gold that this scout almost never fires.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">liquidity</span><span class="tag">smart-money</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 gate</span></div><code>wick sweeps below a swing low but closes
+back above, then a candle with
+body ≥ 1.8 × ATR closes decisively beyond.</code><span class="src">CDisplacementEntry.mqh · 0 signals in 7.5 years</span></div></details>
+            </article>
+          </div>
+        </div>
+
+        <!-- Family: range -->
+        <div class="family" id="s3" style="scroll-margin-top:20px">
+          <div class="family-head"><h3>Range scouts</h3><span class="cnt">2 scouts · the sharpshooters</span>
+            <p>These read a faster 15-minute chart to time reversals at the edges of a range, then size the trade from the 1-hour volatility. They fire rarely, but when they do their setups are among the highest-quality in the book.</p></div>
+          <div class="scouts">
+            <article class="scout" data-status="mute">
+              <div class="top"><h4>Range-Edge Fade <span style="color:var(--text-3);font-size:.7em">(S3)</span></h4><span class="st mute">Dormant</span></div>
+              <p class="sees">A false breakout at the edge of a box — price pokes out, then snaps back in.</p>
+              <p class="body">When gold is boxed inside a range, price often pokes just past the floor or ceiling to trigger breakout traders, then fails and snaps back inside. On the 15-minute chart, this scout fades that failure back toward the middle of the box, targeting the opposite edge.</p>
+              <div class="why"><b>Why it's a good idea:</b> most range breakouts fail. Fading the failure at the very edge gives a naturally good reward-to-risk. But its full checklist has to line up perfectly, which has never once happened on gold in the test window.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">mean-reversion</span><span class="tag">M15</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">M15 trigger</span><span class="tf">H1 sizing</span></div><code>inside a validated box, 15-min low pierces
+below the floor but closes back inside,
+oversold, reward to far edge ≥ 2× risk.</code><span class="src">CRangeEdgeFade.mqh · over-specified for this symbol</span></div></details>
+            </article>
+
+            <article class="scout" data-status="live">
+              <div class="top"><h4>Failed-Break Reversal <span style="color:var(--text-3);font-size:.7em">(S6)</span></h4><span class="st live">Active</span></div>
+              <p class="sees">A failed stop-hunt at a key level — the breakout was a trap.</p>
+              <p class="body">Price spikes past an important level (like yesterday's high or low) to grab a cluster of orders, then reclaims the level on the 15-minute chart. The breakout that fooled everyone becomes the bot's entry, with a stop just past the failed spike.</p>
+              <div class="why"><b>Why it works:</b> reclaiming a swept level is one of the cleanest reversals in trading. This scout is tiny — a couple of times a year — but its trades are the sharpest in the whole book. Its short side is switched off (it was measured to lose).</div>
+              <div class="meta"><span class="badge long">Long</span><span class="tag">liquidity</span><span class="tag">mean-reversion</span><span class="tag">M15</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">M15 trigger</span><span class="tf">H1 ATR</span><span class="tf">D1 levels</span></div><code>spike ≥ 0.20 × (H1 ATR) through a daily
+level, piercing wick &gt; body, then a
+reclaim close back through the level.</code><span class="src">CFailedBreakReversal.mqh · best per-trade quality</span></div></details>
+            </article>
+          </div>
+        </div>
+
+        <!-- Family: breakout -->
+        <div class="family" id="s4" style="scroll-margin-top:20px">
+          <div class="family-head"><h3>Breakout scouts</h3><span class="cnt">2 scouts · the specialists</span>
+            <p>These wait for price to break out of its recent range with force. One is a pure-trend breakout kept for volatile markets; the other is the bot's only dedicated bear-market engine.</p></div>
+          <div class="scouts">
+            <article class="scout" data-status="mute">
+              <div class="top"><h4>Volatility Breakout</h4><span class="st mute">Dormant</span></div>
+              <p class="sees">A clean punch out of the recent 20-bar range while the trend agrees.</p>
+              <p class="body">Price closes beyond both its recent high and a volatility band, during a genuinely volatile market, with a strong trend reading and the 4-hour averages stacked in agreement. A high bar to clear on purpose.</p>
+              <div class="why"><b>Why it's a good idea:</b> real range-expansion moves are worth catching. But it's deliberately gated to only volatile regimes, making it a rare specialist — effectively a reserve that almost never activates.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">breakout</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 EMA stack</span></div><code>volatile regime + ADX ≥ 25 + 4-hour EMA
+stack aligned + a close beyond the
+20-bar high or the upper volatility band.</code><span class="src">CVolatilityBreakoutEntry.mqh · dormant by design</span></div></details>
+            </article>
+
+            <article class="scout" data-status="live">
+              <div class="top"><h4>Crash Breakout <span style="color:var(--text-3);font-size:.7em">(Rubber Band)</span></h4><span class="st live">Active</span></div>
+              <p class="sees">A fade of an over-stretched bounce inside a confirmed downtrend.</p>
+              <p class="body">This is the one scout built for falling markets. It only wakes when the daily 50-day average is below the 200-day average — a confirmed "death cross" downtrend. Then, when live price rubber-bands more than two volatility-units above its hourly mean, it shorts the snap-back toward that mean, only in a tight afternoon window and only on top-grade setups.</p>
+              <div class="why"><b>Why it's a good idea:</b> in a real downtrend, sharp bounces are exhaustion, and selling them back to the mean is a textbook fade. It's the bot's only participant when gold is falling — valuable diversification even though its wins are modest.</div>
+              <div class="meta"><span class="badge short">Short</span><span class="tag">crash-regime</span><span class="tag">mean-reversion</span><span class="tag">session</span><span class="tag">volume-checked</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">D1 gate</span><span class="tf">H1 indicators</span><span class="tf">live trigger</span></div><code>daily EMA50 &lt; EMA200 (death cross), then
+live price &gt; H1 EMA21 + 2 × ATR,
+ADX ≥ 25, only 13:00–17:00 GMT → sell to the mean.</code><span class="src">CCrashBreakoutEntry.mqh · fires only in death-cross eras</span></div></details>
+            </article>
+          </div>
+        </div>
+
+        <!-- Family: engines -->
+        <div class="family" id="s5" style="scroll-margin-top:20px">
+          <div class="family-head"><h3>Multi-mode engines</h3><span class="cnt">4 engines · the sophisticates</span>
+            <p>Each of these is really several sub-strategies bundled together, reporting the first that fires. They encode the more advanced "smart-money", session and continuation ideas — though most of their conditions turn out too demanding to fire on gold.</p></div>
+          <div class="scouts">
+            <article class="scout" data-status="mute">
+              <div class="top"><h4>Liquidity engine</h4><span class="st mute">Dormant</span></div>
+              <p class="sees">A panel of four "smart-money" reads, reporting the first that fires.</p>
+              <p class="body">It checks, in priority order: a Displacement move, an Order-Block Retest (price returning to a zone a big institutional candle left behind), a Fair-Value-Gap fill, and a Swing-Failure. The idea is to trade where large orders have left footprints on the chart.</p>
+              <div class="why"><b>Why it's a good idea:</b> big orders really do leave repeatable footprints — zones, gaps and sweeps. This is the sophisticated end of the book. In practice its structural conditions never all lined up on gold's hourly chart in the test window.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">smart-money</span><span class="tag">liquidity</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1</span></div><code>e.g. Order-Block Retest = price re-enters a
+prior institutional candle's zone, recent
+structure is bullish, a rejection candle forms.</code><span class="src">CLiquidityEngine.mqh · stands aside on news days</span></div></details>
+            </article>
+
+            <article class="scout" data-status="off">
+              <div class="top"><h4>Session engine</h4><span class="st off">Off</span></div>
+              <p class="sees">Time-of-day breakout modes — London open, New York continuation, and more.</p>
+              <p class="body">Four session-timed strategies, each firing only inside its own window off the overnight Asian range. All four ship <em>switched off</em> — they measured a 0% win rate in testing. The engine stays loaded only because it also runs the bot's master clock and builds the Asian range every other scout relies on. One caveat worth knowing: session-<em>breakout</em> logic isn't entirely absent from the live book — the Expansion engine below quietly runs a copy of it, which <em>does</em> trade. So it's this <em>engine</em> and its four modes that are off, not the idea itself.</p>
+              <div class="why"><b>Why it's here:</b> session edges are real for some instruments and worth having on the shelf. On gold they didn't pay, so they're disabled — but the engine remains as essential timekeeping infrastructure.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">session</span><span class="tag">breakout</span><span class="tag">infrastructure</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">Clock</span><span class="tf">H1</span><span class="tf">M15 range</span></div><code>e.g. London Breakout (GMT 8–10): hourly
+candle opens below the Asian high but
+closes above it + 0.35 × ATR, trend up.
+All four sub-modes default OFF.</code><span class="src">CSessionEngine.mqh · also the bot's GMT clock</span></div></details>
+            </article>
+
+            <article class="scout" data-status="live">
+              <div class="top"><h4>Expansion engine</h4><span class="st live">Active</span></div>
+              <p class="sees">Energy building then releasing — a coil, then a break.</p>
+              <p class="body">It looks for an oversized "institutional" candle that closes near its extreme, waits for price to coil quietly for a few bars, then enters on the break of that big candle's extreme. Compression, then expansion. <b>It also carries a second engine inside it:</b> a session breakout — the very London/Asian-range logic the Session engine above ships switched off. On the backtest record that composed sub-strategy accounts for a large share of Expansion's trades (roughly half), all re-tagged under the "Expansion" name — which is why the roster can look like it has no live session breakout when it quietly does.</p>
+              <div class="why"><b>Why it works:</b> quiet-then-explosive is a genuine, repeatable market rhythm. This is the bot's only live breakout expression and its cleanest true diversifier — small, two-sided, and it earns its keep in high-volatility stretches.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">breakout</span><span class="tag">momentum</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1</span><span class="tf">H4 regime gate</span></div><code>institutional candle body ≥ ~1.8 × ATR
+closing near its extreme, then 2–5 coil
+bars, then a close beyond its high/low.</code><span class="src">CExpansionEngine.mqh · also composes a Session-Breakout sub-strategy (MODE_LONDON_BREAKOUT)</span></div></details>
+            </article>
+
+            <article class="scout" data-status="live">
+              <div class="top"><h4>Pullback Continuation</h4><span class="st live">Active</span></div>
+              <p class="sees">Buying the dip inside an uptrend (or selling the bounce in a downtrend).</p>
+              <p class="body">After an established trend pauses for a shallow pullback that shows signs of exhaustion, a "reclaim" candle closes back over the recent highs and the bot joins the trend at a better price. The textbook continuation trade.</p>
+              <div class="why"><b>Why it's a good idea:</b> joining a strong trend on a pullback gives a favourable entry with the trend as a tailwind. Honest note: as tuned, this is the weakest live scout — it finds real moves but tends to give the profit back, a management problem rather than a bad signal.</div>
+              <div class="meta"><span class="badge both">Both</span><span class="tag">trend-following</span><span class="tag">momentum</span></div>
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 + D1 gates</span></div><code>4-hour trend up + ADX ≥ 18, price pulls
+back 0.6–1.8 ATR over 2–10 hours showing
+exhaustion, then a reclaim candle closes
+back above the prior highs → buy, target 1.3R.</code><span class="src">CPullbackContinuationEngine.mqh</span></div></details>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s6">
+        <h2>The honest reality</h2>
+        <p class="lead">Twelve strategies are loaded, but that's a fact about the <b>roster</b>, not the <b>playing time</b>.</p>
+        <div class="honesty">
+          <h4>Seven really play, and three carry the game</h4>
+          <p>Over 7.5 years of real gold data, five of the twelve produced <b>zero</b> trades — their internal conditions are simply too demanding to fire on this market, even with their switches on (use the "Dormant" and "Switched off" filters above to see which). The live book is really about <b>seven</b> scouts, and three of them — Pin Bar, Engulfing and MA&nbsp;Cross — do the overwhelming majority of the work.</p>
+          <p>That isn't a flaw so much as honesty about what actually earns: the bot is, at heart, <b>a disciplined way to buy bullish hourly momentum candles when gold is trending up</b>, wrapped in a great deal of machinery that keeps it out of trouble the rest of the time. The dormant scouts aren't dead weight — they're a reserve that would need re-tuning, not just switching on, to ever contribute.</p>
+          <div class="big3"><span>Pin Bar</span><span>Engulfing</span><span>MA Cross</span><span>≈ most of all trades</span></div>
+        </div>
+        <div class="prose" style="margin-top:22px">
+          <p>Whichever scout wins the hour, its idea now faces the hardest part of the chain: proving itself worthy. That's the next chapter — <a href="04-gauntlet.html" style="color:var(--gold-deep)">Competition &amp; the Gauntlet</a>.</p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="02-reading-the-room.html"><span class="pl">← Previous</span><span class="pt">02 · Reading the Room</span></a>
+        <a class="pager next" href="04-gauntlet.html"><span class="pl">Next chapter →</span><span class="pt">04 · Competition &amp; Gauntlet</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

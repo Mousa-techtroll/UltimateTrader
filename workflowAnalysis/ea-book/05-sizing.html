@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>05 · Sizing the Trade — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html" aria-current="page"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">Decide the loss first</a></li>
+        <li><a href="#s2">The formula, worked</a></li>
+        <li><a href="#s3">The situational dials</a></li>
+        <li><a href="#s4">The hard rails</a></li>
+        <li><a href="#s5">Putting it all together</a></li>
+        <li><a href="#s6">What it will never do</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 05 / 07 · Link 05</div>
+        <h1>Sizing the Trade</h1>
+        <p class="dek">This is the most mechanical link in the chain, and arguably the most important — good sizing keeps a run of losses survivable. The bot decides <b>how much to lose before it decides how much to buy</b>: it fixes the dollars at stake, looks at the stop distance, and works backwards to a position size so that being wrong always costs the same small amount.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>Decide the loss first</h2>
+        <p class="lead">Like saying "tonight I'll risk at most $100 at this table" <b>before</b> choosing chip sizes.</p>
+        <div class="prose">
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);background:var(--gold-soft);border:1px solid var(--gold-line);padding:2px 7px;border-radius:5px;margin-right:8px">In plain terms</span>Most beginners size a trade by asking "how many ounces do I want?" This bot asks the opposite question first: <b>"if I'm wrong and my stop is hit, how many dollars am I willing to lose?"</b> That number — a small slice of the account — is fixed <em>before</em> the size is calculated, and everything else follows from it. The size is an <em>output</em> of the risk, never the input.</p>
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);background:var(--card-2);border:1px solid var(--hair);padding:2px 7px;border-radius:5px;margin-right:8px">Technically</span>This is <b>fixed-fractional risk sizing</b>. Each trade risks a set percentage of the current account balance to its stop-loss. Because that percentage is held constant, the position size floats to match the stop distance — a jumpy setup with a wide stop automatically gets fewer ounces than a tight, precise one, even though both risk the same dollars. Risk stays flat; only exposure flexes.</p>
+          <p class="analogy"><b>Like a poker player</b> who sets tonight's budget before sitting down — the cards change hand to hand, but the most they can lose is decided in advance, not discovered at the end.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s2">
+        <h2>The formula, worked</h2>
+        <p class="lead">The lot-size math reads no candles at all — it's pure money arithmetic from the stop distance and the account balance.</p>
+        <div class="mathbox">position size <span class="op">=</span>  <span class="hl">account × risk%</span>
+              <span class="op">÷</span>  ( stop distance × value-per-point )</div>
+        <div class="prose" style="margin-top:16px">
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);background:var(--card-2);border:1px solid var(--hair);padding:2px 7px;border-radius:5px;margin-right:8px">Technically</span>Every term is concrete. <b>Account × risk%</b> is the dollars at stake (e.g. 1% of $10,000 = $100). <b>Stop distance</b> is how far, in price, the entry sits from the stop. <b>Value-per-point</b> is what a one-point move is worth per unit traded — a fixed property of the instrument. Divide the dollars at risk by the dollar-loss-per-unit at the stop, and you get the number of units to trade.</p>
+          <p>Walk it through with round numbers. Account <b>$10,000</b>, the graded setup allows <b>1%</b> risk ($100), and the stop sits <b>$4.50</b> away from the entry:</p>
+        </div>
+        <div class="mathbox" style="margin-top:0">dollars at risk <span class="op">=</span> $10,000 × 1%      <span class="op">=</span> <span class="hl">$100</span>
+position size   <span class="op">=</span> $100 ÷ $4.50       <span class="op">≈</span> <span class="hl">22 ounces</span>  (~0.22 lot)</div>
+        <div class="prose" style="margin-top:16px">
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);background:var(--gold-soft);border:1px solid var(--gold-line);padding:2px 7px;border-radius:5px;margin-right:8px">In plain terms</span>The clever part is what that division does automatically. A <b>wider stop forces a smaller position; a tighter stop allows a bigger one</b> — the dollar risk never changes. Flip the stop in this example: if the setup had a wide <b>$9.00</b> stop instead, the size would halve to ~11 ounces. Same $100 at risk, half the gold. The trader never has to think about ounces at all.</p>
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);background:var(--card-2);border:1px solid var(--hair);padding:2px 7px;border-radius:5px;margin-right:8px">The safety clamps</span>The raw result is then tidied: rounded <em>down</em> to the broker's smallest tradable step, clamped to a sensible minimum and maximum size, and <b>refused outright if it would need more than 80% of free margin</b> (so a single trade can never consume the account's borrowing room). Only after those checks does an order size actually exist.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s3">
+        <h2>The situational dials</h2>
+        <p class="lead">The grade sets the <em>base</em> risk. A series of situational dials then nudge it — almost always <b>down</b> — before the size is calculated. Each reads one aspect of the environment and multiplies the base risk.</p>
+        <div class="prose" style="margin-bottom:6px">
+          <p>Notice the deliberate asymmetry as you read: most dials only ever <em>reduce</em> risk, and the two that can raise it are small and capped. The bot is built to <b>get cautious quickly and bold slowly</b>.</p>
+        </div>
+        <div class="gates-x">
+
+          <div class="gate-x">
+            <div class="gx-num mult down">×0.50</div>
+            <div class="gx-body">
+              <div class="gx-head"><h4>Session</h4><div class="gx-tf"><span class="tf">clock · GMT</span></div></div>
+              <p class="gx-p"><span class="gx-lab plain">In plain terms</span>The same trade is riskier at some hours than others. The London open is fast and choppy, so the bot <b>halves</b> its size there; New York gets a light trim; the quieter Asian session runs full size.</p>
+              <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A session multiplier keyed on the current GMT hour — <b>London ×0.50, New York ×0.90, Asia ×1.0</b> — applied to the base risk before the position is calculated.</p>
+            </div>
+          </div>
+
+          <div class="gate-x">
+            <div class="gx-num mult up">×1.25</div>
+            <div class="gx-body">
+              <div class="gx-head"><h4>Market mood (regime)</h4><div class="gx-tf"><span class="tf">H4</span></div></div>
+              <p class="gx-p"><span class="gx-lab plain">In plain terms</span>In a clean trend the bot is allowed to press a little harder; in a volatile or choppy market it pulls back. This is the main dial that can nudge risk <em>up</em>, and only modestly.</p>
+              <p class="gx-p tech"><span class="gx-lab tech">Technically</span>A regime multiplier from the 4-hour classifier — <b>Trending ×1.25, Ranging ≈×1.0, Volatile ×0.75, Choppy ×0.60</b>.</p>
+            </div>
+          </div>
+
+          <div class="gate-x">
+            <div class="gx-num mult down">×0.70</div>
+            <div class="gx-body">
+              <div class="gx-head"><h4>Drawdown brake</h4><div class="gx-tf"><span class="tf">account</span></div></div>
+              <p class="gx-p"><span class="gx-lab plain">In plain terms</span>After a losing streak the bot quietly shrinks its bets, so a cold run does less damage — and it recovers size only as results improve. It never bets bigger to "win it back."</p>
+              <p class="gx-p tech"><span class="gx-lab tech">Technically</span>An equity-curve controller that scales risk down toward <b>×0.70</b> during a drawdown and back toward ×1.0 as the curve recovers. It is capped at ×1.0 — it can only ever reduce, never amplify. Reads the account equity curve, no chart.</p>
+            </div>
+          </div>
+
+          <div class="gate-x">
+            <div class="gx-num mult down">×0.50</div>
+            <div class="gx-body">
+              <div class="gx-head"><h4>Counter-trend halving</h4><div class="gx-tf"><span class="tf">H1</span></div></div>
+              <p class="gx-p"><span class="gx-lab plain">In plain terms</span>If a trade is fighting the long-term tide — for example a buy placed below the big trend line — the bot halves the bet. It's allowed, but treated as the riskier exception.</p>
+              <p class="gx-p tech"><span class="gx-lab tech">Technically</span>If the trade's direction opposes the <b>hourly 200-EMA</b> relative to live price, risk is multiplied by <b>×0.50</b>. (The same tide line the bias uses in Chapter 2.)</p>
+            </div>
+          </div>
+
+          <div class="gate-x">
+            <div class="gx-num mult up">×1.15</div>
+            <div class="gx-body">
+              <div class="gx-head"><h4>Volatility burst</h4><div class="gx-tf"><span class="tf">H1</span></div></div>
+              <p class="gx-p"><span class="gx-lab plain">In plain terms</span>When volatility is rapidly expanding, moves travel further and are worth more, so the bot allows a small size boost to make the most of a lively market.</p>
+              <p class="gx-p tech"><span class="gx-lab tech">Technically</span>An ATR-velocity boost of <b>×1.15</b> when the hourly ATR is expanding sharply, measured as recent-versus-older true-range over about six bars.</p>
+            </div>
+          </div>
+
+          <div class="gate-x">
+            <div class="gx-num mult down">×0.25</div>
+            <div class="gx-body">
+              <div class="gx-head"><h4>Shock &amp; quality trims — with a floor</h4><div class="gx-tf"><span class="tf">H4·H1·M5</span><span class="tf">live</span></div></div>
+              <p class="gx-p"><span class="gx-lab plain">In plain terms</span>The same shock and session-quality checks from the gauntlet can also quietly <em>trim</em> a trade (rather than block it) when conditions are borderline — but there's a hard floor: no pile-up of brakes can shrink a trade below a quarter of its base.</p>
+              <p class="gx-p tech"><span class="gx-lab tech">Technically</span>Shock and execution-quality multipliers stack with the others, and the combined product of all dials is floored at <b>×0.25</b> so the total reduction can never go below a quarter.</p>
+            </div>
+          </div>
+
+        </div>
+        <div class="callout">
+          <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 10l7-7 7 7"/></svg></span>
+          <div><p><b>Dials that ship off or inert.</b> A few appear in the code but do nothing on the default gold configuration: a consecutive-loss scaler (near-no-op), a short-protection dial (set to ×1.0 — no effect), a Wednesday reducer (a calendar tweak, off), and a trend-quality boost (off). They're mentioned only so the picture is complete.</p></div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s4">
+        <h2>The hard rails</h2>
+        <p class="lead">The dials <em>adjust</em> size; these are absolute limits no setup or dial can override. None read a chart — they watch the account and the clock, and they always win.</p>
+        <div class="rails">
+          <div class="rail"><div class="rv">≤ 2%</div><div class="rl">Most the account can lose on any one trade</div></div>
+          <div class="rail"><div class="rv">−3%</div><div class="rl">Daily-loss halt: stop all new trades for the day</div></div>
+          <div class="rail"><div class="rv">5</div><div class="rl">Maximum open positions at once (and per day)</div></div>
+          <div class="rail"><div class="rv">≤ 5%</div><div class="rl">Combined risk across all open trades</div></div>
+          <div class="rail"><div class="rv">5 in a row</div><div class="rl">Consecutive failed orders trip a safety halt</div></div>
+          <div class="rail"><div class="rv">Master</div><div class="rl">Operator emergency kill switch</div></div>
+        </div>
+        <div class="prose" style="margin-top:18px">
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);background:var(--gold-soft);border:1px solid var(--gold-line);padding:2px 7px;border-radius:5px;margin-right:8px">In plain terms</span>Think of the dials as the accelerator and brakes, and these rails as the guardrails and the speed limiter that no amount of pedal can beat. Whatever the setup wants, a single trade can't risk more than <b>2%</b>, the open trades together can't risk more than <b>5%</b>, and no more than <b>five</b> can be live at once.</p>
+          <p><span style="font-family:var(--font-mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);background:var(--card-2);border:1px solid var(--hair);padding:2px 7px;border-radius:5px;margin-right:8px">Technically</span>The <b>2% per-trade cap</b> is clamped twice — once during sizing and again just before the order is sent — so no dial or rounding can sneak past it. The <b>total-risk cap</b> sums the open risk of every live position plus the candidate and shrinks-to-fit or rejects. The <b>daily-loss halt</b> watches <em>live</em> equity, so an open trade sliding into a loss can trip it intraday, not just closed losses. And the <b>consecutive-error halt</b> stops everything after five failed order attempts in a row — a circuit-breaker against a broken connection or a misbehaving broker feed, not a market signal.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s5">
+        <h2>Putting it all together</h2>
+        <p class="lead">Here is the whole sizing routine on one trade, from grade to final lot — every multiplier applied in order, then the caps checked.</p>
+        <div class="prose"><p>Say an <b>A+</b> setup appears during the <b>London</b> session in a <b>trending</b> market, and it's <em>with</em> the long-term tide (not counter-trend). The base risk starts at the A+ grade and the dials adjust it:</p></div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>Step</th><th class="r">Running risk</th></tr></thead>
+            <tbody>
+              <tr><td>Base risk — A+ grade</td><td class="r num">1.35%</td></tr>
+              <tr><td>× London session &nbsp;(×0.50)</td><td class="r num">0.675%</td></tr>
+              <tr><td>× Trending regime &nbsp;(×1.25)</td><td class="r num">0.84%</td></tr>
+              <tr><td>Counter-trend? no — unchanged</td><td class="r num">0.84%</td></tr>
+              <tr><td>Drawdown / vol / shock? none active</td><td class="r num">0.84%</td></tr>
+              <tr class="total"><td>Dollars at risk &nbsp;(of $10,000)</td><td class="r pos">≈ $84</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mathbox" style="margin-top:14px">position size <span class="op">=</span> $84 ÷ $4.50 stop <span class="op">≈</span> <span class="hl">18.7 oz</span>  →  rounded down to <span class="hl">0.18 lot</span>
+caps: under 2% per-trade <span class="hl">✓</span> · under 5% total <span class="hl">✓</span> · margin ok <span class="hl">✓</span>  →  order placed</div>
+        <div class="prose" style="margin-top:16px">
+          <p>Two brakes (the halved London size) and one small boost (the trend) net out to about 0.84% — comfortably under the 2% ceiling — and a modest 0.18-lot order results. Change any input and the size moves with it: a New-York A+ setup would size larger (×0.90 instead of ×0.50); the same idea fighting the trend would be halved again; a mid-drawdown version would be trimmed toward ×0.70. The trader sets none of this by hand — it falls out of the rules, the same way every hour.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s6">
+        <h2>What it will never do</h2>
+        <p class="lead">Some of the most dangerous behaviours in trading are the ones this bot is built to <em>refuse</em>. These were audited and confirmed in the code.</p>
+        <div class="wontdo">
+          <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> No martingale (doubling down after losses)</div>
+          <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> No grid (stacking orders into a loser)</div>
+          <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> Never adds to a losing trade</div>
+          <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> Never increases size after a loss</div>
+          <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> Never widens a stop-loss</div>
+        </div>
+        <div class="prose">
+          <p>Each of these is a classic way accounts blow up. <b>Martingale</b> — doubling the bet after a loss to win it back — turns one bad streak into a wipe-out. A <b>grid</b> stacks more and more orders into a position that's already going the wrong way, compounding the loss. <b>Averaging down</b> into a loser feels like buying a bargain and usually just enlarges the mistake. And <b>widening a stop</b> to avoid taking a loss is how a small, planned loss becomes a large, unplanned one.</p>
+          <p>The bot forbids all four by construction: every result-based dial multiplies by <b>1.0 or less</b> (so a loss can only ever shrink the next bet, never grow it), and the stop-loss only ever ratchets toward safety — there is no code path that moves it further away. With the size decided and checked, the order goes in, and the bot's attention shifts entirely to <a href="06-exits.html" style="color:var(--gold-deep)">managing the exit</a>.</p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="04-gauntlet.html"><span class="pl">← Previous</span><span class="pt">04 · Competition &amp; Gauntlet</span></a>
+        <a class="pager next" href="06-exits.html"><span class="pl">Next chapter →</span><span class="pt">06 · Managing the Exit</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

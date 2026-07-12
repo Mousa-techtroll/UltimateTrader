@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>01 · The Heartbeat — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html" aria-current="page"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">Once an hour, on purpose</a></li>
+        <li><a href="#s2">Closed candles, never forming</a></li>
+        <li><a href="#s3">The hourly loop</a></li>
+        <li><a href="#s4">Decide once, manage always</a></li>
+        <li><a href="#s5">Seven timeframes at once</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 01 / 07 · Stage 00</div>
+        <h1>The Heartbeat</h1>
+        <p class="dek">Everything the bot does hangs off a single clock: the <b>1-hour candle</b>. Understand the heartbeat and the rest of the book falls into place — because every other chapter is just one beat of this loop, examined slowly.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>Once an hour, on purpose</h2>
+        <p class="lead">The bot makes exactly <b>one new trade decision</b> when each hourly candle finishes — and only ever acts on a <b>finished</b> hour.</p>
+        <div class="prose">
+          <p class="analogy"><b>Picture a careful shopper</b> who checks the shelf at the top of each hour instead of fidgeting over every price tag change. When the hour closes, the bot wakes, runs its whole routine start to finish, then goes quiet until the next hour.</p>
+          <p>Why the hour, and not the minute or the tick? Because acting slowly is a feature, not a limitation. Markets are noisy: prices jump around constantly, and most of that movement is meaningless wiggle that reverses within minutes. A bot that reacted to every flicker would be whipsawed — buying a spike that immediately fades, selling a dip that instantly recovers. By waiting for a full hour of price action to resolve into one finished candle, the bot filters out the noise and only responds to something that actually held for an hour.</p>
+          <p>This one choice — the <b>hourly heartbeat</b> — is the root of the bot's whole personality: patient, deliberate, and hard to fake out. Every strategy, filter and exit you'll meet in later chapters is timed to it.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s2">
+        <h2>Closed candles, never forming</h2>
+        <p class="lead">A candle is <b>closed</b> once its hour is over — its four prices can never change again. A <b>forming</b> candle is the current, still-moving one. The bot builds its decisions almost entirely on closed candles.</p>
+        <div class="prose">
+          <p>Every candle records four prices for its slice of time: where it <b>opened</b>, the <b>high</b> it reached, the <b>low</b>, and where it <b>closed</b>. While the hour is still running, all four of those (except the open) are still moving — the "high so far" can be beaten a second later, the close isn't decided until the very end. Acting on that half-formed picture is dangerous, because it can completely reverse before the hour finishes. Traders call that being "repainted."</p>
+          <p>So the bot is deliberately conservative. Its trend reading, its market-mood label, its tide line, its structure checks, its trailing stop, and its exit signals all read the <b>last completed candle</b> — the one that's now fixed history.</p>
+          <div class="callout">
+            <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+            <div>
+              <p><b>The deliberate exceptions.</b> A few checks read the live, still-moving price on purpose — to "front-run" a fast reversal against a stable, closed-bar baseline. The macro and crash-fade price checks use the live price by design, and the execution step naturally uses the live price and spread the instant it places an order. These are conscious trade-offs, not oversights.</p>
+            </div>
+          </div>
+          <p>The practical upshot: when this book says a decision is made "on the hourly chart," it almost always means <em>on the candle that just finished</em> — not the one still in progress.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s3">
+        <h2>The hourly loop</h2>
+        <p class="lead">When the hour closes, the bot runs the same seven-step routine every single time. Those seven steps are the chapters of this book.</p>
+        <div class="prose">
+          <p>Here is the whole loop at a glance. Each step links to the chapter that takes it apart:</p>
+        </div>
+        <div class="steps" style="margin-top:16px">
+          <div class="step"><div class="sn"></div><div><h4><a href="02-reading-the-room.html" style="color:var(--gold-deep);text-decoration:none">Read the room</a></h4><p>Build a four-part picture of the market — the favoured direction, the mood, the macro backdrop, and the session — before looking at any specific trade.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4><a href="03-the-scouts.html" style="color:var(--gold-deep);text-decoration:none">Interview the scouts</a></h4><p>Ask a panel of specialist strategies whether each sees its particular setup right now.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4><a href="04-gauntlet.html" style="color:var(--gold-deep);text-decoration:none">Pick the single best</a></h4><p>Score every "yes" and hire exactly one idea — the strongest this hour. Everyone else is dropped until next hour.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4><a href="04-gauntlet.html" style="color:var(--gold-deep);text-decoration:none">Run the gauntlet</a></h4><p>Put that one winner through a wall of twelve safety checks. A single failure cancels the trade.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4><a href="05-sizing.html" style="color:var(--gold-deep);text-decoration:none">Size to the risk</a></h4><p>Work backwards from the stop-loss so that being wrong costs a fixed, small slice of the account.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4><a href="05-sizing.html" style="color:var(--gold-deep);text-decoration:none">Enter</a></h4><p>Place the order, re-checking the live price and spread one final time.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4><a href="06-exits.html" style="color:var(--gold-deep);text-decoration:none">Manage &amp; exit</a></h4><p>Bank profit in slices, trail a runner up, and close the trade on the exit rules.</p></div></div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s4">
+        <h2>Decide once, manage always</h2>
+        <p class="lead">There's one important asymmetry: <b>new trades</b> are decided only once an hour, but <b>open trades</b> are managed continuously — on every price tick.</p>
+        <div class="prose">
+          <p>The hourly heartbeat governs <em>opening</em>. But once a trade is live, the bot can't afford to look away for an hour at a time — a stop-loss or a profit target could be reached at any second. So the management side runs constantly in the background: the moment price touches a take-profit level, a stop, or a trailing-stop line, the bot acts, whatever the clock says.</p>
+          <p>Think of it as two rhythms overlaid: a slow, deliberate <b>once-an-hour pulse</b> for finding and starting trades, and a fast, ever-watchful <b>tick-by-tick pulse</b> for protecting and harvesting the trades already on. Chapter 6 covers that management side in full.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s5">
+        <h2>Seven timeframes at once</h2>
+        <p class="lead">The hourly candle is the heartbeat, but it's not the only chart the bot watches. A good human trader reads several timeframes together — and so does this bot.</p>
+        <div class="prose">
+          <p>A <b>timeframe</b> is simply how much time each candle covers. The bot reads seven of them, each doing a specific job, all feeding the one hourly decision:</p>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>Timeframe</th><th>What each candle covers</th><th>What the bot uses it for</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tfx">W1</span> weekly</td><td>one week</td><td>The biggest-picture tide — the weekly average's slope, and last week's high/low as major levels</td></tr>
+              <tr><td><span class="tfx">D1</span> daily</td><td>one day</td><td>The long-term trend, the "death cross," and yesterday's high/low</td></tr>
+              <tr><td><span class="tfx">H4</span> 4-hour</td><td>four hours</td><td>The market mood (trend vs chop vs volatile) and the trend gate most trades must agree with</td></tr>
+              <tr><td><span class="tfx">H1</span> hourly</td><td>one hour</td><td>The <b>heartbeat</b> — one decision per finished candle; most triggers, the tide line, the trailing stop</td></tr>
+              <tr><td><span class="tfx">M15</span> 15-min</td><td>fifteen minutes</td><td>The overnight Asian range and the trigger candles for a few precise strategies</td></tr>
+              <tr><td><span class="tfx">M5</span> 5-min</td><td>five minutes</td><td>One input to the abnormal-shock detector (a fast-spike check)</td></tr>
+              <tr><td>live tick</td><td>right now</td><td>The instant price and spread used at the moment of decision and execution</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prose" style="margin-top:16px">
+          <p>The mental model is a nested one: the <b>weekly</b> sets the tide, the <b>daily</b> the trend, the <b>4-hour</b> the mood, the <b>hourly</b> the heartbeat, and the faster charts the fine detail. Everything bigger and everything smaller is read <em>in support of</em> that one hourly decision. The next chapter — <a href="02-reading-the-room.html" style="color:var(--gold-deep)">Reading the Room</a> — shows exactly how those layers combine into the bot's first move each hour.</p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="index.html"><span class="pl">← Contents</span><span class="pt">The full table of contents</span></a>
+        <a class="pager next" href="02-reading-the-room.html"><span class="pl">Next chapter →</span><span class="pt">02 · Reading the Room</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

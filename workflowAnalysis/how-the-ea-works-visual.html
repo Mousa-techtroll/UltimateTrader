@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>How the Gold Bot Works — A Field Manual</title>
+</head>
+<body>
+<style>
+  :root{
+    --bg:#f3f0e8; --bg-elev:#fbf9f3; --card:#ffffff; --card-2:#f6f3ea;
+    --border:#e4dfd1; --border-strong:#d0c8b4; --hair:#ece7db;
+    --text:#1b1f26; --text-2:#575c52; --text-3:#8b8579;
+    --gold:#9a7a2c; --gold-bright:#b98f34; --gold-deep:#735820; --gold-line:#c8a24c;
+    --gold-soft:rgba(154,122,44,.11); --gold-glow:rgba(200,162,76,.28);
+    --long:#2f7d5b; --short:#b0492f; --long-soft:rgba(47,125,91,.12); --short-soft:rgba(176,73,47,.12);
+    --neutral:#6d7a86; --neutral-soft:rgba(109,122,134,.13);
+    --focus:#b98f34;
+    --sh-1:0 1px 2px rgba(40,34,20,.05),0 2px 8px rgba(40,34,20,.05);
+    --sh-2:0 4px 22px rgba(40,34,20,.10);
+    --font-display:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
+    --font-body:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono","Cascadia Code","JetBrains Mono","Roboto Mono",Menlo,Consolas,monospace;
+    --maxw:1180px; --measure:66ch;
+    --r:14px; --r-s:9px;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --bg:#0d1014; --bg-elev:#12161d; --card:#161b23; --card-2:#1a2028;
+      --border:#262d38; --border-strong:#36404e; --hair:#1e242d;
+      --text:#f1ece0; --text-2:#b0a99b; --text-3:#847e71;
+      --gold:#cda24e; --gold-bright:#e8c67e; --gold-deep:#9c7a38; --gold-line:#b58e42;
+      --gold-soft:rgba(205,162,78,.12); --gold-glow:rgba(205,162,78,.30);
+      --long:#5da583; --short:#d2705b; --long-soft:rgba(93,165,131,.14); --short-soft:rgba(210,112,91,.14);
+      --neutral:#8f9aa6; --neutral-soft:rgba(143,154,166,.14);
+      --focus:#e8c67e;
+      --sh-1:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.28);
+      --sh-2:0 6px 30px rgba(0,0,0,.42);
+    }
+  }
+  :root[data-theme="light"]{
+    --bg:#f3f0e8; --bg-elev:#fbf9f3; --card:#ffffff; --card-2:#f6f3ea;
+    --border:#e4dfd1; --border-strong:#d0c8b4; --hair:#ece7db;
+    --text:#1b1f26; --text-2:#575c52; --text-3:#8b8579;
+    --gold:#9a7a2c; --gold-bright:#b98f34; --gold-deep:#735820; --gold-line:#c8a24c;
+    --gold-soft:rgba(154,122,44,.11); --gold-glow:rgba(200,162,76,.28);
+    --long:#2f7d5b; --short:#b0492f; --long-soft:rgba(47,125,91,.12); --short-soft:rgba(176,73,47,.12);
+    --neutral:#6d7a86; --neutral-soft:rgba(109,122,134,.13);
+    --focus:#b98f34;
+    --sh-1:0 1px 2px rgba(40,34,20,.05),0 2px 8px rgba(40,34,20,.05);
+    --sh-2:0 4px 22px rgba(40,34,20,.10);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d1014; --bg-elev:#12161d; --card:#161b23; --card-2:#1a2028;
+    --border:#262d38; --border-strong:#36404e; --hair:#1e242d;
+    --text:#f1ece0; --text-2:#b0a99b; --text-3:#847e71;
+    --gold:#cda24e; --gold-bright:#e8c67e; --gold-deep:#9c7a38; --gold-line:#b58e42;
+    --gold-soft:rgba(205,162,78,.12); --gold-glow:rgba(205,162,78,.30);
+    --long:#5da583; --short:#d2705b; --long-soft:rgba(93,165,131,.14); --short-soft:rgba(210,112,91,.14);
+    --neutral:#8f9aa6; --neutral-soft:rgba(143,154,166,.14);
+    --focus:#e8c67e;
+    --sh-1:0 1px 2px rgba(0,0,0,.3),0 2px 10px rgba(0,0,0,.28);
+    --sh-2:0 6px 30px rgba(0,0,0,.42);
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--font-body);font-size:17px;line-height:1.62;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  ::selection{background:var(--gold-glow);color:var(--text)}
+  a{color:inherit}
+  h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;text-wrap:balance;line-height:1.14;margin:0}
+  p{margin:0}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 clamp(18px,4vw,40px)}
+  .mono{font-family:var(--font-mono)}
+  .num{font-variant-numeric:tabular-nums}
+
+  /* ---------- top nav ---------- */
+  .topbar{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 86%,transparent);
+    backdrop-filter:blur(12px) saturate(1.3);border-bottom:1px solid var(--hair)}
+  .topbar .row{display:flex;align-items:center;gap:22px;height:60px}
+  .brand{display:flex;align-items:center;gap:11px;font-family:var(--font-display);font-size:1.08rem;font-weight:600;letter-spacing:.01em;white-space:nowrap}
+  .brand .ticker{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.13em;color:var(--gold);
+    border:1px solid var(--gold-line);border-radius:5px;padding:2px 6px;text-transform:uppercase}
+  .navlinks{display:flex;gap:3px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+  .navlinks::-webkit-scrollbar{display:none}
+  .navlinks a{font-size:.82rem;color:var(--text-2);text-decoration:none;padding:7px 11px;border-radius:8px;white-space:nowrap;
+    font-variant-numeric:tabular-nums;transition:color .18s,background .18s}
+  .navlinks a:hover{color:var(--text);background:var(--card-2)}
+  .navlinks a.active{color:var(--gold);background:var(--gold-soft)}
+  .navlinks a .k{font-family:var(--font-mono);font-size:.72em;color:var(--gold);margin-right:6px;opacity:.8}
+  :focus-visible{outline:2px solid var(--focus);outline-offset:3px;border-radius:4px}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--hair)}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:
+      radial-gradient(120% 90% at 82% -10%,var(--gold-soft),transparent 55%),
+      radial-gradient(80% 70% at 8% 8%,color-mix(in srgb,var(--gold-soft) 60%,transparent),transparent 60%)}
+  .hero .wrap{position:relative;padding-top:clamp(46px,7vw,82px);padding-bottom:clamp(40px,6vw,64px)}
+  .eyebrow{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--gold);display:flex;align-items:center;gap:12px;margin-bottom:22px}
+  .eyebrow::after{content:"";height:1px;flex:1;max-width:180px;background:linear-gradient(90deg,var(--gold-line),transparent)}
+  .hero h1{font-size:clamp(2.35rem,5.6vw,4.15rem);letter-spacing:-.015em;max-width:15ch}
+  .hero h1 .g{color:var(--gold);font-style:italic}
+  .lede{margin-top:24px;max-width:60ch;font-size:clamp(1.06rem,1.7vw,1.28rem);color:var(--text-2);line-height:1.58}
+  .lede b{color:var(--text);font-weight:600}
+
+  .statband{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--border);
+    border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-top:40px;box-shadow:var(--sh-1)}
+  .stat{background:var(--card);padding:18px 18px 16px}
+  .stat .v{font-family:var(--font-display);font-size:clamp(1.5rem,3vw,2.1rem);font-weight:600;line-height:1;font-variant-numeric:tabular-nums;color:var(--text)}
+  .stat .v small{font-size:.5em;color:var(--text-3);font-family:var(--font-mono);font-weight:400;letter-spacing:.02em}
+  .stat .l{font-size:.76rem;color:var(--text-2);margin-top:8px;line-height:1.35}
+  @media (max-width:860px){.statband{grid-template-columns:repeat(2,1fr)}.stat:last-child{grid-column:1/-1}}
+
+  /* ---------- the chain ---------- */
+  .chain-sec{padding:clamp(34px,5vw,52px) 0;border-bottom:1px solid var(--hair);background:var(--bg-elev)}
+  .chain-head{max-width:60ch;margin-bottom:30px}
+  .chain-head .kick{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px}
+  .chain-head h2{font-size:clamp(1.5rem,3vw,2rem);letter-spacing:-.01em}
+  .chain-head p{margin-top:12px;color:var(--text-2)}
+  .chain{display:flex;gap:0;flex-wrap:wrap;counter-reset:c}
+  .link{flex:1 1 150px;min-width:145px;position:relative;padding:20px 18px 20px 0}
+  .link::before{counter-increment:c;content:"0" counter(c);font-family:var(--font-mono);font-size:.72rem;
+    color:var(--gold);letter-spacing:.05em;display:block;margin-bottom:10px}
+  .link .arw{position:absolute;left:-2px;top:52px;color:var(--border-strong)}
+  .link h4{font-size:1.02rem;letter-spacing:-.005em}
+  .link p{font-size:.83rem;color:var(--text-2);margin-top:6px;line-height:1.45}
+  .link .dot{width:10px;height:10px;border-radius:50%;background:var(--gold);position:absolute;left:0;top:2px;
+    box-shadow:0 0 0 4px var(--gold-soft)}
+  .link{padding-left:24px}
+  .link::after{content:"";position:absolute;left:4px;top:14px;bottom:-6px;width:1px;background:var(--hair)}
+  @media (max-width:720px){.link{flex:1 1 100%}}
+
+  /* ---------- generic section ---------- */
+  section.blk{padding:clamp(52px,7vw,90px) 0;border-bottom:1px solid var(--hair)}
+  .sec-head{display:flex;gap:20px;align-items:flex-start;margin-bottom:clamp(28px,4vw,44px);max-width:78ch}
+  .sec-stage{font-family:var(--font-mono);font-size:.78rem;letter-spacing:.06em;color:var(--gold);
+    border:1px solid var(--gold-line);border-radius:8px;padding:8px 10px;line-height:1;white-space:nowrap;margin-top:6px}
+  .sec-head h2{font-size:clamp(1.7rem,3.6vw,2.6rem);letter-spacing:-.018em}
+  .sec-head .sub{color:var(--text-2);margin-top:14px;max-width:var(--measure);font-size:1.05rem}
+  .sec-head .sub b{color:var(--text);font-weight:600}
+
+  .prose{max-width:var(--measure)}
+  .prose p+p{margin-top:16px}
+  .analogy{border-left:3px solid var(--gold-line);padding:4px 0 4px 20px;margin:8px 0;color:var(--text-2);font-style:italic}
+  .analogy b{color:var(--text);font-style:normal}
+
+  /* ---------- room / context cards ---------- */
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media (max-width:980px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:1fr 1fr}}
+  @media (max-width:640px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
+  .ctx{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px;box-shadow:var(--sh-1);
+    display:flex;flex-direction:column;gap:10px}
+  .ctx .tf{align-self:flex-start}
+  .ctx h4{font-size:1.14rem}
+  .ctx p{font-size:.9rem;color:var(--text-2);line-height:1.5}
+  .ctx .ex{font-family:var(--font-mono);font-size:.76rem;color:var(--text-3);border-top:1px dashed var(--hair);padding-top:10px;margin-top:auto}
+
+  /* timeframe pill */
+  .tf{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:.68rem;letter-spacing:.04em;
+    text-transform:uppercase;color:var(--gold-deep);background:var(--gold-soft);border:1px solid var(--gold-line);
+    border-radius:999px;padding:3px 9px 3px 7px;white-space:nowrap}
+  .tf svg{width:11px;height:11px;flex:none}
+  :root[data-theme="dark"] .tf,@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tf{color:var(--gold-bright)}}
+
+  /* ---------- scouts ---------- */
+  .filter{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:26px}
+  .filter .lab{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-right:4px}
+  .chip{font-family:var(--font-mono);font-size:.76rem;letter-spacing:.02em;padding:6px 12px;border-radius:999px;cursor:pointer;
+    border:1px solid var(--border-strong);background:transparent;color:var(--text-2);transition:.16s}
+  .chip:hover{color:var(--text);border-color:var(--gold-line)}
+  .chip[aria-pressed="true"]{background:var(--gold);color:#161109;border-color:var(--gold)}
+  :root[data-theme="dark"] .chip[aria-pressed="true"]{color:#14110a}
+
+  .family{margin-bottom:40px}
+  .family-head{display:flex;align-items:baseline;gap:14px;margin:0 0 18px;padding-bottom:12px;border-bottom:1px solid var(--hair)}
+  .family-head h3{font-size:1.34rem;letter-spacing:-.01em}
+  .family-head .cnt{font-family:var(--font-mono);font-size:.76rem;color:var(--text-3);margin-left:auto}
+  .family-head p{font-size:.9rem;color:var(--text-2);flex-basis:100%;order:3;margin-top:-4px}
+
+  .scouts{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  @media (max-width:820px){.scouts{grid-template-columns:1fr}}
+  .scout{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px 22px 18px;
+    box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:13px;transition:transform .18s,box-shadow .18s,border-color .18s}
+  .scout:hover{transform:translateY(-2px);box-shadow:var(--sh-2);border-color:var(--border-strong)}
+  .scout.dim{opacity:.42;filter:saturate(.6)}
+  .scout .top{display:flex;align-items:flex-start;gap:12px}
+  .scout h4{font-size:1.22rem;letter-spacing:-.01em;flex:1}
+  .scout .sees{font-size:.92rem;color:var(--text-2);font-style:italic;line-height:1.45}
+  .scout .body{font-size:.9rem;line-height:1.55}
+  .scout .why{font-size:.9rem;line-height:1.5;background:var(--card-2);border-radius:var(--r-s);padding:12px 14px;
+    border:1px solid var(--hair)}
+  .scout .why b{color:var(--gold-deep);font-weight:700}
+  :root[data-theme="dark"] .scout .why b{color:var(--gold-bright)}
+  .scout .meta{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-top:auto}
+  .tag{font-family:var(--font-mono);font-size:.68rem;color:var(--text-3);border:1px solid var(--hair);border-radius:6px;padding:2px 7px}
+  .badge{font-family:var(--font-mono);font-size:.67rem;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px;font-weight:600;white-space:nowrap}
+  .badge.long{color:var(--long);background:var(--long-soft)}
+  .badge.short{color:var(--short);background:var(--short-soft)}
+  .badge.both{color:var(--neutral);background:var(--neutral-soft)}
+  .st{font-family:var(--font-mono);font-size:.67rem;letter-spacing:.06em;text-transform:uppercase;padding:3px 9px 3px 8px;
+    border-radius:999px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-weight:600}
+  .st::before{content:"";width:7px;height:7px;border-radius:50%}
+  .st.live{color:var(--long);background:var(--long-soft)}.st.live::before{background:var(--long);box-shadow:0 0 0 3px var(--long-soft)}
+  .st.mute{color:var(--neutral);background:var(--neutral-soft)}.st.mute::before{background:var(--neutral)}
+  .st.off{color:var(--text-3);background:var(--card-2)}.st.off::before{background:var(--text-3);opacity:.6}
+  details.rule{border-top:1px solid var(--hair);padding-top:10px;margin-top:2px}
+  details.rule summary{font-family:var(--font-mono);font-size:.75rem;color:var(--text-3);cursor:pointer;list-style:none;
+    display:flex;align-items:center;gap:8px;user-select:none}
+  details.rule summary::-webkit-details-marker{display:none}
+  details.rule summary .caret{transition:transform .2s;color:var(--gold)}
+  details.rule[open] summary .caret{transform:rotate(90deg)}
+  details.rule .rulebody{margin-top:11px;display:flex;flex-direction:column;gap:9px}
+  details.rule .rule-tf{display:flex;flex-wrap:wrap;gap:6px}
+  details.rule code{font-family:var(--font-mono);font-size:.78rem;color:var(--text);background:var(--card-2);
+    border:1px solid var(--hair);border-radius:7px;padding:9px 11px;display:block;line-height:1.5;white-space:pre-wrap;overflow-x:auto}
+  details.rule .src{font-family:var(--font-mono);font-size:.7rem;color:var(--text-3)}
+
+  .honesty{margin-top:34px;background:var(--card-2);border:1px solid var(--border);border-left:3px solid var(--gold-line);
+    border-radius:var(--r);padding:24px 26px}
+  .honesty h4{font-size:1.16rem;margin-bottom:10px}
+  .honesty p{color:var(--text-2);font-size:.96rem;max-width:74ch}
+  .honesty p+p{margin-top:12px}
+  .honesty b{color:var(--text)}
+  .honesty .big3{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .honesty .big3 span{font-family:var(--font-mono);font-size:.78rem;padding:6px 12px;border-radius:8px;background:var(--gold-soft);
+    color:var(--gold-deep);border:1px solid var(--gold-line)}
+  :root[data-theme="dark"] .honesty .big3 span{color:var(--gold-bright)}
+
+  /* ---------- gauntlet ---------- */
+  .gauntlet{display:grid;grid-template-columns:repeat(2,1fr);gap:12px 26px;counter-reset:g}
+  @media (max-width:760px){.gauntlet{grid-template-columns:1fr}}
+  .gate{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--hair)}
+  .gate .n{counter-increment:g;font-family:var(--font-mono);font-size:.8rem;color:var(--gold);flex:none;width:26px;
+    text-align:right;padding-top:2px;font-variant-numeric:tabular-nums}
+  .gate .n::before{content:counter(g,decimal-leading-zero)}
+  .gate .g-b{flex:1}
+  .gate h4{font-size:1rem;font-family:var(--font-body);font-weight:650;letter-spacing:-.005em}
+  .gate p{font-size:.85rem;color:var(--text-2);margin-top:3px;line-height:1.45}
+  .gate .tf{margin-top:8px}
+
+  /* ---------- sizing / rails ---------- */
+  .split{display:grid;grid-template-columns:1.1fr .9fr;gap:34px;align-items:start}
+  @media (max-width:900px){.split{grid-template-columns:1fr;gap:26px}}
+  .tiers{display:flex;flex-direction:column;gap:10px}
+  .tier{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r-s);padding:13px 16px;box-shadow:var(--sh-1)}
+  .tier .badge-t{font-family:var(--font-display);font-weight:700;font-size:1.25rem;width:46px;text-align:center;color:var(--gold)}
+  .tier .bar{flex:1;height:8px;border-radius:6px;background:var(--card-2);overflow:hidden}
+  .tier .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold-deep),var(--gold-line))}
+  .tier .r{font-family:var(--font-mono);font-size:.9rem;color:var(--text);font-variant-numeric:tabular-nums;width:56px;text-align:right}
+  .tier .lbl{font-size:.82rem;color:var(--text-2);width:118px}
+  .dials{display:flex;flex-direction:column;gap:0;background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-1)}
+  .dial{display:flex;gap:12px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--hair)}
+  .dial:last-child{border-bottom:0}
+  .dial .dn{font-weight:600;font-size:.9rem;flex:1}
+  .dial .dv{font-family:var(--font-mono);font-size:.82rem;color:var(--short)}
+  .dial .dv.up{color:var(--long)}
+  .dial .dt{font-size:.78rem;color:var(--text-3);width:100%;flex-basis:100%;order:3}
+  .rails{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  @media (max-width:760px){.rails{grid-template-columns:1fr 1fr}}
+  @media (max-width:460px){.rails{grid-template-columns:1fr}}
+  .rail{background:var(--card);border:1px solid var(--border);border-radius:var(--r-s);padding:16px;box-shadow:var(--sh-1)}
+  .rail .rv{font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums}
+  .rail .rl{font-size:.8rem;color:var(--text-2);margin-top:5px;line-height:1.35}
+  .wontdo{margin-top:24px;display:flex;flex-wrap:wrap;gap:10px}
+  .wontdo .w{display:flex;align-items:center;gap:9px;font-size:.86rem;color:var(--text-2);background:var(--card-2);
+    border:1px solid var(--hair);border-radius:999px;padding:7px 14px 7px 11px}
+  .wontdo .w svg{width:15px;height:15px;color:var(--short);flex:none}
+
+  /* ---------- exits ---------- */
+  .exwrap{display:flex;flex-direction:column;gap:26px}
+  .exgroup h3{font-size:1.3rem;margin-bottom:4px}
+  .exgroup .gd{color:var(--text-2);font-size:.92rem;margin-bottom:16px;max-width:70ch}
+  .exits{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  @media (max-width:900px){.exits{grid-template-columns:1fr 1fr}}
+  @media (max-width:560px){.exits{grid-template-columns:1fr}}
+  .exit{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;box-shadow:var(--sh-1);display:flex;flex-direction:column;gap:11px}
+  .exit .eh{display:flex;align-items:center;gap:10px}
+  .exit .ei{width:30px;height:30px;border-radius:8px;background:var(--gold-soft);border:1px solid var(--gold-line);
+    display:grid;place-items:center;color:var(--gold);flex:none}
+  .exit .ei svg{width:16px;height:16px}
+  .exit h4{font-size:1.05rem}
+  .exit p{font-size:.88rem;color:var(--text-2);line-height:1.5}
+  .exit .trg{font-family:var(--font-mono);font-size:.74rem;color:var(--gold-deep);background:var(--gold-soft);
+    border:1px solid var(--gold-line);border-radius:7px;padding:5px 9px;align-self:flex-start;margin-top:auto}
+  :root[data-theme="dark"] .exit .trg{color:var(--gold-bright)}
+
+  /* ladder viz */
+  .ladder{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:22px 24px;box-shadow:var(--sh-1);margin-bottom:16px}
+  .ladder .lh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+  .ladder .lh h4{font-size:1.1rem}
+  .ladder .lh span{font-size:.82rem;color:var(--text-3);font-family:var(--font-mono)}
+  .rungs{position:relative;padding-left:8px}
+  .rung{display:grid;grid-template-columns:70px 1fr auto;align-items:center;gap:14px;padding:11px 0;border-top:1px dashed var(--hair)}
+  .rung:first-child{border-top:0}
+  .rung .rr{font-family:var(--font-mono);font-weight:600;font-size:.95rem;color:var(--gold);font-variant-numeric:tabular-nums}
+  .rung .rd{font-size:.86rem;color:var(--text-2)}
+  .rung .rd b{color:var(--text);font-weight:600}
+  .rung .rp{font-family:var(--font-mono);font-size:.82rem;color:var(--text-3);text-align:right;white-space:nowrap}
+  .rung .rp .pct{color:var(--long);font-weight:600}
+
+  /* ---------- worked example ---------- */
+  .example{background:var(--bg-elev)}
+  .steps{display:flex;flex-direction:column;gap:0;counter-reset:s;max-width:82ch}
+  .step{display:flex;gap:20px;padding:20px 0;border-bottom:1px solid var(--hair);position:relative}
+  .step:last-child{border-bottom:0}
+  .step .sn{counter-increment:s;font-family:var(--font-mono);font-size:.9rem;color:#161109;background:var(--gold);
+    width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:600}
+  :root[data-theme="dark"] .step .sn{color:#14110a}
+  .step .sn::before{content:counter(s)}
+  .step .sc{flex:1}
+  .step h4{font-size:1.06rem;font-family:var(--font-body);font-weight:650;margin-bottom:4px}
+  .step p{font-size:.92rem;color:var(--text-2);line-height:1.55}
+  .step .tf{margin-top:9px}
+  .disclaimer{margin-top:24px;font-size:.82rem;color:var(--text-3);font-style:italic;max-width:70ch}
+
+  /* ---------- reference ---------- */
+  .ref-tabs details{background:var(--card);border:1px solid var(--border);border-radius:var(--r);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh-1)}
+  .ref-tabs summary{cursor:pointer;list-style:none;padding:20px 24px;display:flex;align-items:center;gap:14px;font-family:var(--font-display);font-size:1.2rem;font-weight:600}
+  .ref-tabs summary::-webkit-details-marker{display:none}
+  .ref-tabs summary .cv{margin-left:auto;color:var(--gold);transition:transform .2s}
+  .ref-tabs details[open] summary .cv{transform:rotate(45deg)}
+  .ref-tabs summary .rk{font-family:var(--font-mono);font-size:.72rem;color:var(--text-3);font-weight:400}
+  .ref-body{padding:0 24px 22px}
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--hair);border-radius:var(--r-s)}
+  table{border-collapse:collapse;width:100%;font-size:.84rem;min-width:560px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--hair)}
+  th{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);position:sticky;top:0;background:var(--card)}
+  td{color:var(--text-2)}
+  td.mono,td .mono{font-family:var(--font-mono);color:var(--text);font-size:.8rem}
+  tr:last-child td{border-bottom:0}
+  td .tfx{font-family:var(--font-mono);font-size:.72rem;color:var(--gold-deep)}
+  :root[data-theme="dark"] td .tfx{color:var(--gold-bright)}
+  .gloss{columns:2;column-gap:34px}
+  @media (max-width:680px){.gloss{columns:1}}
+  .gloss dl{margin:0}
+  .gterm{break-inside:avoid;margin-bottom:14px}
+  .gterm dt{font-weight:650;font-size:.92rem;color:var(--text)}
+  .gterm dd{margin:2px 0 0;font-size:.86rem;color:var(--text-2);line-height:1.45}
+
+  /* ---------- footer ---------- */
+  footer{padding:48px 0 64px;color:var(--text-3);font-size:.84rem}
+  footer .fr{display:flex;flex-wrap:wrap;gap:16px 30px;align-items:baseline;justify-content:space-between}
+  footer .disc{max-width:64ch;line-height:1.55}
+  footer .sig{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.04em}
+
+  /* reveal (progressive, motion-safe) */
+  .js .reveal{opacity:0;transform:translateY(14px)}
+  @media (prefers-reduced-motion:reduce){.js .reveal{opacity:1;transform:none}}
+  .js .reveal.in{opacity:1;transform:none;transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+</style>
+
+<header class="topbar">
+  <div class="wrap row">
+    <div class="brand">UltimateTrader <span class="ticker">XAU · Gold</span></div>
+    <nav class="navlinks" id="nav">
+      <a href="#heartbeat"><span class="k">00</span>Heartbeat</a>
+      <a href="#room"><span class="k">01</span>Reading the room</a>
+      <a href="#scouts"><span class="k">02</span>The scouts</a>
+      <a href="#compete"><span class="k">03</span>Compete &amp; gauntlet</a>
+      <a href="#sizing"><span class="k">05</span>Sizing</a>
+      <a href="#exits"><span class="k">07</span>Exits</a>
+      <a href="#example">Worked example</a>
+      <a href="#reference">Reference</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="eyebrow">A field manual for a gold-trading machine</div>
+    <h1>The machine that trades gold, <span class="g">one hour at a time.</span></h1>
+    <p class="lede">This is an <b>automated trading program</b> — a "bot" — that buys and sells gold on its own, around the clock. It doesn't guess or react to every price flicker. Once every hour it runs the <b>same disciplined routine</b>: read the market, interview a panel of specialist "scouts", pick the single best idea, put it through a wall of safety checks, size it to a fixed risk, place the order, and then manage it to the exit. This page explains that routine in plain language — no trading background needed.</p>
+
+    <div class="statband reveal">
+      <div class="stat"><div class="v">1<small>/hour</small></div><div class="l">One new trade decision per finished hourly candle — never mid-hour</div></div>
+      <div class="stat"><div class="v">7</div><div class="l">Chart timeframes watched at once, from the weekly tide to 5-minute detail</div></div>
+      <div class="stat"><div class="v">12</div><div class="l">Specialist "scout" strategies on the panel — though 3 do most of the work</div></div>
+      <div class="stat"><div class="v">12</div><div class="l">Safety gates every trade must clear — one "no" cancels it</div></div>
+      <div class="stat"><div class="v">≤2<small>% risk</small></div><div class="l">The most the account can lose on any single trade, enforced twice</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="chain-sec">
+  <div class="wrap">
+    <div class="chain-head reveal">
+      <div class="kick">The chain of execution</div>
+      <h2>From a hunch to a managed trade, in seven links</h2>
+      <p>Every trade that ever gets placed walks this exact chain in order. A break at any link and the idea is dropped until next hour. The numbers below reappear as section markers throughout the page, so you always know where in the chain you are.</p>
+    </div>
+    <div class="chain reveal">
+      <div class="link"><span class="dot"></span><h4>Read the room</h4><p>Size up the trend, the market's mood, the backdrop and the clock.</p></div>
+      <div class="link"><span class="dot"></span><h4>Interview the scouts</h4><p>Ask every specialist strategy: "do you see your setup right now?"</p></div>
+      <div class="link"><span class="dot"></span><h4>Pick the best one</h4><p>Score every "yes" and hire exactly one — the strongest idea this hour.</p></div>
+      <div class="link"><span class="dot"></span><h4>Run the gauntlet</h4><p>Put it through a wall of safety checks; one failure cancels it.</p></div>
+      <div class="link"><span class="dot"></span><h4>Size to the risk</h4><p>Work backwards from the stop so a loss costs a fixed, small amount.</p></div>
+      <div class="link"><span class="dot"></span><h4>Enter</h4><p>Place the order, re-checking the live price and spread one last time.</p></div>
+      <div class="link"><span class="dot"></span><h4>Manage &amp; exit</h4><p>Bank profit in slices, trail a runner, and close on the exit rules.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 00 HEARTBEAT -->
+<section class="blk" id="heartbeat">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">STAGE&nbsp;00</div>
+      <div>
+        <h2>One decision, once an hour</h2>
+        <p class="sub">The bot's whole life runs on a single clock: the <b>1-hour candle</b>. It makes exactly one trade decision when each hour finishes — and only acts on a <b>finished</b> hour, so it never chases a half-formed price that might still reverse.</p>
+      </div>
+    </div>
+    <div class="prose reveal">
+      <p class="analogy"><b>Think of a careful shopper</b> who checks the shelf at the top of each hour instead of fidgeting over every price flicker. When the hour closes, the bot wakes, runs its full routine start to finish, and then goes quiet until the next hour — while <em>continuously</em> managing any trades already open.</p>
+      <p style="margin-top:18px">Why the hour and not the minute? A one-hour candle is finished business — its four prices (where it opened, its high, its low, where it closed) can never change again. Acting only on finished candles is the bot's core discipline against being faked out. Everything bigger (the daily and 4-hour context) and everything smaller (15- and 5-minute detail) is read <em>in support of</em> that hourly decision.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 01 READING THE ROOM -->
+<style>
+  .rr-intro{max-width:74ch}
+  .rr-intro p+p{margin-top:16px}
+  .mtf-note{display:flex;gap:16px;align-items:flex-start;background:var(--card-2);border:1px solid var(--border);
+    border-left:3px solid var(--gold-line);border-radius:var(--r);padding:18px 22px;margin:26px 0 8px;max-width:80ch}
+  .mtf-note .mi{flex:none;width:34px;height:34px;border-radius:9px;background:var(--gold-soft);border:1px solid var(--gold-line);
+    display:grid;place-items:center;color:var(--gold)}
+  .mtf-note .mi svg{width:18px;height:18px}
+  .mtf-note p{font-size:.92rem;color:var(--text-2);line-height:1.55}
+  .mtf-note b{color:var(--text)}
+  .reads{display:flex;flex-direction:column;gap:18px;margin-top:26px}
+  .room-read{background:var(--card);border:1px solid var(--border);border-radius:var(--r);box-shadow:var(--sh-1);overflow:hidden}
+  .rr-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:20px 24px;border-bottom:1px solid var(--hair);background:linear-gradient(180deg,var(--card-2),transparent)}
+  .rr-idx{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--gold-line);color:var(--gold);
+    font-family:var(--font-display);font-weight:700;font-size:1.05rem;display:grid;place-items:center;background:var(--gold-soft)}
+  .rr-head h3{font-size:1.28rem;letter-spacing:-.01em;flex:1;min-width:220px}
+  .rr-tfs{display:flex;gap:6px;flex-wrap:wrap}
+  .rr-grid{display:grid;grid-template-columns:1.02fr 1fr;gap:0}
+  @media (max-width:840px){.rr-grid{grid-template-columns:1fr}}
+  .rr-plain{padding:22px 24px;border-right:1px solid var(--hair)}
+  .rr-tech{padding:22px 24px;background:color-mix(in srgb,var(--card-2) 55%,transparent)}
+  @media (max-width:840px){.rr-plain{border-right:0;border-bottom:1px solid var(--hair)}}
+  .rr-lab{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+  .rr-plain .rr-lab{color:var(--gold-deep)}
+  :root[data-theme="dark"] .rr-plain .rr-lab{color:var(--gold-bright)}
+  .rr-tech .rr-lab{color:var(--text-3)}
+  .rr-lab::after{content:"";height:1px;flex:1;background:var(--hair)}
+  .rr-plain p{font-size:.95rem;line-height:1.6;color:var(--text)}
+  .rr-plain p+p{margin-top:12px}
+  .rr-plain .analogy{margin:14px 0 0;font-size:.9rem}
+  .rr-tech p{font-size:.9rem;line-height:1.58;color:var(--text-2)}
+  .rr-tech p+p{margin-top:11px}
+  .rr-tech b,.rr-plain b{color:var(--text);font-weight:600}
+  .rr-tech em.termdef{font-style:normal;color:var(--gold-deep);font-weight:600}
+  :root[data-theme="dark"] .rr-tech em.termdef{color:var(--gold-bright)}
+  .rr-specs{list-style:none;margin:16px 0 0;padding:0;border:1px solid var(--hair);border-radius:var(--r-s);overflow:hidden}
+  .rr-specs li{display:flex;gap:12px;padding:9px 13px;border-bottom:1px solid var(--hair);align-items:baseline}
+  .rr-specs li:last-child{border-bottom:0}
+  .rr-specs .k{font-family:var(--font-mono);font-size:.7rem;letter-spacing:.03em;text-transform:uppercase;color:var(--text-3);width:96px;flex:none}
+  .rr-specs .v{font-family:var(--font-mono);font-size:.8rem;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.4}
+  .rr-why{display:flex;gap:12px;align-items:baseline;padding:14px 24px;background:var(--gold-soft);border-top:1px solid var(--gold-line);flex-wrap:wrap}
+  .rr-why .wl{font-family:var(--font-mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-deep);flex:none;white-space:nowrap}
+  :root[data-theme="dark"] .rr-why .wl{color:var(--gold-bright)}
+  .rr-why p{font-size:.88rem;color:var(--text-2);line-height:1.5;flex:1;min-width:240px}
+  .rr-why b{color:var(--text)}
+  .rr-close{margin-top:26px;max-width:78ch;font-size:1.02rem;color:var(--text-2);line-height:1.6}
+  .rr-close b{color:var(--text)}
+</style>
+<section class="blk" id="room">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">LINK&nbsp;01</div>
+      <div>
+        <h2>Reading the room</h2>
+        <p class="sub">Before it considers a single trade, the bot spends the first moments of each hour building one shared picture of the market — the way a seasoned trader glances across several screens before deciding anything. That picture has <b>four parts</b>, and together they decide which trades are even allowed, how much to risk, and how suspicious to be.</p>
+      </div>
+    </div>
+
+    <div class="rr-intro reveal">
+      <p>Nothing about a specific candle pattern is considered yet. This is pure situational awareness — <b>where are we, what kind of market is this, what's the wider world doing, and what time is it?</b> Every part of it is read from <b>finished candles</b>, never the half-formed one still moving, so the read can't be faked out partway through the hour.</p>
+    </div>
+
+    <div class="mtf-note reveal">
+      <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-5 4 3 8-9"/><path d="M3 21h18"/></svg></span>
+      <p>The single most important idea here: the bot asks the same question on <b>several charts at once</b>. "Is price trending up?" gets answered separately on the daily (the big tide), the 4-hour (the day's swell) and the 1-hour (the wave in front of you). A trade is on the firmest ground when all three agree — and treated with suspicion when they don't. This is what "multi-timeframe" means, and it runs through all four reads below.</p>
+    </div>
+
+    <div class="reads">
+
+      <!-- A. bias -->
+      <div class="room-read reveal">
+        <div class="rr-head">
+          <span class="rr-idx">A</span>
+          <h3>Direction bias — which way am I allowed to lean?</h3>
+          <div class="rr-tfs"><span class="tf">D1</span><span class="tf">H4</span><span class="tf">H1</span></div>
+        </div>
+        <div class="rr-grid">
+          <div class="rr-plain">
+            <div class="rr-lab">In plain terms</div>
+            <p>Gold has trended upward for years, so the bot leans hard toward <b style="color:var(--long)">buying</b>. But "leaning toward buying" isn't a hunch — it's a stacked measurement. The bot asks "is price trending up?" on three clocks at the same time: the <b>daily</b> chart (weeks of direction), the <b>4-hour</b> (days), and the <b>1-hour</b> (hours). When all three point up, a buy stands on firm ground; when they disagree, the idea is treated as suspect. Selling is the rare, high-bar exception.</p>
+            <p class="analogy"><b>Like a surfer</b> reading the ocean's tide, the day's swell, and the wave right in front of them before paddling out — you want all three working with you, not against.</p>
+          </div>
+          <div class="rr-tech">
+            <div class="rr-lab">Under the hood</div>
+            <p>On each of the three timeframes it runs the same pair of moving averages — a fast <b>10-period</b> and a slow <b>21-period</b> EMA — plus a <b>14-period ATR</b> volatility reading, all on the last <b>closed</b> bar.</p>
+            <p>An <em class="termdef">EMA</em> (exponential moving average) is a smoothed average that weights recent candles more heavily, so it tracks direction without the jitter. When the fast 10 sits above the slow 21 and both point up, that timeframe reads "uptrend." Separately, a long-term <b>200-period EMA on the 1-hour chart</b> is the master "are we above water?" tide line: price above it favours buying; a buy attempted <em>below</em> it gets its size halved.</p>
+            <ul class="rr-specs">
+              <li><span class="k">Indicators</span><span class="v">EMA 10 · EMA 21 · ATR 14</span></li>
+              <li><span class="k">Read on</span><span class="v">D1 + H4 + H1, closed bar [1]</span></li>
+              <li><span class="k">Tide line</span><span class="v">EMA 200 — hourly, not daily*</span></li>
+              <li><span class="k">Source</span><span class="v">CTrendDetector · CMarketContext</span></li>
+            </ul>
+            <p style="font-size:.8rem;color:var(--text-3);margin-top:10px">*A naming quirk worth knowing: the setting is labelled "daily 200-EMA," but the line it actually uses is the <b>hourly</b> one.</p>
+          </div>
+        </div>
+        <div class="rr-why"><span class="wl">Changes downstream →</span><p>This bias is the foundation of the whole book — it's why roughly <b>six in ten</b> trades are buys and the sell side is deliberately thin. It powers the main quality gate (the "buy-bias ladder"), and the hourly 200-EMA drives the counter-trend size-halving dial.</p></div>
+      </div>
+
+      <!-- B. regime -->
+      <div class="room-read reveal">
+        <div class="rr-head">
+          <span class="rr-idx">B</span>
+          <h3>Market mood — what kind of market is this?</h3>
+          <div class="rr-tfs"><span class="tf">H4</span></div>
+        </div>
+        <div class="rr-grid">
+          <div class="rr-plain">
+            <div class="rr-lab">In plain terms</div>
+            <p>The very same trade that's smart in a clean trend is reckless in chop. So before it sizes anything, the bot names the current market as one of four moods:</p>
+            <p><b>Trending</b> — a clean staircase, one step after another. <b>Ranging</b> — boxed between a floor and a ceiling. <b>Choppy</b> — messy and full of head-fakes. <b>Volatile</b> — big, fast, violent lurches.</p>
+            <p class="analogy"><b>Like a driver reading the road</b> — open highway, city grid, gravel, or black ice — and setting their speed to match. The mood decides how boldly the bot is allowed to act.</p>
+          </div>
+          <div class="rr-tech">
+            <div class="rr-lab">Under the hood</div>
+            <p>Decided entirely on the <b>4-hour</b> chart, from three readings of the last closed 4-hour bar:</p>
+            <p><em class="termdef">ADX (14)</em> — how <b>strong</b> the trend is, in any direction (high = a determined march, low = aimless drift; it says how hard, not which way). <em class="termdef">ATR (14)</em> — the raw "bounciness," how far price travels per bar. <em class="termdef">Bollinger Bands (20, 2.0)</em> — an envelope that hugs price and widens when volatility rises; riding a band means the market is stretched.</p>
+            <p>A "volatility is expanding" flag trips when the current 4-hour ATR is more than <b>1.3×</b> its own 50-bar average — i.e. things just got livelier than usual.</p>
+            <ul class="rr-specs">
+              <li><span class="k">Indicators</span><span class="v">ADX 14 · ATR 14 · BB 20/2.0</span></li>
+              <li><span class="k">Read on</span><span class="v">H4, closed bar [1]</span></li>
+              <li><span class="k">Expansion</span><span class="v">ATR &gt; 1.3 × 50-bar avg</span></li>
+              <li><span class="k">Source</span><span class="v">CRegimeClassifier</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="rr-why"><span class="wl">Changes downstream →</span><p>The regime is a master dial. It scales risk directly (<b>Trending ×1.25 · Volatile ×0.75 · Choppy ×0.60</b>), it gates whole scouts (the Volatility Breakout only fires in a Volatile market; the Crash engine needs a confirmed downtrend), and it sets how wide the trailing stop rides a winner.</p></div>
+      </div>
+
+      <!-- C. macro -->
+      <div class="room-read reveal">
+        <div class="rr-head">
+          <span class="rr-idx">C</span>
+          <h3>Macro backdrop — is the wider world with me?</h3>
+          <div class="rr-tfs"><span class="tf">H4</span></div>
+        </div>
+        <div class="rr-grid">
+          <div class="rr-plain">
+            <div class="rr-lab">In plain terms</div>
+            <p>Gold doesn't move in a vacuum. It usually <b>rises when the US dollar falls</b>, and it often catches a bid <b>when fear rises</b> across markets. So the bot glances at two outside gauges — the dollar's strength and a market "fear index" — to check whether its intended direction fits the wider weather.</p>
+            <p>On the default settings this is a gentle nudge, not a veto — it can make a setup look a little better or a little worse, but it rarely blocks a trade outright.</p>
+            <p class="analogy"><b>Like checking the forecast</b> before a long drive: it won't cancel the trip, but it changes how cautiously you set out.</p>
+          </div>
+          <div class="rr-tech">
+            <div class="rr-lab">Under the hood</div>
+            <p>It reads the <em class="termdef">US Dollar Index (DXY)</em> and the <em class="termdef">VIX</em> "fear gauge" on the <b>4-hour</b> chart. Because gold and the dollar tend to move opposite each other, a weakening dollar is a tailwind for buying gold; a spike in the fear index often lines up with gold catching a bid.</p>
+            <p>If those two feeds aren't available from the broker, it falls back to a home-grown proxy: the <b>daily 200-EMA</b> plus the <b>4-hour 20/50 EMAs</b> measured against live price — a rough stand-in for "is the macro tide with me?"</p>
+            <ul class="rr-specs">
+              <li><span class="k">Reads</span><span class="v">DXY · VIX (H4)</span></li>
+              <li><span class="k">Fallback</span><span class="v">D1 EMA200 + H4 EMA 20/50</span></li>
+              <li><span class="k">Role</span><span class="v">one input to the 0–10 grade</span></li>
+              <li><span class="k">Source</span><span class="v">CMacroBias</span></li>
+            </ul>
+            <p style="font-size:.8rem;color:var(--text-3);margin-top:10px">A stronger, news-driven cousin of this — standing flat around scheduled economic releases — exists but ships <b>switched off</b> (see the gauntlet).</p>
+          </div>
+        </div>
+        <div class="rr-why"><span class="wl">Changes downstream →</span><p>Macro alignment is one ingredient in the <b>0–10 quality score</b> that grades every idea. It seldom vetoes a trade by itself, but it nudges the grade up or down — and the grade sets the size.</p></div>
+      </div>
+
+      <!-- D. session -->
+      <div class="room-read reveal">
+        <div class="rr-head">
+          <span class="rr-idx">D</span>
+          <h3>Time of day — which market am I in right now?</h3>
+          <div class="rr-tfs"><span class="tf">Clock</span><span class="tf">M15</span></div>
+        </div>
+        <div class="rr-grid">
+          <div class="rr-plain">
+            <div class="rr-lab">In plain terms</div>
+            <p>Gold trades nearly 24 hours, but it behaves like <b>three different markets</b> across the day: the quiet <b>Asian</b> hours, the busy <b>London</b> open, and the US <b>New York</b> session. Where a move happens matters as much as what it is — a breakout in thin Asian liquidity is a very different animal from one at the London open.</p>
+            <p>So the bot tracks which session it's in and adapts, mostly by taking <b>less risk</b> in the busier, choppier hours.</p>
+            <p class="analogy"><b>Like a cab driver</b> who knows the same street is calm at dawn and chaos at rush hour — and drives accordingly.</p>
+          </div>
+          <div class="rr-tech">
+            <div class="rr-lab">Under the hood</div>
+            <p>The session clock is the broker's <b>server time minus an auto-detected GMT offset</b> (with a sensible fallback). From that it knows whether it's Asia, London or New York. During the overnight window (roughly <b>GMT 0–7</b>) it builds the <b>Asian high–low range</b> from 15-minute candles — a reference box several time-based strategies key off.</p>
+            <p>Session sets a hard <b>risk multiplier</b>: London ×0.50 (half size), New York ×0.90, Asia ×1.0 — and gates a couple of scouts (bearish pin bars blocked in New York; the crash fade only fires 13:00–17:00 GMT). Plus a weekly clock rule: <b>no new trade is opened on a Friday</b>, to avoid carrying fresh risk over the weekend gap — the price jump when the market reopens Sunday night that can leap right over a stop.</p>
+            <ul class="rr-specs">
+              <li><span class="k">Clock</span><span class="v">server − GMT offset (auto)</span></li>
+              <li><span class="k">Asian range</span><span class="v">M15 highs/lows, GMT 0–7</span></li>
+              <li><span class="k">Risk mult</span><span class="v">LDN ×0.50 · NY ×0.90 · Asia ×1.0</span></li>
+              <li><span class="k">Source</span><span class="v">CSessionEngine</span></li>
+            </ul>
+          </div>
+        </div>
+        <div class="rr-why"><span class="wl">Changes downstream →</span><p>The session is both a risk dial and a gate. It's why the same setup is sized differently at 03:00 versus 09:00 GMT, and why some short trades simply aren't allowed in the US afternoon.</p></div>
+      </div>
+
+    </div>
+
+    <p class="rr-close reveal">Only once all four reads are in — a <b>favoured direction</b>, a <b>named market mood</b>, a <b>macro tilt</b>, and the <b>session's rules</b> — does the bot turn to the scouts. Everything that follows is filtered through this one shared picture of the room.</p>
+  </div>
+</section>
+
+<!-- 02 THE SCOUTS -->
+<section class="blk" id="scouts">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">LINK&nbsp;02</div>
+      <div>
+        <h2>The scouts — many specialists, one hire</h2>
+        <p class="sub">Picture the bot as a hiring manager who, once an hour, interviews a panel of <b>specialist scouts</b>. Each is an expert in exactly one chart shape. The manager asks them all "do you see your setup?", scores every yes, and hires the single best. Below is every scout, grouped by family — what each one looks for, how it works, and why it's a sound idea.</p>
+      </div>
+    </div>
+
+    <div class="filter reveal" id="filter">
+      <span class="lab">Show</span>
+      <button class="chip" data-f="all" aria-pressed="true">All 12</button>
+      <button class="chip" data-f="live" aria-pressed="false">Active</button>
+      <button class="chip" data-f="mute" aria-pressed="false">Dormant</button>
+      <button class="chip" data-f="off" aria-pressed="false">Switched off</button>
+    </div>
+
+    <!-- FAMILY: candle-shape -->
+    <div class="family reveal">
+      <div class="family-head">
+        <h3>Candle-shape scouts</h3><span class="cnt">4 scouts · the workhorses</span>
+        <p>The simplest and most reliable readers: they judge the market from the shape of the just-finished hourly candle, always in agreement with the bigger 4-hour trend. Three of these do the overwhelming majority of the bot's actual trading.</p>
+      </div>
+      <div class="scouts">
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>Pin Bar</h4><span class="st live">Active</span></div>
+          <p class="sees">A candle with a long tail and a small body — price stabbed one way and got slapped straight back.</p>
+          <p class="body">During the hour, price pushed hard in one direction, then reversed and closed near where it started, leaving a long "rejection wick". The bot buys when the tail points <em>down</em> (sellers were rejected) inside an uptrend, and sells the mirror image — but never during the New York session, where short pin bars historically misfire.</p>
+          <div class="why"><b>Why it works:</b> a long rejection wick marks the exact spot where a push ran out of buyers or sellers. Entering as the reversal confirms lets the bot ride the bounce with a tight, logical stop just past the rejected extreme.</div>
+          <div class="meta">
+            <span class="badge long">Long</span><span class="badge short">Short</span>
+            <span class="tag">candlestick</span><span class="tag">trend-following</span><span class="tag">session</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 trend gate</span><span class="tf">GMT clock</span></div>
+              <code>rejection wick &gt; 1.5 × body,
+opposing wick &lt; 0.8 × body,
+close in the top/bottom 30% of range.
+Bearish side blocked from 13:00 GMT (NY).</code>
+              <span class="src">CPinBarEntry.mqh · reads the closed hourly candle</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>Engulfing</h4><span class="st live">Active</span></div>
+          <p class="sees">A single up-candle that completely swallows the previous down-candle — buyers overpowering sellers.</p>
+          <p class="body">In one hour, buyers fully reversed and overwhelmed the prior hour's sellers: the new candle's body wraps the whole of the last one. A clean flip of control. It only fires when the 4-hour trend already agrees, so it's catching continuation, not fighting the tide. Long only on the default settings.</p>
+          <div class="why"><b>Why it works:</b> a full engulf is one of the least ambiguous signs that control has changed hands. Pairing it with the higher-timeframe uptrend filters out random noise and keeps the bot buying strength.</div>
+          <div class="meta">
+            <span class="badge long">Long</span>
+            <span class="tag">candlestick</span><span class="tag">momentum</span><span class="tag">volume-checked</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 trend gate</span></div>
+              <code>signal candle's body ≥ 80% engulfs
+the prior opposite candle's body,
+body &gt; 0.3 × ATR, 4-hour trend agrees.</code>
+              <span class="src">CEngulfingEntry.mqh · the most prolific idea generator; a tick-volume check is its main filter</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>MA Cross</h4><span class="st live">Active</span></div>
+          <p class="sees">A fast 10-hour average crossing up through a slow 21-hour average — "momentum just turned up."</p>
+          <p class="body">The classic trend trigger: the short-term average lifting through the longer-term one signals that recent momentum has flipped upward. It only fires in a clearly trending market and is blocked during New York. Long only — the downward-cross version was measured to lose money and removed from the code entirely.</p>
+          <div class="why"><b>Why it works:</b> fewer but stronger signals. It fires several times less often than the other candle scouts, yet each trade carries more follow-through — the payoff of waiting for a cleaner, harder-to-fake trigger.</div>
+          <div class="meta">
+            <span class="badge long">Long</span>
+            <span class="tag">momentum</span><span class="tag">trend-following</span><span class="tag">session</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 trend gate</span></div>
+              <code>MA(10) was ≤ MA(21) two bars ago
+and is above it on the last closed bar,
+trending regime only, New-York-blocked.</code>
+              <span class="src">CMACrossEntry.mqh · bearish cross removed at source</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="mute">
+          <div class="top"><h4>Displacement</h4><span class="st mute">Dormant</span></div>
+          <p class="sees">A stop-hunt followed by a big, decisive drive the other way.</p>
+          <p class="body">Price first dips below a recent low to trip other traders' stop orders, then a large "power candle" closes back above it — the signature of big money grabbing cheap liquidity and then revealing its true direction. The bot enters after the trap, using the failed level as its stop.</p>
+          <div class="why"><b>Why it's a good idea:</b> trading <em>after</em> the trap, not into it, catches the real move with a clean invalidation point. In practice, though, an hourly candle that large right after a sweep is so rare on gold that this scout almost never fires.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">liquidity</span><span class="tag">smart-money</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 gate</span></div>
+              <code>wick sweeps below a swing low but closes
+back above, then a candle with
+body ≥ 1.8 × ATR closes decisively beyond.</code>
+              <span class="src">CDisplacementEntry.mqh · 0 signals in 7.5 years of gold data</span>
+            </div>
+          </details>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- FAMILY: range scouts -->
+    <div class="family reveal">
+      <div class="family-head">
+        <h3>Range scouts</h3><span class="cnt">2 scouts · the sharpshooters</span>
+        <p>These read a faster 15-minute chart to time reversals at the edges of a range, then size the trade from the 1-hour volatility. They fire rarely, but when they do their setups are among the highest-quality in the book.</p>
+      </div>
+      <div class="scouts">
+
+        <article class="scout" data-status="mute">
+          <div class="top"><h4>Range-Edge Fade <span style="color:var(--text-3);font-size:.7em">(S3)</span></h4><span class="st mute">Dormant</span></div>
+          <p class="sees">A false breakout at the edge of a box — price pokes out, then snaps back in.</p>
+          <p class="body">When gold is boxed inside a range, price often pokes just past the floor or ceiling to trigger breakout traders, then fails and snaps back inside. On the 15-minute chart, this scout fades that failure back toward the middle of the box, targeting the opposite edge.</p>
+          <div class="why"><b>Why it's a good idea:</b> most range breakouts fail. Fading the failure at the very edge gives a naturally good reward-to-risk (at least 2:1 to the far side). But its full checklist has to line up perfectly, which has never once happened on gold in the test window.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">mean-reversion</span><span class="tag">M15</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">M15 trigger</span><span class="tf">H1 sizing</span></div>
+              <code>inside a validated box, 15-min low pierces
+below the floor but closes back inside,
+oversold, reward to far edge ≥ 2× risk.</code>
+              <span class="src">CRangeEdgeFade.mqh · over-specified for this symbol</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>Failed-Break Reversal <span style="color:var(--text-3);font-size:.7em">(S6)</span></h4><span class="st live">Active</span></div>
+          <p class="sees">A failed stop-hunt at a key level — the breakout was a trap.</p>
+          <p class="body">Price spikes past an important level (like yesterday's high or low) to grab a cluster of orders, then reclaims the level on the 15-minute chart. The breakout that fooled everyone becomes the bot's entry, with a stop just past the failed spike.</p>
+          <div class="why"><b>Why it works:</b> reclaiming a swept level is one of the cleanest reversals in trading. This scout is tiny — it fires only a couple of times a year — but its trades are the sharpest in the whole book. Its short side is switched off (it was measured to lose).</div>
+          <div class="meta">
+            <span class="badge long">Long</span>
+            <span class="tag">liquidity</span><span class="tag">mean-reversion</span><span class="tag">M15</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">M15 trigger</span><span class="tf">H1 ATR</span><span class="tf">D1 levels</span></div>
+              <code>spike ≥ 0.20 × (H1 ATR) through a daily
+level, piercing wick &gt; body, then a
+reclaim close back through the level.</code>
+              <span class="src">CFailedBreakReversal.mqh · best per-trade quality in the book</span>
+            </div>
+          </details>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- FAMILY: breakout -->
+    <div class="family reveal">
+      <div class="family-head">
+        <h3>Breakout scouts</h3><span class="cnt">2 scouts · the specialists</span>
+        <p>These wait for price to break out of its recent range with force. One is a pure-trend breakout kept for volatile markets; the other is the bot's only dedicated bear-market engine.</p>
+      </div>
+      <div class="scouts">
+
+        <article class="scout" data-status="mute">
+          <div class="top"><h4>Volatility Breakout</h4><span class="st mute">Dormant</span></div>
+          <p class="sees">A clean punch out of the recent 20-bar range while the trend agrees.</p>
+          <p class="body">Price closes beyond both its recent high and a volatility band, during a genuinely volatile market, with a strong trend reading and the 4-hour averages stacked in agreement. A high bar to clear on purpose.</p>
+          <div class="why"><b>Why it's a good idea:</b> real range-expansion moves are worth catching. But it is deliberately gated to only volatile regimes, which makes it a rare specialist — effectively a reserve that almost never activates.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">breakout</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 EMA stack</span></div>
+              <code>volatile regime + ADX ≥ 25 + 4-hour EMA
+stack aligned + a close beyond the
+20-bar high or the upper volatility band.</code>
+              <span class="src">CVolatilityBreakoutEntry.mqh · dormant by design</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>Crash Breakout <span style="color:var(--text-3);font-size:.7em">(Rubber Band)</span></h4><span class="st live">Active</span></div>
+          <p class="sees">A fade of an over-stretched bounce inside a confirmed downtrend.</p>
+          <p class="body">This is the one scout built for falling markets. It only wakes when the daily 50-day average is below the 200-day average — a confirmed "death cross" downtrend. Then, when live price rubber-bands more than two volatility-units above its hourly mean, it shorts the snap-back toward that mean, only in a tight afternoon window and only on top-grade setups.</p>
+          <div class="why"><b>Why it's a good idea:</b> in a real downtrend, sharp bounces are exhaustion, and selling them back to the mean is a textbook fade. It's the bot's only participant when gold is falling — valuable as diversification even though its wins are modest.</div>
+          <div class="meta">
+            <span class="badge short">Short</span>
+            <span class="tag">crash-regime</span><span class="tag">mean-reversion</span><span class="tag">session</span><span class="tag">volume-checked</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">D1 gate</span><span class="tf">H1 indicators</span><span class="tf">live trigger</span></div>
+              <code>daily EMA50 &lt; EMA200 (death cross), then
+live price &gt; H1 EMA21 + 2 × ATR,
+ADX ≥ 25, only 13:00–17:00 GMT → sell to the mean.</code>
+              <span class="src">CCrashBreakoutEntry.mqh · fires only in death-cross eras</span>
+            </div>
+          </details>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- FAMILY: engines -->
+    <div class="family reveal">
+      <div class="family-head">
+        <h3>Multi-mode engines</h3><span class="cnt">4 engines · the sophisticates</span>
+        <p>Each of these is really several sub-strategies bundled together, reporting the first that fires. They encode the more advanced "smart-money", session and continuation ideas — though most of their conditions turn out to be too demanding to fire on gold.</p>
+      </div>
+      <div class="scouts">
+
+        <article class="scout" data-status="mute">
+          <div class="top"><h4>Liquidity engine</h4><span class="st mute">Dormant</span></div>
+          <p class="sees">A panel of four "smart-money" reads, reporting the first that fires.</p>
+          <p class="body">It checks, in priority order: a Displacement move, an Order-Block Retest (price returning to a zone a big institutional candle left behind), a Fair-Value-Gap fill, and a Swing-Failure. The idea is to trade where large orders have left footprints on the chart.</p>
+          <div class="why"><b>Why it's a good idea:</b> big orders really do leave repeatable footprints — zones, gaps and sweeps. This is the sophisticated end of the book. In practice its structural conditions never all lined up on gold's hourly chart in the test window.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">smart-money</span><span class="tag">liquidity</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1</span></div>
+              <code>e.g. Order-Block Retest = price re-enters a
+prior institutional candle's zone, recent
+structure is bullish, a rejection candle forms.</code>
+              <span class="src">CLiquidityEngine.mqh · stands aside on news days</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="off">
+          <div class="top"><h4>Session engine</h4><span class="st off">Off</span></div>
+          <p class="sees">Time-of-day breakout modes — London open, New York continuation, and more.</p>
+          <p class="body">Four session-timed strategies, each firing only inside its own window off the overnight Asian range. All four ship <em>switched off</em> — they measured a 0% win rate in testing. The engine stays loaded only because it also runs the bot's master clock and builds the Asian range every other scout relies on.</p>
+          <div class="why"><b>Why it's here:</b> session edges are real for some instruments and worth having on the shelf. On gold they didn't pay, so they're disabled — but the engine remains as essential timekeeping infrastructure.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">session</span><span class="tag">breakout</span><span class="tag">infrastructure</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">Clock</span><span class="tf">H1</span><span class="tf">M15 range</span></div>
+              <code>e.g. London Breakout (GMT 8–10): hourly
+candle opens below the Asian high but
+closes above it + 0.35 × ATR, trend up.
+All four sub-modes default OFF.</code>
+              <span class="src">CSessionEngine.mqh · also the bot's GMT clock</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>Expansion engine</h4><span class="st live">Active</span></div>
+          <p class="sees">Energy building then releasing — a coil, then a break.</p>
+          <p class="body">It looks for an oversized "institutional" candle that closes near its extreme, waits for price to coil quietly for a few bars, then enters on the break of that big candle's extreme. Compression, then expansion.</p>
+          <div class="why"><b>Why it works:</b> quiet-then-explosive is a genuine, repeatable market rhythm. This is the bot's only live breakout expression and its cleanest true diversifier — small, two-sided, and it earns its keep in high-volatility stretches.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">breakout</span><span class="tag">momentum</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1</span><span class="tf">H4 regime gate</span></div>
+              <code>institutional candle body ≥ ~1.8 × ATR
+closing near its extreme, then 2–5 coil
+bars, then a close beyond its high/low.</code>
+              <span class="src">CExpansionEngine.mqh · fires in high-ATR regimes</span>
+            </div>
+          </details>
+        </article>
+
+        <article class="scout" data-status="live">
+          <div class="top"><h4>Pullback Continuation</h4><span class="st live">Active</span></div>
+          <p class="sees">Buying the dip inside an uptrend (or selling the bounce in a downtrend).</p>
+          <p class="body">After an established trend pauses for a shallow pullback that shows signs of exhaustion, a "reclaim" candle closes back over the recent highs and the bot joins the trend at a better price. The textbook continuation trade.</p>
+          <div class="why"><b>Why it's a good idea:</b> joining a strong trend on a pullback gives a favorable entry with the trend as a tailwind. Honest note: as tuned, this is the weakest live scout — it finds real moves but tends to give the profit back, a management problem rather than a bad signal.</div>
+          <div class="meta">
+            <span class="badge both">Both</span>
+            <span class="tag">trend-following</span><span class="tag">momentum</span>
+          </div>
+          <details class="rule"><summary><span class="caret">›</span> The exact rule</summary>
+            <div class="rulebody">
+              <div class="rule-tf"><span class="tf">H1 trigger</span><span class="tf">H4 + D1 gates</span></div>
+              <code>4-hour trend up + ADX ≥ 18, price pulls
+back 0.6–1.8 ATR over 2–10 hours showing
+exhaustion, then a reclaim candle closes
+back above the prior highs → buy, target 1.3R.</code>
+              <span class="src">CPullbackContinuationEngine.mqh</span>
+            </div>
+          </details>
+        </article>
+
+      </div>
+    </div>
+
+    <div class="honesty reveal">
+      <h4>An honest word on "twelve scouts"</h4>
+      <p>Twelve strategies are loaded, but that's a fact about the <b>roster</b>, not the <b>playing time</b>. Over 7.5 years of real gold data, five of the twelve produced <b>zero</b> trades — their internal conditions are simply too demanding to fire on this market, even with their switches on. The live book is really about <b>seven</b> scouts, and three of them — Pin Bar, Engulfing and MA&nbsp;Cross — do the overwhelming majority of the work.</p>
+      <p>That isn't a flaw so much as honesty about what actually earns: the bot is, at heart, <b>a disciplined way to buy bullish hourly momentum candles when gold is trending up</b>, wrapped in a great deal of machinery that keeps it out of trouble the rest of the time.</p>
+      <div class="big3"><span>Pin Bar</span><span>Engulfing</span><span>MA Cross</span><span>≈ most of all trades</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 03/04 COMPETE + GAUNTLET -->
+<section class="blk" id="compete">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">LINKS&nbsp;03–04</div>
+      <div>
+        <h2>The competition, then the gauntlet</h2>
+        <p class="sub">Two links happen here. First the scouts <b>compete</b> — even if five shout "yes", only the single highest-scoring idea is hired that hour. Then that one winner must clear a <b>wall of twelve safety gates</b>. A "no" at any gate cancels the trade outright.</p>
+      </div>
+    </div>
+
+    <div class="split reveal" style="margin-bottom:40px">
+      <div class="prose">
+        <h3 style="font-family:var(--font-display);font-size:1.4rem;margin-bottom:12px">First, one winner is chosen</h3>
+        <p>Each idea is scored 0–10 on how well it fits the room — trend agreement, market mood, macro alignment, pattern strength, and a choppiness penalty — then graded <b>A+ / A / B+</b> (or rejected). Only the top-scoring idea per hour is carried forward. A higher grade also earns the right to risk slightly more money, which is where the next link, sizing, comes in.</p>
+        <p style="margin-top:14px">Many winners then wait <em>one more hour</em> for a confirmation candle to close past the pattern before entering — an extra patience check. Short trades and mean-reversion trades skip this and act immediately.</p>
+      </div>
+      <div>
+        <div class="tiers">
+          <div class="tier"><div class="badge-t">A+</div><div class="lbl">Top-grade setup</div><div class="bar"><i style="width:100%"></i></div><div class="r">1.35%</div></div>
+          <div class="tier"><div class="badge-t">A</div><div class="lbl">Strong setup</div><div class="bar"><i style="width:67%"></i></div><div class="r">0.90%</div></div>
+          <div class="tier"><div class="badge-t">B+</div><div class="lbl">Decent setup</div><div class="bar"><i style="width:50%"></i></div><div class="r">0.68%</div></div>
+        </div>
+        <p style="font-size:.78rem;color:var(--text-3);margin-top:12px;font-family:var(--font-mono)">Grade → base risk %. A better idea is allowed a slightly bigger bet — but never more than 2% (see Sizing).</p>
+      </div>
+    </div>
+
+    <h3 style="font-family:var(--font-display);font-size:1.4rem;margin-bottom:8px" class="reveal">Then, the twelve-gate gauntlet</h3>
+    <p class="reveal" style="color:var(--text-2);max-width:70ch;margin-bottom:24px">Spotting a trade is only the beginning. The winning idea must pass every one of these, in order. One failure and it's dropped until next hour.</p>
+    <div class="gauntlet reveal">
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Kill switch on?</h4><p>The operator's master off-switch. If flipped, nothing trades.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Trading halted for the day?</h4><p>A daily-loss or max-trades halt stands the bot down until tomorrow.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Abnormal price shock?</h4><p>Stand aside on a violent spike — measured across the hourly, 5-minute and live spread.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Low-quality time to trade?</h4><p>Checks this session's recent execution quality — slippage, thin volume, wide spreads.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Cost too high?</h4><p>Reject if the live spread (the built-in cost of entering) is above the limit.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Market flip-flopping?</h4><p>A cooldown if the 4-hour mood has changed too many times too fast.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Allowed session &amp; hour?</h4><p>Only trade inside permitted regional windows and non-skipped hours.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Passes its own quality vetting?</h4><p>The buy-bias ladder: agreement across the daily, 4-hour and hourly trend, plus structure checks.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Too many positions open?</h4><p>A hard cap of five open trades at once. If full, wait.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Stop safely clear of the noise?</h4><p>The stop-loss must sit at least three spreads away, so ordinary jitter can't clip it.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Reward worth the risk?</h4><p>The potential gain must be at least 1.3× the amount risked, or it's not worth taking.</p></div></div>
+      <div class="gate"><div class="n"></div><div class="g-b"><h4>Within the total-risk cap?</h4><p>All open trades combined must risk no more than 5% of the account. Shrink to fit, or reject.</p></div></div>
+    </div>
+    <p class="reveal" style="font-size:.82rem;color:var(--text-3);margin-top:20px;max-width:74ch">One notable gate ships <b style="color:var(--text-2)">off</b>: a news filter that would stand the bot flat around scheduled announcements (rate decisions, inflation, jobs). On the default settings it is disabled — a deliberate choice reviewed separately for live use.</p>
+  </div>
+</section>
+
+<!-- 05 SIZING -->
+<section class="blk" id="sizing">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">LINK&nbsp;05</div>
+      <div>
+        <h2>Sizing — decide the loss first</h2>
+        <p class="sub">Like saying "tonight I'll risk at most $100 at this table" <b>before</b> choosing chip sizes. The bot fixes the dollars it's willing to lose, looks at how far away the stop is, and works backwards to a position size — so a stop-out always costs that same small amount, no matter the trade.</p>
+      </div>
+    </div>
+
+    <div class="split reveal">
+      <div>
+        <div class="ladder" style="margin-bottom:0">
+          <div class="lh"><h4>The formula, in words</h4><span>no chart read — pure arithmetic</span></div>
+          <p style="font-family:var(--font-mono);font-size:.9rem;background:var(--card-2);border:1px solid var(--hair);border-radius:9px;padding:16px;line-height:1.6;color:var(--text)">position size&nbsp;=&nbsp;<span style="color:var(--gold)">(account × risk%)</span>
+&nbsp;&nbsp;&nbsp;&nbsp;÷&nbsp;<span style="color:var(--long)">stop distance</span></p>
+        <p style="font-size:.9rem;color:var(--text-2);margin-top:14px;line-height:1.55">A <b style="color:var(--text)">wider stop forces a smaller position; a tighter stop allows a bigger one</b> — the dollar risk stays constant either way. The grade sets the base risk %; a series of situational dials then almost always nudges it <em>down</em> before the order is sized.</p>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px">The situational dials — mostly brakes</div>
+        <div class="dials">
+          <div class="dial"><span class="dn">Session</span><span class="dv">London ×0.50</span><span class="dt">Half risk in the busier, choppier London hours; New York ×0.90; Asia full.</span></div>
+          <div class="dial"><span class="dn">Market mood</span><span class="dv up">Trend ×1.25</span><span class="dt">A little bolder in a clean trend; Volatile ×0.75; Choppy ×0.60.</span></div>
+          <div class="dial"><span class="dn">Drawdown brake</span><span class="dv">down to ×0.70</span><span class="dt">Eases size down after a cold streak, and never scales above ×1.0.</span></div>
+          <div class="dial"><span class="dn">Counter-trend</span><span class="dv">×0.50</span><span class="dt">Halves the bet if a trade fights the long-term tide line.</span></div>
+          <div class="dial"><span class="dn">Volatility burst</span><span class="dv up">×1.15</span><span class="dt">A small boost when volatility is rapidly expanding.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="reveal" style="margin-top:44px">
+      <div style="font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px">The hard rails — absolute limits no dial can override</div>
+      <div class="rails">
+        <div class="rail"><div class="rv">≤ 2%</div><div class="rl">Most the account can lose on any one trade — clamped twice</div></div>
+        <div class="rail"><div class="rv">−3%</div><div class="rl">Daily-loss halt: stop all new trades for the day at this equity loss</div></div>
+        <div class="rail"><div class="rv">5</div><div class="rl">Maximum open positions at once (and per day)</div></div>
+        <div class="rail"><div class="rv">≤ 5%</div><div class="rl">Combined risk across all open trades — shrink to fit or reject</div></div>
+        <div class="rail"><div class="rv">5 in a row</div><div class="rl">Consecutive failed orders trip a safety halt</div></div>
+        <div class="rail"><div class="rv">Master</div><div class="rl">Operator emergency kill switch, always available</div></div>
+      </div>
+      <div class="wontdo">
+        <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> No martingale (doubling down after losses)</div>
+        <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> No grid (stacking orders into a loser)</div>
+        <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> Never adds to a losing trade</div>
+        <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> Never increases size after a loss</div>
+        <div class="w"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="12" cy="12" r="9"/><path d="M7 7l10 10"/></svg> Never widens a stop-loss</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 07 EXITS -->
+<section class="blk" id="exits">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">LINK&nbsp;07</div>
+      <div>
+        <h2>Managing the trade to the exit</h2>
+        <p class="sub">Getting in is only half the job. Every open trade is managed <b>continuously</b> — not once an hour — against a fixed set of exits: a stop that only ever tightens, a ladder that banks profit in slices, a trailing stop that rides a runner, and three housekeeping exits. First, one key term: <b>R</b> is simply the amount risked on the trade. A "1.3R" target means a gain of 1.3× that risk.</p>
+      </div>
+    </div>
+
+    <div class="ladder reveal">
+      <div class="lh"><h4>The take-profit ladder — bank in slices, keep a runner</h4><span>measured in R, not time</span></div>
+      <div class="rungs">
+        <div class="rung"><span class="rr">Stop</span><span class="rd">The <b>initial stop-loss</b>, parked just past where the idea is proven wrong — and never a hair closer than a gold-noise floor. Once set, it only ever moves the <em>safer</em> way.</span><span class="rp">risk = <b>1R</b></span></div>
+        <div class="rung"><span class="rr">+0.7R</span><span class="rd">First nibble — take a small slice off the table early to reduce risk.</span><span class="rp">close <span class="pct">~15%</span></span></div>
+        <div class="rung"><span class="rr">+0.8R</span><span class="rd"><b>Break-even</b> — once there's a cushion, slide the stop toward the entry so the trade can't turn into a loss.</span><span class="rp">stop → entry</span></div>
+        <div class="rung"><span class="rr">+1.3R</span><span class="rd">Bank the biggest slice as the trade reaches a solid multiple of its risk.</span><span class="rp">close <span class="pct">~40%</span></span></div>
+        <div class="rung"><span class="rr">+1.8R</span><span class="rd">Take another slice, leaving only a small "runner" to chase a bigger move.</span><span class="rp">close <span class="pct">~30%</span></span></div>
+        <div class="rung"><span class="rr">Runner</span><span class="rd">The remainder rides the trailing stop below, capturing the tail of a strong trend.</span><span class="rp">trails out</span></div>
+      </div>
+    </div>
+
+    <div class="exwrap">
+      <div class="exgroup reveal">
+        <h3 style="font-family:var(--font-display)">Following the trade</h3>
+        <p class="gd">Two mechanisms actively track an open winner — one protects, one chases.</p>
+        <div class="exits">
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10l8-6 8 6v10"/><path d="M4 14h16"/></svg></div><h4>Initial stop-loss</h4></div>
+            <p>Set by the scout just past its invalidation point — the price that would prove the idea wrong. It's never placed closer than a fixed gold-noise floor, and after entry it only ratchets toward safety. It is <em>never</em> widened.</p>
+            <span class="trg">only moves the safe way</span>
+          </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18l6-6 4 4 6-8"/><path d="M20 8v4h-4"/></svg></div><h4>Chandelier trail</h4></div>
+            <p>The runner's stop follows price up like a ratchet, always sitting a volatility-sized cushion below the recent high. It only ever tightens — locking in more of a strong move as it extends, and stepping out only when price finally pulls back to it.</p>
+            <span class="trg">recent high − 3 × ATR (hourly)</span>
+          </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="9"/></svg></div><h4>Break-even shift</h4></div>
+            <p>Once the trade has banked its first nibble and shown a cushion, the design slides the stop up to about the entry price. From there, in the best case, the worst outcome is a scratch rather than a loss.</p>
+            <span class="trg">arms at +0.8R</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="exgroup reveal">
+        <h3 style="font-family:var(--font-display)">Housekeeping exits</h3>
+        <p class="gd">Three unconditional exits that close a trade for reasons other than hitting a target — protecting against dead trades, weekend gaps, and a market that structurally turns.</p>
+        <div class="exits">
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Time exit</h4></div>
+            <p>Close a trade that has gone nowhere for about three days. Capital tied up in a stalled position is capital that can't take a better trade.</p>
+            <span class="trg">open &gt; 72 hours</span>
+          </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div><h4>Weekend close</h4></div>
+            <p>Flatten everything late on Friday to dodge the weekend gap — the jump in price that can happen when the market reopens Sunday night, leaping right over a stop.</p>
+            <span class="trg">Friday ≥ 20:00 server</span>
+          </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><h4>Regime-aware exit</h4></div>
+            <p>Bail only if the market structurally flips against the trade — a closed hourly candle breaking through a key average the wrong way — not on a brief flicker. It distinguishes a real turn from noise.</p>
+            <span class="trg">hourly close through the 50-EMA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WORKED EXAMPLE -->
+<section class="blk example" id="example">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">END&nbsp;TO&nbsp;END</div>
+      <div>
+        <h2>One trade, start to finish</h2>
+        <p class="sub">The whole chain on a single illustrative trade. The numbers are invented for clarity and imply no outcome — the point is to watch every link connect.</p>
+      </div>
+    </div>
+    <div class="steps reveal">
+      <div class="step"><div class="sn"></div><div class="sc"><h4>The hour closes.</h4><p>The bot wakes and reads the room: daily, 4-hour and hourly trends all <b style="color:var(--long)">up</b>; market mood trending; a calm New-York session.</p><span class="tf">Hourly heartbeat</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>A scout raises its hand.</h4><p>A bullish <b>engulfing</b> candle just closed near $2,400.00. The pattern's low — the point that would prove it wrong — sits at $2,396.00. It wins the hour's interview.</p><span class="tf">Engulfing · H1 trigger + H4 gate</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>It runs the gauntlet.</h4><p>Kill switch off; not halted; no price shock; session quality fine; spread normal; not flip-flopping; a solid quality grade; one of five slots used. Every gate says yes.</p><span class="tf">12 gates</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>Stop &amp; reward are set.</h4><p>The stop goes just below the pattern low, about $2,395.50 — a stop <em>distance</em> of roughly $4.50. The laddered targets clear the "reward ≥ 1.3× risk" check.</p><span class="tf">R-geometry</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>Size is worked backwards.</h4><p>It risks about 1% — say $100. With a $4.50 stop, that's roughly $100 ÷ $4.50 ≈ 22 ounces (about 0.22 of a lot), rounded down to the broker's step.</p><span class="tf">Pure arithmetic</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>The order goes in.</h4><p>The bot re-checks the live price and spread one final time, then places the buy.</p><span class="tf">Live execution</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>It manages to the exit.</h4><p>A 15% nibble at +0.7R; the stop slides to break-even at +0.8R; 40% banked at +1.3R, 30% at +1.8R; the runner rides the trailing stop until price taps it — or a housekeeping exit fires first.</p><span class="tf">Continuous management</span></div></div>
+    </div>
+    <p class="disclaimer reveal">Illustrative only. Prices, sizes and steps are invented to show the mechanism; no profit, win rate or outcome is implied. The bot makes no promises about any individual trade — only that every trade follows this same disciplined chain.</p>
+  </div>
+</section>
+
+<!-- REFERENCE -->
+<section class="blk" id="reference" style="border-bottom:0">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">APPENDIX</div>
+      <div>
+        <h2>Reference desk</h2>
+        <p class="sub">For the curious: which chart timeframe drives each decision, and a plain-English glossary of every term used above. Tap to open.</p>
+      </div>
+    </div>
+    <div class="ref-tabs reveal">
+      <details>
+        <summary>Which timeframe drives each decision <span class="rk">24 rows</span><span class="cv">＋</span></summary>
+        <div class="ref-body">
+          <p style="font-size:.86rem;color:var(--text-2);margin:0 0 14px;max-width:70ch">The bot is genuinely multi-timeframe: the weekly sets the tide, the daily the trend, the 4-hour the mood, the hourly the heartbeat, and the 15-/5-minute charts the fine detail. Here's the map.</p>
+          <div class="tbl-scroll">
+            <table>
+              <thead><tr><th>Decision</th><th>Timeframe(s)</th><th>What it reads</th></tr></thead>
+              <tbody>
+                <tr><td>New-trade cadence</td><td><span class="tfx">H1</span></td><td>One decision per finished hourly candle</td></tr>
+                <tr><td>Big-picture trend</td><td><span class="tfx">W1 · D1</span></td><td>Weekly average slope; the daily trend &amp; "death cross"</td></tr>
+                <tr><td>Market mood (regime)</td><td><span class="tfx">H4</span></td><td>Trend-strength, volatility, volatility envelope</td></tr>
+                <tr><td>Trend gate for entries</td><td><span class="tfx">H4</span></td><td>Most scouts must agree with the 4-hour trend</td></tr>
+                <tr><td>Bias / tide line</td><td><span class="tfx">H1</span></td><td>The 200-hour average vs live price</td></tr>
+                <tr><td>Candle-shape triggers</td><td><span class="tfx">H1</span></td><td>Engulfing, Pin Bar, MA Cross, Displacement, Expansion, Pullback</td></tr>
+                <tr><td>Range triggers</td><td><span class="tfx">M15</span> + <span class="tfx">H1</span></td><td>S3 &amp; S6 read 15-minute candles, size from hourly volatility</td></tr>
+                <tr><td>Crash death-cross gate</td><td><span class="tfx">D1</span></td><td>Daily 50-average below the 200-average</td></tr>
+                <tr><td>Crash rubber-band trigger</td><td><span class="tfx">H1</span> + live</td><td>Live price stretched above the hourly mean</td></tr>
+                <tr><td>Key levels</td><td><span class="tfx">D1 · W1</span></td><td>Yesterday's &amp; last week's highs and lows</td></tr>
+                <tr><td>Macro backdrop</td><td><span class="tfx">H4</span></td><td>Dollar index &amp; the fear gauge (VIX)</td></tr>
+                <tr><td>Asian range / sessions</td><td><span class="tfx">M15</span> + clock</td><td>Overnight range built on 15-minute candles</td></tr>
+                <tr><td>Price-shock detector</td><td><span class="tfx">H1 · M5</span> + live</td><td>Fast-leg spike &amp; spread checks</td></tr>
+                <tr><td>Spread &amp; execution gates</td><td>live</td><td>The instant cost of entering right now</td></tr>
+                <tr><td>Position sizing</td><td>none</td><td>Pure money arithmetic — reads no candles</td></tr>
+                <tr><td>Take-profit ladder</td><td>R-multiples</td><td>0.7R / 1.3R / 1.8R, not clock time</td></tr>
+                <tr><td>Break-even &amp; nibble</td><td>R-multiples</td><td>Arm at +0.8R after the first slice</td></tr>
+                <tr><td>Trailing stop</td><td><span class="tfx">H1</span></td><td>Recent high minus a volatility cushion</td></tr>
+                <tr><td>Regime-aware exit</td><td><span class="tfx">H1</span></td><td>Hourly close through a key average</td></tr>
+                <tr><td>Time exit</td><td>clock</td><td>Older than ~72 hours</td></tr>
+                <tr><td>Weekend close</td><td>clock</td><td>Late Friday, server time</td></tr>
+                <tr><td>Daily-loss halt</td><td>account</td><td>Equity down ~3% on the day</td></tr>
+                <tr><td>Friday no-open rule</td><td>clock</td><td>No new trades opened on Fridays</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+      <details>
+        <summary>Plain-English glossary <span class="rk">every term</span><span class="cv">＋</span></summary>
+        <div class="ref-body">
+          <div class="gloss">
+            <dl>
+              <div class="gterm"><dt>Candle / bar</dt><dd>One block summarizing a slice of time by four prices: where it opened, its high, its low, and where it closed. "Closed" = finished and fixed; "forming" = still moving.</dd></div>
+              <div class="gterm"><dt>Timeframe</dt><dd>How much time each candle covers — M5 (5-min), M15 (15-min), H1 (hourly), H4 (4-hour), D1 (daily), W1 (weekly).</dd></div>
+              <div class="gterm"><dt>Long / short</dt><dd>Long = betting price goes up (buying). Short = betting price goes down (selling).</dd></div>
+              <div class="gterm"><dt>Trend / bias</dt><dd>The trend is where price is heading; the bot's bias is the direction it's predisposed to trade — heavily tilted toward buying gold.</dd></div>
+              <div class="gterm"><dt>Regime</dt><dd>The type of market right now: trending, ranging, choppy, or volatile — decided on the 4-hour chart.</dd></div>
+              <div class="gterm"><dt>Session</dt><dd>A regional trading window — Asia, London, New York. A clock concept, not a chart.</dd></div>
+              <div class="gterm"><dt>Spread</dt><dd>The small gap between the buy and sell price — a built-in cost every time you enter.</dd></div>
+              <div class="gterm"><dt>ATR</dt><dd>Average True Range — how much price typically moves per bar lately. In short: "how bouncy is it?"</dd></div>
+              <div class="gterm"><dt>ADX</dt><dd>A gauge of how strong a trend is (in any direction). High = a strong march; low = aimless drifting.</dd></div>
+              <div class="gterm"><dt>EMA / moving average</dt><dd>A smoothed average price line. The 200-period average is a long-term "tide line" for the big picture.</dd></div>
+              <div class="gterm"><dt>Stop-loss</dt><dd>The pre-set "I was wrong, get me out" exit that caps a loss. This bot's stop only ever tightens.</dd></div>
+              <div class="gterm"><dt>Take-profit</dt><dd>A pre-set price where the bot cashes in some or all of a winning trade.</dd></div>
+              <div class="gterm"><dt>R / R-multiple</dt><dd>"R" is the amount risked on a trade. Targets and break-even are measured in R — a 1.3R target is a gain of 1.3× the risk.</dd></div>
+              <div class="gterm"><dt>Lot / size</dt><dd>The trade-size unit. A standard gold lot is 100 ounces; the bot trades fractions, sized to the risk.</dd></div>
+              <div class="gterm"><dt>Drawdown</dt><dd>How far the account has fallen from its recent peak. The bot brakes its risk as drawdown grows.</dd></div>
+              <div class="gterm"><dt>Liquidity / stop-hunt</dt><dd>Liquidity is how easily you can trade without moving price. A "stop-hunt" is a poke past a level to trigger others' stops before reversing.</dd></div>
+              <div class="gterm"><dt>Death cross</dt><dd>When a shorter average (50-day) falls below a longer one (200-day) — a classic confirmed-downtrend signal.</dd></div>
+              <div class="gterm"><dt>Smart-money (SMC)</dt><dd>Reading the chart around where large institutional orders likely sit — order blocks, gaps, sweeps. Used here mainly as a quality check.</dd></div>
+            </dl>
+          </div>
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap fr">
+    <p class="disc">A plain-language field manual describing the bot's <b style="color:var(--text-2)">default behavior</b>, verified against the source code. It explains mechanics only — no profit, win-rate or return is claimed or implied. Trading carries risk; nothing here is financial advice.</p>
+    <p class="sig">UltimateTrader · XAUUSD · H1 heartbeat</p>
+  </div>
+</footer>
+
+<script>
+  document.documentElement.classList.add('js');
+
+  /* scout filter */
+  (function(){
+    var chips=document.querySelectorAll('#filter .chip');
+    var scouts=document.querySelectorAll('.scout');
+    chips.forEach(function(c){
+      c.addEventListener('click',function(){
+        chips.forEach(function(x){x.setAttribute('aria-pressed','false');});
+        c.setAttribute('aria-pressed','true');
+        var f=c.dataset.f;
+        scouts.forEach(function(s){
+          var show = f==='all' || s.dataset.status===f;
+          s.classList.toggle('dim',!show);
+        });
+      });
+    });
+  })();
+
+  /* reveal on scroll */
+  (function(){
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var els=document.querySelectorAll('.reveal');
+    if(reduce || !('IntersectionObserver' in window)){
+      els.forEach(function(e){e.classList.add('in');});return;
+    }
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}
+      });
+    },{rootMargin:'0px 0px -8% 0px',threshold:.08});
+    els.forEach(function(e){io.observe(e);});
+  })();
+
+  /* nav scroll-spy */
+  (function(){
+    var links=[].slice.call(document.querySelectorAll('#nav a'));
+    var map={};
+    links.forEach(function(l){var id=l.getAttribute('href').slice(1);var t=document.getElementById(id);if(t)map[id]=l;});
+    var ids=Object.keys(map);
+    if(!('IntersectionObserver' in window))return;
+    var spy=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          links.forEach(function(l){l.classList.remove('active');});
+          if(map[en.target.id])map[en.target.id].classList.add('active');
+        }
+      });
+    },{rootMargin:'-45% 0px -50% 0px',threshold:0});
+    ids.forEach(function(id){spy.observe(document.getElementById(id));});
+  })();
+</script>
+</body>
+</html>

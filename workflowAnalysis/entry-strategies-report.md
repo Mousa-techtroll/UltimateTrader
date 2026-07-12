@@ -1,5 +1,7 @@
 # UltimateTrader — Entry-Strategy Census & Honest Performance Reflection
 
+> ⚠️ **SUPERSEDED FOR PHASE-1 PRIORITISATION (2026-07-12).** This document is built on an **older 928-position / $21,623.18 run**. The binding baseline is now the **DST-corrected 950 positions / $24,829.05** run (Phase-0.5 DST-1 fix adopted). The authoritative census is **`entry-strategies-census.md`** — use it for all Phase-1 decisions. The broad conclusions here still hold (core-3 concentration ≈75% fills / 86% profit; five dormant plugins; ~11% capture), but exact counts differ. Structural corrections (session-breakout via Expansion) have been applied in-place below.
+
 **Purpose.** A complete census of every entry strategy in the EA — its logic (source-verified), category tags, activation status under the binding production config, long/short splits, and measured results — reflected against the plain-English guide `workflowAnalysis/how-this-ea-works.md`, and ending with an honest answer to *"why is this EA underperforming buy-and-hold gold?"*
 
 **Data basis (all fresh, one run).**
@@ -36,7 +38,7 @@ Status legend — **LIVE**: registered, produced candidates and fills this run. 
 | Displacement | **REGISTERED-MUTE** — 0 candidates in 7.5y | liquidity, SMC-structure | 0 | 0 | — | — | — | — | — |
 | SessionBreakout | **DEAD** — never registered (`UltimateTrader.mq5:699-700`: skipped when `InpEnableSessionEngine=true`) | session-time, breakout | 0 | 0 | — | — | — | — | — |
 | PullbackContinuation | **LIVE** | trend-following, momentum | 233 | 45 | +621.30 | 1.21 | **−0.032** | 44.4% | 26/19 |
-| Expansion (IC mode only; CompressionBO off) | **LIVE** | breakout, momentum | 74 | 19 | +979.47 | 1.56 | +0.127 | 47.4% | 12/7 |
+| Expansion (IC mode + composed Session-Breakout sub-strategy; CompressionBO off) | **LIVE** | breakout, momentum, session-time | 74 | 19 | +979.47 | 1.56 | +0.127 | 47.4% | 12/7 |
 | LiquidityEngine (Displacement+OBRetest modes on; FVG/SFP off) | **REGISTERED-MUTE** — 0 candidates in 7.5y | SMC-structure, liquidity | 0 | 0 | — | — | — | — | — |
 | SessionEngine (all 4 modes off) | **REGISTERED-MUTE** — mode flags all false in ini AND at source default | session-time, breakout | 0 | 0 | — | — | — | — | — |
 | TrendContinuation engine | **DEAD** — not constructed (`InpEnableMultiStrategy=false`, `UltimateTrader.mq5:763`) | trend-following | — | — | — | — | — | — | — |
@@ -111,12 +113,13 @@ Tag taxonomy used: candlestick-pattern / SMC-structure / liquidity / volume / mo
 - **Data shows (FACT):** 233 candidates → 45 fills (26 L / 19 S), net **+$621.30** but avg R **−0.032** — the R-book is negative; the dollars are positive only because its occasional winners landed on later (larger) account balances. Its MFE capture is **−3.1%**: it visits +45.9R of open profit across its trades and banks −1.4R. Shorts: 19 fills, −$135.70, avg R −0.187.
 - **Insight (interpretation):** The prior campaign verdict ("PBC avg-R negative history") re-verifies exactly. This strategy finds real moves (positive MFE) and then gives all of it back — a management/exit mismatch, not a signal-quality problem. FIX-or-KILL: as configured it adds 45 trades of noise and negative R; its short side is the worst live short book per-trade. If kept, it is the natural first patient for any capture-ratio work because its gap between "seen" and "kept" profit is total.
 
-### 2.6 Expansion Engine (Institutional-Candle mode only) — LIVE, thin but honest
+### 2.6 Expansion Engine (Institutional-Candle mode + composed Session-Breakout sub-strategy) — LIVE, thin but honest
 
 - **Logic (verified).** Detects an "institutional" H1 candle with body ≥ 1.8×ATR (`InpInstCandleMult=1.8`; doc says 2× — the default; ini overrides to 1.8) closing near its extreme (`CExpansionEngine.mqh:702`), waits 2–5 bars of consolidation (`:759,770`), then enters on the break of the big candle's extreme. The CompressionBO squeeze mode is **off** (`InpExpCompressionBO=false`).
 - **Tags active:** breakout; momentum. ("Volume" here is candle size, not tick volume — not volume-tagged.)
 - **Doc says:** "energy building then releasing: an oversized institutional candle then a coil then a break, or a volatility squeeze" (§3) — accurate mechanics; on this config only the first mode exists.
 - **Data shows (FACT):** 74 candidates → 19 fills (12 L / 7 S), net **+$979.47**, PF 1.56, avg R +0.127, WR 47.4%. Nearly all activity 2024–2026 (14 of 19 fills) — it fires in high-ATR regimes.
+- **Mode split (Phase-0 correction, `CExpansionEngine.mqh:384,520-529`):** this engine composes a `CSessionBreakoutEntry` as its Priority-5 sub-strategy, ungated by the `InpSession*` flags. On the 928-baseline snapshot 12 of the 19 fills are that composed **Session-Breakout** logic (`MODE_LONDON_BREAKOUT`, re-tagged `ExpansionEngine`), only 7 are true IC-mode breaks. (On the current 952 baseline: 26 total = 14 IC + 12 session.) Expansion is therefore the one place session-breakout logic actually trades — see §2.9 and `phase0-session-dormant-reconcile.md`.
 - **Insight (interpretation):** KEEP. Small but positive, two-sided, and the only live *breakout* expression in the book. It is the closest thing the EA has to a diversifier that actually pays.
 
 ### 2.7 FailedBreakReversal (S6) — LIVE, long-only, boutique
@@ -144,7 +147,7 @@ FACT: none of these emitted a single candidate row this run. Re-verified, not as
 ### 2.9 The never-registered / never-constructed set
 
 - **LiquiditySweep** (`InpEnableLiquiditySweep=false` → `RegisterEntryPlugin(...,false)` returns early at `UltimateTrader.mq5:373` — not registered), **RangeBox** and **FalseBreakoutFade** (explicitly disabled when the S3/S6 branch is active, `UltimateTrader.mq5:656-657`), **Momentum filter as entry** (`InpEnableMomentum=false`).
-- **SessionBreakout**: constructed, then registration skipped entirely because `InpEnableSessionEngine=true` (`UltimateTrader.mq5:699-700`; source comment: "SessionBreakout DEAD when InpEnableSessionEngine=true"). Since SessionEngine's own modes are all off, **the EA has no live session-breakout of any kind** — Asian-range/London-open logic exists in three places and trades in none.
+- **SessionBreakout**: the *standalone* plugin is constructed, then registration skipped because `InpEnableSessionEngine=true` (`UltimateTrader.mq5:699-700`; source comment: "SessionBreakout DEAD when InpEnableSessionEngine=true"), and SessionEngine's own four modes are all off. **Correction (Phase-0):** despite that, session-breakout *logic* is **not** dead — `CExpansionEngine` composes a `CSessionBreakoutEntry` as its Priority-5 sub-strategy (`CExpansionEngine.mqh:384,520-529`), ungated by the `InpSession*` flags, and it fires **12×** re-tagged `ExpansionEngine`/`MODE_LONDON_BREAKOUT` (9 "Asian Breakout London" + 3 "London Continuation NY", verified on the 952 baseline). So of the three places Asian-range/London-open logic exists, it trades in **one** (inside Expansion) — not none. The earlier "trades in none" claim was wrong; `CSessionEngine` and the standalone `SessionBreakout` plugin are the two that are genuinely mute.
 - **TrendContinuation / ReversalSweep / RangeReversion engines**: inside `if(InpEnableMultiStrategy)` (`UltimateTrader.mq5:763-792`) with `InpEnableMultiStrategy=false` — never constructed. The 4-engine scaffold is entirely dormant.
 - **FileEntry**: constructed and initialized (SignalSource=BOTH, `UltimateTrader.mq5:687-691`) but its `telegram_signals.csv` does not exist in the tester's Files — zero external signals. All its ~30 ini parameters are dead weight on this config.
 

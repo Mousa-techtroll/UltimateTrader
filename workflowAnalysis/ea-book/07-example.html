@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>07 · Start to Finish — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html" aria-current="page"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">One trade, start to finish</a></li>
+        <li><a href="#s2">Timeframe reference</a></li>
+        <li><a href="#s3">Glossary</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 07 / 07 · End to end</div>
+        <h1>Start to Finish</h1>
+        <p class="dek">Every chapter so far examined one link of the chain in slow motion. This closing chapter runs the whole thing at speed on a single illustrative trade — then leaves you with a reference desk: which timeframe drives each decision, and a plain-English glossary of every term used in the book.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>One trade, start to finish</h2>
+        <p class="lead">The whole chain on one trade. The numbers are invented for clarity and imply no outcome — the point is to watch every link connect.</p>
+        <div class="steps">
+          <div class="step"><div class="sn"></div><div><h4>The hour closes.</h4><p>The bot wakes and <b>reads the room</b>: daily, 4-hour and hourly trends all <b style="color:var(--long)">up</b>; market mood trending; a calm New-York session. Buying is firmly favoured. <em>(Chapter 2.)</em></p><span class="tf">Hourly heartbeat</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>A scout raises its hand.</h4><p>A bullish <b>engulfing</b> candle just closed near $2,400.00. The pattern's low — the point that would prove it wrong — sits at $2,396.00. It wins the hour's interview. <em>(Chapter 3.)</em></p><span class="tf">Engulfing · H1 trigger + H4 gate</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>It runs the gauntlet.</h4><p>Kill switch off; not halted; no price shock; session quality fine; spread normal; not flip-flopping; a solid quality grade; one of five slots used. Every gate says yes. <em>(Chapter 4.)</em></p><span class="tf">12 gates</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>Stop &amp; reward are set.</h4><p>The stop goes just below the pattern low, about $2,395.50 — a stop <em>distance</em> of roughly $4.50. The laddered targets clear the "reward ≥ 1.3× risk" check.</p><span class="tf">R-geometry</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>Size is worked backwards.</h4><p>It risks about 1% — say $100. With a $4.50 stop, that's roughly $100 ÷ $4.50 ≈ 22 ounces (about 0.22 of a lot), rounded down to the broker's step. <em>(Chapter 5.)</em></p><span class="tf">Pure arithmetic</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>The order goes in.</h4><p>The bot re-checks the live price and spread one final time, then places the buy.</p><span class="tf">Live execution</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>It manages to the exit.</h4><p>A 15% nibble at +0.7R; the stop slides to break-even at +0.8R; 40% banked at +1.3R, 30% at +1.8R; the runner rides the trailing stop until price taps it — or a housekeeping exit fires first. <em>(Chapter 6.)</em></p><span class="tf">Continuous management</span></div></div>
+        </div>
+        <div class="callout" style="margin-top:26px">
+          <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+          <div><p><b>Illustrative only.</b> Prices, sizes and steps are invented to show the mechanism; no profit, win rate or outcome is implied. The bot makes no promises about any individual trade — only that every trade follows this same disciplined chain, in this same order, every hour.</p></div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s2">
+        <h2>Timeframe reference</h2>
+        <p class="lead">For the curious: which chart timeframe actually drives each decision in the book. The bot is genuinely multi-timeframe — the weekly sets the tide, the daily the trend, the 4-hour the mood, the hourly the heartbeat, the faster charts the detail.</p>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>Decision</th><th>Timeframe(s)</th><th>What it reads</th></tr></thead>
+            <tbody>
+              <tr><td>New-trade cadence</td><td><span class="tfx">H1</span></td><td>One decision per finished hourly candle</td></tr>
+              <tr><td>Big-picture trend</td><td><span class="tfx">W1 · D1</span></td><td>Weekly average slope; the daily trend &amp; "death cross"</td></tr>
+              <tr><td>Market mood (regime)</td><td><span class="tfx">H4</span></td><td>Trend-strength, volatility, volatility envelope</td></tr>
+              <tr><td>Trend gate for entries</td><td><span class="tfx">H4</span></td><td>Most scouts must agree with the 4-hour trend</td></tr>
+              <tr><td>Bias / tide line</td><td><span class="tfx">H1</span></td><td>The 200-hour average vs live price</td></tr>
+              <tr><td>Candle-shape triggers</td><td><span class="tfx">H1</span></td><td>Engulfing, Pin Bar, MA Cross, Displacement, Expansion, Pullback</td></tr>
+              <tr><td>Range triggers (S3, S6)</td><td><span class="tfx">M15</span> + <span class="tfx">H1</span></td><td>Read 15-minute candles, size from hourly volatility</td></tr>
+              <tr><td>Crash death-cross gate</td><td><span class="tfx">D1</span></td><td>Daily 50-average below the 200-average</td></tr>
+              <tr><td>Crash rubber-band trigger</td><td><span class="tfx">H1</span> + live</td><td>Live price stretched above the hourly mean</td></tr>
+              <tr><td>Key levels</td><td><span class="tfx">D1 · W1</span></td><td>Yesterday's &amp; last week's highs and lows</td></tr>
+              <tr><td>Macro backdrop</td><td><span class="tfx">H4</span></td><td>Dollar index &amp; the fear gauge (VIX)</td></tr>
+              <tr><td>Asian range / sessions</td><td><span class="tfx">M15</span> + clock</td><td>Overnight range built on 15-minute candles</td></tr>
+              <tr><td>Price-shock detector</td><td><span class="tfx">H1 · M5</span> + live</td><td>Fast-leg spike &amp; spread checks</td></tr>
+              <tr><td>Spread &amp; execution gates</td><td>live</td><td>The instant cost of entering right now</td></tr>
+              <tr><td>Position sizing</td><td>none</td><td>Pure money arithmetic — reads no candles</td></tr>
+              <tr><td>Take-profit ladder</td><td>R-multiples</td><td>0.7R / 1.3R / 1.8R, not clock time</td></tr>
+              <tr><td>Break-even &amp; nibble</td><td>R-multiples</td><td>Arm at +0.8R after the first slice</td></tr>
+              <tr><td>Trailing stop</td><td><span class="tfx">H1</span></td><td>Recent high minus a volatility cushion</td></tr>
+              <tr><td>Regime-aware exit</td><td><span class="tfx">H1</span></td><td>Hourly close through a key average</td></tr>
+              <tr><td>Time / weekend exits</td><td>clock</td><td>Older than ~72 hours; late Friday</td></tr>
+              <tr><td>Daily-loss halt</td><td>account</td><td>Equity down ~3% on the day</td></tr>
+              <tr><td>Friday no-open rule</td><td>clock</td><td>No new trades opened on Fridays</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s3">
+        <h2>Glossary</h2>
+        <p class="lead">Every term used in this book, in plain language.</p>
+        <div class="gloss">
+          <dl>
+            <div class="gterm"><dt>Candle / bar</dt><dd>One block summarizing a slice of time by four prices: where it opened, its high, its low, and where it closed. "Closed" = finished and fixed; "forming" = still moving.</dd></div>
+            <div class="gterm"><dt>Timeframe</dt><dd>How much time each candle covers — M5 (5-min), M15 (15-min), H1 (hourly), H4 (4-hour), D1 (daily), W1 (weekly).</dd></div>
+            <div class="gterm"><dt>Long / short</dt><dd>Long = betting price goes up (buying). Short = betting price goes down (selling).</dd></div>
+            <div class="gterm"><dt>Trend / bias</dt><dd>The trend is where price is heading; the bot's bias is the direction it's predisposed to trade — heavily tilted toward buying gold.</dd></div>
+            <div class="gterm"><dt>Regime</dt><dd>The type of market right now: trending, ranging, choppy, or volatile — decided on the 4-hour chart.</dd></div>
+            <div class="gterm"><dt>Session</dt><dd>A regional trading window — Asia, London, New York. A clock concept, not a chart.</dd></div>
+            <div class="gterm"><dt>Spread</dt><dd>The small gap between the buy and sell price — a built-in cost every time you enter.</dd></div>
+            <div class="gterm"><dt>ATR</dt><dd>Average True Range — how much price typically moves per bar lately. In short: "how bouncy is it?"</dd></div>
+            <div class="gterm"><dt>ADX</dt><dd>A gauge of how strong a trend is (in any direction). High = a strong march; low = aimless drifting.</dd></div>
+            <div class="gterm"><dt>EMA / moving average</dt><dd>A smoothed average price line. The 200-period average is a long-term "tide line" for the big picture.</dd></div>
+            <div class="gterm"><dt>Bollinger Bands</dt><dd>An envelope drawn around price that widens when it's volatile and narrows when calm.</dd></div>
+            <div class="gterm"><dt>Stop-loss</dt><dd>The pre-set "I was wrong, get me out" exit that caps a loss. This bot's stop only ever tightens.</dd></div>
+            <div class="gterm"><dt>Take-profit</dt><dd>A pre-set price where the bot cashes in some or all of a winning trade.</dd></div>
+            <div class="gterm"><dt>R / R-multiple</dt><dd>"R" is the amount risked on a trade. Targets and break-even are measured in R — a 1.3R target is a gain of 1.3× the risk.</dd></div>
+            <div class="gterm"><dt>Lot / size</dt><dd>The trade-size unit. A standard gold lot is 100 ounces; the bot trades fractions, sized to the risk.</dd></div>
+            <div class="gterm"><dt>Drawdown</dt><dd>How far the account has fallen from its recent peak. The bot brakes its risk as drawdown grows.</dd></div>
+            <div class="gterm"><dt>Liquidity / stop-hunt</dt><dd>Liquidity is how easily you can trade without moving price. A "stop-hunt" is a poke past a level to trigger others' stops before reversing.</dd></div>
+            <div class="gterm"><dt>Death cross</dt><dd>When a shorter average (50-day) falls below a longer one (200-day) — a classic confirmed-downtrend signal.</dd></div>
+            <div class="gterm"><dt>Smart-money (SMC)</dt><dd>Reading the chart around where large institutional orders likely sit — order blocks, gaps, sweeps. Used here mainly as a quality check.</dd></div>
+            <div class="gterm"><dt>Weekend gap</dt><dd>The jump between Friday's close and Sunday's reopen; the bot flattens on Friday to avoid it.</dd></div>
+          </dl>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="06-exits.html"><span class="pl">← Previous</span><span class="pt">06 · Managing the Exit</span></a>
+        <a class="pager next" href="index.html"><span class="pl">Back to start →</span><span class="pt">Contents</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

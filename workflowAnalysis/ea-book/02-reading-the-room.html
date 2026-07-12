@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>02 · Reading the Room — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html" aria-current="page"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">The four reads</a></li>
+        <li><a href="#s2" class="sub">A · Direction bias</a></li>
+        <li><a href="#s3" class="sub">B · Market mood</a></li>
+        <li><a href="#s4" class="sub">C · Macro backdrop</a></li>
+        <li><a href="#s5" class="sub">D · Time of day</a></li>
+        <li><a href="#s6">How the four combine</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 02 / 07 · Link 01</div>
+        <h1>Reading the Room</h1>
+        <p class="dek">Before it considers a single trade, the bot spends the first moments of each hour building one shared picture of the market — the way a seasoned trader glances across several screens before deciding anything. That picture has <b>four parts</b>, and together they decide which trades are even allowed, how much to risk, and how suspicious to be.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>The four reads</h2>
+        <p class="lead">Nothing about a specific candle pattern is considered yet. This is pure situational awareness: <b>where are we, what kind of market is this, what's the wider world doing, and what time is it?</b></p>
+        <div class="prose">
+          <p>Every part of this read is taken from <b>finished candles</b>, never the half-formed one still moving, so the picture can't be faked out partway through the hour. And crucially, each question is asked on <em>several charts at once</em>.</p>
+        </div>
+        <div class="mtf-note">
+          <span class="mi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-5 4 3 8-9"/><path d="M3 21h18"/></svg></span>
+          <p>The single most important idea here: the bot asks the same question on <b>several charts at once</b>. "Is price trending up?" gets answered separately on the daily (the big tide), the 4-hour (the day's swell) and the 1-hour (the wave in front of you). A trade stands on the firmest ground when all three agree — and is treated with suspicion when they don't. This is what "multi-timeframe" means, and it runs through all four reads below.</p>
+        </div>
+
+        <div class="reads">
+          <!-- A -->
+          <div class="room-read" id="s2" style="scroll-margin-top:20px">
+            <div class="rr-head"><span class="rr-idx">A</span><h3>Direction bias — which way am I allowed to lean?</h3><div class="rr-tfs"><span class="tf">D1</span><span class="tf">H4</span><span class="tf">H1</span></div></div>
+            <div class="rr-grid">
+              <div class="rr-plain"><div class="rr-lab">In plain terms</div>
+                <p>Gold has trended upward for years, so the bot leans hard toward <b style="color:var(--long)">buying</b>. But "leaning toward buying" isn't a hunch — it's a stacked measurement. The bot asks "is price trending up?" on three clocks at the same time: the <b>daily</b> chart (weeks of direction), the <b>4-hour</b> (days), and the <b>1-hour</b> (hours). When all three point up, a buy stands on firm ground; when they disagree, the idea is treated as suspect. Selling is the rare, high-bar exception.</p>
+                <p class="analogy"><b>Like a surfer</b> reading the ocean's tide, the day's swell, and the wave right in front of them before paddling out — you want all three working with you, not against.</p>
+              </div>
+              <div class="rr-tech"><div class="rr-lab">Under the hood</div>
+                <p>On each of the three timeframes it runs the same pair of moving averages — a fast <b>10-period</b> and a slow <b>21-period</b> EMA — plus a <b>14-period ATR</b> volatility reading, all on the last <b>closed</b> bar.</p>
+                <p>An <em class="termdef">EMA</em> (exponential moving average) is a smoothed average that weights recent candles more heavily, so it tracks direction without the jitter. When the fast 10 sits above the slow 21 and both point up, that timeframe reads "uptrend." Separately, a long-term <b>200-period EMA on the 1-hour chart</b> is the master "are we above water?" tide line: price above it favours buying; a buy attempted <em>below</em> it gets its size halved.</p>
+                <ul class="rr-specs">
+                  <li><span class="k">Indicators</span><span class="v">EMA 10 · EMA 21 · ATR 14</span></li>
+                  <li><span class="k">Read on</span><span class="v">D1 + H4 + H1, closed bar [1]</span></li>
+                  <li><span class="k">Tide line</span><span class="v">EMA 200 — hourly, not daily*</span></li>
+                  <li><span class="k">Source</span><span class="v">CTrendDetector · CMarketContext</span></li>
+                </ul>
+                <p style="font-size:.8rem;color:var(--text-3);margin-top:10px">*A naming quirk worth knowing: the setting is labelled "daily 200-EMA," but the line it actually uses is the <b>hourly</b> one.</p>
+              </div>
+            </div>
+            <div class="rr-why"><span class="wl">Changes downstream →</span><p>This bias is the foundation of the whole book — it's why roughly <b>six in ten</b> trades are buys and the sell side is deliberately thin. It powers the main quality gate (the "buy-bias ladder"), and the hourly 200-EMA drives the counter-trend size-halving dial.</p></div>
+          </div>
+
+          <!-- B -->
+          <div class="room-read" id="s3" style="scroll-margin-top:20px">
+            <div class="rr-head"><span class="rr-idx">B</span><h3>Market mood — what kind of market is this?</h3><div class="rr-tfs"><span class="tf">H4</span></div></div>
+            <div class="rr-grid">
+              <div class="rr-plain"><div class="rr-lab">In plain terms</div>
+                <p>The very same trade that's smart in a clean trend is reckless in chop. So before it sizes anything, the bot names the current market as one of four moods:</p>
+                <p><b>Trending</b> — a clean staircase, one step after another. <b>Ranging</b> — boxed between a floor and a ceiling. <b>Choppy</b> — messy and full of head-fakes. <b>Volatile</b> — big, fast, violent lurches.</p>
+                <p class="analogy"><b>Like a driver reading the road</b> — open highway, city grid, gravel, or black ice — and setting their speed to match. The mood decides how boldly the bot may act.</p>
+              </div>
+              <div class="rr-tech"><div class="rr-lab">Under the hood</div>
+                <p>Decided entirely on the <b>4-hour</b> chart, from three readings of the last closed 4-hour bar:</p>
+                <p><em class="termdef">ADX (14)</em> — how <b>strong</b> the trend is, in any direction (high = a determined march, low = aimless drift; it says how hard, not which way). <em class="termdef">ATR (14)</em> — the raw "bounciness," how far price travels per bar. <em class="termdef">Bollinger Bands (20, 2.0)</em> — an envelope that hugs price and widens when volatility rises; riding a band means the market is stretched.</p>
+                <p>A "volatility is expanding" flag trips when the current 4-hour ATR is more than <b>1.3×</b> its own 50-bar average — i.e. things just got livelier than usual.</p>
+                <ul class="rr-specs">
+                  <li><span class="k">Indicators</span><span class="v">ADX 14 · ATR 14 · BB 20/2.0</span></li>
+                  <li><span class="k">Read on</span><span class="v">H4, closed bar [1]</span></li>
+                  <li><span class="k">Expansion</span><span class="v">ATR &gt; 1.3 × 50-bar avg</span></li>
+                  <li><span class="k">Source</span><span class="v">CRegimeClassifier</span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="rr-why"><span class="wl">Changes downstream →</span><p>The regime is a master dial. It scales risk directly (<b>Trending ×1.25 · Volatile ×0.75 · Choppy ×0.60</b>), it gates whole scouts (the Volatility Breakout only fires in a Volatile market; the Crash engine needs a confirmed downtrend), and it sets how wide the trailing stop rides a winner.</p></div>
+          </div>
+
+          <!-- C -->
+          <div class="room-read" id="s4" style="scroll-margin-top:20px">
+            <div class="rr-head"><span class="rr-idx">C</span><h3>Macro backdrop — is the wider world with me?</h3><div class="rr-tfs"><span class="tf">H4</span></div></div>
+            <div class="rr-grid">
+              <div class="rr-plain"><div class="rr-lab">In plain terms</div>
+                <p>Gold doesn't move in a vacuum. It usually <b>rises when the US dollar falls</b>, and it often catches a bid <b>when fear rises</b> across markets. So the bot glances at two outside gauges — the dollar's strength and a market "fear index" — to check whether its intended direction fits the wider weather.</p>
+                <p>On the default settings this is a gentle nudge, not a veto — it can make a setup look a little better or worse, but rarely blocks a trade outright.</p>
+                <p class="analogy"><b>Like checking the forecast</b> before a long drive: it won't cancel the trip, but it changes how cautiously you set out.</p>
+              </div>
+              <div class="rr-tech"><div class="rr-lab">Under the hood</div>
+                <p>It reads the <em class="termdef">US Dollar Index (DXY)</em> and the <em class="termdef">VIX</em> "fear gauge" on the <b>4-hour</b> chart. Because gold and the dollar tend to move opposite each other, a weakening dollar is a tailwind for buying gold; a spike in the fear index often lines up with gold catching a bid.</p>
+                <p>If those two feeds aren't available from the broker, it falls back to a home-grown proxy: the <b>daily 200-EMA</b> plus the <b>4-hour 20/50 EMAs</b> measured against live price — a rough stand-in for "is the macro tide with me?"</p>
+                <ul class="rr-specs">
+                  <li><span class="k">Reads</span><span class="v">DXY · VIX (H4)</span></li>
+                  <li><span class="k">Fallback</span><span class="v">D1 EMA200 + H4 EMA 20/50</span></li>
+                  <li><span class="k">Role</span><span class="v">one input to the 0–10 grade</span></li>
+                  <li><span class="k">Source</span><span class="v">CMacroBias</span></li>
+                </ul>
+                <p style="font-size:.8rem;color:var(--text-3);margin-top:10px">A stronger, news-driven cousin of this — standing flat around scheduled economic releases — exists but ships <b>switched off</b> (see Chapter 4).</p>
+              </div>
+            </div>
+            <div class="rr-why"><span class="wl">Changes downstream →</span><p>Macro alignment is one ingredient in the <b>0–10 quality score</b> that grades every idea. It seldom vetoes a trade by itself, but it nudges the grade up or down — and the grade sets the size.</p></div>
+          </div>
+
+          <!-- D -->
+          <div class="room-read" id="s5" style="scroll-margin-top:20px">
+            <div class="rr-head"><span class="rr-idx">D</span><h3>Time of day — which market am I in right now?</h3><div class="rr-tfs"><span class="tf">Clock</span><span class="tf">M15</span></div></div>
+            <div class="rr-grid">
+              <div class="rr-plain"><div class="rr-lab">In plain terms</div>
+                <p>Gold trades nearly 24 hours, but it behaves like <b>three different markets</b> across the day: the quiet <b>Asian</b> hours, the busy <b>London</b> open, and the US <b>New York</b> session. Where a move happens matters as much as what it is — a breakout in thin Asian liquidity is a very different animal from one at the London open.</p>
+                <p>So the bot tracks which session it's in and adapts, mostly by taking <b>less risk</b> in the busier, choppier hours.</p>
+                <p class="analogy"><b>Like a cab driver</b> who knows the same street is calm at dawn and chaos at rush hour — and drives accordingly.</p>
+              </div>
+              <div class="rr-tech"><div class="rr-lab">Under the hood</div>
+                <p>The session clock is the broker's <b>server time minus an auto-detected GMT offset</b> (with a sensible fallback). From that it knows whether it's Asia, London or New York. During the overnight window (roughly <b>GMT 0–7</b>) it builds the <b>Asian high–low range</b> from 15-minute candles — a reference box several time-based strategies key off.</p>
+                <p>Session sets a hard <b>risk multiplier</b>: London ×0.50 (half size), New York ×0.90, Asia ×1.0 — and gates a couple of scouts (bearish pin bars blocked in New York; the crash fade only fires 13:00–17:00 GMT). Plus a weekly clock rule: <b>no new trade is opened on a Friday</b>, to avoid carrying fresh risk over the weekend gap — the price jump when the market reopens Sunday night that can leap right over a stop.</p>
+                <ul class="rr-specs">
+                  <li><span class="k">Clock</span><span class="v">server − GMT offset (auto)</span></li>
+                  <li><span class="k">Asian range</span><span class="v">M15 highs/lows, GMT 0–7</span></li>
+                  <li><span class="k">Risk mult</span><span class="v">LDN ×0.50 · NY ×0.90 · Asia ×1.0</span></li>
+                  <li><span class="k">Source</span><span class="v">CSessionEngine</span></li>
+                </ul>
+              </div>
+            </div>
+            <div class="rr-why"><span class="wl">Changes downstream →</span><p>The session is both a risk dial and a gate. It's why the same setup is sized differently at 03:00 versus 09:00 GMT, and why some short trades simply aren't allowed in the US afternoon.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s6">
+        <h2>How the four combine</h2>
+        <p class="lead">On their own, each read is a single opinion. Stacked together, they form the lens every later decision looks through.</p>
+        <div class="prose">
+          <p>By the time the bot turns to its scouts, it holds four settled facts about the room: a <b>favoured direction</b> (almost always "buy is easier than sell"), a <b>named market mood</b>, a <b>macro tilt</b> for or against, and the <b>session's rules and risk multiplier</b>. Nothing has been traded yet — but the field of possible trades has already narrowed dramatically.</p>
+          <p>These reads don't just filter; they <em>weight</em>. A setup that agrees with the trend, fits the mood, aligns with the macro tide, and arrives in a favourable session earns a higher grade and a slightly larger size. A setup fighting even one of them is graded down, sized down, or blocked outright. Nothing later in the chain can rescue a trade the room has already ruled against.</p>
+          <p>With the room read, the bot is ready to hear from its specialists. That's the next chapter — <a href="03-the-scouts.html" style="color:var(--gold-deep)">The Scouts</a>.</p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="01-heartbeat.html"><span class="pl">← Previous</span><span class="pt">01 · The Heartbeat</span></a>
+        <a class="pager next" href="03-the-scouts.html"><span class="pl">Next chapter →</span><span class="pt">03 · The Scouts</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>

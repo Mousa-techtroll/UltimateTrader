@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>06 · Managing the Exit — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html" aria-current="page"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#s1">First, what "R" means</a></li>
+        <li><a href="#s2">The initial stop</a></li>
+        <li><a href="#s3">The take-profit ladder</a></li>
+        <li><a href="#s4">Break-even</a></li>
+        <li><a href="#s5">The trailing stop, in detail</a></li>
+        <li><a href="#s6">Housekeeping exits</a></li>
+        <li><a href="#s7">How they interact</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Chapter 06 / 07 · Link 07</div>
+        <h1>Managing the Exit</h1>
+        <p class="dek">Getting in is only half the job. Every open trade is managed <b>continuously</b> — not once an hour — against a fixed set of exits: a stop that only ever tightens, a ladder that banks profit in slices, a <b>trailing stop</b> that rides a runner, and three housekeeping exits. The trailing stop is the most involved of these, so this chapter gives it a section of its own.</p>
+      </header>
+
+      <section class="sec reveal" id="s1">
+        <h2>First, what "R" means</h2>
+        <p class="lead"><b>R</b> is simply the amount risked on the trade — the distance from entry to the initial stop, in dollars.</p>
+        <div class="prose">
+          <p>It's the single most useful unit in this chapter. If a trade risks $100 to its stop, then "1R" is $100, "1.3R of profit" is $130, and "break-even" is 0R. Measuring everything in R instead of raw dollars means the same rules work identically whether a trade risked $50 or $500 — the ladder below is written entirely in R, not in prices or time.</p>
+          <p class="analogy"><b>Like counting in "bus fares" instead of coins</b> — once you know one fare, every distance is easy to compare, no matter the local currency.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s2">
+        <h2>The initial stop</h2>
+        <p class="lead">Set by the scout just past its invalidation point — the price that would prove the idea wrong — and never widened once placed.</p>
+        <div class="prose">
+          <p>Every trade is born with a stop-loss. It's parked just beyond the level that would mean the setup has failed — for a bought pin bar, just below the rejection wick; for an engulfing, just under the pattern. But it's never placed <em>closer</em> than a fixed "gold-noise floor," so ordinary hourly jitter can't clip it out of a perfectly good trade.</p>
+          <p>Two properties make it trustworthy: it defines the <b>1R</b> risk the whole account was sized against, and after entry it <b>only ever moves toward safety</b> — tighter, never looser. The bot has no mechanism to widen a stop to avoid a loss. If price reaches it, the trade closes. Full stop.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s3">
+        <h2>The take-profit ladder</h2>
+        <p class="lead">Rather than guess one exit, the bot banks profit in slices and keeps a "runner" to ride a strong trend. Everything below is measured in R, not time.</p>
+        <div class="ladder">
+          <div class="lh"><h4>How a winning trade is harvested</h4><span>measured in R</span></div>
+          <div class="rung"><span class="rr">Stop</span><span class="rd">The <b>initial stop-loss</b> — the trade's 1R risk, parked past the invalidation point and never widened.</span><span class="rp">risk = <b>1R</b></span></div>
+          <div class="rung"><span class="rr">+0.7R</span><span class="rd">First nibble — take a small slice off the table early to reduce risk on the position.</span><span class="rp">close <span class="pct">~15%</span></span></div>
+          <div class="rung"><span class="rr">+0.8R</span><span class="rd"><b>Break-even marker</b> — by around here the trailing stop has usually climbed to the entry on its own, so the trade is hard to lose. On the default config there is no separate "jump to break-even" (see the break-even section below).</span><span class="rp">trail ≈ entry</span></div>
+          <div class="rung"><span class="rr">+1.3R</span><span class="rd">Bank the biggest slice as the trade reaches a solid multiple of its risk.</span><span class="rp">close <span class="pct">~40% of rest</span></span></div>
+          <div class="rung"><span class="rr">+1.8R</span><span class="rd">Take another slice, leaving a runner to chase a bigger move.</span><span class="rp">close <span class="pct">~30% of rest</span></span></div>
+          <div class="rung"><span class="rr">Runner</span><span class="rd">Because each slice is a share of what <em>remains</em>, a trade that climbs the whole ladder still leaves a runner of about <b>40% of the original position</b> to ride the <b>trailing stop</b> below and capture the tail of a strong trend.</span><span class="rp">trails out</span></div>
+        </div>
+        <div class="prose">
+          <p>Why slice it up? Because no one knows in advance whether a trade will stall at +1R or run to +5R. Banking part of the position early locks in a real gain and takes the pressure off; keeping a runner leaves the door open to a big trend. That runner is what the trailing stop then manages — the subject of the two sections below.</p>
+          <p><b>A reality check on how often the full ladder runs.</b> These rungs describe what happens <em>if</em> a trade gets there — and most don't. Measured across the 952-trade baseline, about <b>61%</b> of trades reach the first nibble (+0.7R), under <b>37%</b> reach the +1.3R slice, and only about <b>16%</b> reach the top rung (+1.8R). The majority never complete the ladder — they ride as a single block to their stop or trailing exit. The ladder is the plan for a winner, not the typical path.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s4">
+        <h2>Break-even: playing with the market's money</h2>
+        <p class="lead">On the default config there is no active "jump to break-even" at a fixed trigger — instead the trailing stop climbs to the entry on its own as the trade advances.</p>
+        <div class="prose">
+          <p>From that moment the worst case becomes a <em>scratch</em> rather than a loss — the position is "playing with the market's money." In practice this happens hand-in-hand with the trailing system below: as the trailing stop ratchets upward, it naturally carries the stop through the entry price and onward, so "break-even" isn't a separate lever so much as the moment the trail crosses zero. The important guarantee is the same either way — <b>a trade that has run far enough can no longer become a loser</b>. (The bot <em>does</em> contain an explicit "move stop to break-even" lever, but it ships <b>switched off</b>; on the default config break-even is entirely the trailing stop's doing, and only a minority of trades — roughly one in nine — ever actually reach it.)</p>
+          <div class="callout">
+            <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12h4l3 8 4-16 3 8h4"/></svg></span>
+            <div><p>Underpinning everything: the stop is <b>never</b> allowed closer than a minimum gold-noise distance. That floor is what keeps the trailing stop from hugging price so tightly that a single ordinary wiggle shakes the bot out of a good trade too early.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s5">
+        <h2>The trailing stop, in detail</h2>
+        <p class="lead">A trailing stop is a stop that <b>follows price in your favour and never backward</b> — it ratchets up behind a rising trade to lock in more and more, and closes the trade only when price finally pulls back to it. This is how the bot lets a runner ride a trend without ever giving all the profit back.</p>
+
+        <div class="prose">
+          <h3>What's actually running: the Chandelier</h3>
+          <p>The bot ships with several trailing methods in its toolbox, but only one is switched on and doing the work: the <b>Chandelier trailing stop</b>. The name comes from how it "hangs" the stop down from the highest point the trade has reached, like a chandelier hanging from a ceiling. As the ceiling (the recent high) rises, the chandelier rises with it.</p>
+        </div>
+
+        <div class="mathbox">trailing stop (for a buy) <span class="op">=</span>  highest high of the last ~15 hours
+                          <span class="op">−</span>  ( cushion × hourly ATR )</div>
+        <div class="prose" style="margin-top:14px">
+          <p>In words: take the highest price the trade has seen over roughly the last <b>15 hourly candles</b>, then drop down a <b>volatility-sized cushion</b> below it. That cushion is a multiple of the hourly <em class="termdef">ATR</em> — the "how bouncy is gold right now" gauge from Chapter 2 — so the stop automatically sits close in calm markets and further back in wild ones, instead of a fixed number of dollars that would be too tight in one regime and too loose in another. For a short trade the whole thing mirrors: <em>lowest low + cushion × ATR</em>.</p>
+        </div>
+
+        <div class="prose">
+          <h3>The cushion widens and narrows with the market's mood</h3>
+          <p>The cushion multiplier isn't fixed — it's set by the market <b>regime</b> (Chapter 2), so a runner is given room to breathe in a clean trend and kept on a tighter leash in chop. These are the multipliers currently in use; a wider bar means a wider cushion, i.e. more room before the stop is hit:</p>
+        </div>
+        <div class="tiers">
+          <div class="tier"><div class="badge-t" style="font-size:.9rem">Trend</div><div class="lbl">clean staircase</div><div class="bar"><i style="width:100%"></i></div><div class="r">×4.2</div></div>
+          <div class="tier"><div class="badge-t" style="font-size:.9rem">Normal</div><div class="lbl">ordinary / ranging</div><div class="bar"><i style="width:86%"></i></div><div class="r">×3.6</div></div>
+          <div class="tier"><div class="badge-t" style="font-size:.9rem">Volatile</div><div class="lbl">big fast lurches</div><div class="bar"><i style="width:86%"></i></div><div class="r">×3.6</div></div>
+          <div class="tier"><div class="badge-t" style="font-size:.9rem">Choppy</div><div class="lbl">messy fakeouts</div><div class="bar"><i style="width:71%"></i></div><div class="r">×3.0</div></div>
+        </div>
+        <div class="prose">
+          <p>Two safeguards stop this from misbehaving. First, the regime that chooses the multiplier is <b>held for a few bars</b> before it's allowed to change, so a one-hour flicker between "trending" and "choppy" doesn't yank the cushion around. Second — and importantly — the cushion width is <b>locked at entry</b>: if the market later flips to a regime with a tighter multiplier, the trail is <em>not</em> allowed to suddenly shrink and knife the runner out. The cushion can widen to protect a trade, but it won't dangerously tighten mid-flight.</p>
+        </div>
+
+        <div class="prose">
+          <h3>How it's executed, step by step</h3>
+          <p>The trailing stop isn't a single event — it's a small routine the bot runs over and over. Here is exactly what happens each time it considers moving the stop:</p>
+        </div>
+        <div class="steps" style="margin-top:8px">
+          <div class="step"><div class="sn"></div><div><h4>Recompute on each finished hour.</h4><p>When a new hourly candle closes, the bot recalculates the chandelier level from the latest highest-high and the latest hourly ATR — all from <b>closed</b> candles, so the number can't repaint.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4>Only accept if it's strictly better.</h4><p>The new level is compared to the stop already in the market. It's accepted <b>only if it's higher</b> (for a buy) than the current stop — i.e. tighter, more protective. If the computed level is lower, it's ignored. The stop never loosens.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4>Must clear a minimum step.</h4><p>Even a better level is skipped unless it moves by a small minimum amount, so the bot doesn't spam the broker with dozens of trivial one-cent adjustments.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4>Respect the broker's minimum distance.</h4><p>Brokers won't accept a stop placed too close to the current price. If the computed level is inside that forbidden band, it's nudged out to the nearest allowed distance before being sent.</p></div></div>
+          <div class="step"><div class="sn"></div><div><h4>Send the modification — then wait and watch.</h4><p>The new stop is written to the live order. Between hourly recomputes it simply sits in the market: if price falls to it at <b>any tick</b>, the runner is closed immediately, whatever the clock says.</p></div></div>
+        </div>
+        <div class="prose">
+          <p>A subtle consequence of the "strictly better" rule: early in a trade the chandelier level is usually still <em>below</em> the initial stop, so nothing moves. It only begins to bite once price has advanced enough that "recent high − cushion" climbs above the initial stop — and from then on it ratchets upward, hour after hour, for as long as the trend keeps making new highs.</p>
+        </div>
+
+        <div class="prose">
+          <h3>Watching it ratchet — an illustrative runner</h3>
+          <p>Take the runner from a buy entered at $2,400.00 with its initial stop at $2,395.50, in a trending market (cushion ×4.2, with the hourly ATR near $2.00 → about an $8.40 cushion). Invented numbers, purely to show the mechanism:</p>
+        </div>
+        <div class="tbl-scroll">
+          <table>
+            <thead><tr><th>Hour</th><th>New high</th><th>Cushion</th><th>Computed trail</th><th>What happens</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>$2,401.0</td><td>$8.40</td><td>$2,392.6</td><td>Below the $2,395.50 stop → <b>ignored</b>, stop stays put</td></tr>
+              <tr><td>2</td><td>$2,406.0</td><td>$8.40</td><td>$2,397.6</td><td>Higher &amp; above entry → stop <b>moves up to $2,397.6</b> (now locked in profit)</td></tr>
+              <tr><td>3</td><td>$2,410.0</td><td>$8.82</td><td>$2,401.2</td><td>Better still → stop <b>ratchets to $2,401.2</b></td></tr>
+              <tr><td>4</td><td>$2,412.0</td><td>$8.61</td><td>$2,403.4</td><td>New high → stop <b>ratchets to $2,403.4</b></td></tr>
+              <tr><td>5</td><td>—</td><td>—</td><td>held</td><td>Price pulls back and taps $2,403.4 → <b>runner closes</b>, banking the trend's tail</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="prose" style="margin-top:14px">
+          <p>Notice three things: the stop <b>never moved down</b>; it only began advancing once the trade was clearly in profit; and it followed the trend up automatically until the market itself pulled back to it. That's the entire job of the trailing stop — turn a good move into a booked one without ever guessing the top.</p>
+          <div class="callout warn">
+            <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+            <div><p><b>One live exception.</b> For the crash-fade short strategy (the "Rubber Band" scout), the ratchet is deliberately <b>held off</b> until price reaches the strategy's target zone. Trailing that particular trade too early was measured to strangle it — its whole thesis is a snap-back to the mean, so tightening a stop on the initial spike would close it before the move it's waiting for. For every other strategy, the trail runs exactly as described above.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s6">
+        <h2>Housekeeping exits</h2>
+        <p class="lead">Three unconditional exits close a trade for reasons other than hitting a target or a trailing stop — dead trades, weekend gaps, and a market that structurally turns.</p>
+        <div class="exits">
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Time exit</h4></div>
+            <p>Close a trade that has gone nowhere for about three days. Capital tied up in a stalled position is capital that can't take a better trade elsewhere.</p>
+            <span class="trg">open &gt; 72 hours</span>
+          </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div><h4>Weekend close</h4></div>
+            <p>Flatten everything late on Friday to dodge the weekend gap — the jump in price when the market reopens Sunday night that can leap right over a resting stop.</p>
+            <span class="trg">Friday ≥ 20:00 server</span>
+          </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><h4>Regime-aware exit</h4></div>
+            <p>Bail only if the market structurally flips against the trade — a closed hourly candle breaking through a key average the wrong way — not on a brief flicker. It tells a real turn from noise.</p>
+            <span class="trg">hourly close through the 50-EMA</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s7">
+        <h2>How they interact</h2>
+        <p class="lead">On a live trade all of these run at once, and whichever fires first wins.</p>
+        <div class="prose">
+          <p>Picture a buy that's going well. It nibbles ~15% at +0.7R, its trailing stop reaches break-even around +0.8R, it banks ~40% of the rest at +1.3R and ~30% of the rest at +1.8R. The remaining runner — around 40% of the original position — now rides the chandelier trail described above. If gold keeps climbing, the trail keeps ratcheting the stop higher, locking in more and more, until price finally pulls back and taps it. If instead the trend structurally breaks first, the regime-aware exit takes it. If it simply stalls for three days, the time exit clears it out. And if it's still open late Friday, the weekend close flattens it regardless.</p>
+          <p>That layered design is the heart of the bot's calm temperament: losses are capped at 1R by a stop that never widens, winners are harvested in slices while a runner is left to ride a trailing stop that only ever tightens — and although only a minority of trades climb far enough to reach break-even, the ones that do can no longer become losers. It's why, over the years, the account's dips have stayed roughly <b>half as deep</b> as simply buying and holding gold — the subject that the closing chapter, <a href="07-example.html" style="color:var(--gold-deep)">Start to Finish</a>, ties together on a single worked trade.</p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="05-sizing.html"><span class="pl">← Previous</span><span class="pt">05 · Sizing the Trade</span></a>
+        <a class="pager next" href="07-example.html"><span class="pl">Next chapter →</span><span class="pt">07 · Start to Finish</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>
