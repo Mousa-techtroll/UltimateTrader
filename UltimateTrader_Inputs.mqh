@@ -276,6 +276,7 @@ input double InpVIXLow = 15.0;              // VIX low threshold
 //--- Group 17: PATTERN ENABLE/DISABLE
 input group "══════ PATTERN ENABLE/DISABLE ══════"
 input bool   InpEnableEngulfing = true;      // Enable Engulfing
+input ENUM_ENGULFING_REGIME_POLICY InpEngulfingRegimePolicy = ENGULF_REGIME_NONE; // Engulfing Arm 1: regime gate on BULLISH engulfing only (NONE = identity)
 input bool   InpEnablePinBar = true;         // Pin Bar ON (baseline — Bearish PF 1.48 carries 2023)
 input bool   InpPinBarProximityFilter = false;  // Pin Bar: REJECTED — blocked 94% of entries in trending markets
 input int    InpPinBarHighLookback = 20;        // Pin Bar: lookback bars for recent high (H1)

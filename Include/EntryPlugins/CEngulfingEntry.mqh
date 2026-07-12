@@ -33,6 +33,10 @@ private:
    double            m_body_engulf_pct;     // Min body engulf ratio (0.8 = 80%)
    ENUM_TIMEFRAMES   m_timeframe;
 
+   // Engulfing Arm 1: regime-restriction policy on the BULLISH emission only.
+   // NONE = identity (gate branch unreachable). Reuses the D1/H4 trend classifier.
+   ENUM_ENGULFING_REGIME_POLICY m_regime_policy;
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -43,7 +47,8 @@ public:
                    double min_sl = 100.0,
                    double rr_target = 2.0,
                    double body_engulf_pct = 0.8,
-                   ENUM_TIMEFRAMES tf = PERIOD_H1)
+                   ENUM_TIMEFRAMES tf = PERIOD_H1,
+                   ENUM_ENGULFING_REGIME_POLICY regime_policy = ENGULF_REGIME_NONE)
    {
       m_context = context;
       m_atr_period = atr_period;
@@ -52,6 +57,7 @@ public:
       m_rr_target = rr_target;
       m_body_engulf_pct = body_engulf_pct;
       m_timeframe = tf;
+      m_regime_policy = regime_policy;
       m_handle_atr = INVALID_HANDLE;
    }
 
@@ -173,6 +179,36 @@ public:
                // Additional filter: body must be significant vs ATR
                if(curr_body > atr * 0.3)
                {
+                  // ============================================================
+                  // Engulfing Arm 1: regime-restriction gate (BULLISH only).
+                  // NONE = identity (branch never entered). Reuses the existing
+                  // D1/H4 trend classifier — no new indicator/threshold. When
+                  // m_context is NULL, treated as NONE (no regime data -> emit).
+                  // ============================================================
+                  if(m_regime_policy != ENGULF_REGIME_NONE && m_context != NULL)
+                  {
+                     ENUM_TREND_DIRECTION d1 = m_context.GetTrendDirection(); // D1/daily trend
+                     ENUM_TREND_DIRECTION h4 = trend_bias;                    // = m_context.GetH4Trend()
+                     bool dc = m_context.GetD1DeathCross();                   // RAW D1 death-cross (EMA50<EMA200, no price guard)
+                     bool allow = true;
+                     // Diag: IsBearRegimeActive() adds a Close<EMA50 reversal
+                     // guard that turns FALSE exactly on the counter-trend rallies
+                     // where Engulfing longs fire; the RAW EMA50<EMA200 death-cross
+                     // is the true structural discriminator (same as Crash/Arm C).
+                     if(m_regime_policy == ENGULF_BLOCK_D1_BEAR)
+                        allow = !dc;
+                     else if(m_regime_policy == ENGULF_REQUIRE_D1_H4_ALIGNMENT)
+                        allow = (d1 != TREND_BEARISH && h4 == TREND_BULLISH);
+
+                     PrintFormat(">>> ENGULF REGIME: D1=%s H4=%s DC=%d policy=%d decision=%s @%s",
+                                 EnumToString(d1), EnumToString(h4), (dc ? 1 : 0), (int)m_regime_policy,
+                                 (allow ? "ALLOW" : "BLOCK"),
+                                 TimeToString(iTime(_Symbol, m_timeframe, 1), TIME_DATE|TIME_MINUTES));
+
+                     if(!allow)
+                        return signal;   // signal still Init'd/invalid — BUY suppressed
+                  }
+
                   double entry = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
 
                   // Stop loss: below pattern low with buffer, enforce minimum

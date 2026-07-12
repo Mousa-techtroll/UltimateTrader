@@ -1,0 +1,375 @@
+{
+  "task": "Task 13 - build separate MT5 custom symbol XAUUSD_GOLDHISTORY (independent-feed integration test); imported FULL 2004-2025 M1 (supports 2006-2010 holdout + 2011-2017 structural test)",
+  "generated_utc": "2026-07-12T16:10:15Z",
+  "terminal_data_dir": "/mnt/c/Users/nullkuhl/AppData/Roaming/MetaQuotes/Terminal/725B72F25E46C780EF59F57016D58156",
+  "binaries": {
+    "metaeditor": "C:\\Program Files\\Vantage Markets MT5 Terminal\\MetaEditor64.exe",
+    "terminal": "C:\\Program Files\\Vantage Markets MT5 Terminal\\terminal64.exe"
+  },
+  "hard_constraints_respected": {
+    "xauusd_plus_untouched": true,
+    "ea_binary_not_recompiled": true,
+    "symbol_spec_unchanged_on_reimport": true,
+    "protected_files_not_overwritten": [
+      "UltimateTrader*.ex5",
+      "UltimateTrader_FREEZE_DST.ex5",
+      "risk_R90.ini"
+    ],
+    "distinct_names_used": [
+      "GHProbe",
+      "GHBuild",
+      "GHSmoke"
+    ]
+  },
+  "headless_mechanism": "live-chart Expert via [StartUp] startup .ini (NOT tester sandbox); work in OnInit; done-sentinel then TerminalClose(0). Persistence proven by terminal restart smoke test.",
+  "source_data": {
+    "normalized_m1_csv": "Common/Files/XAUUSD_GOLDHISTORY_M1.csv",
+    "csv_sha256": "951f7770db9f22587defc9239793c3fbf1ce270f71a7e14815f2d0e8cce4864f",
+    "bars": 6770558,
+    "range": "2004.06.11 07:18 -> 2025.12.31 23:59",
+    "delimiter": "semicolon",
+    "format": "Date;Open;High;Low;Close;Volume",
+    "decimals": 2,
+    "timezone": "broker-server time (== broker clock, no conversion)"
+  },
+  "spec_source_hash_sha256": "38e5fb1f51c276be875b94cd292f0c36da5a850b1dd7120ca86dcfa158d0d3f5",
+  "probed_spec_xauusd_plus": {
+    "scalars": {
+      "SYMBOL_DIGITS": "2",
+      "SYMBOL_TRADE_CALC_MODE": "4",
+      "SYMBOL_TRADE_MODE": "4",
+      "SYMBOL_TRADE_STOPS_LEVEL": "20",
+      "SYMBOL_TRADE_FREEZE_LEVEL": "0",
+      "SYMBOL_TRADE_EXEMODE": "2",
+      "SYMBOL_SWAP_MODE": "1",
+      "SYMBOL_SWAP_ROLLOVER3DAYS": "3",
+      "SYMBOL_ORDER_MODE": "127",
+      "SYMBOL_FILLING_MODE": "2",
+      "SYMBOL_EXPIRATION_MODE": "7",
+      "SYMBOL_ORDER_GTC_MODE": "0",
+      "SYMBOL_SPREAD_FLOAT": "1",
+      "SYMBOL_SPREAD": "18",
+      "SYMBOL_CHART_MODE": "0",
+      "SYMBOL_MARGIN_HEDGED_USE_LEG": "0",
+      "SYMBOL_POINT": "0.0100000000",
+      "SYMBOL_TRADE_TICK_SIZE": "0.0100000000",
+      "SYMBOL_TRADE_TICK_VALUE": "1.0000000000",
+      "SYMBOL_TRADE_TICK_VALUE_PROFIT": "1.0000000000",
+      "SYMBOL_TRADE_TICK_VALUE_LOSS": "1.0000000000",
+      "SYMBOL_TRADE_CONTRACT_SIZE": "100.0000000000",
+      "SYMBOL_VOLUME_MIN": "0.0100000000",
+      "SYMBOL_VOLUME_MAX": "100.0000000000",
+      "SYMBOL_VOLUME_STEP": "0.0100000000",
+      "SYMBOL_VOLUME_LIMIT": "0.0000000000",
+      "SYMBOL_MARGIN_INITIAL": "0.0000000000",
+      "SYMBOL_MARGIN_MAINTENANCE": "0.0000000000",
+      "SYMBOL_MARGIN_HEDGED": "0.0000000000",
+      "SYMBOL_SWAP_LONG": "-79.1700000000",
+      "SYMBOL_SWAP_SHORT": "28.8400000000",
+      "SYMBOL_CURRENCY_BASE": "XAU",
+      "SYMBOL_CURRENCY_PROFIT": "USD",
+      "SYMBOL_CURRENCY_MARGIN": "USD",
+      "SYMBOL_DESCRIPTION": "Gold US Dollar",
+      "SYMBOL_PATH": "Gold+\\XAUUSD+",
+      "SYMBOL_BASIS": ""
+    },
+    "sessions": {
+      "SESSION_QUOTE_D1_I0": "3600-86280",
+      "SESSION_QUOTE_D2_I0": "3600-86280",
+      "SESSION_QUOTE_D3_I0": "3600-86280",
+      "SESSION_QUOTE_D4_I0": "3600-86280",
+      "SESSION_QUOTE_D5_I0": "3600-86220",
+      "SESSION_TRADE_D1_I0": "3660-86280",
+      "SESSION_TRADE_D2_I0": "3660-86280",
+      "SESSION_TRADE_D3_I0": "3660-86280",
+      "SESSION_TRADE_D4_I0": "3660-86280",
+      "SESSION_TRADE_D5_I0": "3660-86220"
+    },
+    "decoded": {
+      "SYMBOL_TRADE_CALC_MODE": "4 = CFDLEVERAGE",
+      "SYMBOL_TRADE_MODE": "4 = FULL",
+      "SYMBOL_TRADE_EXEMODE": "2 = MARKET",
+      "SYMBOL_SWAP_MODE": "1 = POINTS",
+      "SYMBOL_SWAP_ROLLOVER3DAYS": "3 = WEDNESDAY",
+      "SYMBOL_FILLING_MODE": "2 = IOC",
+      "sessions": "Mon-Fri only; quote 01:00-23:58 (Fri to 23:57), trade 01:01-23:58; no Sat/Sun"
+    }
+  },
+  "custom_symbol_settings_readback": {
+    "SYMBOL_DIGITS": {
+      "set": "2",
+      "ok": true,
+      "readback": "2"
+    },
+    "SYMBOL_TRADE_CALC_MODE": {
+      "set": "4",
+      "ok": true,
+      "readback": "4"
+    },
+    "SYMBOL_TRADE_MODE": {
+      "set": "4",
+      "ok": true,
+      "readback": "4"
+    },
+    "SYMBOL_TRADE_STOPS_LEVEL": {
+      "set": "20",
+      "ok": true,
+      "readback": "20"
+    },
+    "SYMBOL_TRADE_FREEZE_LEVEL": {
+      "set": "0",
+      "ok": true,
+      "readback": "0"
+    },
+    "SYMBOL_TRADE_EXEMODE": {
+      "set": "2",
+      "ok": true,
+      "readback": "2"
+    },
+    "SYMBOL_SWAP_MODE": {
+      "set": "1",
+      "ok": true,
+      "readback": "1"
+    },
+    "SYMBOL_SWAP_ROLLOVER3DAYS": {
+      "set": "3",
+      "ok": true,
+      "readback": "3"
+    },
+    "SYMBOL_ORDER_MODE": {
+      "set": "127",
+      "ok": true,
+      "readback": "127"
+    },
+    "SYMBOL_FILLING_MODE": {
+      "set": "2",
+      "ok": true,
+      "readback": "2"
+    },
+    "SYMBOL_EXPIRATION_MODE": {
+      "set": "7",
+      "ok": true,
+      "readback": "7"
+    },
+    "SYMBOL_ORDER_GTC_MODE": {
+      "set": "0",
+      "ok": true,
+      "readback": "0"
+    },
+    "SYMBOL_SPREAD_FLOAT": {
+      "set": "1",
+      "ok": true,
+      "readback": "1"
+    },
+    "SYMBOL_CHART_MODE": {
+      "set": "0",
+      "ok": true,
+      "readback": "0"
+    },
+    "SYMBOL_TRADE_TICK_SIZE": {
+      "set": "0.0100000000",
+      "ok": true,
+      "readback": "0.0100000000"
+    },
+    "SYMBOL_TRADE_TICK_VALUE": {
+      "set": "1.0000000000",
+      "ok": true,
+      "readback": "1.0000000000"
+    },
+    "SYMBOL_TRADE_TICK_VALUE_PROFIT": {
+      "set": "1.0000000000",
+      "ok": false,
+      "readback": "0.0000000000"
+    },
+    "SYMBOL_TRADE_TICK_VALUE_LOSS": {
+      "set": "1.0000000000",
+      "ok": false,
+      "readback": "0.0000000000"
+    },
+    "SYMBOL_TRADE_CONTRACT_SIZE": {
+      "set": "100.0000000000",
+      "ok": true,
+      "readback": "100.0000000000"
+    },
+    "SYMBOL_VOLUME_MIN": {
+      "set": "0.0100000000",
+      "ok": true,
+      "readback": "0.0100000000"
+    },
+    "SYMBOL_VOLUME_MAX": {
+      "set": "100.0000000000",
+      "ok": true,
+      "readback": "100.0000000000"
+    },
+    "SYMBOL_VOLUME_STEP": {
+      "set": "0.0100000000",
+      "ok": true,
+      "readback": "0.0100000000"
+    },
+    "SYMBOL_VOLUME_LIMIT": {
+      "set": "0.0000000000",
+      "ok": true,
+      "readback": "0.0000000000"
+    },
+    "SYMBOL_MARGIN_INITIAL": {
+      "set": "0.0000000000",
+      "ok": true,
+      "readback": "0.0000000000"
+    },
+    "SYMBOL_MARGIN_MAINTENANCE": {
+      "set": "0.0000000000",
+      "ok": true,
+      "readback": "0.0000000000"
+    },
+    "SYMBOL_MARGIN_HEDGED": {
+      "set": "0.0000000000",
+      "ok": true,
+      "readback": "0.0000000000"
+    },
+    "SYMBOL_SWAP_LONG": {
+      "set": "-79.1700000000",
+      "ok": true,
+      "readback": "-79.1700000000"
+    },
+    "SYMBOL_SWAP_SHORT": {
+      "set": "28.8400000000",
+      "ok": true,
+      "readback": "28.8400000000"
+    },
+    "SYMBOL_CURRENCY_BASE": {
+      "set": "XAU",
+      "ok": true,
+      "readback": "XAU"
+    },
+    "SYMBOL_CURRENCY_PROFIT": {
+      "set": "USD",
+      "ok": true,
+      "readback": "USD"
+    },
+    "SYMBOL_CURRENCY_MARGIN": {
+      "set": "USD",
+      "ok": true,
+      "readback": "USD"
+    },
+    "SYMBOL_DESCRIPTION": {
+      "set": "Gold US Dollar",
+      "ok": true,
+      "readback": "Gold US Dollar"
+    },
+    "SYMBOL_BASIS": {
+      "set": "",
+      "ok": true,
+      "readback": ""
+    }
+  },
+  "custom_symbol_sessions_set": {
+    "SESSION_QUOTE_D1_I0": "3600-86280",
+    "SESSION_TRADE_D1_I0": "3660-86280",
+    "SESSION_QUOTE_D2_I0": "3600-86280",
+    "SESSION_TRADE_D2_I0": "3660-86280",
+    "SESSION_QUOTE_D3_I0": "3600-86280",
+    "SESSION_TRADE_D3_I0": "3660-86280",
+    "SESSION_QUOTE_D4_I0": "3600-86280",
+    "SESSION_TRADE_D4_I0": "3660-86280",
+    "SESSION_QUOTE_D5_I0": "3600-86220",
+    "SESSION_TRADE_D5_I0": "3660-86220"
+  },
+  "notes_on_clone": {
+    "SYMBOL_TRADE_TICK_VALUE_PROFIT": "computed field, not settable -> readback 0; base SYMBOL_TRADE_TICK_VALUE=1.0 governs P/L (verified in tester)",
+    "SYMBOL_TRADE_TICK_VALUE_LOSS": "same",
+    "SYMBOL_POINT": "derived from digits=2 -> 0.01"
+  },
+  "import_log": {
+    "source_symbol": "XAUUSD+",
+    "target_symbol": "XAUUSD_GOLDHISTORY",
+    "target_path": "Custom\\Gold",
+    "created": "OK;origin=XAUUSD+",
+    "method": "delete+recreate: CustomSymbolCreate(origin=XAUUSD+) re-clones the IDENTICAL spec, then explicit CustomSymbolSet* of every enumerated property + sessions",
+    "rates_api": "CustomRatesReplace in chunks of 200000 MqlRates over full 2004-2025 range",
+    "per_bar_fields": "time=broker-server timestamp, OHLC=2dp, tick_volume=Volume, spread=0 (deliberate), real_volume=0 (deliberate)",
+    "parsed_bars": 6770558,
+    "replaced_bars": 6770558,
+    "rejected_bars": 0,
+    "csv_data_lines": 6770558,
+    "bars_m1_after_import": 6770558,
+    "first_bar": "2004.06.11 07:18",
+    "last_bar": "2025.12.31 23:59",
+    "assert_count_pass": true,
+    "assert_first_pass": true,
+    "assert_last_pass": true,
+    "status": "OK_ALL_ASSERTS_PASS"
+  },
+  "extension_full_2004_2025_verification": {
+    "imported_count": 6770558,
+    "expected_count": 6770558,
+    "first": "2004.06.11 07:18",
+    "last": "2025.12.31 23:59",
+    "boundary_2009_seam": "PASS;last2008=2008.12.31 17:47 O866.60 ok=1; first2009=2009.01.02 10:00 O874.20 ok=1; strict-monotonic=1; gap=2413 min (New-Year holiday, expected)",
+    "seam_detail": "14;seamIdx=8;last2008=2008.12.31 17:47;first2009=2009.01.02 10:00;gapMin=2413;mono=1",
+    "2006_m1_sample": "PASS;2006.06.01 12:01 got O631.60 H631.60 L631.20 C631.20 vs O631.60 H631.60 L631.20 C631.20",
+    "2006_h1_build": "PASS;2006.06.01 12:00 open=631.60 (expect 631.60) time=2006.06.01 12:00 rollover00:00=no",
+    "2006_d1_build": "PASS;2006.06.01 00:00 open=643.10 (expect 643.10) time=2006.06.01 00:00 rollover00:00=yes",
+    "htf_bar_counts": "H1=124887 H4=32876 D1=5516 (span 2004-2025)",
+    "note": "Fresh live chart lazy-loads M1 deep history from .hcc; GHSmoke warms the M1 series back to 2004.06.11 (exact-first-bar gated) before direct reads, and retries the boundary window. Bars(M1)=6770558 is authoritative for stored count. Strategy Tester reads full .hcc regardless of live-chart series cache."
+  },
+  "smoke_tests": {
+    "S1_EXISTS_AFTER_RESTART": "PASS;exists=1 custom=1",
+    "S2_M1_COUNT": "PASS;Bars(M1)=6770558 expect=6770558 (recent CopyRates functional=30162 bars)",
+    "S3_FIRST_M1": "PASS;expect 2004.06.11 07:18 O384.00 H384.10 L384.00 C384.00",
+    "S3_LAST_M1": "PASS;expect 2025.12.31 23:59 O4318.89 H4319.23 L4317.95 C4318.36",
+    "S4_HTF_BUILD": "PASS;H1=124887 H4=32876 D1=5516",
+    "S4_D1_ROLLOVER_0000": "PASS;checked=200 nonzero_open=0",
+    "S5_NO_SAT_CANDLES": "PASS;saturday_bars=0 (sun=0 ok)",
+    "S6_INDICATORS": "PASS;EMA=4355.78 ATR=20.9350 ADX=26.83",
+    "S7_TICK_CALCS": "PASS;tickVal=1.00 tickSize=0.0100 contract=100 volMin=0.01 volStep=0.01",
+    "S9_CC1_M1": "PASS;2016.01.04 01:05 got O1064.88 H1065.87 L1064.85 C1065.72 vs O1064.88 H1065.87 L1064.85 C1065.72",
+    "S9_CC2_M1": "PASS;2020.01.02 15:00 got O1523.08 H1523.48 L1523.08 C1523.29 vs O1523.08 H1523.48 L1523.08 C1523.29",
+    "S9_CC3_M1": "PASS;2025.12.31 23:59 got O4318.89 H4319.23 L4317.95 C4318.36 vs O4318.89 H4319.23 L4317.95 C4318.36",
+    "S9_CC4_H1": "PASS;2020.01.02 15:00 genH1 O1523.08 H1529.01 L1522.68 C1528.04 vs raw1h O1523.08 H1529.01 L1522.68 C1528.04",
+    "S8_BOUNDARY_2009": "PASS;last2008=2008.12.31 17:47 O866.60 ok=1; first2009=2009.01.02 10:00 O874.20 ok=1; strict-monotonic=1; gap=2413 min (New-Year holiday, expected)",
+    "S9_CC5_2006_M1_M1": "PASS;2006.06.01 12:01 got O631.60 H631.60 L631.20 C631.20 vs O631.60 H631.60 L631.20 C631.20",
+    "S10_2006_H1": "PASS;2006.06.01 12:00 open=631.60 (expect 631.60) time=2006.06.01 12:00 rollover00:00=no",
+    "S10_2006_D1": "PASS;2006.06.01 00:00 open=643.10 (expect 643.10) time=2006.06.01 00:00 rollover00:00=yes",
+    "SUMMARY_PASS": "17;SUMMARY_FAIL=0"
+  },
+  "smoke_test_8_tester": {
+    "binary": "UltimateTrader_FREEZE_DST.ex5",
+    "binary_md5": "405854d8ddc37de15f0ef67f2f7716ea",
+    "symbol": "XAUUSD_GOLDHISTORY",
+    "window": "2024.03.01 -> 2024.04.01 (2016+ portion, unchanged across re-imports)",
+    "model_1_1min_ohlc": {
+      "total_net_profit": 100.91,
+      "profit_factor": 1.18,
+      "total_trades": 23,
+      "total_deals": 35,
+      "positions": 12,
+      "opened_modified_closed": true,
+      "lots_sane": true
+    },
+    "model_4_real_ticks": {
+      "result": "FAILS - \"no history data, stop testing\" (no ticks imported)"
+    }
+  },
+  "commission_determination": {
+    "tester_applies_commission": false,
+    "commission_total_deals": 0.0,
+    "swap_applied": true,
+    "swap_total_deals": -79.96,
+    "conclusion": "Custom-symbol tester applies ZERO commission (no clonable commission tier). Swap IS applied (cloned). Task 14 must layer commission via the production per-lot model."
+  },
+  "task14_model_warning": "claude/gate/gh_run.sh defaults to Model=4 which yields 0 trades on this M1-only custom symbol. Task 14 must pass Model=1 (or import ticks via CustomTicksReplace).",
+  "artifacts": {
+    "scripts": [
+      "MQL5/Experts/GHProbe.mq5",
+      "MQL5/Experts/GHBuild.mq5",
+      "MQL5/Experts/GHSmoke.mq5",
+      "claude/gate/gh_persist.sh"
+    ],
+    "common_files_outputs": [
+      "gh_spec.{txt,kv}",
+      "gh_build.{txt,kv}",
+      "gh_smoke.{txt,kv}"
+    ],
+    "on_disk_history": "bases/Custom/history/XAUUSD_GOLDHISTORY/{2004..2025}.hcc"
+  }
+}

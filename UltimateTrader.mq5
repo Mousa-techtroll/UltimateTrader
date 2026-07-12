@@ -809,7 +809,8 @@ int OnInit()
    g_entryPluginCount = 0;
 
    // Trend-Following patterns
-   g_engulfingEntry    = new CEngulfingEntry(NULL, InpATRPeriod, InpATRMultiplierSL, g_scaledMinSLPoints);
+   g_engulfingEntry    = new CEngulfingEntry(NULL, InpATRPeriod, InpATRMultiplierSL, g_scaledMinSLPoints,
+                                             2.0, 0.8, PERIOD_H1, InpEngulfingRegimePolicy); // Arm 1: rr/body/tf = ctor defaults (identity)
    g_pinBarEntry       = new CPinBarEntry(NULL, InpATRPeriod, g_scaledMinSLPoints);
    g_liqSweepEntry     = new CLiquiditySweepEntry(NULL, g_scaledMinSLPoints);
    g_maCrossEntry      = new CMACrossEntry(NULL, InpMAFastPeriod, InpMASlowPeriod, InpATRPeriod, InpATRMultiplierSL);

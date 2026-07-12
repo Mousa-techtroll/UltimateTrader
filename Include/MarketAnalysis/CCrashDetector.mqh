@@ -387,4 +387,10 @@ public:
    double GetEMA50() { return m_ema50; }
    double GetEMA200() { return m_ema200; }
    double GetCurrentClose() { return m_current_close; }
+
+   //--- RAW D1 death-cross (EMA50 < EMA200 on the CLOSED D1 bar), WITHOUT the
+   //--- reversal price-guard used by IsBearRegime(). m_ema50/m_ema200 are set
+   //--- every Update() at :217-218 regardless of bear state, so this is always
+   //--- valid. Same structural condition Crash entry / Arm C use (death_cross_exists).
+   bool GetD1DeathCross() const { return (m_ema50 < m_ema200); }
 };

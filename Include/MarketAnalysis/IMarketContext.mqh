@@ -55,6 +55,8 @@ public:
    //--- Crash Detection (from CCrashDetector)
    virtual bool                 IsBearRegimeActive()     { return false; }
    virtual bool                 IsRubberBandSignal()     { return false; }
+   // RAW D1 death-cross (EMA50 < EMA200), no reversal price-guard — Engulfing Arm 1.
+   virtual bool                 GetD1DeathCross()        { return false; }
 
    //--- Volatility Regime (from CVolatilityRegimeManager)
    virtual ENUM_VOLATILITY_REGIME GetVolatilityRegime()  { return VOL_NORMAL; }

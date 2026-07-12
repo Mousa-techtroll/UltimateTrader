@@ -5,7 +5,7 @@
 import os
 SRC="/mnt/c/Trading/UltimateTrader/GoldHistory/XAU_1m_data.csv"
 DST="/mnt/c/Trading/UltimateTrader/GoldHistory/normalized/XAUUSD_GOLDHISTORY_M1.csv"
-START="2009.01.01"   # warmup from Jan-2009 for the 2011-2017 structural test (D1 EMA200 etc.)
+START="2004.01.01"   # FULL history — enables the 2006-2010 holdout (warmup from 2004-06 data start)
 kept=0; skipped_dup=0; skipped_ooo=0; first=None; last=None; prev=None
 with open(SRC,encoding="utf-8",errors="replace") as f, open(DST,"w",encoding="utf-8",newline="") as out:
     f.readline()

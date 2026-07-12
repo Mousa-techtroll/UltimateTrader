@@ -428,4 +428,18 @@ enum ENUM_BEAR_STATE_SOURCE
    BEAR_SRC_LEDGER   = 1    // CSV of validated states in Common\Files
 };
 
+//+------------------------------------------------------------------+
+//| Engulfing Regime-Restriction Policy (Engulfing Arm 1)            |
+//| Reuses the existing D1/H4 trend classifier — NO new indicator.  |
+//| Applies ONLY to the BULLISH engulfing (BUY) emission; bearish    |
+//| engulfing is unchanged. NONE = identity (branch unreachable).    |
+//| APPENDED AT THE END so no existing ordinals shift.               |
+//+------------------------------------------------------------------+
+enum ENUM_ENGULFING_REGIME_POLICY
+{
+   ENGULF_REGIME_NONE = 0,         // Identity: no regime restriction (default)
+   ENGULF_BLOCK_D1_BEAR,           // Skip BUY when D1 trend == TREND_BEARISH
+   ENGULF_REQUIRE_D1_H4_ALIGNMENT  // BUY only if D1 != BEAR AND H4 == BULLISH
+};
+
 #endif // ULTIMATETRADER_ENUMS_MQH

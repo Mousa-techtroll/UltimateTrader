@@ -683,6 +683,14 @@ public:
       return m_crash_detector.IsBearRegime();
    }
 
+   //--- RAW D1 death-cross (EMA50 < EMA200), no reversal price-guard. Used by
+   //--- the Engulfing Arm 1 ENGULF_BLOCK_D1_BEAR gate.
+   virtual bool GetD1DeathCross()
+   {
+      if(m_crash_detector == NULL) return false;
+      return m_crash_detector.GetD1DeathCross();
+   }
+
    virtual bool IsRubberBandSignal()
    {
       if(m_crash_detector == NULL) return false;
