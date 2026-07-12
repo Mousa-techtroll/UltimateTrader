@@ -822,6 +822,20 @@ public:
             continue;
          }
 
+         // PBC Arm C': block PullbackContinuation's SETUP_A tier — forensically its
+         // worst cohort (WR 26% in BOTH directions, -$1,808/19 on the baseline) while
+         // A_PLUS/B_PLUS are positive (+$2,447). A quality-tier INVERSION (SETUP_A
+         // ranks above B+ yet underperforms it). Default off = identity.
+         if(InpPBCBlockSetupA && quality == SETUP_A &&
+            signal.plugin_name == "PullbackContinuationEngine")
+         {
+            LogPrint(">>> PBC REJECTED: SETUP_A tier blocked (Arm C')");
+            AuditCandidate(signal, sig_type, regime, current_atr, current_adx, macro_score,
+                           "QUALITY", "REJECT", "PBC_SETUP_A_BLOCKED", smc_score,
+                           quality, 0, 0.0, signal.requiresConfirmation, false);
+            continue;
+         }
+
          // Rubber Band A/A+ gate: reject B+ quality (B+ loses -4.0R across 22 trades)
          if(g_profileRubberBandAPlusOnly && quality == SETUP_B_PLUS &&
             StringFind(signal.comment, "Rubber Band") >= 0)

@@ -445,6 +445,7 @@ input int    InpPBCMaxCyclesPerTrend = 3;                      // v2.2: increase
 input double InpPBCRearmMinPullbackATR = 0.3;                  // Min fresh pullback for re-arm (x ATR) — lowered from 0.5 to allow more re-arms
 input int    InpPBCRearmMinBars = 2;                           // Min bars forming fresh pullback
 input int    InpPBCTrendResetBars = 48;                        // Bars without PBC activity → reset cycle count (48h = 2 trading days)
+input bool   InpPBCBlockSetupA = false;                        // PBC Arm C': block PBC SETUP_A tier (its worst — WR26% both dirs, -$1,808/19; A+/B+ positive). Default off = identity
 
 //--- Group 44: REGIME EXIT PROFILES (v2.0 — locked per trade at entry)
 input group "══════ REGIME EXIT PROFILES ══════"
