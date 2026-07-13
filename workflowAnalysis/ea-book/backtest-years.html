@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Appendix · Backtest by Year — Gold Bot Field Manual</title>
+<link rel="stylesheet" href="book.css">
+<style>
+  .yr-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:6px 0 2px}
+  .yr-head h2{margin:0;border:0;padding:0}
+  .grade{display:inline-flex;align-items:center;justify-content:center;min-width:2.5em;
+    padding:.12em .5em;border-radius:.55em;font-weight:800;font-size:1rem;border:1.6px solid;letter-spacing:.01em}
+  .grade.a{color:#1a8f4a;border-color:#1a8f4a66;background:#1a8f4a14}
+  .grade.b{color:#2a72b8;border-color:#2a72b866;background:#2a72b814}
+  .grade.c{color:#c0820f;border-color:#c0820f66;background:#c0820f14}
+  .grade.d{color:#c93b2b;border-color:#c93b2b66;background:#c93b2b14}
+  .gold-ctx{font-size:.86rem;color:var(--text-3);font-weight:500}
+  .verdict{border-left:3px solid var(--accent,#c0820f)}
+  .verdict .grade{margin-right:.4em}
+  .scorecard td .grade{min-width:2.2em;font-size:.85rem;padding:.06em .4em}
+  .win{color:var(--long,#1a8f4a)} .lose{color:var(--short,#c93b2b)}
+</style>
+</head>
+<body>
+<button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 6h16M4 12h16M4 18h16"/></svg> Contents</button>
+<div class="scrim" id="scrim"></div>
+<div class="book">
+  <aside class="sidebar" id="sidebar">
+    <a class="book-brand" href="index.html"><span class="bt">Field Manual</span><span class="bs">UltimateTrader · Gold</span></a>
+    <nav><div class="side-lab">Chapters</div>
+      <div class="chapters">
+        <a href="01-heartbeat.html"><span class="cn"></span>The Heartbeat</a>
+        <a href="02-reading-the-room.html"><span class="cn"></span>Reading the Room</a>
+        <a href="03-the-scouts.html"><span class="cn"></span>The Scouts</a>
+        <a href="04-gauntlet.html"><span class="cn"></span>Competition &amp; Gauntlet</a>
+        <a href="05-sizing.html"><span class="cn"></span>Sizing the Trade</a>
+        <a href="06-exits.html"><span class="cn"></span>Managing the Exit</a>
+        <a href="07-example.html"><span class="cn"></span>Start to Finish</a>
+      </div>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="appendix-nav"><div class="side-lab">Appendix</div>
+      <a href="backtest.html"><span class="cn">A</span>Backtest results</a>
+      <a href="backtest-years.html" aria-current="page"><span class="cn">B</span>Backtest by year</a>
+    </nav>
+    <div class="side-sep"></div>
+    <nav class="otp"><div class="side-lab">On this page</div>
+      <ul id="toc">
+        <li><a href="#intro">The report card</a></li>
+        <li><a href="#y2019">2019 · Warm-up</a></li>
+        <li><a href="#y2020">2020 · COVID surge</a></li>
+        <li><a href="#y2021">2021 · The chop</a></li>
+        <li><a href="#y2022">2022 · Two-way volatility</a></li>
+        <li><a href="#y2023">2023 · The turn</a></li>
+        <li><a href="#y2024">2024 · The run begins</a></li>
+        <li><a href="#y2025">2025 · The feast</a></li>
+        <li><a href="#y2026">2026 H1 · The correction</a></li>
+        <li><a href="#verdict">The trader's verdict</a></li>
+      </ul>
+    </nav>
+    <div class="side-foot">A trader's-eye evaluation · real-tick backtest · past results are not a promise of future performance.</div>
+  </aside>
+
+  <main class="content">
+    <div class="content-inner">
+      <header class="chapter-head reveal">
+        <div class="crumb">Appendix · Backtest by year</div>
+        <h1>Backtest by Year</h1>
+        <p class="dek">The results appendix shows <em>what</em> the bot earned. This one sits in the chair of a <b>trading desk risk manager</b> and grades it — one year at a time, the way you'd review any trader's book. For each year: did it capture the opportunity the market actually offered? How did it handle its losses and size its risk? Were the right strategies working, or was it winning by luck? A number is only good in the context of the market that produced it — so every year is judged against the gold move it was dealt.</p>
+      </header>
+
+      <section class="sec reveal" id="intro">
+        <h2>The report card</h2>
+        <p class="lead">Eight years, graded. "Account" is that year's compounded return on the running balance; "Gold" is the year's open-to-close move in the underlying — the opportunity on the table.</p>
+        <div class="tbl-scroll">
+          <table class="scorecard">
+            <thead><tr><th>Year</th><th class="r">Account</th><th class="r">Gold</th><th class="r">Profit factor</th><th class="r">Sharpe*</th><th class="r">Worst dip</th><th class="r">Win rate</th><th>Grade</th></tr></thead>
+            <tbody>
+              <tr><td>2019 · warm-up</td><td class="r lose">−2.3%</td><td class="r num">+18.3%</td><td class="r num">1.01</td><td class="r lose">−0.2</td><td class="r num">11.7%</td><td class="r num">37%</td><td><span class="grade d">D+</span></td></tr>
+              <tr><td>2020 · COVID surge</td><td class="r win">+14.3%</td><td class="r num">+25.0%</td><td class="r num">1.40</td><td class="r num">1.0</td><td class="r num">9.8%</td><td class="r num">47%</td><td><span class="grade b">B</span></td></tr>
+              <tr><td>2021 · the chop</td><td class="r win">+1.2%</td><td class="r num">−4.0%</td><td class="r num">1.20</td><td class="r num">0.1</td><td class="r num">15.8%</td><td class="r num">46%</td><td><span class="grade c">C+</span></td></tr>
+              <tr><td>2022 · two-way vol</td><td class="r win">+26.5%</td><td class="r num">−0.3%</td><td class="r num">1.41</td><td class="r num">1.5</td><td class="r num">7.9%</td><td class="r num">46%</td><td><span class="grade a">A−</span></td></tr>
+              <tr><td>2023 · the turn</td><td class="r win">+31.7%</td><td class="r num">+12.9%</td><td class="r num">1.40</td><td class="r num">1.6</td><td class="r num">8.1%</td><td class="r num">43%</td><td><span class="grade a">A</span></td></tr>
+              <tr><td>2024 · the run begins</td><td class="r win">+28.5%</td><td class="r num">+27.2%</td><td class="r num">1.45</td><td class="r num">2.1</td><td class="r num">10.6%</td><td class="r num">50%</td><td><span class="grade a">A</span></td></tr>
+              <tr><td>2025 · the feast</td><td class="r win">+76.4%</td><td class="r num">+64.5%</td><td class="r num">2.05</td><td class="r num">2.5</td><td class="r num">10.5%</td><td class="r num">52%</td><td><span class="grade a">A+</span></td></tr>
+              <tr><td>2026 H1 · correction</td><td class="r win">+0.9%</td><td class="r num">−6.4%</td><td class="r num">0.98</td><td class="r num">0.1</td><td class="r num">10.4%</td><td class="r num">40%</td><td><span class="grade b">B−</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="prose" style="color:var(--text-3);font-size:.9rem">*Sharpe here is computed from that year's monthly P&amp;L, annualised — a single-year read, noisier than the 2.87 whole-run figure, but fine for ranking one year against another. "Worst dip" is the deepest intra-year equity drawdown.</p>
+        <div class="callout">
+          <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18M7 14l4-4 3 3 5-6"/></svg></span>
+          <div><p><b>The one-line read.</b> This is a <em>risk-adjusted grinder</em>, not a max-capture trend rider. It earns its best marks in the <b>flat and two-way years</b> (2022–2023), where it manufactured 25–30% out of a market that went nowhere — that is genuine skill, not borrowed beta. It rides the big up-years respectably but <b>banks early on purpose</b>, capturing only 15–28% of the peak move it saw. Its one real failure was the <b>2019 warm-up</b>, where it sat out an 18% gold rally for a small loss. And its fortunes lean heavily on <b>2025</b> — a single year worth 56% of the whole run's profit.</p></div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2019">
+        <div class="yr-head"><h2>2019 · The warm-up</h2><span class="grade d">D+</span> <span class="gold-ctx">Gold +18.3% · 86 trades · net −$232</span></div>
+        <p class="lead">The only losing year — and, judged as a trader, the most disappointing one, because the market handed it an easy tape and it came away empty.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv lose">−2.3%</div><div class="mn">$10,000 → $9,768</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.01</div><div class="mn">essentially break-even</div></div>
+          <div class="metric"><div class="mk">Avg R / trade</div><div class="mv">+0.00</div><div class="mn">no expectancy</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv">11.7%</div><div class="mn">12.9R peak-to-trough</div></div>
+          <div class="metric"><div class="mk">Win rate</div><div class="mv">37%</div><div class="mn">lowest of the run</div></div>
+          <div class="metric"><div class="mk">Long / short</div><div class="mv">+$239 / −$471</div><div class="mn">the short book bled</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Almost none. Gold rose <b>+18.3%</b> — a clean, trend-following year — and the account finished <b>down 2.3%</b>. For a machine built to "buy strength in an uptrend," missing an 18% uptrend is the sharpest indictment on the page. It was still tuning its regime reads early in the sample and never got in gear.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>The saving grace: the losses were <b>disciplined</b>. The worst single trade was −1.1R — no blow-ups, no widened stops, no revenge-sizing. The 11.7% drawdown is the year's real black mark, though: taking a double-digit dip <em>and</em> finishing red is the worst reward-for-risk of the whole run. Capital was preserved, but barely earned its keep.</p>
+          <h3>Strategy fit</h3>
+          <p>Wrong tools for the tape. The <b>short book (−$471, 31% win rate)</b> kept fading a market that was rising — the single worst directional cell of the eight years. <b>Pullback Continuation</b> bled −$483 chasing a trend it couldn't hold. Engulfing (+$443) was the lone bright spot.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade d">D+</span><b>Verdict:</b> a missed year, redeemed only by discipline. It didn't lose the account, but it left an 18% rally on the table and paid an 11.7% drawdown for the privilege. On a real desk this is the year you have a hard conversation about — not because it lost money, but because it did nothing with an easy market.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2020">
+        <div class="yr-head"><h2>2020 · The COVID surge</h2><span class="grade b">B</span> <span class="gold-ctx">Gold +25.0% · 70 trades · net +$1,398</span></div>
+        <p class="lead">A crash and a stimulus-fuelled melt-up in one year. The bot found its feet and made a solid, low-risk return — but left a lot on a wild table.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+14.3%</div><div class="mn">$9,768 → $11,166</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.40</div><div class="mn">healthy</div></div>
+          <div class="metric"><div class="mk">Sharpe*</div><div class="mv">1.0</div><div class="mn">steady</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv">9.8%</div><div class="mn">well controlled</div></div>
+          <div class="metric"><div class="mk">MFE capture</div><div class="mv">15%</div><div class="mn">banked early</div></div>
+          <div class="metric"><div class="mk">Long / short</div><div class="mv">+$1,320 / +$78</div><div class="mn">longs did the work</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Partial. Gold ran +25% through a <b>41% high-to-low range</b> — one of the most opportunity-rich years on record. The account returned <b>+14.3%</b>, so it captured roughly half the trend. Respectable, but the tiny <b>15% MFE capture</b> tells the real story: it kept getting on the right side and then banking after a small slice, leaving the fat tail of a historic move behind.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>Exemplary. A <b>9.8% dip</b> in a year that whipsawed violently is excellent risk control — it never let the COVID-crash volatility turn into an account event. Longs carried it (+$1,320) and the shorts stayed out of trouble (+$78, essentially flat, correctly declining to fight the recovery).</p>
+          <h3>Strategy fit</h3>
+          <p>Correct. Engulfing (+$525) and Pin Bar (+$247) — the trend-continuation candles — led, exactly what you want when you're catching a melt-up. Nothing lost meaningfully.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade b">B</span><b>Verdict:</b> a professional, low-stress +14% with textbook risk control — but a "good, not great" grade because a 41%-range year should have yielded more. This is the year that first exposes the machine's defining trade-off: it will not chase, so it will never fully capture a runaway.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2021">
+        <div class="yr-head"><h2>2021 · The chop</h2><span class="grade c">C+</span> <span class="gold-ctx">Gold −4.0% · 118 trades · net +$129</span></div>
+        <p class="lead">A sideways, mildly bearish grind — the hardest kind of year for a trend-follower. It stayed positive and leaned the right way, but paid too much for it.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+1.2%</div><div class="mn">$11,166 → $11,295</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.20</div><div class="mn">thin</div></div>
+          <div class="metric"><div class="mk">Sharpe*</div><div class="mv">0.1</div><div class="mn">flat</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv lose">15.8%</div><div class="mn">the run's deepest</div></div>
+          <div class="metric"><div class="mk">Short book</div><div class="mv win">+$407</div><div class="mn">the right lean</div></div>
+          <div class="metric"><div class="mk">Long book</div><div class="mv lose">−$277</div><div class="mn">chopped up</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Fine, in a year with little to capture. Gold fell −4% in a directionless 15% range — there was no trend to ride, only chop to survive. Finishing <b>+1.2%</b> is an acceptable "tread water" result; a trend-follower's job in a year like this is mainly to not give money back.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>This is where the year earns its middling grade. It took its <b>deepest drawdown of the entire run — 15.8% — in its least profitable year.</b> That is the wrong shape: a risk manager wants the big dips to come in the big-return years, not to bleed 16% for a 1% gain. The individual losses stayed capped (−1.2R worst), but the <em>accumulation</em> of small losing trades in the chop ran the equity down hard before it clawed back.</p>
+          <h3>Strategy fit</h3>
+          <p>Genuinely good positioning. The <b>short book (+$407) and the Crash / Rubber-Band engine (+$463, 55 trades)</b> woke up for gold's death-cross downtrend and carried the year, while the long book (−$277) correctly stayed small and out of the way. This is the diversification working as designed — the short side paying precisely when the long side can't. Pullback (−$504) was again the weak link.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade c">C+</span><b>Verdict:</b> correct instincts, inefficient execution. It read the regime right — shorts and the crash engine leading — but the 16%-dip-for-1%-gain is the year's flaw. Survived a nasty tape leaning the right way; just paid a stiff toll to do it.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2022">
+        <div class="yr-head"><h2>2022 · Two-way volatility</h2><span class="grade a">A−</span> <span class="gold-ctx">Gold −0.3% · 152 trades · net +$2,989</span></div>
+        <p class="lead">Gold finished the year almost exactly flat — yet the bot pulled +26% out of it. This is the machine at its best: manufacturing return from a market that offered no net direction at all.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+26.5%</div><div class="mn">$11,295 → $14,283</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.41</div><div class="mn">strong on volume</div></div>
+          <div class="metric"><div class="mk">Sharpe*</div><div class="mv">1.5</div><div class="mn">high quality</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv win">7.9%</div><div class="mn">the run's shallowest</div></div>
+          <div class="metric"><div class="mk">Long / short</div><div class="mv win">+$1,222 / +$1,767</div><div class="mn">both books paid</div></div>
+          <div class="metric"><div class="mk">Trades</div><div class="mv">152</div><div class="mn">busiest year</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>This is <b>pure alpha</b>, not captured beta. Buy-and-hold made <em>nothing</em> (−0.3%); the bot made <b>+26.5%</b>. When the return has almost no relationship to the underlying's direction, you're looking at genuine trading skill — extracting money from a 25%-range chop through disciplined two-sided participation.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>Best-in-class. The <b>shallowest drawdown of the whole run (7.9%)</b> in the busiest, most volatile year. It traded 152 times through rate-hike whipsaw and never let the book get away from it. Sharpe 1.5. This is what elite risk-adjusted trading looks like: big return, small dip, high activity, tight control.</p>
+          <h3>Strategy fit</h3>
+          <p>Ideal balance. Both books profitable — Pin Bar (+$1,277) and Pullback (+$1,031) on the long side, the Crash engine (+$672) and the short book (+$1,767) on the sell side. The machine leaned <em>short</em> (116 of 152 trades) into a weak, choppy tape and was paid for it, while the longs picked off the counter-rallies.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade a">A−</span><b>Verdict:</b> the standout "skill" year. +26% from a flat market at a 7.9% drawdown is the single most impressive line on the report card — more so than the bigger-dollar trending years, because none of it was gifted by direction. Just short of an A only because there is always a touch of luck in nailing a two-sided year this cleanly.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2023">
+        <div class="yr-head"><h2>2023 · The turn</h2><span class="grade a">A</span> <span class="gold-ctx">Gold +12.9% · 125 trades · net +$4,531</span></div>
+        <p class="lead">A long range that finally resolved upward. The bot made money on <em>both</em> sides in near-perfect balance and beat the underlying two-and-a-half to one.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+31.7%</div><div class="mn">$14,283 → $18,814</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.40</div><div class="mn">consistent</div></div>
+          <div class="metric"><div class="mk">Sharpe*</div><div class="mv">1.6</div><div class="mn">excellent</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv win">8.1%</div><div class="mn">tightly held</div></div>
+          <div class="metric"><div class="mk">Long book</div><div class="mv win">+$2,288</div><div class="mn">caught the resolution</div></div>
+          <div class="metric"><div class="mk">Short book</div><div class="mv win">+$2,243</div><div class="mn">faded the range</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Excellent. Gold rose +12.9%; the account rose <b>+31.7%</b> — beating the underlying by roughly 2.5×. It caught the range with fades and then the breakout with trend trades, converting a two-phase year into profit in both phases.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>Textbook. An 8.1% drawdown against a 32% return is a <b>~4:1 return-to-pain ratio</b> for the year, with a Sharpe of 1.6. Losses stayed capped and the equity curve rose in a controlled stair-step rather than lurching.</p>
+          <h3>Strategy fit</h3>
+          <p>The most <b>balanced year of the run</b>: longs +$2,288, shorts +$2,243 — dead level. Pin Bar (+$2,581) led, MA Cross (+$1,388) contributed strongly on the trend resolution, and the short book faded the earlier range. Every family pulled its weight; nothing was carried.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade a">A</span><b>Verdict:</b> the complete year. Beat the market, made money both ways, kept the dip under control, and drew profit from every strategy family. If you wanted one year to show a client what the machine is supposed to do, it's this one.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2024">
+        <div class="yr-head"><h2>2024 · The run begins</h2><span class="grade a">A</span> <span class="gold-ctx">Gold +27.2% · 128 trades · net +$5,356</span></div>
+        <p class="lead">Gold's record-breaking bull run got underway. The bot leaned long at the right moment, matched the underlying, and kept its shorts profitable anyway.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+28.5%</div><div class="mn">$18,814 → $24,171</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.45</div><div class="mn">strong</div></div>
+          <div class="metric"><div class="mk">Sharpe*</div><div class="mv">2.1</div><div class="mn">very high</div></div>
+          <div class="metric"><div class="mk">Win rate</div><div class="mv">50%</div><div class="mn">a coin-flip that pays</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv">10.6%</div><div class="mn">controlled</div></div>
+          <div class="metric"><div class="mk">Long / short</div><div class="mv win">+$4,170 / +$1,186</div><div class="mn">right lean, both green</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Full marks. Gold +27.2%, account <b>+28.5%</b> — it <em>matched</em> a strong trend year, which for a conservative, profit-banking machine is about as good as capture gets. The book turned decisively long (93 of 128 trades) as the run began, without being told to.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>Very strong. Sharpe of 2.1, a 10.6% dip against a 28% return, and a 50% win rate — the payoff and the accuracy were both working. Even the shorts, fading into a bull, finished <b>+$1,186</b> rather than fighting and losing.</p>
+          <h3>Strategy fit</h3>
+          <p>Correct and broad. Pin Bar (+$1,956) and Engulfing (+$1,794) — the trend candles — led, with MA Cross, Expansion and Pullback all contributing. A healthy, diversified long-lean into a trend.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade a">A</span><b>Verdict:</b> matched a big trend at a Sharpe of 2.1 and kept every book green. The machine did exactly what a trend-follower should when the trend arrives — pressed the long side, sized up its winners, and didn't get cute on the short side.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2025">
+        <div class="yr-head"><h2>2025 · The feast</h2><span class="grade a">A+</span> <span class="gold-ctx">Gold +64.5% · 134 trades · net +$18,464</span></div>
+        <p class="lead">Gold went vertical — a +64% year through a 74% range. The bot had the year of its life, and, crucially, did it without loosening its risk.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+76.4%</div><div class="mn">$24,171 → $42,635</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv win">2.05</div><div class="mn">double the norm</div></div>
+          <div class="metric"><div class="mk">Sharpe*</div><div class="mv win">2.5</div><div class="mn">elite</div></div>
+          <div class="metric"><div class="mk">Avg R / trade</div><div class="mv win">+0.41</div><div class="mn">2.5× the usual</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv win">10.5%</div><div class="mn">unchanged despite the size</div></div>
+          <div class="metric"><div class="mk">MFE capture</div><div class="mv">28%</div><div class="mn">its best capture year</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Its best ever — and it <b>beat the underlying</b> (+76% account vs +64% gold), the payoff of pressing size on A+ setups into a clean trend. Even so, the 28% MFE-capture — its <em>highest</em> — is a reminder that it still left roughly seventy cents of every peak dollar on the table. It feasted; it did not gorge.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>The most important number on this whole page: the <b>drawdown stayed at 10.5%</b> — no higher than a normal year — while the return was 76%. Most systems, and most humans, get reckless when the money is easy; this one returned three-quarters of the account without ever risking more than a tenth of it. Profit factor 2.05, Sharpe 2.5, average trade +0.41R — every quality metric doubled, none of the risk did.</p>
+          <h3>Strategy fit</h3>
+          <p>Pure trend book. Pin Bar (+$9,877), Engulfing (+$5,401) and MA Cross (+$2,997) — the three trend-continuation candles — took essentially the entire year, pressing the long side (104 of 134 trades). The shorts wisely shrank to a token +$702 rather than standing in front of the train.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade a">A+</span><b>Verdict:</b> a career year executed with total discipline — 76% return at a 10% dip. The only caveat is a portfolio one, not a performance one: <b>this single year is 56% of the entire run's profit</b>. The machine's long-run record leans on years like this arriving, which they will not every year. Brilliant, but be honest about the concentration.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="y2026">
+        <div class="yr-head"><h2>2026 · H1 — The correction</h2><span class="grade b">B−</span> <span class="gold-ctx">Gold −6.4% · 52 trades · net +$399</span></div>
+        <p class="lead">Half a year, and a sharp one: gold fell 6% through a violent 38% range right after its record run. The bot's job here was capital preservation, and it did it — narrowly.</p>
+        <div class="metricgrid">
+          <div class="metric"><div class="mk">Account</div><div class="mv win">+0.9%</div><div class="mn">$42,635 → $43,033</div></div>
+          <div class="metric"><div class="mk">Profit factor</div><div class="mv">0.98</div><div class="mn">a hair under breakeven*</div></div>
+          <div class="metric"><div class="mk">Worst dip</div><div class="mv">10.4%</div><div class="mn">held the high</div></div>
+          <div class="metric"><div class="mk">Pin Bar</div><div class="mv lose">−$4,256</div><div class="mn">its worst cell of the run</div></div>
+          <div class="metric"><div class="mk">Diversifiers</div><div class="mv win">+$5,280</div><div class="mn">carried the half</div></div>
+          <div class="metric"><div class="mk">Both books</div><div class="mv win">+$228 / +$171</div><div class="mn">small, positive, both</div></div>
+        </div>
+        <div class="prose">
+          <h3>Opportunity captured</h3>
+          <p>Correct call, thin result. Coming off a +64% year into a −6% correction, the right play was defence — and it stayed <b>net-positive (+$399)</b> through a nasty two-sided half. It protected a hard-won account rather than giving back the 2025 gains, which is the priority after a run like that.</p>
+          <h3>Losses &amp; money management</h3>
+          <p>Preserved the high. A 10.4% intra-half dip on a $42k account, and it finished green — no round-tripping of the 2025 profits. But the honest flag is on the raw trade quality: profit factor <b>0.98</b> and a fractionally-negative average R mean the book was, at the trade level, <em>losing</em> and only rescued to green by a couple of large diversifier winners. That's a thinner edge than the headline "+$399" suggests.</p>
+          <h3>Strategy fit</h3>
+          <p>The diversification earned its keep — but exposed a weakness. <b>Pin Bar was chopped to pieces (−$4,256)</b>, its worst showing of the run: a reversal-hunting candle mis-firing repeatedly in a whippy correction. It was bailed out by <b>Engulfing (+$2,064), Expansion (+$1,650) and Pullback (+$1,566)</b> — the very definition of why you hold uncorrelated strategies. The book survived because its parts don't all fail at once.</p>
+          <div class="callout verdict"><span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM9 12l2 2 4-4"/></svg></span>
+            <div><p><span class="grade b">B−</span><b>Verdict:</b> a passing grade for defence, with an asterisk. It did the important thing — held the account's high through a sharp correction — but the sub-1.0 profit factor and Pin Bar's −$4,256 show the edge was thin and one engine was actively hurting. An incomplete, defensively-acceptable half. <em>(*Half-year only; not a full-year verdict.)</em></p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="verdict">
+        <h2>The trader's verdict</h2>
+        <p class="lead">Eight years reviewed as you'd review any trader's book. A few conclusions a risk desk would actually write down.</p>
+        <div class="prose">
+          <p><b>It is a genuine two-sided operator, not a closet long-only fund.</b> The tell is 2022 and 2023 — it made 26% and 32% in years gold went nowhere and then only halfway, by trading both sides. Any system can look clever in a bull market; making money from a <em>flat</em> one (2022) is the evidence of real edge rather than borrowed beta.</p>
+          <p><b>Its risk management is its best feature — and it is remarkably constant.</b> The worst intra-year dip ranged from 8% to 16% across every regime, and, most tellingly, <em>did not rise</em> in the 76% blow-out year of 2025. A machine that returns 76% at the same drawdown it takes in a break-even year is one that will not blow up chasing a hot streak. That discipline is worth more than any single year's return.</p>
+          <p><b>Its defining weakness is the mirror image of that strength: it will not chase.</b> It captured only 15–28% of the peak move available in its trend years and sat out the entire 2019 rally. If you want a machine to wring the last dollar out of a runaway, this is the wrong one. It is built to bank early and sleep well — a deliberate trade of upside for calm.</p>
+          <p><b>Two honest risks a desk would flag.</b> First, <b>concentration</b>: 2025 alone is 56% of the whole run's profit, and 2022–2025 is roughly 95% — the long-run record needs trending years to keep arriving. Second, the <b>2019 and 2026-H1 profile</b>: in its two weakest tapes the raw trade edge thinned to break-even, saved by discipline and diversification rather than signal quality. The machine survives bad years; it does not yet <em>profit</em> from them.</p>
+          <p><b>Overall grade: a solid A−.</b> As a risk-adjusted vehicle it is excellent — it beat gold over the full run at half the drawdown, made money in flat years, and never lost its head in the big one. It is marked down from an A only for the 2019 miss and its structural dependence on trending years. If this were a trader on the desk, you would keep them, size them confidently, and simply not expect miracles in the flat, rangebound years — because on the evidence, that is exactly when they merely tread water.</p>
+          <p style="color:var(--text-3);font-size:.92rem;margin-top:6px"><em>Every figure on this page is measured from the frozen v1 release trade log (real-tick, 2019–mid-2026). A backtest replays the past; it is not a forecast, and past performance does not guarantee future results. Nothing here is financial advice.</em></p>
+        </div>
+      </section>
+
+      <footer class="chapter-foot reveal">
+        <a class="pager prev" href="backtest.html"><span class="pl">← Previous</span><span class="pt">Appendix A · Backtest results</span></a>
+        <a class="pager next" href="index.html"><span class="pl">Back to start →</span><span class="pt">Contents</span></a>
+      </footer>
+    </div>
+  </main>
+</div>
+<script src="book.js"></script>
+</body>
+</html>
