@@ -730,8 +730,14 @@ public:
             continue;
          }
 
-         // Volume validation for breakout patterns
-         if(!m_validator.ValidateVolumeSpread(pat_type))
+         // Volume validation for breakout patterns.
+         // VOLUME_FILTER campaign: per-pattern ablation flags (default all true = identity).
+         // The gate only ever affects PATTERN_ENGULFING / _CRASH_BREAKOUT / _VOLATILITY_BREAKOUT.
+         bool apply_vol_filter = true;
+         if(pat_type == PATTERN_ENGULFING)             apply_vol_filter = InpVolFilterEngulfing;
+         else if(pat_type == PATTERN_CRASH_BREAKOUT)   apply_vol_filter = InpVolFilterCrash;
+         else if(pat_type == PATTERN_VOLATILITY_BREAKOUT) apply_vol_filter = InpVolFilterVolBreakout;
+         if(apply_vol_filter && !m_validator.ValidateVolumeSpread(pat_type))
          {
             LogPrint(">>> Signal REJECTED by volume filter");
             AuditCandidate(signal, sig_type, regime, current_atr, current_adx, macro_score,

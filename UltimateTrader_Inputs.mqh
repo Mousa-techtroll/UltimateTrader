@@ -56,6 +56,10 @@ input double InpRiskAPlusSetup = 1.35;        // Risk % for A+ setups — v18 pr
 input double InpRiskASetup = 0.9;            // Risk % for A setups — EC filter compensated
 input double InpRiskBPlusSetup = 0.675;       // Risk % for B+ setups — EC filter compensated
 input double InpPinBarFlatRiskPct = 0.0;      // PinBar tier→risk flattening: if >0, ALL PinBar tiers use this base risk (preserves every signal). 0 = off = identity. PinBar score is anti-predictive (A+ lowest R yet highest risk)
+// VOLUME_FILTER campaign — per-pattern ablation (filter gates only these 3 breakout patterns; default true = identity)
+input bool   InpVolFilterEngulfing   = true;  // Volume filter applies to Engulfing (false = disable vol gate for Engulfing)
+input bool   InpVolFilterCrash       = true;  // Volume filter applies to Crash breakout
+input bool   InpVolFilterVolBreakout = true;  // Volume filter applies to Volatility breakout
 input double InpRiskBSetup = 0.54;            // Risk % for B setups — EC filter compensated
 input double InpMaxRiskPerTrade = 2.0;       // Hard cap % per trade (catches regime+ATR stacking outliers)
 input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe backstop, NOT a DD lever.
