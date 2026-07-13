@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED — see `gold-v2-methodology-correction.md`.** This doc used a circular news-fit TZ (+3 fixed; 1h off in winter), no confidence intervals, overlapping (non-declustered) events, and "fade vs continuation" wording that is a tautological directional event study, not a strategy comparison. Corrected result: after an unconditional abnormal move there is **no statistically resolved directional edge** (both feeds/timeframes, CIs straddle zero). The "continuation wins" reading below is withdrawn.
+
 # Gold v2 · Candidate D · Phase-1 — abnormal-move FADE vs CONTINUATION
 Honest ref = signal-bar close. cleanWR = P(favorable 0.5ATR before adverse 0.5ATR within horizon). FADE advances only if it clearly beats CONTINUE and is positive, both feeds, news-excluded, both directions, era-stable.
 

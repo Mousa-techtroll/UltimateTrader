@@ -1,3 +1,5 @@
+> ⚠️ **PRELIMINARY — superseded by the executable test** (`candidate-F-executable-FROZEN.md` + `gh_candidateF_exec.py`). This Phase-1 screen used +3 fixed TZ, no CIs, and an ATR-edge (not net R). The +0.038 ATR below is a price movement, not a tradeable expectancy. See the executable study for the adopt/close decision.
+
 # Gold v2 · Candidate F · Phase-1 — compression -> failed-expansion FADE vs breakout CONTINUATION
 Honest fill: fade entry = close of the confirmed return-inside bar. FADE advances only if it beats re-break/continuation and is positive, both feeds, news-excluded, both directions, era-stable.
 

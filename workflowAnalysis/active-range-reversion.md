@@ -1,3 +1,5 @@
+> ⚠️ **SUPERSEDED — see `gold-v2-methodology-correction.md`.** Same defects as the D doc (circular +3 TZ, no CIs, non-declustered overlapping events, tautological fade-vs-continuation labelling). The specific 8h-rolling-mean reversion spec is rejected, but no broad "reversion is dead" claim is supported. Read the corrected analysis, not the point estimates below.
+
 # Gold v2 · Candidate E · Phase-1 — active-range equilibrium REVERSION vs CONTINUATION
 Honest ref=signal close. Decisive: REVERSION must beat CONTINUATION in LOW-ER *active* regime AND be materially weaker in HIGH-ER (trending). Both feeds, news-excluded.
 
