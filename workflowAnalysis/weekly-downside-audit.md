@@ -36,3 +36,13 @@ leave-2025-out ΔNet: O1 +2,085 · O3 -272
 - Reassuring deployment finding: the machine is **more weekly-symmetric than the annual $ distribution implied** — its short book genuinely offsets bear-week long losses in real time.
 
 **Decision: close the weekly-downside campaign. No production action.** The unpleasant non-bull weeks are a necessary consequence of a profitable long-biased gold trend system whose short book already handles the down weeks — not a fixable implementation defect. Reinforces the research-frontier conclusion: the remaining pain is variance/texture, not separable edge.
+
+## Optional check — MILD_BULL class: uncomfortable, not damaging (closed, no classifier)
+- **Net-positive overall (+14.2R over 70 weeks)**, median week −0.09, 47% positive; leave-worst-week-out = +18.0R (no single-week dependence).
+- **Not the max-DD driver:** in the max R-DD window (13.8R, 2019-08→2020-02) mild-bull trades were only −4.9R (~35%).
+- Weakness is **Pin Bar (−11.3R)**, offset by MACross (+12.9R) + Crash (+13.2R) — the reversal-in-chop whipsaw already seen in CORRECTION/RANGE/CHOPPY states.
+- **61% of the mild-bull loss-R is MFE<0.5R** — the immediate-failure tail the exit-attribution + standalone-entry audits already proved is NOT a cross-feed-removable cohort.
+- Criterion met (positive overall + losses = known tail) → **close, no oracle/backtest, no new state classifier.**
+
+## Banked conclusion
+> UltimateTrader Gold v1 has **moderate positive weekly gold beta (+0.47 R/ATR) but is historically profitable across bullish, flat, and bearish weekly return classes**; its short strategies provide meaningful within-week defense. The worst weekly losses arise from **choppy, mildly-rising paths — not outright bearish weeks** — and neither perfect bearish-week avoidance nor an implementable weekly loss budget materially repairs the portfolio. There is **no material, separable bearish-week problem.** (Narrower than "the problem isn't there": this does not certify every intraday path; that reopens only on a repeated, material FORWARD discrepancy — margin/kill-switch/intraday-DD — not on individual uncomfortable days.)
