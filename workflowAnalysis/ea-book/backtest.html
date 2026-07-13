@@ -66,7 +66,7 @@
             <div class="metric"><div class="mk">Sharpe ratio</div><div class="mv">2.87</div><div class="mn">return per unit of risk</div></div>
             <div class="metric"><div class="mk">Max drawdown</div><div class="mv">14.14%</div><div class="mn">worst dip (−$6,758)</div></div>
             <div class="metric"><div class="mk">Balance drawdown</div><div class="mv">11.37%</div><div class="mn">closed-trade basis</div></div>
-            <div class="metric"><div class="mk">Positions</div><div class="mv">865</div><div class="mn">1,895 deals incl. partials</div></div>
+            <div class="metric"><div class="mk">Positions</div><div class="mv">865</div><div class="mn">1,895 report trades · 2,760 deals</div></div>
             <div class="metric"><div class="mk">Time in market</div><div class="mv">≈ 12%</div><div class="mn">of all calendar hours</div></div>
           </div>
         </div>
@@ -327,6 +327,7 @@
           <p><b>It is a trend-follower, and the calendar shows it.</b> One exceptional year — 2025 — was about <b>56% of the entire profit</b>, and 2022–2025 together were roughly <b>95%</b>. In the flat, choppy years (2019 and 2021) it barely moved the needle, and 2019 was a small loss. That's by design: the machine is built to <em>buy strength and protect capital</em>, feasting when gold trends and treading water when it doesn't.</p>
           <p><b>It wins by payoff, not by accuracy.</b> Its win rate was 45.9% over the whole run and never far above 50% in any year — it makes money because its exit ladder lets winners outrun losers. And it <b>leans with the market</b>: mostly short in the bearish stretches, mostly long as gold ran. It banks profit early on purpose, capturing only a modest slice of every move — the direct trade-off for that shallow drawdown.</p>
           <p><b>It was frozen when the well ran dry.</b> This v1 release is the point where <em>subtractive</em> tuning stopped paying: three interpretable quality gates captured the real, portable edge, and six further audits (candle-strength, tier-risk, the volume filter, exposure caps, the exit ladder, and standalone-entry breadth) each returned a confident "no change." The book was banked there rather than over-fitted further.</p>
+          <p><b>And the additive search came up empty too.</b> After release, a separate line of research asked whether a genuinely <em>new</em> non-trend strategy could be added — intraday liquidity/CRT, abnormal-move exhaustion, active-range reversion and failed-breakout candidates. Run purely as analysis and held to honest, cost-netted, cross-feed, confidence-interval validation, every candidate failed; none was adopted. The v1 configuration on this page is therefore <b>unchanged</b>. The architecture is treated as being at its research frontier on the available data — the next phase is forward (shadow) validation, not further backtest tuning.</p>
           <p style="color:var(--text-3);font-size:.92rem;margin-top:6px"><em>A backtest replays the past on historical prices. It cannot capture every real-world friction, and it is not a forecast. Past performance does not guarantee future results; nothing here is financial advice.</em></p>
         </div>
       </section>
