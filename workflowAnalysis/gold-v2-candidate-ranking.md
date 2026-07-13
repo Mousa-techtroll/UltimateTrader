@@ -12,8 +12,17 @@ Status 2026-07-14. All four XAUUSD-only non-trend candidates have been screened 
 | defer | **B · COMEX value reversion** | **DATA-DEFERRED** | no COMEX GC price/volume in repo |
 | defer | **C · XAUUSD–GC residual convergence** | **DATA-DEFERRED** | no COMEX GC price/volume in repo |
 
-## The load-bearing conclusion
-Across four independent non-trend mechanisms, **intraday gold is continuation/momentum-dominated at honest fills** — the clean ±0.5×ATR directional test favors continuation in fades, exhaustion, and equilibrium-reversion, even inside low-persistence "active-range" regimes. The only genuine fade phenomenon (false-breakout) is real but thin and already captured by v1's FailedBreakReversal. This is the same wall the prior H1 liquidity-fade hit, now confirmed to be a property of gold intraday structure, not of one setup's construction.
+## Conclusion — NARROWED after owner methodology review (2026-07-14). Program-level closure PAUSED.
+The Phase-1 screens reject the **specific unconditional formulations tested** (blind abnormal-move fade D; 8h-rolling-mean active-range reversion E; premium/discount + sweep-reclaim CRT S1/S2). They do **not** establish the broad claim "the whole mean-reversion family is dead" — that over-reaches from narrow specifications. What is robust across D and E is the flip side: **directionally, intraday gold displacement tends to CONTINUE rather than revert** — a *positive* finding to exploit (Candidate G), not merely a reason to kill fades.
 
-## Decision gate reached (roadmap Condition 1)
-All feasible XAUUSD-only non-trend candidates are exhausted with no cost-survivable, cross-feed-confirmed, non-redundant additive sleeve. Per the owner roadmap, this is the point at which COMEX (a genuinely different information source — order flow, volume acceptance, spot–futures basis) becomes justified — but it requires GC data not currently present. Open options: (1) run F's Phase-2 executable cost + v1-correlation battery to confirm/deny the one survivor; (2) supply COMEX GC data to open B/C; (3) bank v2 as XAUUSD-only-exhausted and return to v1 forward validation.
+### Known methodology limitations being corrected (owner review)
+1. **Timezone** — the GH→UTC offset was originally fit via news/move coincidence (circular). FIXED: locked from price cross-correlation → GH is on Vantage's broker clock (UTC+2 winter / +3 summer); earlier fixed +3 was 1h off in winter. D/E/F news exclusion is being re-run with the corrected offset.
+2. **"Fade vs continuation"** here is a **directional event study** (fade edge ≡ −continuation edge by construction), NOT a comparison of two executable strategies. Relabelled; no "continuation strategies are profitable" claim is supported by it.
+3. **Cross-feed** was GH-M15 vs Van-H1 — feed AND timeframe changed together. Being redone as GH-H1 vs Van-H1 (same dates/logic) + GH-M15 vs GH-H1 (resolution) separately.
+4. **No CIs / no declustering** — overlapping events inflated n; adding refractory-period declustering, independent episode counts, and block-bootstrap CIs.
+5. **"non-news"** overstated → "not near a scheduled high-impact USD release" (calendar is USD-only, 2019+; pre-2019 is news-uncontrolled).
+6. **GoldHistory** = primary high-resolution *research* feed, not "execution-grade" (no bid/ask; costs modelled separately).
+7. **F** is unresolved: +0.038 ATR is a price movement, not R; needs an executable R-based study (next-M1 entry, stop beyond expansion extreme), same-timeframe cross-feed, CIs, multiple-testing control, and measured overlap with v1 FailedBreakReversal — not naming-based rejection.
+
+### Open work (COMEX NOT chosen; v2 NOT closed)
+(1) Finish F properly (executable R + same-tf cross-feed + CIs + v1 overlap). (2) Candidate G — pre-registered M15 continuation during weak/non-directional D1/H4 states (does local momentum monetize flat years without duplicating v1?). COMEX remains deferred until F and G are resolved.
