@@ -144,7 +144,7 @@
               </div>
               <div class="rr-tech"><div class="rr-lab">Under the hood</div>
                 <p>The session clock is the broker's <b>server time minus an auto-detected GMT offset</b> (with a sensible fallback). From that it knows whether it's Asia, London or New York. During the overnight window (roughly <b>GMT 0–7</b>) it builds the <b>Asian high–low range</b> from 15-minute candles — a reference box several time-based strategies key off.</p>
-                <p>Session sets a hard <b>risk multiplier</b>: London ×0.50 (half size), New York ×0.90, Asia ×1.0 — and gates a couple of scouts (bearish pin bars blocked in New York; the crash fade only fires 13:00–17:00 GMT). Plus a weekly clock rule: <b>no new trade is opened on a Friday</b>, to avoid carrying fresh risk over the weekend gap — the price jump when the market reopens Sunday night that can leap right over a stop.</p>
+                <p>Session sets a hard <b>risk multiplier</b>: London ×0.50 (half size), New York ×0.90, Asia ×1.0 — and gates a scout (bearish pin bars are blocked during the New York session). Plus a weekly clock rule: <b>no new trade is opened on a Friday</b>, to avoid carrying fresh risk over the weekend gap — the price jump when the market reopens Sunday night that can leap right over a stop.</p>
                 <ul class="rr-specs">
                   <li><span class="k">Clock</span><span class="v">server − GMT offset (auto)</span></li>
                   <li><span class="k">Asian range</span><span class="v">M15 highs/lows, GMT 0–7</span></li>

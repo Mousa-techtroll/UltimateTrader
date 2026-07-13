@@ -165,12 +165,12 @@ stack aligned + a close beyond the
             <article class="scout" data-status="live">
               <div class="top"><h4>Crash Breakout <span style="color:var(--text-3);font-size:.7em">(Rubber Band)</span></h4><span class="st live">Active</span></div>
               <p class="sees">A fade of an over-stretched bounce inside a confirmed downtrend.</p>
-              <p class="body">This is the one scout built for falling markets. It only wakes when the daily 50-day average is below the 200-day average — a confirmed "death cross" downtrend, and in the v1 release only a <em>fresh</em> one (within a few months of the cross), so it never fires on a stale, played-out downtrend. Then, when live price rubber-bands more than two volatility-units above its hourly mean, it shorts the snap-back toward that mean, only in a tight afternoon window and only on top-grade setups.</p>
+              <p class="body">This is the one scout built for falling markets. It only wakes when the daily 50-day average is below the 200-day average — a confirmed "death cross" downtrend, and in the v1 release only a <em>fresh</em> one (within a few months of the cross), so it never fires on a stale, played-out downtrend. Then, when live price rubber-bands more than two volatility-units above its hourly mean, it shorts the snap-back toward that mean, at any hour of the day and only on top-grade setups.</p>
               <div class="why"><b>Why it's a good idea:</b> in a real downtrend, sharp bounces are exhaustion, and selling them back to the mean is a textbook fade. It's the bot's only participant when gold is falling — valuable diversification even though its wins are modest.</div>
               <div class="meta"><span class="badge short">Short</span><span class="tag">crash-regime</span><span class="tag">mean-reversion</span><span class="tag">session</span><span class="tag">volume-checked</span></div>
               <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">D1 gate</span><span class="tf">H1 indicators</span><span class="tf">live trigger</span></div><code>daily EMA50 &lt; EMA200 (a FRESH death cross), then
 live price &gt; H1 EMA21 + 2 × ATR,
-ADX ≥ 25, only 13:00–17:00 GMT → sell to the mean.</code><span class="src">CCrashBreakoutEntry.mqh · fires only in fresh death-cross eras</span></div></details>
+ADX ≥ 25, any hour → sell to the mean.</code><span class="src">CCrashBreakoutEntry.mqh · fires only in fresh death-cross eras</span></div></details>
             </article>
           </div>
         </div>
@@ -197,7 +197,7 @@ structure is bullish, a rejection candle forms.</code><span class="src">CLiquidi
               <p class="body">Four session-timed strategies, each firing only inside its own window off the overnight Asian range. All four ship <em>switched off</em> — they measured a 0% win rate in testing. The engine stays loaded only because it also runs the bot's master clock and builds the Asian range every other scout relies on. One caveat worth knowing: session-<em>breakout</em> logic isn't entirely absent from the live book — the Expansion engine below quietly runs a copy of it, which <em>does</em> trade. So it's this <em>engine</em> and its four modes that are off, not the idea itself.</p>
               <div class="why"><b>Why it's here:</b> session edges are real for some instruments and worth having on the shelf. On gold they didn't pay, so they're disabled — but the engine remains as essential timekeeping infrastructure.</div>
               <div class="meta"><span class="badge both">Both</span><span class="tag">session</span><span class="tag">breakout</span><span class="tag">infrastructure</span></div>
-              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">Clock</span><span class="tf">H1</span><span class="tf">M15 range</span></div><code>e.g. London Breakout (GMT 8–10): hourly
+              <details class="rule"><summary><span class="caret">›</span> The exact rule</summary><div class="rulebody"><div class="rule-tf"><span class="tf">Clock</span><span class="tf">H1</span><span class="tf">M15 range</span></div><code>e.g. London Breakout (GMT 8–9): hourly
 candle opens below the Asian high but
 closes above it + 0.35 × ATR, trend up.
 All four sub-modes default OFF.</code><span class="src">CSessionEngine.mqh · also the bot's GMT clock</span></div></details>
