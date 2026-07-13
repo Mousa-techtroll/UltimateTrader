@@ -60,6 +60,9 @@ input double InpPinBarFlatRiskPct = 0.0;      // PinBar tier→risk flattening: 
 input bool   InpVolFilterEngulfing   = true;  // Volume filter applies to Engulfing (false = disable vol gate for Engulfing)
 input bool   InpVolFilterCrash       = true;  // Volume filter applies to Crash breakout
 input bool   InpVolFilterVolBreakout = true;  // Volume filter applies to Volatility breakout
+// Same-direction exposure cap campaign (on top of InpMaxTotalExposure). 0 = off = identity.
+input double InpMaxSameDirRisk    = 0.0;      // Cap on Σ open initial-stop risk% in a candidate's direction (0 = off)
+input bool   InpSameDirCapResize  = false;    // false = reject on breach (Arm A); true = scale lot to directional headroom (Arm D)
 input double InpRiskBSetup = 0.54;            // Risk % for B setups — EC filter compensated
 input double InpMaxRiskPerTrade = 2.0;       // Hard cap % per trade (catches regime+ATR stacking outliers)
 input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe backstop, NOT a DD lever.

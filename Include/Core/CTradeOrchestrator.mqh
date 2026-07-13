@@ -714,6 +714,53 @@ public:
          }
       }
 
+      // SAME-DIRECTION RISK CAP (exposure campaign). Limits Σ open initial-stop risk
+      // in the candidate's direction, ON TOP OF the InpMaxTotalExposure ceiling. Runs
+      // after all rescales so final_risk_pct/lot_size are resolved. Arm A = hard reject
+      // on breach; Arm D (InpSameDirCapResize) = scale lot to directional headroom
+      // (SL unchanged). 0 = off = identity.
+      if(m_pos_coordinator != NULL && InpMaxSameDirRisk > 0.0 && final_risk_pct > 0.0)
+      {
+         double eq_sd = AccountInfoDouble(ACCOUNT_EQUITY);
+         double dir_risk = m_pos_coordinator.GetDirectionalOpenRiskPct(eq_sd, sig_type);
+         if(dir_risk + final_risk_pct > InpMaxSameDirRisk)
+         {
+            double sd_headroom = InpMaxSameDirRisk - dir_risk;
+            bool sd_reject = true;
+            if(InpSameDirCapResize && sd_headroom > 0.0)
+            {
+               double sd_min_lot  = SymbolInfoDouble(trade_symbol, SYMBOL_VOLUME_MIN);
+               double sd_lot_step = SymbolInfoDouble(trade_symbol, SYMBOL_VOLUME_STEP);
+               if(sd_min_lot  <= 0) sd_min_lot  = 0.01;
+               if(sd_lot_step <= 0) sd_lot_step = 0.01;
+               double sd_lot = MathFloor((lot_size * (sd_headroom / final_risk_pct)) / sd_lot_step) * sd_lot_step;
+               sd_lot = NormalizeDouble(sd_lot, 2);
+               if(sd_lot >= sd_min_lot)
+               {
+                  double sd_new_risk = final_risk_pct * (sd_lot / lot_size);
+                  LogPrint(">>> SAME-DIR CAP: dir risk ", DoubleToString(dir_risk, 2),
+                           "% + ", DoubleToString(final_risk_pct, 2), "% > ",
+                           DoubleToString(InpMaxSameDirRisk, 2), "% — rescale lot ",
+                           DoubleToString(lot_size, 2), " -> ", DoubleToString(sd_lot, 2), ". SL unchanged.");
+                  lot_size = sd_lot; risk_pct = sd_new_risk; final_risk_pct = sd_new_risk;
+                  sd_reject = false;
+               }
+            }
+            if(sd_reject)
+            {
+               LogPrint(">>> SAME-DIR CAP REJECT: dir risk ", DoubleToString(dir_risk, 2),
+                        "% + candidate ", DoubleToString(final_risk_pct, 2), "% > ",
+                        DoubleToString(InpMaxSameDirRisk, 2), "% same-direction ceiling.");
+               LogRiskAudit(signal, sig_type, requested_risk_pct,
+                            risk_strategy_used, risk_strategy_valid, risk_reason,
+                            adjusted_risk_pct, fallback_sizing_used,
+                            counter_trend_reduced, counter_trend_multiplier,
+                            final_risk_pct, 0, margin, "REJECT_SAMEDIR_CAP");
+               return position;
+            }
+         }
+      }
+
       LogPrint("========================================");
       LogPrint("EXECUTING TRADE");
       LogPrint("Pattern: ", signal.comment);

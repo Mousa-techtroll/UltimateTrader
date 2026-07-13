@@ -1248,6 +1248,21 @@ public:
       return (total_risk_dollars / equity) * 100.0;
    }
 
+   //| Open initial-stop risk % in ONE direction (same-direction exposure cap).
+   //| dir = ENUM_SIGNAL_TYPE (SIGNAL_LONG/SIGNAL_SHORT), matching m_positions[].direction.
+   double GetDirectionalOpenRiskPct(double equity, ENUM_SIGNAL_TYPE dir)
+   {
+      if(equity <= 0.0)
+         return 0.0;
+
+      double risk_dollars = 0.0;
+      for(int i = 0; i < m_position_count; i++)
+         if(m_positions[i].direction == dir)
+            risk_dollars += CalculatePositionRiskDollars(m_positions[i]);
+
+      return (risk_dollars / equity) * 100.0;
+   }
+
    //+------------------------------------------------------------------+
    //| TIER-2 cluster guard (InpEnableClusterGuard): is a same           |
    //| pattern-family, same-direction position already open?             |
