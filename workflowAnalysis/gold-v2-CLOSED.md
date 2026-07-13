@@ -1,5 +1,7 @@
 # Gold v2 — XAUUSD-only non-trend program CLOSED (2026-07-14)
 
+> **Closure CONFIRMED by exact M1 replay** (`candidate-F-m1replay.md`, `gh_candidateF_m1replay.py`): the frozen F signals replayed on GoldHistory 1-minute data (6.77M bars, 5,699 trades) = **−0.1330R**, identical to the M15 approximation (−0.1313; mean per-trade diff −0.0016R, symmetric flips). Cost audit (spread counted ONCE): **gross +0.0265R − spread 0.0665 − comm 0.0399 − slip 0.0532 = −0.1330R** — F has a tiny real edge that is ~6× too small to pay its own frictions (avg risk ≈ $1.50). Verdict robust to news ±1h / news-included (−0.129…−0.133). H1 feed-identity audit confirms GH-H1 and Van-H1 are independently generated (different row/trade counts, gross, sample trades; the earlier −0.046/−0.046 was coincidental rounding). Closure is FINAL, not provisional.
+
 **Outcome: no adopted sleeve.** On the available XAUUSD-only data (Vantage H1 real-tick, GoldHistory M1–D1, USD news calendar 2019+), none of the owner-specified non-trend candidates produced a statistically resolved, cost-survivable, cross-feed-consistent additive edge. v1 (`release-ultimate-gold-v1-32490`) untouched throughout; analysis-only. COMEX candidates (B/C) remain **DATA-DEFERRED** — the one genuinely different information source, untested for lack of data.
 
 ## Final verdicts (all with corrected methodology: DST-locked TZ, declustering, month-block CIs, same-timeframe cross-feed, selection-aware)
