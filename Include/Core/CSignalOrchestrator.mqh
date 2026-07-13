@@ -866,6 +866,13 @@ public:
          // risk strategy's ApplyShortProtection(), causing 0.5 x 0.5 = 0.25x effective risk
          double risk_pct = m_evaluator.GetRiskForQuality(quality, signal.comment);
 
+         // PinBar tier→risk flattening: PinBar's confluence score is anti-predictive
+         // (A+ = lowest expectancy yet gets the most risk). Flatten all PinBar tiers
+         // to one conservative base risk; preserves every signal (no block). Short
+         // protection still applies downstream. 0 = off = identity.
+         if(InpPinBarFlatRiskPct > 0.0 && signal.plugin_name == "PinBarEntry")
+            risk_pct = InpPinBarFlatRiskPct;
+
          // Populate the signal with Stack17 quality data.
          // Fix 2.1: for ENGINE signals keep the engine scorer's native 0-10
          // qualityScore (used for ranking) — do NOT replace it with the legacy
