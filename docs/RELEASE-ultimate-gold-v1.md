@@ -75,3 +75,23 @@ This release branch is **immutable except verified correctness defects**. Any ad
 
 ## Strategic conclusion
 Preserve the validated system, prove it operates correctly live, collect forward evidence, and reopen research only when live telemetry flags a specific discrepancy or a genuinely independent new-edge thesis emerges. **Banked as UltimateTrader Gold v1 — $32,490.33 / 865 / Sharpe 2.87.**
+
+---
+
+## 11 · Research frontier reached — transition to forward validation
+The historical gold-only optimization program is **closed**. Nine successive investigations (3 adopted edges → this release; 6 suspected weaknesses vetted to confident negatives; 2 rejected upside theses — regime sizing overlay, Gold-v2 opportunity engines) establish the correctly-scoped conclusion:
+
+> Within the current architecture and available historical evidence, **no additional gold-only entry filter, exit change, sizing overlay, exposure rule, additive opportunity sleeve or weak-regime governor has shown sufficient cross-feed, cross-era and portfolio-level value to justify production complexity. The architecture has reached its research frontier on the currently available data** — not an absolute ceiling.
+
+What the research also established (record for context): the EA is **not** a hard-bull-only system — SLOW_DRIFT is its *strongest* state, CHOPPY_UPTREND its biggest earner, and EXPANSION/BEAR/VOLATILE-TWOWAY all profitable; the state-level edge is broader than the annual $ distribution suggests. Its weak states (CORRECTION, RANGE_BOUND) are genuine but not economically large, and the remaining losses are the **necessary losing tail of positive strategies** — not separable at entry, not an exit-capture defect, not stacking, not the volume gate, not the tier map. Gold-v2 research is archived **CLOSED — no production action** (`research/gold-v2-opportunity-geometry`; reason: governor ceiling below materiality). The analyses are not failures — they proved the apparent opportunity gaps were already captured or too small to exploit.
+
+**The next useful evidence must come from OUTSIDE the exhausted historical dataset → forward validation, not more backtesting.** Sequence: shadow execution → minimum executable risk → staged rollout (§6–8), tracking **R, not just dollars** (short-run live $ is sequence noise; behavioural + normalized-R drift is the signal). Primary question at each stage: *does the live EA behave like the frozen backtest system?*
+
+### Research-reopening triggers (do NOT reopen on a losing month)
+Reopen historical research ONLY on one of:
+1. **Behavioural discrepancy** — a strategy/gate behaves materially differently live than in the release data (e.g. signal frequency doubles, volume-filter pass-rate shifts sharply, Pin Bar/Engulfing contribution collapses, lot sizing/partials diverge from tester, live spread/slippage eats far more R than modelled).
+2. **New independent evidence** — enough genuinely new gold history accumulates to test the conclusions *outside* the already-inspected periods.
+3. **Specific repeated live weakness** — a broad, interpretable cohort repeatedly fails live and was not represented historically.
+4. **New economic thesis** — a new gold mechanism proposed *before* seeing its profitability, with a plausible market explanation and an observable setup — not another rearrangement of current indicators.
+
+**Transition, in one line:** *Stop optimizing the backtest. Start validating the frozen behaviour in forward execution.*
