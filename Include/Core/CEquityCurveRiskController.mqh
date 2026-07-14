@@ -41,8 +41,6 @@ input group "══════ EC LAYER: FORWARD-LOOKING ══════"
 input bool   InpECFwdEnable = false;               // REJECTED: 13.6:1 cost/benefit, too noisy for gold
 input double InpECFwdStressThreshold = 1.50;       // MAE/MFE ratio above this = stressed
 input double InpECFwdStressMult = 0.95;            // Stress reduction multiplier
-input int    InpECFwdStallBars = 8;                // Bars before declaring stalled
-input double InpECFwdMinMFE = 0.30;                // Expected min MFE by stall check
 input double InpECFwdFloor = 0.92;                 // Forward adjustment floor
 input double InpECFwdCeiling = 1.02;               // Forward adjustment ceiling
 

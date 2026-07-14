@@ -289,7 +289,7 @@ void ApplySymbolProfile()
    g_profileRubberBandAPlusOnly = InpRubberBandAPlusOnly;
    g_profileLongExtensionFilter = InpLongExtensionFilter;
    g_profileEnableCIScoring     = InpEnableCIScoring;
-   g_profileEnableBearishEngulfing = InpEnableBearishEngulfing;
+   g_profileEnableBearishEngulfing = false;
    g_profileEnableS6Short       = InpEnableS6Short;
    g_profileShortRiskMultiplier = InpShortRiskMultiplier;  // BUG 3 FIX: was self-assignment no-op
 
@@ -725,7 +725,7 @@ int OnInit()
       InpADXTrending, InpADXRanging,
       InpDXYSymbol, InpVIXSymbol,
       InpVIXElevated, InpVIXLow,
-      InpEnableSMC, InpSMCOBLookback, InpSMCMinConfluence,
+      InpEnableSMC, InpSMCOBLookback, 55,
       InpEnableCrashDetector,
       InpEnableVolRegime,
       InpEnableMomentum,
@@ -747,9 +747,9 @@ int OnInit()
    {
       g_marketContext.GetVolatilityManager().Configure(
          InpVolVeryLowThresh, InpVolLowThresh, InpVolNormalThresh, InpVolHighThresh,
-         InpVolVeryLowRisk, InpVolLowRisk, InpVolNormalRisk, InpVolHighRisk, InpVolExtremeRisk,
+         1.0, 0.92, 1.0, 0.85, 0.65,
          1.5, 0.7, 0.7, 1.1,  // expansion/contraction defaults (no user inputs for these)
-         InpEnableVolSLAdjust, InpVolHighSLMult, InpVolExtremeSLMult, 0.75
+         true, 0.85, 0.70, 0.75
       );
    }
 
@@ -872,9 +872,9 @@ int OnInit()
    // Crash Breakout (Bear Hunter)
    g_crashEntry        = new CCrashBreakoutEntry(NULL,
       InpCrashATRMult, InpCrashSLATRMult, 25.0,
-      InpCrashRSICeiling, InpCrashRSIFloor,
-      InpCrashMaxSpread, InpCrashBufferPoints,
-      InpCrashDonchianPeriod,
+      45.0, 25.0,
+      40, 15,
+      24,
       InpCrashTPExtension, InpCrashRegimeGate,
       InpCrashRequireFallingEMA50,
       InpCrashRequireFreshDeathCross, InpCrashFreshDCBars);
@@ -1840,7 +1840,7 @@ void OnTick()
          g_regimeRouter.UpdateActivation();
 
       //--- 1b. Process breakout probation (before new signals so S6 can override failures)
-      if(InpEnableBreakoutProbation && g_breakoutProbation.active)
+      if(false && g_breakoutProbation.active)
       {
          double h1_close = iClose(_Symbol, PERIOD_H1, 1);  // Last completed H1
          bool held = g_breakoutProbation.is_long
@@ -2538,7 +2538,7 @@ void OnTick()
 
                   // Breakout probation: divert breakout signals to 2-bar acceptance check
                   bool probation_diverted = false;
-                  if(InpEnableBreakoutProbation && IsBreakoutPattern(signal.patternType) &&
+                  if(false && IsBreakoutPattern(signal.patternType) &&
                      !g_breakoutProbation.active)
                   {
                      g_breakoutProbation.active = true;

@@ -2800,7 +2800,7 @@ public:
          // Data: 148 trades stall 8h+ without TP0. 96% end as losses. Only 4% recover.
          // Closing at market instead of waiting for full SL saves +40.7R across 7 years.
          // Positive in ALL 7 years. Does NOT touch runners (only fires before TP0).
-         if(InpEnableUniversalStall &&
+         if(false &&
             m_positions[i].stage == STAGE_INITIAL &&
             !m_positions[i].tp0_closed)
          {

@@ -80,21 +80,18 @@ private:
    //+------------------------------------------------------------------+
    double ApplyLossScaling(double risk)
    {
-      if(!InpEnableLossScaling)
-         return risk;
-
       if(m_consecutive_losses >= InpLossLevel2Threshold)
       {
-         double scaled = risk * InpLossLevel2Reduction;
+         double scaled = risk * 0.50;
          Print("CQualityTierRisk: Loss scaling L2 (", m_consecutive_losses,
-               " losses) x", InpLossLevel2Reduction, " -> ", DoubleToString(scaled, 2), "%");
+               " losses) x", 0.50, " -> ", DoubleToString(scaled, 2), "%");
          return scaled;
       }
       else if(m_consecutive_losses >= InpLossLevel1Threshold)
       {
-         double scaled = risk * InpLossLevel1Reduction;
+         double scaled = risk * 0.75;
          Print("CQualityTierRisk: Loss scaling L1 (", m_consecutive_losses,
-               " losses) x", InpLossLevel1Reduction, " -> ", DoubleToString(scaled, 2), "%");
+               " losses) x", 0.75, " -> ", DoubleToString(scaled, 2), "%");
          return scaled;
       }
       return risk;
@@ -109,7 +106,7 @@ private:
 
       // Sprint 5A: Skip when CRegimeRiskScaler handles volatility adjustment
       // (prevents double-reduction: 0.75 * 0.85 = 0.6375x instead of intended ~0.75x)
-      if(InpVolRegimeYieldsToRegimeRisk && InpEnableRegimeRisk)
+      if(InpEnableRegimeRisk)
          return risk;
 
       double vol_mult = m_context.GetVolatilityRiskMultiplier();
@@ -170,11 +167,11 @@ private:
       lots = MathMax(min_lot, MathMin(max_lot, lots));
 
       // Apply max lot multiplier safety cap
-      double max_allowed = min_lot * InpMaxLotMultiplier;
+      double max_allowed = min_lot * 10.0;
       if(lots > max_allowed)
       {
          Print("CQualityTierRisk: Lot size capped from ", lots, " to ", max_allowed,
-               " (", InpMaxLotMultiplier, "x min lot)");
+               " (", 10.0, "x min lot)");
          lots = max_allowed;
       }
 
@@ -335,7 +332,7 @@ public:
       risk_pct = ApplyVolatilityAdjustment(risk_pct);
       if(risk_pct != pre_vol)
          risk_log += " | Vol=" + DoubleToString(risk_pct, 2) + "%";
-      else if(InpVolRegimeYieldsToRegimeRisk && InpEnableRegimeRisk)
+      else if(InpEnableRegimeRisk)
          risk_log += " | Vol=SKIPPED(RegimeRisk)";
 
       // === Step 4: Short protection ===

@@ -199,7 +199,7 @@ public:
             signal.stopLoss = sl;
             signal.takeProfit1 = tp;
             signal.patternType = PATTERN_MA_CROSS_ANOMALY;
-            signal.qualityScore = InpScoreBullMACross;
+            signal.qualityScore = 82;
             signal.riskReward = m_rr_target;
             signal.comment = "Bullish MA Cross";
             signal.source = SIGNAL_SOURCE_PATTERN;

@@ -202,7 +202,7 @@ public:
                signal.stopLoss = sl;
                signal.takeProfit1 = tp;
                signal.patternType = PATTERN_PIN_BAR;
-               signal.qualityScore = InpScoreBullPinBar;
+               signal.qualityScore = 88;
                signal.riskReward = m_rr_target;
                signal.comment = "Bullish Pin Bar";
                signal.source = SIGNAL_SOURCE_PATTERN;
@@ -267,7 +267,7 @@ public:
                signal.stopLoss = sl;
                signal.takeProfit1 = tp;
                signal.patternType = PATTERN_PIN_BAR;
-               signal.qualityScore = InpScoreBearPinBar;
+               signal.qualityScore = 15;
                signal.riskReward = m_rr_target;
                signal.comment = "Bearish Pin Bar";
                signal.source = SIGNAL_SOURCE_PATTERN;
