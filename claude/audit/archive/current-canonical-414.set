@@ -1,6 +1,9 @@
-; current-canonical.set — reconciled production config (393 inputs, v3, post-cleanup)
-; Exactly 393 current inputs, NO retired keys. 21 retired (Runner-Exit-Mode+Smart-Runner) → consts;
-; see migration-manifest.json. Previous 414-set archived at archive/current-canonical-414.set (immutable).
+; IMMUTABLE ARCHIVE — 414-input canonical set (pre baseline-input-cleanup-414 subcategory cleanups).
+; Superseded by ../current-canonical.set (393 pins) after commits dc0531e + d7f7313. DO NOT EDIT.
+; current-canonical.set — reconciled production config authority (v2, runtime-sourced)
+; ALL 414 current inputs. 358 pinned verbatim from risk_R90.ini (md5 cebf9578);
+; 56 previously-unpinned sourced from the RUNTIME-LOADED value (OnInit dump under risk_R90.ini),
+; verified == compiled default (not from declarations). No obsolete keys. risk_R90.ini preserved unchanged.
 
 InpADXPeriod=14
 InpADXRanging=15.0
@@ -144,6 +147,7 @@ InpEnableRangeBox=true
 InpEnableRegimeExit=true
 InpEnableRegimeRisk=true
 InpEnableRewardRoom=false
+InpEnableRunnerExitMode=false
 InpEnableS3S6=true
 InpEnableS6Short=false
 InpEnableSMC=true
@@ -155,6 +159,7 @@ InpEnableSessionRiskAdjust=true
 InpEnableShadowKillLog=false
 InpEnableShockDetection=true
 InpEnableShortSleeve=false
+InpEnableSmartRunnerExit=false
 InpEnableTMF=false
 InpEnableTP0=true
 InpEnableThrashCooldown=true
@@ -311,6 +316,25 @@ InpRiskASetup=0.9
 InpRiskBPlusSetup=0.675
 InpRiskBSetup=0.54
 InpRubberBandAPlusOnly=true
+InpRunnerAllowPromotion=true
+InpRunnerBrokerTrailCooldownBars=1
+InpRunnerCloseInChoppy=true
+InpRunnerCloseInRanging=true
+InpRunnerCloseInVolatile=true
+InpRunnerMinConfluence=75
+InpRunnerMinQuality=3
+InpRunnerNormalMinConfluence=85
+InpRunnerPromoteAtR=1.25
+InpRunnerPromoteMaxMAE_R=0.35
+InpRunnerRegimeConditional=false
+InpRunnerRegimeKill=true
+InpRunnerTrailBarCloseMinStepR=0.25
+InpRunnerTrailLockStepR1=0.5
+InpRunnerTrailLockStepR2=0.75
+InpRunnerUseEntryLockedChandFloor=true
+InpRunnerVolDecayThreshold=0.5
+InpRunnerWeakCandleCount=3
+InpRunnerWeakCandleRatio=0.3
 InpSMCBOSLookback=20
 InpSMCFVGMinPoints=50
 InpSMCLiqMinTouches=2

@@ -3,7 +3,7 @@
  "config_of_record_md5": "cebf95788d43fbb3936b4fd9ce02659c",
  "release_tag": "release-ultimate-gold-v1-32490",
  "release_manifest": "docs/RELEASE-ultimate-gold-v1.md",
- "runtime_config_hash_fnv1a32": "12BA6E3E (journal-only, non-authoritative)",
+ "runtime_config_hash_fnv1a32": "EA5892E1 (393-config, journal-only)",
  "runtime_baseline_HEAD": {
   "net_profit": 32503.03,
   "positions": 865,
@@ -3539,182 +3539,6 @@
    "validation": "Rejected"
   },
   {
-   "name": "InpRunnerAllowPromotion",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (master InpEnableRunnerExitMode=false)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerBrokerTrailCooldownBars",
-   "type": "int",
-   "unit": "bars",
-   "source_default": "1",
-   "set_value": "1",
-   "runtime_value": "1",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerPromoteAtR",
-   "type": "double",
-   "unit": "R-multiple",
-   "source_default": "1.25",
-   "set_value": "1.25",
-   "runtime_value": "1.250000",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerPromoteMaxMAE_R",
-   "type": "double",
-   "unit": "R-multiple",
-   "source_default": "0.35",
-   "set_value": "0.35",
-   "runtime_value": "0.350000",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerTrailBarCloseMinStepR",
-   "type": "double",
-   "unit": "R-multiple",
-   "source_default": "0.25",
-   "set_value": "0.25",
-   "runtime_value": "0.250000",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerTrailLockStepR1",
-   "type": "double",
-   "unit": "R-multiple",
-   "source_default": "0.50",
-   "set_value": "0.5",
-   "runtime_value": "0.500000",
-   "effective_value": "inert (master off; policy never RUNNER_POLICY)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerTrailLockStepR2",
-   "type": "double",
-   "unit": "R-multiple",
-   "source_default": "0.75",
-   "set_value": "0.75",
-   "runtime_value": "0.750000",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpEnableRunnerExitMode",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "false",
-   "set_value": "false",
-   "runtime_value": "false",
-   "effective_value": "= runtime (false) \u2014 all runner-exit-mode machinery dead; positions use standard trailing",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerCloseInChoppy",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (master InpRunnerRegimeConditional=false); also REGIME_CHOPPY never occurs on gold",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerCloseInRanging",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (master InpRunnerRegimeConditional=false)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerCloseInVolatile",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (master InpRunnerRegimeConditional=false)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerMinConfluence",
-   "type": "int",
-   "unit": "count/level",
-   "source_default": "75",
-   "set_value": "75",
-   "runtime_value": "75",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerMinQuality",
-   "type": "ENUM_SETUP_QUALITY",
-   "unit": "enum",
-   "source_default": "SETUP_A",
-   "set_value": "3",
-   "runtime_value": "SETUP_A",
-   "effective_value": "inert (master InpEnableRunnerExitMode=false)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerNormalMinConfluence",
-   "type": "int",
-   "unit": "count/level",
-   "source_default": "85",
-   "set_value": "85",
-   "runtime_value": "85",
-   "effective_value": "inert (master off); self-documented 'reserved for future revalidation'",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerRegimeConditional",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "false",
-   "set_value": "false",
-   "runtime_value": "false",
-   "effective_value": "= runtime (false) \u2014 the post-TP2 runner-kill block is dead",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerUseEntryLockedChandFloor",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (master off; runner_exit_mode always STANDARD)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
    "name": "InpConfirmedMinBodyATR",
    "type": "double",
    "unit": "ATR-mult",
@@ -3769,61 +3593,6 @@
    "set_value": "true",
    "runtime_value": "true",
    "effective_value": "inert (CQF master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpEnableSmartRunnerExit",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "false",
-   "set_value": "false",
-   "runtime_value": "false",
-   "effective_value": "= runtime (false) \u2014 the entire smart-runner exit block is dead",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerRegimeKill",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (master off); DUP of the InpRunnerCloseIn* regime-kill mechanism",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerVolDecayThreshold",
-   "type": "double",
-   "unit": "ratio/%",
-   "source_default": "0.50",
-   "set_value": "0.5",
-   "runtime_value": "0.500000",
-   "effective_value": "inert (master InpEnableSmartRunnerExit=false)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerWeakCandleCount",
-   "type": "int",
-   "unit": "none",
-   "source_default": "3",
-   "set_value": "3",
-   "runtime_value": "3",
-   "effective_value": "inert (master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpRunnerWeakCandleRatio",
-   "type": "double",
-   "unit": "ratio/%",
-   "source_default": "0.30",
-   "set_value": "0.3",
-   "runtime_value": "0.300000",
-   "effective_value": "inert (master off)",
    "activation": "Gated-off",
    "validation": "Rejected"
   },
@@ -4670,5 +4439,6 @@
   }
  ],
  "authoritative_identity": "SHA-256 (release-identity-manifest.json config_sha256)",
- "config_sha256": "e6c7a2169c757833f833ea5f3d26a8f4ef5e7aa5d8aaa9c64c5746e9f27bb9cb"
+ "config_sha256": "9bc147a70c8c5c7c67d6d8f7ff6063d3021b8e69427b6b1976823ee5129ec477",
+ "input_count": 393
 }

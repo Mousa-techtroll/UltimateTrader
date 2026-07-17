@@ -1,0 +1,243 @@
+{
+ "schema": "input-migration-v1",
+ "tag_baseline": "baseline-input-cleanup-414",
+ "byte_identity_evidence": {
+  "stats_md5": "96415ff0477271ed4ff4072cf244d216",
+  "tradeevents_md5": "9c08bcfa5364a06dd21bf97cbbfac9bd",
+  "net": 32503.03,
+  "positions": 865
+ },
+ "retired": [
+  {
+   "name": "InpEnableRunnerExitMode",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "false",
+   "former_value_runtime": "false",
+   "const_value": "false",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerRegimeConditional",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "false",
+   "former_value_runtime": "false",
+   "const_value": "false",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerCloseInChoppy",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerCloseInVolatile",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerCloseInRanging",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerMinQuality",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "3",
+   "former_value_runtime": "SETUP_A",
+   "const_value": "3",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerMinConfluence",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "75",
+   "former_value_runtime": "75",
+   "const_value": "75",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerNormalMinConfluence",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "85",
+   "former_value_runtime": "85",
+   "const_value": "85",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerUseEntryLockedChandFloor",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerAllowPromotion",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerPromoteAtR",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "1.25",
+   "former_value_runtime": "1.250000",
+   "const_value": "1.25",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerPromoteMaxMAE_R",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.35",
+   "former_value_runtime": "0.350000",
+   "const_value": "0.35",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerTrailLockStepR1",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.5",
+   "former_value_runtime": "0.500000",
+   "const_value": "0.5",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerTrailLockStepR2",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.75",
+   "former_value_runtime": "0.750000",
+   "const_value": "0.75",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerTrailBarCloseMinStepR",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.25",
+   "former_value_runtime": "0.250000",
+   "const_value": "0.25",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerBrokerTrailCooldownBars",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "1",
+   "former_value_runtime": "1",
+   "const_value": "1",
+   "subcategory": "Runner-exit-mode",
+   "commit": "dc0531e",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpEnableSmartRunnerExit",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "false",
+   "former_value_runtime": "false",
+   "const_value": "false",
+   "subcategory": "Smart-runner exit",
+   "commit": "d7f7313",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerVolDecayThreshold",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.5",
+   "former_value_runtime": "0.500000",
+   "const_value": "0.5",
+   "subcategory": "Smart-runner exit",
+   "commit": "d7f7313",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerWeakCandleCount",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "3",
+   "former_value_runtime": "3",
+   "const_value": "3",
+   "subcategory": "Smart-runner exit",
+   "commit": "d7f7313",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerWeakCandleRatio",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.3",
+   "former_value_runtime": "0.300000",
+   "const_value": "0.3",
+   "subcategory": "Smart-runner exit",
+   "commit": "d7f7313",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpRunnerRegimeKill",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Smart-runner exit",
+   "commit": "d7f7313",
+   "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  }
+ ]
+}
