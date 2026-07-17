@@ -735,7 +735,6 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpEnableShadowKillLog",(InpEnableShadowKillLog?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableShockDetection",(InpEnableShockDetection?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableShortSleeve",(InpEnableShortSleeve?"true":"false"),"bool",acc);
-   CfgRow(h,"InpEnableSmartRunnerExit",(InpEnableSmartRunnerExit?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableTMF",(InpEnableTMF?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableTP0",(InpEnableTP0?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableThrashCooldown",(InpEnableThrashCooldown?"true":"false"),"bool",acc);
@@ -892,10 +891,6 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpRiskBPlusSetup",DoubleToString(InpRiskBPlusSetup,6),"double",acc);
    CfgRow(h,"InpRiskBSetup",DoubleToString(InpRiskBSetup,6),"double",acc);
    CfgRow(h,"InpRubberBandAPlusOnly",(InpRubberBandAPlusOnly?"true":"false"),"bool",acc);
-   CfgRow(h,"InpRunnerRegimeKill",(InpRunnerRegimeKill?"true":"false"),"bool",acc);
-   CfgRow(h,"InpRunnerVolDecayThreshold",DoubleToString(InpRunnerVolDecayThreshold,6),"double",acc);
-   CfgRow(h,"InpRunnerWeakCandleCount",IntegerToString(InpRunnerWeakCandleCount),"int",acc);
-   CfgRow(h,"InpRunnerWeakCandleRatio",DoubleToString(InpRunnerWeakCandleRatio,6),"double",acc);
    CfgRow(h,"InpSMCBOSLookback",IntegerToString(InpSMCBOSLookback),"int",acc);
    CfgRow(h,"InpSMCFVGMinPoints",IntegerToString(InpSMCFVGMinPoints),"int",acc);
    CfgRow(h,"InpSMCLiqMinTouches",IntegerToString(InpSMCLiqMinTouches),"int",acc);
@@ -982,7 +977,7 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpWeekendCloseHour",IntegerToString(InpWeekendCloseHour),"int",acc);
    uint cfghash = AuditFnv1a(acc);
    Print("[EffCfg] ===== EFFECTIVE INPUT MANIFEST (audit, decision-free) =====");
-   Print("[EffCfg] symbol=", _Symbol, " inputs=398 config_hash=", StringFormat("%08X", cfghash));
+   Print("[EffCfg] symbol=", _Symbol, " inputs=393 config_hash=", StringFormat("%08X", cfghash));
    if(h != INVALID_HANDLE)
    {
       FileWrite(h, "__CONFIG_HASH_FNV1A32__", StringFormat("%08X", cfghash), "hash");

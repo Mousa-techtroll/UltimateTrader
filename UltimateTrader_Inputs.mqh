@@ -507,11 +507,11 @@ input bool   InpEnableConfirmedQualityFilter = false;             // CQF tested:
 
 //--- Group 46: SMART RUNNER EXIT (Phase 5)
 input group "══════ SMART RUNNER EXIT ══════"
-input bool   InpEnableSmartRunnerExit = false;                    // Smart runner exit: tested 2 variants, both -$8K. Runner losses are the cost of tail captures.
-input double InpRunnerVolDecayThreshold = 0.50;                   // Volatility decay: exit if ATR ratio < this (softened from 0.70)
-input int    InpRunnerWeakCandleCount = 3;                        // Momentum fade: require ALL 3 weak candles (was 2)
-input double InpRunnerWeakCandleRatio = 0.30;                     // Weak candle threshold (tightened from 0.40)
-input bool   InpRunnerRegimeKill = true;                          // Regime kill: exit runner if regime turns CHOPPY/VOLATILE
+const bool   InpEnableSmartRunnerExit = false;                    // Smart runner exit: tested 2 variants, both -$8K. Runner losses are the cost of tail captures.
+const double InpRunnerVolDecayThreshold = 0.50;                   // Volatility decay: exit if ATR ratio < this (softened from 0.70)
+const int    InpRunnerWeakCandleCount = 3;                        // Momentum fade: require ALL 3 weak candles (was 2)
+const double InpRunnerWeakCandleRatio = 0.30;                     // Weak candle threshold (tightened from 0.40)
+const bool   InpRunnerRegimeKill = true;                          // Regime kill: exit runner if regime turns CHOPPY/VOLATILE
 input double InpConfirmedMinBodyATR = 0.25;                       // Rule A: min confirmation body (x ATR) — CQF-2 softened from 0.30
 input double InpConfirmedMinClosePos = 0.60;                      // Rule B: min close position in candle range — CQF-2 softened from 0.65
 input bool   InpConfirmedRequireStructureReclaim = false;         // Rule C: structure reclaim — CQF-2 DISABLED (too strict, killed $5K profit)
