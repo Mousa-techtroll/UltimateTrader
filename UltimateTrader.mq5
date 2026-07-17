@@ -623,11 +623,6 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpCompressionMinBars",IntegerToString(InpCompressionMinBars),"int",acc);
    CfgRow(h,"InpConfirmationStrictness",DoubleToString(InpConfirmationStrictness,6),"double",acc);
    CfgRow(h,"InpConfirmationWindowBars",IntegerToString(InpConfirmationWindowBars),"int",acc);
-   CfgRow(h,"InpConfirmedMinBodyATR",DoubleToString(InpConfirmedMinBodyATR,6),"double",acc);
-   CfgRow(h,"InpConfirmedMinClosePos",DoubleToString(InpConfirmedMinClosePos,6),"double",acc);
-   CfgRow(h,"InpConfirmedMinScore",IntegerToString(InpConfirmedMinScore),"int",acc);
-   CfgRow(h,"InpConfirmedRequireStructureReclaim",(InpConfirmedRequireStructureReclaim?"true":"false"),"bool",acc);
-   CfgRow(h,"InpConfirmedStricterInChop",(InpConfirmedStricterInChop?"true":"false"),"bool",acc);
    CfgRow(h,"InpCrashATRMult",DoubleToString(InpCrashATRMult,6),"double",acc);
    CfgRow(h,"InpCrashFreshDCBars",IntegerToString(InpCrashFreshDCBars),"int",acc);
    CfgRow(h,"InpCrashRegimeGate",IntegerToString(InpCrashRegimeGate),"int",acc);
@@ -977,7 +972,7 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpWeekendCloseHour",IntegerToString(InpWeekendCloseHour),"int",acc);
    uint cfghash = AuditFnv1a(acc);
    Print("[EffCfg] ===== EFFECTIVE INPUT MANIFEST (audit, decision-free) =====");
-   Print("[EffCfg] symbol=", _Symbol, " inputs=393 config_hash=", StringFormat("%08X", cfghash));
+   Print("[EffCfg] symbol=", _Symbol, " inputs=388 config_hash=", StringFormat("%08X", cfghash));
    if(h != INVALID_HANDLE)
    {
       FileWrite(h, "__CONFIG_HASH_FNV1A32__", StringFormat("%08X", cfghash), "hash");

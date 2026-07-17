@@ -506,17 +506,17 @@ input group "══════ CONFIRMED ENTRY QUALITY FILTER ═════�
 input bool   InpEnableConfirmedQualityFilter = false;             // CQF tested: all 3 variants hurt profit. Confirmation candle IS the quality gate.
 
 //--- Group 46: SMART RUNNER EXIT (Phase 5)
-input group "══════ SMART RUNNER EXIT ══════"
+// ══════ SMART RUNNER EXIT — DEPRECATED (5 smart-runner + 5 mis-filed entry-confirmation InpConfirmed*, all gated-off; input→const, identity-verified) ══════
 const bool   InpEnableSmartRunnerExit = false;                    // Smart runner exit: tested 2 variants, both -$8K. Runner losses are the cost of tail captures.
 const double InpRunnerVolDecayThreshold = 0.50;                   // Volatility decay: exit if ATR ratio < this (softened from 0.70)
 const int    InpRunnerWeakCandleCount = 3;                        // Momentum fade: require ALL 3 weak candles (was 2)
 const double InpRunnerWeakCandleRatio = 0.30;                     // Weak candle threshold (tightened from 0.40)
 const bool   InpRunnerRegimeKill = true;                          // Regime kill: exit runner if regime turns CHOPPY/VOLATILE
-input double InpConfirmedMinBodyATR = 0.25;                       // Rule A: min confirmation body (x ATR) — CQF-2 softened from 0.30
-input double InpConfirmedMinClosePos = 0.60;                      // Rule B: min close position in candle range — CQF-2 softened from 0.65
-input bool   InpConfirmedRequireStructureReclaim = false;         // Rule C: structure reclaim — CQF-2 DISABLED (too strict, killed $5K profit)
-input int    InpConfirmedMinScore = 2;                            // Min rules passed (of 3) to execute
-input bool   InpConfirmedStricterInChop = true;                   // Require score=3 in CHOPPY/VOLATILE
+const double InpConfirmedMinBodyATR = 0.25;                       // Rule A: min confirmation body (x ATR) — CQF-2 softened from 0.30
+const double InpConfirmedMinClosePos = 0.60;                      // Rule B: min close position in candle range — CQF-2 softened from 0.65
+const bool   InpConfirmedRequireStructureReclaim = false;         // Rule C: structure reclaim — CQF-2 DISABLED (too strict, killed $5K profit)
+const int    InpConfirmedMinScore = 2;                            // Min rules passed (of 3) to execute
+const bool   InpConfirmedStricterInChop = true;                   // Require score=3 in CHOPPY/VOLATILE
 
 //--- Group 47: RUNNER EXIT MODE
 // ══════ RUNNER EXIT MODE — DEPRECATED (gated-off, behaviorally inactive; input→const, config-surface removed; identity-verified @ baseline-input-cleanup-414) ══════
