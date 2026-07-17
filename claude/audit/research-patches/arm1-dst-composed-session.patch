@@ -1,0 +1,68 @@
+diff --git a/Include/EntryPlugins/CExpansionEngine.mqh b/Include/EntryPlugins/CExpansionEngine.mqh
+index 6349855..6a81a5f 100644
+--- a/Include/EntryPlugins/CExpansionEngine.mqh
++++ b/Include/EntryPlugins/CExpansionEngine.mqh
+@@ -385,6 +385,7 @@ public:
+       if(m_session_breakout != NULL)
+       {
+          m_session_breakout.SetContext(m_context);
++         m_session_breakout.SetDSTFix(InpTesterDSTFix);   // Arm 1: propagate DST-aware broker offset into the composed instance (was m_gmt_offset=0 → raw server time)
+          if(!m_session_breakout.Initialize())
+          {
+             Print("CExpansionEngine: WARN composed Session-BO init failed: ",
+diff --git a/Include/EntryPlugins/CSessionBreakoutEntry.mqh b/Include/EntryPlugins/CSessionBreakoutEntry.mqh
+index 54a2269..e2c0276 100644
+--- a/Include/EntryPlugins/CSessionBreakoutEntry.mqh
++++ b/Include/EntryPlugins/CSessionBreakoutEntry.mqh
+@@ -12,6 +12,7 @@
+ #include "../PluginSystem/IMarketContext.mqh"
+ #include "../Common/Enums.mqh"
+ #include "../Common/Structs.mqh"
++#include "../Utils/CTimeOffset.mqh"   // Arm 1: DST-aware broker-offset resolver
+ 
+ //+------------------------------------------------------------------+
+ //| CSessionBreakoutEntry - Session-based breakout entries            |
+@@ -44,6 +45,7 @@ private:
+    double            m_max_range_atr;          // Max Asian range as ATR multiple (filter too wide)
+    ENUM_TIMEFRAMES   m_timeframe;
+    int               m_gmt_offset;             // Broker GMT offset (hours)
++   bool              m_dst_fix;                // Arm 1: when true, resolve GMT per-timestamp via CTimeOffset (DST-aware) instead of fixed m_gmt_offset
+ 
+    // Cached Asian range
+    double            m_asian_high;
+@@ -89,6 +91,7 @@ public:
+       m_min_range_atr = min_range;
+       m_max_range_atr = max_range;
+       m_gmt_offset = gmt_offset;
++      m_dst_fix = false;   // Arm 1: armed via SetDSTFix()
+       m_timeframe = tf;
+       m_handle_atr = INVALID_HANDLE;
+ 
+@@ -111,6 +114,7 @@ public:
+    // Phase 6.9 Entry-SessionBO-1: GMT-offset injection from the EA (single source of
+    // truth — InpBrokerGMTOffset). Do NOT add in-plugin TimeGMT auto-detect (stok-binding).
+    void SetGMTOffset(int gmt_offset) { m_gmt_offset = gmt_offset; }
++   void SetDSTFix(bool v) { m_dst_fix = v; }   // Arm 1: DST-aware GMT resolution
+ 
+    //+------------------------------------------------------------------+
+    //| Initialize                                                        |
+@@ -215,7 +219,8 @@ private:
+    {
+       MqlDateTime dt;
+       TimeToStruct(server_time, dt);
+-      int hour = dt.hour - m_gmt_offset;
++      int off = m_dst_fix ? CTimeOffset::BrokerGMTOffset(server_time) : m_gmt_offset;  // Arm 1
++      int hour = dt.hour - off;
+ 
+       // Normalize to 0-23
+       if(hour < 0) hour += 24;
+@@ -267,7 +272,8 @@ private:
+       {
+          MqlDateTime bar_dt;
+          TimeToStruct(time[i], bar_dt);
+-         int bar_gmt_hour = bar_dt.hour - m_gmt_offset;
++         int bar_off = m_dst_fix ? CTimeOffset::BrokerGMTOffset(time[i]) : m_gmt_offset;  // Arm 1
++         int bar_gmt_hour = bar_dt.hour - bar_off;
+          if(bar_gmt_hour < 0) bar_gmt_hour += 24;
+          if(bar_gmt_hour >= 24) bar_gmt_hour -= 24;
+ 

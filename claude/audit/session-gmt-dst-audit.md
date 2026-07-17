@@ -9,6 +9,40 @@
 
 ---
 
+## REFRAME (2026-07-17) — the composed instance is a LEGACY FIXED BROKER-HOUR implementation, not a broken London/NY engine
+
+This audit below correctly establishes, as a matter of *clock mechanics*, that the composed
+`CSessionBreakoutEntry` (#12) keys its Asian/London/NY windows off **raw broker-server time
+(`m_gmt_offset = 0`)**. That factual finding stands. **What is reframed is the interpretation.**
+
+The original wording ("correctness defect", "the one uncorrected consumer", "wrong clock",
+"recommended fix: propagate the DST-1 offset") silently assumes the *intended* semantics are a
+DST-anchored **London/NY GMT** engine and that this instance is a failed attempt at one. That
+assumption is **not established**. The composed instance is more accurately described as a
+**legacy fixed broker-hour session implementation**: it fires breakout windows at *fixed broker
+server hours* (Asian `[0,8)`, "London" `[8,9)`, "NY" `[13,14)` server), a stable design that
+does not track US DST. Whether the *fixed broker-hour* clock or a *DST-anchored GMT* clock is the
+correct intended behavior is an **open question about timing semantics**, not a settled defect.
+
+**Direct evidence that "correct London/NY" is not self-evidently better:** Arm 1 — full DST
+correction of this exact instance (both its range-construction clock and its breakout-window
+clock) — was implemented, compiled 0/0, and measured on the canonical 388 config. It **REGRESSED
+−$1,103.47** (net $32,503.03 → $31,399.56; positions 865 → 868; Sharpe 2.87 → 2.81). See
+`claude/audit/research-patches/arm1-result.md`. A genuine "fix" of a genuine "defect" would not
+be expected to lose money; the fixed-broker-hour windows may be capturing a real intraday effect,
+or the DST shift may simply relocate the ~12 composed fills into worse hours.
+
+**Consequence for this document:** read every "defect / wrong clock / recommended fix: propagate
+DST" statement below as *"the composed instance runs on a legacy fixed broker-hour clock; whether
+to DST-anchor it is undecided."* The intended timing semantics will be chosen only after the
+**2×2 range-construction × breakout-window decomposition** (`session-clock-decomposition.md`)
+separates which of the two clocks (if either) carries the effect. Until that decision:
+- Production stays at `baseline-input-cleanup-388` (legacy fixed broker-hour, unchanged).
+- Arm 1 is preserved as a **research patch**, neither adopted nor rejected.
+- No hardcoded-Asian-end replacement (Arm 2) and no live-DST refresh (Arm 3) are performed.
+
+---
+
 ## The DST model (single source of truth)
 
 `Include/Utils/CTimeOffset.mqh:66` `BrokerGMTOffset(server_time)` returns **+3 during US-DST (summer), +2 otherwise (winter)**, switching on the US-DST Sundays (2nd Sun Mar 07:00 UTC → 1st Sun Nov 06:00 UTC). Broker server clock = **GMT+2 winter / GMT+3 summer**. `server_hour H ⇔ GMT hour (H − offset)`.

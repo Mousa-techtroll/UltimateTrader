@@ -12,6 +12,9 @@
 #include "../PluginSystem/IMarketContext.mqh"
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
+#ifdef RESEARCH_SESSION
+#include "../Utils/CTimeOffset.mqh"   // RESEARCH: DST-aware broker offset for the 2x2 clock decomposition
+#endif
 
 //+------------------------------------------------------------------+
 //| CSessionBreakoutEntry - Session-based breakout entries            |
@@ -44,6 +47,13 @@ private:
    double            m_max_range_atr;          // Max Asian range as ATR multiple (filter too wide)
    ENUM_TIMEFRAMES   m_timeframe;
    int               m_gmt_offset;             // Broker GMT offset (hours)
+#ifdef RESEARCH_SESSION
+   // RESEARCH (session-clock 2x2 decomposition; production-inert unless RESEARCH_SESSION).
+   // The composed engine is a LEGACY FIXED BROKER-HOUR session implementation (m_gmt_offset,
+   // no DST). These flags let the study DST-correct the two clock consumers independently.
+   bool              m_dst_fix_range;          // range-construction clock (UpdateAsianRange)
+   bool              m_dst_fix_breakout;       // breakout-window clock (GetGMTHour @ window check)
+#endif
 
    // Cached Asian range
    double            m_asian_high;
@@ -89,6 +99,10 @@ public:
       m_min_range_atr = min_range;
       m_max_range_atr = max_range;
       m_gmt_offset = gmt_offset;
+#ifdef RESEARCH_SESSION
+      m_dst_fix_range = false;      // RESEARCH default = legacy fixed broker-hour
+      m_dst_fix_breakout = false;   // RESEARCH default = legacy fixed broker-hour
+#endif
       m_timeframe = tf;
       m_handle_atr = INVALID_HANDLE;
 
@@ -111,6 +125,11 @@ public:
    // Phase 6.9 Entry-SessionBO-1: GMT-offset injection from the EA (single source of
    // truth — InpBrokerGMTOffset). Do NOT add in-plugin TimeGMT auto-detect (stok-binding).
    void SetGMTOffset(int gmt_offset) { m_gmt_offset = gmt_offset; }
+#ifdef RESEARCH_SESSION
+   // RESEARCH: arm the 2x2 session-clock decomposition (production-inert).
+   void SetDSTFixRange(bool v)    { m_dst_fix_range = v; }
+   void SetDSTFixBreakout(bool v) { m_dst_fix_breakout = v; }
+#endif
 
    //+------------------------------------------------------------------+
    //| Initialize                                                        |
@@ -215,7 +234,13 @@ private:
    {
       MqlDateTime dt;
       TimeToStruct(server_time, dt);
+#ifdef RESEARCH_SESSION
+      // RESEARCH breakout-window clock: DST-correct only when the breakout flag is armed.
+      int off = m_dst_fix_breakout ? CTimeOffset::BrokerGMTOffset(server_time) : m_gmt_offset;
+      int hour = dt.hour - off;
+#else
       int hour = dt.hour - m_gmt_offset;
+#endif
 
       // Normalize to 0-23
       if(hour < 0) hour += 24;
@@ -238,7 +263,16 @@ private:
       datetime today_start = StructToTime(dt);
 
       // Determine current GMT hour to check if Asian session is still open
+#ifdef RESEARCH_SESSION
+      // RESEARCH range-construction clock (freeze gate): independent of the breakout flag.
+      int r_off = m_dst_fix_range ? CTimeOffset::BrokerGMTOffset(today) : m_gmt_offset;
+      MqlDateTime rdt; TimeToStruct(today, rdt);
+      int gmt_hour = rdt.hour - r_off;
+      if(gmt_hour < 0) gmt_hour += 24;
+      if(gmt_hour >= 24) gmt_hour -= 24;
+#else
       int gmt_hour = GetGMTHour(today);
+#endif
 
       // During Asian session hours, recalculate on every call (new bar)
       // After Asian close (>= m_asian_end_hour), freeze the range for the day
@@ -267,7 +301,13 @@ private:
       {
          MqlDateTime bar_dt;
          TimeToStruct(time[i], bar_dt);
+#ifdef RESEARCH_SESSION
+         // RESEARCH range-construction clock (per-bar Asian classification).
+         int bar_off = m_dst_fix_range ? CTimeOffset::BrokerGMTOffset(time[i]) : m_gmt_offset;
+         int bar_gmt_hour = bar_dt.hour - bar_off;
+#else
          int bar_gmt_hour = bar_dt.hour - m_gmt_offset;
+#endif
          if(bar_gmt_hour < 0) bar_gmt_hour += 24;
          if(bar_gmt_hour >= 24) bar_gmt_hour -= 24;
 

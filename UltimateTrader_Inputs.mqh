@@ -106,6 +106,15 @@ input group "══════ DST / TIMEZONE CORRECTION ══════"
 //  The LIVE auto-detected path (TimeCurrent()-TimeGMT()) is NEVER affected by this flag.
 input bool   InpTesterDSTFix = true;         // DST-1: tester DST offset fix (true=US-DST corrected, false=legacy fixed+3)
 
+#ifdef RESEARCH_SESSION
+// RESEARCH ONLY (session-clock 2x2 decomposition) — these inputs exist ONLY in a build compiled
+// with `#define RESEARCH_SESSION`. The production 388-input surface does NOT contain them; the
+// composed CSessionBreakoutEntry stays a legacy fixed broker-hour clock. Both default false =
+// legacy. Toggle independently to build the four arms (range-clock x breakout-clock).
+input bool   InpResSessRangeDST    = false;  // RESEARCH: DST-correct the Asian RANGE-construction clock
+input bool   InpResSessBreakoutDST = false;  // RESEARCH: DST-correct the BREAKOUT-window clock
+#endif
+
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"
 input double InpShortRiskMultiplier = 1.0;   // Short protection OFF for Test 5
