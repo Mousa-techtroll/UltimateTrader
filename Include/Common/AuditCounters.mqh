@@ -32,6 +32,18 @@ long g_auditVixUsable = 0, g_auditVixStarved = 0;  // AnalyzeVIX got usable bars
 #define AUDIT_CHAND_FLAT       g_auditChandFlat++
 #define AUDIT_VIX_USABLE       g_auditVixUsable++
 #define AUDIT_VIX_STARVED      g_auditVixStarved++
+// --- position/episode-level flat-fallback + VIX materiality (v2) ---
+long g_auditFlatTPPos = 0;   ulong g_lastFlatTPTicket = 0;   // distinct positions (by ticket) that hit flat TP
+long g_auditFlatBEPos = 0;   ulong g_lastFlatBETicket = 0;   // distinct positions (by ticket) that hit flat BE (either site)
+long g_auditVixElevatedHits = 0, g_auditVixLowHits = 0;      // VIX crossed InpVIXElevated / InpVIXLow
+long g_auditVixNonzero = 0;                                  // AnalyzeVIX returned a nonzero (+1/-1) contribution
+long g_auditVixBiasFlip = 0;                                 // VIX contribution flipped the ±2 macro bias band (classify(score) != classify(score-vix))
+#define AUDIT_FLATTP_POS(flat,ticket) { if(flat && (ulong)(ticket)!=g_lastFlatTPTicket){ g_auditFlatTPPos++; g_lastFlatTPTicket=(ulong)(ticket); } }
+#define AUDIT_FLATBE_POS(flat,ticket) { if(flat && (ulong)(ticket)!=g_lastFlatBETicket){ g_auditFlatBEPos++; g_lastFlatBETicket=(ulong)(ticket); } }
+#define AUDIT_VIX_ELEVATED     g_auditVixElevatedHits++
+#define AUDIT_VIX_LOW          g_auditVixLowHits++
+#define AUDIT_VIX_NONZERO      g_auditVixNonzero++
+#define AUDIT_VIX_BIASFLIP     g_auditVixBiasFlip++
 #else
 #define AUDIT_TIER(i)
 #define AUDIT_VOLBO_CHECK
@@ -44,6 +56,12 @@ long g_auditVixUsable = 0, g_auditVixStarved = 0;  // AnalyzeVIX got usable bars
 #define AUDIT_CHAND_FLAT
 #define AUDIT_VIX_USABLE
 #define AUDIT_VIX_STARVED
+#define AUDIT_FLATTP_POS(flat,ticket)
+#define AUDIT_FLATBE_POS(flat,ticket)
+#define AUDIT_VIX_ELEVATED
+#define AUDIT_VIX_LOW
+#define AUDIT_VIX_NONZERO
+#define AUDIT_VIX_BIASFLIP
 #endif
 
 #endif // AUDIT_COUNTERS_MQH

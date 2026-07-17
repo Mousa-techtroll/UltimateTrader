@@ -1971,6 +1971,12 @@ void OnDeinit(const int reason)
    Print("[AuditDiag] Chandelier live-regime/smoothed/flat-pre-hysteresis = ",
          g_auditChandLive, "/", g_auditChandSmoothed, "/", g_auditChandFlat);
    Print("[AuditDiag] VIX usable-bars/data-starved = ", g_auditVixUsable, "/", g_auditVixStarved);
+   // v2: position/episode-level flat-fallback + VIX trading materiality
+   Print("[AuditDiag2] Flat-fallback UNIQUE POSITIONS: TP=", g_auditFlatTPPos, " BE=", g_auditFlatBEPos,
+         "  (Chandelier flat episodes=", g_auditChandFlat, ")");
+   Print("[AuditDiag2] VIX materiality: elevated-hits=", g_auditVixElevatedHits,
+         " low-hits=", g_auditVixLowHits, " nonzero-contrib=", g_auditVixNonzero,
+         " macro-band-flips=", g_auditVixBiasFlip, "  (band-flip = VIX changed bullish/neutral/bearish class)");
 #endif
 
    // Phase 0.1: Save position state before shutdown

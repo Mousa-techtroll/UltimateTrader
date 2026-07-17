@@ -149,7 +149,19 @@ public:
 
       // Update VIX analysis
       if(m_vix_available)
-         score += AnalyzeVIX();
+      {
+         int vix_c = AnalyzeVIX();
+         score += vix_c;
+#ifdef AUDIT_BUILD
+         if(vix_c != 0)
+         {
+            g_auditVixNonzero++;
+            int band_with = (score >= 2) ? 1 : ((score <= -2) ? -1 : 0);
+            int band_wo   = ((score - vix_c) >= 2) ? 1 : (((score - vix_c) <= -2) ? -1 : 0);
+            if(band_with != band_wo) g_auditVixBiasFlip++;   // VIX flipped the macro bias band
+         }
+#endif
+      }
       else
          LogPrint("INFO: VIX unavailable - skipping VIX component");
 
@@ -262,12 +274,18 @@ private:
       
       // VIX elevated = Risk-off = Gold bullish
       if(m_macro_data.vix_elevated)
+      {
+         AUDIT_VIX_ELEVATED;
          return +1;
+      }
 
       // VIX very low = Extreme risk-on = Gold bearish
       if(vix_close[0] < m_vix_low_level)
+      {
+         AUDIT_VIX_LOW;
          return -1;
-      
+      }
+
       return 0;
    }
 

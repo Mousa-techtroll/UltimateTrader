@@ -2406,6 +2406,7 @@ public:
          double tp0_volume = (m_positions[i].exit_tp0_volume > 0.0) ? m_positions[i].exit_tp0_volume : InpTP0Volume;
          double tp1_distance = (m_positions[i].exit_tp1_distance > 0.0) ? m_positions[i].exit_tp1_distance : InpTP1Distance;
          AUDIT_TP(m_positions[i].exit_tp1_distance > 0.0);
+         AUDIT_FLATTP_POS(m_positions[i].exit_tp1_distance <= 0.0, m_positions[i].ticket);
          double tp1_volume = (m_positions[i].exit_tp1_volume > 0.0) ? m_positions[i].exit_tp1_volume : InpTP1Volume;
          double tp2_distance = (m_positions[i].exit_tp2_distance > 0.0) ? m_positions[i].exit_tp2_distance : InpTP2Distance;
          double tp2_volume = (m_positions[i].exit_tp2_volume > 0.0) ? m_positions[i].exit_tp2_volume : InpTP2Volume;
@@ -3200,6 +3201,7 @@ private:
       // Trigger source: per-position regime exit profile, fallback to global input
       double be_trigger = (pos.exit_be_trigger > 0.0) ? pos.exit_be_trigger : InpTrailBETrigger;
       AUDIT_BE(pos.exit_be_trigger > 0.0);
+      AUDIT_FLATBE_POS(pos.exit_be_trigger <= 0.0, pos.ticket);
       if(profit_r_be < be_trigger)
          return false;
 
@@ -3923,6 +3925,8 @@ private:
                         : (pos.entry_price - current_price_be) / risk_dist_be;
 
                      double be_trigger = (pos.exit_be_trigger > 0.0) ? pos.exit_be_trigger : InpTrailBETrigger;
+                     AUDIT_BE(pos.exit_be_trigger > 0.0);
+                     AUDIT_FLATBE_POS(pos.exit_be_trigger <= 0.0, pos.ticket);
 
                      // Only trigger BE after reaching the configured R-threshold for this trade
                      if(profit_r_be >= be_trigger)

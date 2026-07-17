@@ -20,3 +20,23 @@ behavior-neutral.
   the exit-profile design audit: the flat set is NOT a NORMAL duplicate (values differ) AND is
   essentially never the effective value → it is a **dead-fallback deprecation candidate** (a future
   gated-off-style, identity-preserving cleanup — prove reachability then const-deprecate), NOT a merge.
+
+## v2 — position/episode-level + VIX trading-materiality (byte-identical)
+| Metric | Count | Interpretation |
+|---|---|---|
+| Flat TP fallback — UNIQUE positions | **0** | No position ever resolves TP from the flat `InpTP0/1/2*`. |
+| Flat BE fallback — UNIQUE positions | **0** | No position ever resolves BE from flat `InpTrailBETrigger` (both trailing-loop :3202 and anti-stall :3927 sites instrumented; anti-stall fires 1269×, all stamped). |
+| Chandelier flat — episodes | 1 | Flat default effective in exactly one episode (first bar). |
+| VIX elevated / low threshold hits | 19,136 / 5,958 | VIX crossed InpVIXElevated(20) / InpVIXLow(15). |
+| VIX nonzero contributions | 25,094 | AnalyzeVIX returned ±1. |
+| **VIX macro-band-flips** | **7,568** | VIX's ±1 changed the ±2 macro bias classification (bullish/neutral/bearish) 7,568×. |
+
+**Conclusions:**
+- **Flat TP/BE fallback is unused at the POSITION level (0/0).** The condition to deprecate the flat
+  inputs (`InpTP0/1/2Distance/Volume`, `InpTrailBETrigger`) is met — future gated-off-style const-deprecation
+  with a reachability proof + identity battery. Keep the inputs until that isolated cleanup runs.
+- **VIX is trading-material.** 7,568 macro-band-flips means VIX materially changes the macro bias that
+  gates entry branches (CSignalValidator:361-596). Data availability (44,267 CopyClose) is NOT the whole
+  story — VIX genuinely moves decisions. `InpVIXElevated`/`InpVIXLow` are live, material inputs.
+  (band-flips upper-bound the trade-level "decisions changed"; a precise per-signal validator counterfactual
+  is a deeper follow-up if a VIX value review is ever requested.)
