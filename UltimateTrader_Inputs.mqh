@@ -519,23 +519,23 @@ input int    InpConfirmedMinScore = 2;                            // Min rules p
 input bool   InpConfirmedStricterInChop = true;                   // Require score=3 in CHOPPY/VOLATILE
 
 //--- Group 47: RUNNER EXIT MODE
-input group "══════ RUNNER EXIT MODE ══════"
-input bool               InpEnableRunnerExitMode = false;         // Runner mode OFF: -$391 in isolation test (v8). Trail system untouchable.
-input bool               InpRunnerRegimeConditional = false;     // REVERTED: runner kill cost -$2K, Core Truth #4 confirmed
-input bool               InpRunnerCloseInChoppy = true;          // Runner: kill in CHOPPY
-input bool               InpRunnerCloseInVolatile = true;        // Runner: kill in VOLATILE
-input bool               InpRunnerCloseInRanging = true;         // Runner: kill in RANGING
-input ENUM_SETUP_QUALITY InpRunnerMinQuality = SETUP_A;           // Minimum setup quality for runner mode
-input int                InpRunnerMinConfluence = 75;             // Minimum confluence to qualify at entry
-input int                InpRunnerNormalMinConfluence = 85;       // Reserved for future revalidation if NORMAL runner mode returns
-input bool               InpRunnerUseEntryLockedChandFloor = true;// Preserve the entry-stamped Chandelier width for runner-managed trades
-input bool               InpRunnerAllowPromotion = true;          // Promote proven strong trades after entry
-input double             InpRunnerPromoteAtR = 1.25;              // Base proof threshold before relaxed runner management
-input double             InpRunnerPromoteMaxMAE_R = 0.35;         // Base MAE cap; pattern-specific rules can tighten further
-input double             InpRunnerTrailLockStepR1 = 0.50;         // Broker trail step while locked profit is below 2R
-input double             InpRunnerTrailLockStepR2 = 0.75;         // Broker trail step once locked profit is 2R+
-input double             InpRunnerTrailBarCloseMinStepR = 0.25;   // Minimum locked-R improvement for H1 cadence sends
-input int                InpRunnerBrokerTrailCooldownBars = 1;    // Minimum H1 bars between runner broker trail sends
+// ══════ RUNNER EXIT MODE — DEPRECATED (gated-off, behaviorally inactive; input→const, config-surface removed; identity-verified @ baseline-input-cleanup-414) ══════
+const bool               InpEnableRunnerExitMode = false;         // Runner mode OFF: -$391 in isolation test (v8). Trail system untouchable.
+const bool               InpRunnerRegimeConditional = false;     // REVERTED: runner kill cost -$2K, Core Truth #4 confirmed
+const bool               InpRunnerCloseInChoppy = true;          // Runner: kill in CHOPPY
+const bool               InpRunnerCloseInVolatile = true;        // Runner: kill in VOLATILE
+const bool               InpRunnerCloseInRanging = true;         // Runner: kill in RANGING
+const ENUM_SETUP_QUALITY InpRunnerMinQuality = SETUP_A;           // Minimum setup quality for runner mode
+const int                InpRunnerMinConfluence = 75;             // Minimum confluence to qualify at entry
+const int                InpRunnerNormalMinConfluence = 85;       // Reserved for future revalidation if NORMAL runner mode returns
+const bool               InpRunnerUseEntryLockedChandFloor = true;// Preserve the entry-stamped Chandelier width for runner-managed trades
+const bool               InpRunnerAllowPromotion = true;          // Promote proven strong trades after entry
+const double             InpRunnerPromoteAtR = 1.25;              // Base proof threshold before relaxed runner management
+const double             InpRunnerPromoteMaxMAE_R = 0.35;         // Base MAE cap; pattern-specific rules can tighten further
+const double             InpRunnerTrailLockStepR1 = 0.50;         // Broker trail step while locked profit is below 2R
+const double             InpRunnerTrailLockStepR2 = 0.75;         // Broker trail step once locked profit is 2R+
+const double             InpRunnerTrailBarCloseMinStepR = 0.25;   // Minimum locked-R improvement for H1 cadence sends
+const int                InpRunnerBrokerTrailCooldownBars = 1;    // Minimum H1 bars between runner broker trail sends
 
 //--- Group 46: MULTI-STRATEGY ENGINES (regime router + 4 major engines)
 input group "══════ MULTI-STRATEGY ENGINES ══════"
