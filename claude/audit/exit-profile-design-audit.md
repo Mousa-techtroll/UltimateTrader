@@ -82,3 +82,12 @@ future profile edit.
   separate reachability audit + identity test, not a merge.
 - **VOLATILE:** unchanged (research-backed behavioral change if ever revisited).
 - No consolidation commit is produced by this audit.
+
+## 6. Runtime consumption (AUDIT_BUILD, added post-audit)
+Behavior-neutral counters over the full run (see runtime-diagnostics-results.md):
+- Flat TP fallback consumed **0 / 93.8M** (all stamped); flat Chandelier default **1 / 93.8M**; flat BE
+  site **0** (BE-mover off). → **The flat/fallback set is effectively dead** (never the effective value).
+- This SUPERSEDES §3's "flat Chand 3.0 has distinct effective behavior" — it is effective exactly once.
+- Revised recommendation: the flat set is NOT a merge candidate (not a NORMAL duplicate) but IS a
+  **dead-fallback deprecation candidate** — future gated-off-style const-deprecation after a reachability
+  proof + identity battery, NOT a value merge. VOLATILE unchanged (research-backed if revisited).

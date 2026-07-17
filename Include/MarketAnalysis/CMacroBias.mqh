@@ -251,8 +251,12 @@ private:
       ArraySetAsSeries(vix_close, true);
       
       if(CopyClose(m_vix_symbol, PERIOD_H4, 0, 1, vix_close) <= 0)
+      {
+         AUDIT_VIX_STARVED;
          return 0;
-      
+      }
+      AUDIT_VIX_USABLE;
+
       m_macro_data.vix_level = vix_close[0];
       m_macro_data.vix_elevated = (vix_close[0] > m_vix_elevated_level);
       

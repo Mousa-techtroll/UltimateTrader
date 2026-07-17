@@ -1965,6 +1965,12 @@ void OnDeinit(const int reason)
    Print("[AuditCounters] CVolatilityBreakoutEntry checked/regime-compatible/emitted = ",
          g_auditVolBOChecked, "/", g_auditVolBOCompat, "/", g_auditVolBOEmitted,
          "  (compat==0 => unreachable; compat>0 & emitted==0 => historically-inactive)");
+   // Operational diagnostics (flat-fallback / pre-hysteresis chandelier / VIX availability)
+   Print("[AuditDiag] BE trigger flat(InpTrailBETrigger)/stamped = ", g_auditBEFlat, "/", g_auditBEStamped);
+   Print("[AuditDiag] TP1 flat(InpTP1Distance)/stamped = ", g_auditTPFlat, "/", g_auditTPStamped);
+   Print("[AuditDiag] Chandelier live-regime/smoothed/flat-pre-hysteresis = ",
+         g_auditChandLive, "/", g_auditChandSmoothed, "/", g_auditChandFlat);
+   Print("[AuditDiag] VIX usable-bars/data-starved = ", g_auditVixUsable, "/", g_auditVixStarved);
 #endif
 
    // Phase 0.1: Save position state before shutdown

@@ -2405,6 +2405,7 @@ public:
          double tp0_distance = (m_positions[i].exit_tp0_distance > 0.0) ? m_positions[i].exit_tp0_distance : InpTP0Distance;
          double tp0_volume = (m_positions[i].exit_tp0_volume > 0.0) ? m_positions[i].exit_tp0_volume : InpTP0Volume;
          double tp1_distance = (m_positions[i].exit_tp1_distance > 0.0) ? m_positions[i].exit_tp1_distance : InpTP1Distance;
+         AUDIT_TP(m_positions[i].exit_tp1_distance > 0.0);
          double tp1_volume = (m_positions[i].exit_tp1_volume > 0.0) ? m_positions[i].exit_tp1_volume : InpTP1Volume;
          double tp2_distance = (m_positions[i].exit_tp2_distance > 0.0) ? m_positions[i].exit_tp2_distance : InpTP2Distance;
          double tp2_volume = (m_positions[i].exit_tp2_volume > 0.0) ? m_positions[i].exit_tp2_volume : InpTP2Volume;
@@ -3198,6 +3199,7 @@ private:
 
       // Trigger source: per-position regime exit profile, fallback to global input
       double be_trigger = (pos.exit_be_trigger > 0.0) ? pos.exit_be_trigger : InpTrailBETrigger;
+      AUDIT_BE(pos.exit_be_trigger > 0.0);
       if(profit_r_be < be_trigger)
          return false;
 
@@ -3704,10 +3706,13 @@ private:
 
          // Only switch trailing multiplier after 3 bars of consistent regime
          if(m_regime_hold_bars >= 3)
-            live_chand_mult = liveProfile.chandelierMult;
+         {  AUDIT_CHAND_LIVE;
+            live_chand_mult = liveProfile.chandelierMult;  }
          else if(m_smoothed_chand_mult > 0)
-            live_chand_mult = m_smoothed_chand_mult;  // Keep previous
-         // else: use InpTrailChandelierMult default
+         {  AUDIT_CHAND_SMOOTHED;
+            live_chand_mult = m_smoothed_chand_mult;  }  // Keep previous
+         else
+         {  AUDIT_CHAND_FLAT;  }  // use InpTrailChandelierMult default (pre-hysteresis)
 
          m_smoothed_chand_mult = live_chand_mult;
       }
