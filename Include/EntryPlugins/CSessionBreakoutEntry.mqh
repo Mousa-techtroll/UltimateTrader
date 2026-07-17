@@ -52,7 +52,7 @@ private:
    // The composed engine is a LEGACY FIXED BROKER-HOUR session implementation (m_gmt_offset,
    // no DST). These flags let the study DST-correct the two clock consumers independently.
    bool              m_dst_fix_range;          // range-construction clock (UpdateAsianRange)
-   bool              m_dst_fix_breakout;       // breakout-window clock (GetGMTHour @ window check)
+   int               m_breakout_model;         // breakout-window clock: 0=legacy 1=fixedUTC 2=London-local 3=NY-local
 #endif
 
    // Cached Asian range
@@ -101,7 +101,7 @@ public:
       m_gmt_offset = gmt_offset;
 #ifdef RESEARCH_SESSION
       m_dst_fix_range = false;      // RESEARCH default = legacy fixed broker-hour
-      m_dst_fix_breakout = false;   // RESEARCH default = legacy fixed broker-hour
+      m_breakout_model = 0;         // RESEARCH default = legacy fixed broker-hour
 #endif
       m_timeframe = tf;
       m_handle_atr = INVALID_HANDLE;
@@ -128,7 +128,8 @@ public:
 #ifdef RESEARCH_SESSION
    // RESEARCH: arm the 2x2 session-clock decomposition (production-inert).
    void SetDSTFixRange(bool v)    { m_dst_fix_range = v; }
-   void SetDSTFixBreakout(bool v) { m_dst_fix_breakout = v; }
+   void SetBreakoutModel(int m)   { m_breakout_model = m; }          // 0=legacy 1=fixedUTC 2=London-local 3=NY-local
+   void SetDSTFixBreakout(bool v) { m_breakout_model = (v ? 1 : 0); }// back-compat: old bool ⇒ fixed-UTC
 #endif
 
    //+------------------------------------------------------------------+
@@ -236,7 +237,25 @@ private:
       TimeToStruct(server_time, dt);
 #ifdef RESEARCH_SESSION
       // RESEARCH breakout-window clock: DST-correct only when the breakout flag is armed.
-      int off = m_dst_fix_breakout ? CTimeOffset::BrokerGMTOffset(server_time) : m_gmt_offset;
+      // RESEARCH breakout-window clock model:
+      //   0=legacy broker-hour · 1=fixed-UTC · 2=London-local (UK-DST) · 3=New-York-local (US-DST)
+      int off;
+      if(m_breakout_model == 1)                                            // fixed UTC
+         off = CTimeOffset::BrokerGMTOffset(server_time);
+      else if(m_breakout_model == 2)                                       // London-local (UK-DST)
+      {
+         int bo = CTimeOffset::BrokerGMTOffset(server_time);
+         datetime utc = (datetime)(server_time - bo*3600);
+         off = bo - (CTimeOffset::IsUkDst(utc) ? 1 : 0);                   // London = UTC + (1 if UK-summer)
+      }
+      else if(m_breakout_model == 3)                                       // New-York-local (US-DST)
+      {
+         int bo = CTimeOffset::BrokerGMTOffset(server_time);
+         datetime utc = (datetime)(server_time - bo*3600);
+         off = bo - (-5 + (CTimeOffset::IsUsDst(utc) ? 1 : 0));            // NY = UTC-5 winter / UTC-4 summer
+      }
+      else                                                                 // 0 = legacy fixed broker-hour
+         off = m_gmt_offset;
       int hour = dt.hour - off;
 #else
       int hour = dt.hour - m_gmt_offset;

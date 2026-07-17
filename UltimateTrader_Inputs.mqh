@@ -112,7 +112,15 @@ input bool   InpTesterDSTFix = true;         // DST-1: tester DST offset fix (tr
 // composed CSessionBreakoutEntry stays a legacy fixed broker-hour clock. Both default false =
 // legacy. Toggle independently to build the four arms (range-clock x breakout-clock).
 input bool   InpResSessRangeDST    = false;  // RESEARCH: DST-correct the Asian RANGE-construction clock
-input bool   InpResSessBreakoutDST = false;  // RESEARCH: DST-correct the BREAKOUT-window clock
+input bool   InpResSessBreakoutDST = false;  // RESEARCH: BREAKOUT-window clock -> fixed-UTC (back-compat; =model 1)
+// Timing-semantics comparison: breakout-window clock model (Asian range stays legacy throughout).
+//   0=legacy broker-hour · 1=fixed-UTC · 2=London-local (UK-DST) · 3=New-York-local (US-DST)
+input int    InpResSessBreakoutModel = 0;    // RESEARCH: breakout-window clock model (0 ⇒ fall back to *DST bool)
+// Sizing-mode validation (isolate compounding / lot-quantization). 0=%-of-balance (default, identity).
+//   1=fixed lot (InpResFixedLot) · 2=fixed $ risk (InpResFixedDollar)
+input int    InpResSizeMode    = 0;          // RESEARCH: 0=percent 1=fixed-lot 2=fixed-$risk
+input double InpResFixedLot     = 0.05;      // RESEARCH: lots when InpResSizeMode=1
+input double InpResFixedDollar  = 200.0;     // RESEARCH: $ risk/trade when InpResSizeMode=2
 #endif
 
 //--- Group 3: SHORT PROTECTION

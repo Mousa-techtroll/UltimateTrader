@@ -144,7 +144,7 @@ are **not** random. But decomposing the GH deltas the same way separates *what* 
 Two distinct robustness verdicts fall out:
 - **The session strategy's *own* directional response IS feed-robust.** Breakout-DST helps the session
   book on both feeds (+$92 / +$533); range-DST zeroes it out (0 fills) on both. Firing the breakout at
-  the *true* London/NY open (svr 10/11, 15/16) rather than the premature legacy svr-08/13 is the mildly
+  a *fixed-UTC* clock (svr 10/11, 15/16) rather than the legacy fixed broker-hour svr-08/13 is the mildly
   better design — consistently.
 - **The headline total-P&L magnitude is NOT feed-robust.** The portfolio ripple that made the primary
   feed's B look like +$2.4k (ripple +$2,291) is only +$243 on GH — a ~9× collapse. The multi-thousand
@@ -164,7 +164,7 @@ Two distinct robustness verdicts fall out:
    +$2.4k of primary-B is **~96% portfolio-coupling ripple** (460 unrelated trades' exits) that shrinks
    9× on the second feed.
 3. **Do NOT conclude any window is "more profitable" in a bankable sense.** The supportable statement is
-   directional and small: *the legacy breakout window fires ~2–3h before the true London/NY open and is
+   directional and small: *the legacy breakout window fires ~2–3h before the fixed-UTC window and is
    mildly suboptimal; the legacy Asian range is correct and must NOT be DST-shifted.* This is a
    correctness nuance, not an edge — the 9–16-fill sample and the non-robust ripple forbid an edge claim.
 4. **If the composed clock is ever revisited (a future, separate decision):** the *only* supported

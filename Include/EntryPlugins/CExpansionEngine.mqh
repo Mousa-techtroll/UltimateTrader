@@ -390,7 +390,10 @@ public:
          // arm the two independent DST-correction flags from the research inputs. Production
          // never compiles this — the composed engine stays a legacy fixed broker-hour clock.
          m_session_breakout.SetDSTFixRange(InpResSessRangeDST);
-         m_session_breakout.SetDSTFixBreakout(InpResSessBreakoutDST);
+         // breakout-window clock model: explicit model wins; else fall back to the legacy DST bool.
+         int bmodel = InpResSessBreakoutModel;
+         if(bmodel == 0 && InpResSessBreakoutDST) bmodel = 1;   // back-compat: bool ⇒ fixed-UTC
+         m_session_breakout.SetBreakoutModel(bmodel);
 #endif
          if(!m_session_breakout.Initialize())
          {

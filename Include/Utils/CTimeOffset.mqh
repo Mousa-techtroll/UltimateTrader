@@ -49,6 +49,28 @@ public:
    }
 
    //+------------------------------------------------------------------+
+   //| UK/Europe DST membership of a UTC instant (for London-local       |
+   //| session semantics research): last Sunday March 01:00 UTC →        |
+   //| last Sunday October 01:00 UTC. London = UTC+0 winter / +1 summer. |
+   //| Differs from US-DST in the March (US springs first) and late-Oct  |
+   //| (UK falls back first) MISMATCH weeks.                             |
+   //+------------------------------------------------------------------+
+   static bool IsUkDst(datetime utc_time)
+   {
+      MqlDateTime dt;
+      TimeToStruct(utc_time, dt);
+      if(dt.mon < 3 || dt.mon > 10)  return false;
+      if(dt.mon > 3 && dt.mon < 10)  return true;
+      if(dt.mon == 3)
+      {
+         datetime start = LastSundayUtc(dt.year, 3) + 1*3600;   // 01:00 UTC
+         return (utc_time >= start);
+      }
+      datetime end = LastSundayUtc(dt.year, 10) + 1*3600;       // 01:00 UTC
+      return (utc_time < end);
+   }
+
+   //+------------------------------------------------------------------+
    //| Broker GMT offset (hours) for a broker/server timestamp:          |
    //|   +3 during US DST (summer), +2 otherwise (winter).               |
    //| This is the DST-aware replacement for the fixed +3 tester         |
@@ -83,6 +105,21 @@ private:
       TimeToStruct(first, dt);                       // fills day_of_week
       int first_sunday = 1 + ((7 - dt.day_of_week) % 7);
       return first + (first_sunday - 1 + 7 * (nth - 1)) * 86400;
+   }
+
+   //+------------------------------------------------------------------+
+   //| Last Sunday of a month, 00:00 UTC (for UK/EU DST boundaries).     |
+   //+------------------------------------------------------------------+
+   static datetime LastSundayUtc(int year, int month)
+   {
+      MqlDateTime dt;
+      dt.year = (month == 12) ? year + 1 : year;
+      dt.mon  = (month == 12) ? 1 : month + 1;
+      dt.day  = 1; dt.hour = 0; dt.min = 0; dt.sec = 0;
+      datetime first_next = StructToTime(dt);
+      datetime last_day   = first_next - 86400;      // last day of `month`
+      TimeToStruct(last_day, dt);                    // fills day_of_week (0=Sun)
+      return last_day - dt.day_of_week * 86400;      // step back to Sunday
    }
 };
 

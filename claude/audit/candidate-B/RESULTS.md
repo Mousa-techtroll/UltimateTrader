@@ -87,7 +87,8 @@ the direct session edge is +$92; the headline +$2.4k is intended-but-path-depend
 that is 9× smaller cross-feed, negative in 2026H1, and bought with a worse recovery factor.
 
 **→ Do NOT merge to production on backtest evidence. INCONCLUSIVE → forward-validation candidate.**
-The correctness core (breakout window fires at the *true* London/NY open, svr 10/11 & 15/16, instead of
-the premature legacy svr-08/13) is directionally sound and defensible to carry into shadow/forward
+The correctness core (breakout window fires on a **fixed-UTC** clock — svr 10/11 & 15/16 — instead of
+the legacy fixed broker-hour svr-08/13; NOT proven to be the *session-local* London/NY open, which
+requires the timing-semantics test) is directionally sound and defensible to carry into shadow/forward
 validation at production risk — but the +$2.4k must not be booked as a repeatable edge. Production stays
 `baseline-input-cleanup-388`. Range-DST (Arm C) and full-DST (Arm 1/D) remain rejected.
