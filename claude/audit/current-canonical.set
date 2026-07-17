@@ -362,6 +362,7 @@ InpTP1Volume=40.0
 InpTP2Distance=1.8
 InpTP2Volume=30.0
 InpTesterDSTFix=true
+InpSessionBreakoutDST=true
 InpTradeAsia=true
 InpTradeLondon=true
 InpTradeNY=true

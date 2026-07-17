@@ -12,9 +12,7 @@
 #include "../PluginSystem/IMarketContext.mqh"
 #include "../Common/Enums.mqh"
 #include "../Common/Structs.mqh"
-#ifdef RESEARCH_SESSION
-#include "../Utils/CTimeOffset.mqh"   // RESEARCH: DST-aware broker offset for the 2x2 clock decomposition
-#endif
+#include "../Utils/CTimeOffset.mqh"   // ADOPTED candidate-B: DST-aware breakout-window clock (fixed-UTC)
 
 //+------------------------------------------------------------------+
 //| CSessionBreakoutEntry - Session-based breakout entries            |
@@ -46,14 +44,12 @@ private:
    double            m_min_range_atr;          // Min Asian range as ATR multiple (filter tiny ranges)
    double            m_max_range_atr;          // Max Asian range as ATR multiple (filter too wide)
    ENUM_TIMEFRAMES   m_timeframe;
-   int               m_gmt_offset;             // Broker GMT offset (hours)
-#ifdef RESEARCH_SESSION
-   // RESEARCH (session-clock 2x2 decomposition; production-inert unless RESEARCH_SESSION).
-   // The composed engine is a LEGACY FIXED BROKER-HOUR session implementation (m_gmt_offset,
-   // no DST). These flags let the study DST-correct the two clock consumers independently.
-   bool              m_dst_fix_range;          // range-construction clock (UpdateAsianRange)
-   int               m_breakout_model;         // breakout-window clock: 0=legacy 1=fixedUTC 2=London-local 3=NY-local
-#endif
+   int               m_gmt_offset;             // Broker GMT offset (hours) — RANGE clock (legacy raw-server)
+   // ADOPTED candidate-session-breakout-dst-only-B (2026-07-18): the BREAKOUT-window clock is DST-aware
+   // (fixed-UTC), resolved like CSessionEngine. The Asian RANGE clock stays legacy raw-server (m_gmt_offset).
+   // Gated by InpTesterDSTFix: true ⇒ fixed-UTC breakout (new baseline $34,858.89); false ⇒ legacy A.
+   int               m_bo_gmt_offset;          // breakout-window clock offset (live: auto-detected)
+   bool              m_tester_dst_fix;         // tester: per-bar CTimeOffset::BrokerGMTOffset for the breakout clock
 
    // Cached Asian range
    double            m_asian_high;
@@ -99,10 +95,8 @@ public:
       m_min_range_atr = min_range;
       m_max_range_atr = max_range;
       m_gmt_offset = gmt_offset;
-#ifdef RESEARCH_SESSION
-      m_dst_fix_range = false;      // RESEARCH default = legacy fixed broker-hour
-      m_breakout_model = 0;         // RESEARCH default = legacy fixed broker-hour
-#endif
+      m_bo_gmt_offset = gmt_offset;
+      m_tester_dst_fix = false;
       m_timeframe = tf;
       m_handle_atr = INVALID_HANDLE;
 
@@ -125,12 +119,6 @@ public:
    // Phase 6.9 Entry-SessionBO-1: GMT-offset injection from the EA (single source of
    // truth — InpBrokerGMTOffset). Do NOT add in-plugin TimeGMT auto-detect (stok-binding).
    void SetGMTOffset(int gmt_offset) { m_gmt_offset = gmt_offset; }
-#ifdef RESEARCH_SESSION
-   // RESEARCH: arm the 2x2 session-clock decomposition (production-inert).
-   void SetDSTFixRange(bool v)    { m_dst_fix_range = v; }
-   void SetBreakoutModel(int m)   { m_breakout_model = m; }          // 0=legacy 1=fixedUTC 2=London-local 3=NY-local
-   void SetDSTFixBreakout(bool v) { m_breakout_model = (v ? 1 : 0); }// back-compat: old bool ⇒ fixed-UTC
-#endif
 
    //+------------------------------------------------------------------+
    //| Initialize                                                        |
@@ -147,6 +135,24 @@ public:
       }
 
       m_isInitialized = true;
+
+      // ADOPTED candidate-B (InpSessionBreakoutDST): resolve the BREAKOUT-window clock offset (mirrors
+      // CSessionEngine::init). Live: auto-detect broker GMT offset (TimeCurrent-TimeGMT). Tester (offset
+      // unreliable) + InpTesterDSTFix: per-bar DST-aware via CTimeOffset (fixed-UTC = new baseline).
+      // InpSessionBreakoutDST=false leaves the breakout clock on raw-server ⇒ EXACT legacy A ($32,503.03).
+      // The Asian RANGE clock (m_gmt_offset) is untouched throughout.
+      if(InpSessionBreakoutDST)
+      {
+         long bo_off_sec = (long)(TimeCurrent() - TimeGMT());
+         m_bo_gmt_offset = (int)(bo_off_sec / 3600);
+         if(m_bo_gmt_offset == 0 && (bool)MQLInfoInteger(MQL_TESTER) && InpTesterDSTFix)
+         {
+            m_tester_dst_fix = true;                                        // per-bar CTimeOffset (fixed-UTC = B)
+            m_bo_gmt_offset  = CTimeOffset::BrokerGMTOffset(TimeCurrent()); // seed for the init log only
+         }
+      }
+      // else: m_bo_gmt_offset stays 0, m_tester_dst_fix stays false ⇒ legacy raw-server composed breakout (A)
+
       Print("CSessionBreakoutEntry initialized on ", _Symbol, " ", EnumToString(m_timeframe),
             " | Asian=", m_asian_start_hour, "-", m_asian_end_hour,
             " London=", m_london_open_start, "-", m_london_open_end,
@@ -235,31 +241,10 @@ private:
    {
       MqlDateTime dt;
       TimeToStruct(server_time, dt);
-#ifdef RESEARCH_SESSION
-      // RESEARCH breakout-window clock: DST-correct only when the breakout flag is armed.
-      // RESEARCH breakout-window clock model:
-      //   0=legacy broker-hour · 1=fixed-UTC · 2=London-local (UK-DST) · 3=New-York-local (US-DST)
-      int off;
-      if(m_breakout_model == 1)                                            // fixed UTC
-         off = CTimeOffset::BrokerGMTOffset(server_time);
-      else if(m_breakout_model == 2)                                       // London-local (UK-DST)
-      {
-         int bo = CTimeOffset::BrokerGMTOffset(server_time);
-         datetime utc = (datetime)(server_time - bo*3600);
-         off = bo - (CTimeOffset::IsUkDst(utc) ? 1 : 0);                   // London = UTC + (1 if UK-summer)
-      }
-      else if(m_breakout_model == 3)                                       // New-York-local (US-DST)
-      {
-         int bo = CTimeOffset::BrokerGMTOffset(server_time);
-         datetime utc = (datetime)(server_time - bo*3600);
-         off = bo - (-5 + (CTimeOffset::IsUsDst(utc) ? 1 : 0));            // NY = UTC-5 winter / UTC-4 summer
-      }
-      else                                                                 // 0 = legacy fixed broker-hour
-         off = m_gmt_offset;
+      // Breakout-window clock (ADOPTED candidate-B fixed-UTC): DST-aware via CTimeOffset in the tester,
+      // or the resolved live offset. The Asian RANGE clock (freeze gate + bar loop) stays raw-server.
+      int off = m_tester_dst_fix ? CTimeOffset::BrokerGMTOffset(server_time) : m_bo_gmt_offset;
       int hour = dt.hour - off;
-#else
-      int hour = dt.hour - m_gmt_offset;
-#endif
 
       // Normalize to 0-23
       if(hour < 0) hour += 24;
@@ -281,17 +266,14 @@ private:
       dt.sec = 0;
       datetime today_start = StructToTime(dt);
 
-      // Determine current GMT hour to check if Asian session is still open
-#ifdef RESEARCH_SESSION
-      // RESEARCH range-construction clock (freeze gate): independent of the breakout flag.
-      int r_off = m_dst_fix_range ? CTimeOffset::BrokerGMTOffset(today) : m_gmt_offset;
-      MqlDateTime rdt; TimeToStruct(today, rdt);
-      int gmt_hour = rdt.hour - r_off;
-      if(gmt_hour < 0) gmt_hour += 24;
+      // Determine current GMT hour to check if Asian session is still open.
+      // RANGE-construction freeze gate: legacy raw-server clock (m_gmt_offset) — candidate-B changes ONLY
+      // the breakout window, never the Asian range. (GetGMTHour is now the DST-aware breakout clock.)
+      MqlDateTime rdt;
+      TimeToStruct(today, rdt);
+      int gmt_hour = rdt.hour - m_gmt_offset;
+      if(gmt_hour < 0)  gmt_hour += 24;
       if(gmt_hour >= 24) gmt_hour -= 24;
-#else
-      int gmt_hour = GetGMTHour(today);
-#endif
 
       // During Asian session hours, recalculate on every call (new bar)
       // After Asian close (>= m_asian_end_hour), freeze the range for the day
@@ -320,13 +302,7 @@ private:
       {
          MqlDateTime bar_dt;
          TimeToStruct(time[i], bar_dt);
-#ifdef RESEARCH_SESSION
-         // RESEARCH range-construction clock (per-bar Asian classification).
-         int bar_off = m_dst_fix_range ? CTimeOffset::BrokerGMTOffset(time[i]) : m_gmt_offset;
-         int bar_gmt_hour = bar_dt.hour - bar_off;
-#else
          int bar_gmt_hour = bar_dt.hour - m_gmt_offset;
-#endif
          if(bar_gmt_hour < 0) bar_gmt_hour += 24;
          if(bar_gmt_hour >= 24) bar_gmt_hour -= 24;
 

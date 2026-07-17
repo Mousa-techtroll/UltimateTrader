@@ -8,6 +8,7 @@
 #property description "Merged EA: Stack17 trading intelligence + AICoder V1 infrastructure"
 #property strict
 
+
 //+------------------------------------------------------------------+
 //| Includes                                                          |
 //+------------------------------------------------------------------+
@@ -942,6 +943,7 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpTP2Distance",DoubleToString(InpTP2Distance,6),"double",acc);
    CfgRow(h,"InpTP2Volume",DoubleToString(InpTP2Volume,6),"double",acc);
    CfgRow(h,"InpTesterDSTFix",(InpTesterDSTFix?"true":"false"),"bool",acc);
+   CfgRow(h,"InpSessionBreakoutDST",(InpSessionBreakoutDST?"true":"false"),"bool",acc);
    CfgRow(h,"InpTradeAsia",(InpTradeAsia?"true":"false"),"bool",acc);
    CfgRow(h,"InpTradeLondon",(InpTradeLondon?"true":"false"),"bool",acc);
    CfgRow(h,"InpTradeNY",(InpTradeNY?"true":"false"),"bool",acc);

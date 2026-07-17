@@ -385,16 +385,6 @@ public:
       if(m_session_breakout != NULL)
       {
          m_session_breakout.SetContext(m_context);
-#ifdef RESEARCH_SESSION
-         // RESEARCH (session-clock 2x2 decomposition; production-inert unless RESEARCH_SESSION):
-         // arm the two independent DST-correction flags from the research inputs. Production
-         // never compiles this — the composed engine stays a legacy fixed broker-hour clock.
-         m_session_breakout.SetDSTFixRange(InpResSessRangeDST);
-         // breakout-window clock model: explicit model wins; else fall back to the legacy DST bool.
-         int bmodel = InpResSessBreakoutModel;
-         if(bmodel == 0 && InpResSessBreakoutDST) bmodel = 1;   // back-compat: bool ⇒ fixed-UTC
-         m_session_breakout.SetBreakoutModel(bmodel);
-#endif
          if(!m_session_breakout.Initialize())
          {
             Print("CExpansionEngine: WARN composed Session-BO init failed: ",

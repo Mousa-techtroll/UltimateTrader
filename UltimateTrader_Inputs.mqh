@@ -105,23 +105,11 @@ input group "══════ DST / TIMEZONE CORRECTION ══════"
 //    reproduces the frozen $23,856.89 baseline exactly.
 //  The LIVE auto-detected path (TimeCurrent()-TimeGMT()) is NEVER affected by this flag.
 input bool   InpTesterDSTFix = true;         // DST-1: tester DST offset fix (true=US-DST corrected, false=legacy fixed+3)
-
-#ifdef RESEARCH_SESSION
-// RESEARCH ONLY (session-clock 2x2 decomposition) — these inputs exist ONLY in a build compiled
-// with `#define RESEARCH_SESSION`. The production 388-input surface does NOT contain them; the
-// composed CSessionBreakoutEntry stays a legacy fixed broker-hour clock. Both default false =
-// legacy. Toggle independently to build the four arms (range-clock x breakout-clock).
-input bool   InpResSessRangeDST    = false;  // RESEARCH: DST-correct the Asian RANGE-construction clock
-input bool   InpResSessBreakoutDST = false;  // RESEARCH: BREAKOUT-window clock -> fixed-UTC (back-compat; =model 1)
-// Timing-semantics comparison: breakout-window clock model (Asian range stays legacy throughout).
-//   0=legacy broker-hour · 1=fixed-UTC · 2=London-local (UK-DST) · 3=New-York-local (US-DST)
-input int    InpResSessBreakoutModel = 0;    // RESEARCH: breakout-window clock model (0 ⇒ fall back to *DST bool)
-// Sizing-mode validation (isolate compounding / lot-quantization). 0=%-of-balance (default, identity).
-//   1=fixed lot (InpResFixedLot) · 2=fixed $ risk (InpResFixedDollar)
-input int    InpResSizeMode    = 0;          // RESEARCH: 0=percent 1=fixed-lot 2=fixed-$risk
-input double InpResFixedLot     = 0.05;      // RESEARCH: lots when InpResSizeMode=1
-input double InpResFixedDollar  = 200.0;     // RESEARCH: $ risk/trade when InpResSizeMode=2
-#endif
+// ADOPTED 2026-07-18 (candidate-session-breakout-dst-only-B): DST-correct the composed
+// CSessionBreakoutEntry BREAKOUT-window clock (fixed-UTC). true = new binding baseline $34,858.89;
+// false = legacy raw-server composed breakout = prior baseline $32,503.03 (clean kill-switch).
+// The Asian RANGE clock is NOT affected (range-DST was rejected).
+input bool   InpSessionBreakoutDST = true;   // composed breakout-window DST-correct (fixed-UTC); false=legacy A
 
 //--- Group 3: SHORT PROTECTION
 input group "══════ SHORT PROTECTION ══════"

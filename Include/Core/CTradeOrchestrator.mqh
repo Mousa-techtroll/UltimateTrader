@@ -770,25 +770,6 @@ public:
       LogPrint("SL: ", DoubleToString(sl, (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS)));
       LogPrint("TP1: ", DoubleToString(tp1, (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS)));
       LogPrint("TP2: ", DoubleToString(tp2, (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS)));
-#ifdef RESEARCH_SESSION
-      // RESEARCH sizing-mode override (validation of the frozen logic under fixed lot / fixed $ risk).
-      // Single final chokepoint — after all rescales. Default InpResSizeMode=0 ⇒ passthrough ⇒ identity.
-      if(InpResSizeMode == 1)                                   // fixed lot
-      {
-         double rl = NormalizeLots(InpResFixedLot, trade_symbol);
-         if(rl > 0) lot_size = rl;
-      }
-      else if(InpResSizeMode == 2 && risk_distance > 0)         // fixed $ risk
-      {
-         double rtv = SymbolInfoDouble(trade_symbol, SYMBOL_TRADE_TICK_VALUE);
-         double rts = SymbolInfoDouble(trade_symbol, SYMBOL_TRADE_TICK_SIZE);
-         if(rtv > 0 && rts > 0)
-         {
-            double rl = NormalizeLots(InpResFixedDollar / ((risk_distance/rts)*rtv), trade_symbol);
-            if(rl > 0) lot_size = rl;
-         }
-      }
-#endif
       LogPrint("Lot Size: ", DoubleToString(lot_size, 2));
       LogPrint("Risk: ", DoubleToString(risk_pct, 2), "%");
       LogPrint("========================================");
