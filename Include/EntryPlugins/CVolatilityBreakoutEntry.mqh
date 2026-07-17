@@ -10,6 +10,7 @@
 #include "../PluginSystem/CEntryStrategy.mqh"
 #include "../PluginSystem/IMarketContext.mqh"
 #include "../Common/Enums.mqh"
+#include "../Common/AuditCounters.mqh"
 #include "../Common/Structs.mqh"
 
 //+------------------------------------------------------------------+
@@ -164,6 +165,7 @@ public:
 
       if(!m_isInitialized)
          return signal;
+      AUDIT_VOLBO_CHECK;
 
       // Regime filter
       if(m_context != NULL)
@@ -172,6 +174,7 @@ public:
          if(!IsCompatibleWithRegime(regime))
             return signal;
       }
+      AUDIT_VOLBO_COMPAT;
 
       // ADX filter from context
       double adx_current = 0;

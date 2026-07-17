@@ -14,6 +14,7 @@
 
 // Common
 #include "Include/Common/Enums.mqh"
+#include "Include/Common/AuditCounters.mqh"
 #include "Include/Common/Structs.mqh"
 #include "Include/Common/Utils.mqh"
 #include "Include/Utils/CTimeOffset.mqh"   // DST-1: single authoritative US-DST broker-offset resolver
@@ -1967,7 +1968,9 @@ int OnInit()
    // P0.5: runtime capability manifest — decision-free, emitted after ALL
    // registration completes (journal block + UltTrader_Manifest_<symbol>.csv).
    EmitCapabilityManifest();
-   EmitEffectiveConfigManifest();  // AUDIT: decision-free effective-config dump + hash
+#ifdef AUDIT_BUILD
+   EmitEffectiveConfigManifest();  // AUDIT-ONLY: effective-config dump + hash (compile with AUDIT_BUILD; guarded out of production)
+#endif
 
    return(INIT_SUCCEEDED);
 }
@@ -1978,6 +1981,17 @@ int OnInit()
 void OnDeinit(const int reason)
 {
    Print("[Deinit] UltimateTrader EA shutting down. Reason: ", reason);
+
+#ifdef AUDIT_BUILD
+   // Runtime call-counter evidence (reachability): tier returns + vol-breakout engine calls
+   Print("[AuditCounters] CSetupEvaluator tier returns A+/A/B+/B/NONE = ",
+         g_auditTierReturned[0], "/", g_auditTierReturned[1], "/", g_auditTierReturned[2],
+         "/", g_auditTierReturned[3], "/", g_auditTierReturned[4],
+         "  (B==0 confirms SETUP_B unreachable)");
+   Print("[AuditCounters] CVolatilityBreakoutEntry checked/regime-compatible/emitted = ",
+         g_auditVolBOChecked, "/", g_auditVolBOCompat, "/", g_auditVolBOEmitted,
+         "  (compat==0 => unreachable; compat>0 & emitted==0 => historically-inactive)");
+#endif
 
    // Phase 0.1: Save position state before shutdown
    if(g_posCoordinator != NULL)

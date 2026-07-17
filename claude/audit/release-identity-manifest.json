@@ -1,0 +1,45 @@
+{
+ "schema": "ultimatetrader-release-identity-v3-layered",
+ "authoritative_identity": "SHA-256 over canonical name\\ttype\\tvalue serialization (sorted by name)",
+ "config_sha256": "e6c7a2169c757833f833ea5f3d26a8f4ef5e7aa5d8aaa9c64c5746e9f27bb9cb",
+ "config_fnv1a32_journal": "12BA6E3E  (fast journal checksum only \u2014 NOT authoritative)",
+ "components": {
+  "source_commit_HEAD": "568189214d2cdf249e547f57b608cd182ad1b3cc",
+  "release_source_commit": "eee95ed (release-ultimate-gold-v1-32490)",
+  "ex5_md5": "8992dbdbdf4a4b558dadf735741438c6",
+  "ex5_sha256": "f756e8e659fbbd67981496b648616206",
+  "release_ex5_md5": "7a10211eece460922be11ff4ca718499",
+  "set_sha256_current_canonical": "bd2898abb3f4159981ba853f14f5b4c17806cf986cc155018934dc5a2d18ae00",
+  "set_md5_risk_R90_ini": "cebf95788d43fbb3936b4fd9ce02659c",
+  "symbol_profile_sha256": "7d3d98103c5dad9701c751895b326ef0c8f6691a8722732f1afb2538eb2448a5",
+  "tester_settings_sha256": "c757eb680866e9b84531c598cac8df86d1de5f26541788383caf736239061556",
+  "data_hash": "XAUUSD+ H1 Model-4 2019.01.01\u20132026.06.27 Vantage feed; tick cache is broker-managed and not content-addressable from the toolchain \u2014 tick-invariance is instead evidenced by the REL==ARC forensic diff (same binary/config, current ticks).",
+  "tick_data_sha256": "ffebf6f8c6276b3083c44541edf9f892b3ebd9957ce2554efb7d0ae3f8b40fbb",
+  "tick_data_note": "SHA-256 over all 10 XAUUSD+ real-tick cache files (.hcc) concatenated sorted. 2017-2025 frozen 2026-06-26; 2026.hcc revised 2026-07-17 (the sole post-release change \u2192 the $12.70). Read-only during the runs (back-to-back, same cache).",
+  "symbol_spec_sha256": "symbols.sel not exportable from toolchain; symbol = XAUUSD+ Vantage (Digits=2, ContractSize=100, TickValue per broker); spec pinned by broker server VantageMarkets-Live",
+  "ex5_note": "DEPLOYED production binary (AUDIT_BUILD undefined; config-manifest emitter compiled OUT). NOTE: MQL5 .ex5 embeds a compile timestamp \u2192 the hash pins THIS artifact, not a reproducible build; the reproducible behavioral invariant is Stats-CSV md5 96415ff0."
+ },
+ "note": "FNV-1a32 retained only as an optional fast journal checksum; SHA-256 config_sha256 is the authoritative release identity.",
+ "layered_config_hashes": {
+  "config_raw_sha256": "e6c7a2169c757833f833ea5f3d26a8f4ef5e7aa5d8aaa9c64c5746e9f27bb9cb",
+  "config_raw_note": "SHA-256 over sorted raw input name\\ttype\\tvalue (the 414 declared inputs as loaded). AUTHORITATIVE.",
+  "config_init_effective_sha256": "e6c7a2169c757833f833ea5f3d26a8f4ef5e7aa5d8aaa9c64c5746e9f27bb9cb",
+  "config_init_effective_note": "On the gold profile the init-effective DISCRETE config == raw: all 10 ApplySymbolProfile overrides resolve 1:1 (verified; g_profileShortRiskMultiplier=InpShortRiskMultiplier=1.0). The 5 point-scaled inputs (InpMinSLPoints/InpMinTrailMovement/InpTrailMinProfit/InpTrailBEOffset/InpBOEntryBuffer) are runtime price-scaled (\u00d7g_pointScale) \u2014 documented as per-input effective_formula, not discrete pins. So init-effective discrete hash == raw hash; dynamic scaling is formula-captured."
+ },
+ "forensic_gate": {
+  "tick_dataset": "one shared read-only tick cache (hashed above), identical terminal build + tester settings + symbol spec across all runs",
+  "cond1_release_vs_current_binary": "PASS \u2014 REL(7a10211e) == ARC(a71b3ce0) trade-identical: Stats md5 96415ff0, TradeEvents md5 9c08bcfa, 0 differing rows",
+  "cond2_historical_vs_414pin_config": "PASS \u2014 REC(414-pin) == ARC(risk_R90.ini) trade-identical: same md5s, 0 differing rows",
+  "cond3_audit_vs_production_binary": "PASS \u2014 PRODB == AUDITB trade-identical (Stats md5 96415ff0 == baseline); PRODB emits 0 [EffCfg] (config not exposed in production)",
+  "cond4_all_dimensions_reconcile_414": "PASS \u2014 8/8 dimensions total 414",
+  "cond5_manifest_identifies_hashes": "PASS \u2014 binary/set/source/data/tester hashes recorded (this file)",
+  "twelve_seventy_explanation": "NOT tick-backfill-by-assertion: REL==ARC==REC byte-identical (not binary/config/source); 2026.hcc is the SOLE tick file modified after the release (2026-07-17 vs 2026-06-26 freeze on 2019-2025) \u2192 the delta is the broker's 2026 current-year tick revision. Release-era 2026 ticks were overwritten (literal trade-diff vs release impossible); tick_data_sha256 pins the set going forward.",
+  "56_pin_verification": "all 56 previously-unpinned inputs: runtime-loaded value == compiled default, verified (not assumed); current-canonical.set now sources them from runtime, not declarations",
+  "reachability_call_counters": {
+   "CSetupEvaluator_tier_returns_APlus_A_BPlus_B_NONE": "924/483/232/0/358 \u2192 SETUP_B UNREACHABLE (0 scorer returns)",
+   "CVolatilityBreakoutEntry_checked_compat_emitted": "42161/5186/0 \u2192 HISTORICALLY-INACTIVE (VOLATILE regime occurred 5186x, engine called, 0 emissions \u2014 breakout trigger never fires; NOT unreachable-by-regime as the source comment implied)"
+  },
+  "verdict": "ALL 5 CONDITIONS PASS \u2014 cleanup gate is OPEN (deprecate/merge/rename/value-change now permitted, per-subcategory with identity re-test)"
+ },
+ "release_manifest_sha256": "(computed over this file after write \u2014 see manifest.sha256 sidecar)"
+}

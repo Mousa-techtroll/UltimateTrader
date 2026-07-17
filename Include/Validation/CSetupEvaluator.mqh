@@ -10,6 +10,7 @@
 #property strict
 
 #include "../Common/Enums.mqh"
+#include "../Common/AuditCounters.mqh"
 #include "../Common/Structs.mqh"
 #include "../Common/Utils.mqh"
 #include "../MarketAnalysis/IMarketContext.mqh"
@@ -326,11 +327,12 @@ public:
          points = 10;
 
       // Determine quality tier
-      if(points >= m_points_aplus) return SETUP_A_PLUS;
-      if(points >= m_points_a) return SETUP_A;
-      if(points >= m_points_bplus) return SETUP_B_PLUS;
-      if(points >= m_points_b) return SETUP_B;
+      if(points >= m_points_aplus) { AUDIT_TIER(0); return SETUP_A_PLUS; }
+      if(points >= m_points_a)     { AUDIT_TIER(1); return SETUP_A; }
+      if(points >= m_points_bplus) { AUDIT_TIER(2); return SETUP_B_PLUS; }
+      if(points >= m_points_b)     { AUDIT_TIER(3); return SETUP_B; }
 
+      AUDIT_TIER(4);
       return SETUP_NONE;
    }
 

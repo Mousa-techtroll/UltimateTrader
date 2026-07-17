@@ -3,7 +3,7 @@
  "config_of_record_md5": "cebf95788d43fbb3936b4fd9ce02659c",
  "release_tag": "release-ultimate-gold-v1-32490",
  "release_manifest": "docs/RELEASE-ultimate-gold-v1.md",
- "runtime_config_hash_fnv1a32": "12BA6E3E",
+ "runtime_config_hash_fnv1a32": "12BA6E3E (journal-only, non-authoritative)",
  "runtime_baseline_HEAD": {
   "net_profit": 32503.03,
   "positions": 865,
@@ -709,7 +709,10 @@
    "runtime_value": "2.000000",
    "effective_value": "= runtime (2.0)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpCrashATRMult \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpCrashFreshDCBars",
@@ -764,7 +767,10 @@
    "runtime_value": "1.500000",
    "effective_value": "= runtime (1.5)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpCrashSLATRMult \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpCrashTPExtension",
@@ -808,7 +814,10 @@
    "runtime_value": "1.800000",
    "effective_value": "= runtime (1.8, raised from 1.5)",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted"
+   "validation": "Evidence-backed-adopted",
+   "effective_formula": "InpDisplacementATRMult \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpEnableDisplacementEntry",
@@ -951,7 +960,10 @@
    "runtime_value": "1.800000",
    "effective_value": "= runtime (1.8, lowered from 2.5); ctor value overwritten by ConfigureModes",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted"
+   "validation": "Evidence-backed-adopted",
+   "effective_formula": "InpInstCandleMult \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpEnableLiquidityEngine",
@@ -1270,7 +1282,10 @@
    "runtime_value": "1.800000",
    "effective_value": "= runtime (1.8)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpPBCMaxPullbackATR \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpPBCMaxPullbackBars",
@@ -1303,7 +1318,10 @@
    "runtime_value": "0.600000",
    "effective_value": "= runtime (0.6)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpPBCMinPullbackATR \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpPBCMinPullbackBars",
@@ -1347,7 +1365,10 @@
    "runtime_value": "0.200000",
    "effective_value": "= runtime (0.20); ctor default 0.35 overridden by input 0.20",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted"
+   "validation": "Evidence-backed-adopted",
+   "effective_formula": "InpPBCSignalBodyATR \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpPBCStopBufferATR",
@@ -1358,7 +1379,10 @@
    "runtime_value": "0.200000",
    "effective_value": "= runtime (0.20)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpPBCStopBufferATR \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpPBCTrendResetBars",
@@ -1710,7 +1734,10 @@
    "runtime_value": "50.000000",
    "effective_value": "InpBOEntryBuffer x g_pointScale (mq5:254) THEN x _Point at use = double-scaled price offset",
    "activation": "Unreachable",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "\u00d7 g_pointScale",
+   "derived_variable": "g_scaledBOEntryBuffer (mq5:254)",
+   "dynamic_range": "price-anchored"
   },
   {
    "name": "InpBOKeltnerATRPeriod",
@@ -1743,7 +1770,10 @@
    "runtime_value": "1.500000",
    "effective_value": "= runtime (1.5)",
    "activation": "Unreachable",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpBOKeltnerMult \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpBOPullbackATRFrac",
@@ -1754,7 +1784,10 @@
    "runtime_value": "0.500000",
    "effective_value": "= runtime (0.5)",
    "activation": "Unreachable",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpBOPullbackATRFrac \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpEnableVolBreakout",
@@ -2051,7 +2084,10 @@
    "runtime_value": "1.000000",
    "effective_value": "1.0 (unpinned -> compiled default)",
    "activation": "Gated-off",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpNewsTightenATRMult \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpNewsTightenEnable",
@@ -2348,7 +2384,10 @@
    "runtime_value": "1.350000",
    "effective_value": "1.35",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted (honest-backtest-baseline $32,503/865; v18 tuned ladder, EC-compensated)"
+   "validation": "Evidence-backed-adopted (honest-backtest-baseline $32,503/865; v18 tuned ladder, EC-compensated)",
+   "effective_formula": "InpRiskAPlusSetup% \u00d7 EC_governor \u00d7 regime_scaler \u00d7 session_mult, clamp\u2264InpMaxRiskPerTrade(2.0%)",
+   "derived_variable": "risk_pct (CSetupEvaluator::GetRiskForQuality \u2192 CTradeOrchestrator sizing)",
+   "dynamic_range": "composite \u2208 [base\u00d70.58 (EC floor)\u00d70.5 (London) , 2.0% cap]"
   },
   {
    "name": "InpRiskASetup",
@@ -2359,7 +2398,10 @@
    "runtime_value": "0.900000",
    "effective_value": "0.9",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted (tuned ladder, honest-backtest-baseline)"
+   "validation": "Evidence-backed-adopted (tuned ladder, honest-backtest-baseline)",
+   "effective_formula": "InpRiskASetup% \u00d7 EC_governor \u00d7 regime_scaler \u00d7 session_mult, clamp\u2264InpMaxRiskPerTrade(2.0%)",
+   "derived_variable": "risk_pct (CSetupEvaluator::GetRiskForQuality \u2192 CTradeOrchestrator sizing)",
+   "dynamic_range": "composite \u2208 [base\u00d70.58 (EC floor)\u00d70.5 (London) , 2.0% cap]"
   },
   {
    "name": "InpRiskBPlusSetup",
@@ -2370,7 +2412,10 @@
    "runtime_value": "0.675000",
    "effective_value": "0.675",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted (tuned ladder)"
+   "validation": "Evidence-backed-adopted (tuned ladder)",
+   "effective_formula": "InpRiskBPlusSetup% \u00d7 EC_governor \u00d7 regime_scaler \u00d7 session_mult, clamp\u2264InpMaxRiskPerTrade(2.0%)",
+   "derived_variable": "risk_pct (CSetupEvaluator::GetRiskForQuality \u2192 CTradeOrchestrator sizing)",
+   "dynamic_range": "composite \u2208 [base\u00d70.58 (EC floor)\u00d70.5 (London) , 2.0% cap]"
   },
   {
    "name": "InpRiskBSetup",
@@ -2381,7 +2426,10 @@
    "runtime_value": "0.540000",
    "effective_value": "0.54",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted (bottom of tuned ladder)"
+   "validation": "Evidence-backed-adopted (bottom of tuned ladder)",
+   "effective_formula": "InpRiskBSetup% \u00d7 EC_governor \u00d7 regime_scaler \u00d7 session_mult, clamp\u2264InpMaxRiskPerTrade(2.0%)",
+   "derived_variable": "risk_pct (CSetupEvaluator::GetRiskForQuality \u2192 CTradeOrchestrator sizing)",
+   "dynamic_range": "composite \u2208 [base\u00d70.58 (EC floor)\u00d70.5 (London) , 2.0% cap]"
   },
   {
    "name": "InpEnableClusterGuard",
@@ -2821,7 +2869,10 @@
    "runtime_value": "50.000000",
    "effective_value": "InpTrailBEOffset * _Point * (BID/2000) = 50.0 * _Point * (BID/2000) [only when InpAutoScalePoints]",
    "activation": "Clipped",
-   "validation": "Unvalidated"
+   "validation": "Unvalidated",
+   "effective_formula": "InpTrailBEOffset \u00d7 _Point \u00d7 (BID/2000)  [BUG: uses hardcoded /2000, NOT g_pointScale]",
+   "derived_variable": "inline be_sl (CPositionCoordinator:2912,3207,3928); g_scaledTrailBEOffset (mq5:253) computed but NEVER read",
+   "dynamic_range": "BID\u2208[~1046,~3500] 2019\u20132026 \u2192 scale factor \u2208[~0.52,~1.75]; 50pt offset \u2192 ~26\u201388pt effective"
   },
   {
    "name": "InpTrailBETrigger",
@@ -2920,7 +2971,10 @@
    "runtime_value": "3.000000",
    "effective_value": "3.0 (x ATR)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpATRMultiplierSL \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpMinSLPoints",
@@ -2931,7 +2985,10 @@
    "runtime_value": "800.000000",
    "effective_value": "InpMinSLPoints * g_pointScale = 800.0 * g_pointScale",
    "activation": "Active",
-   "validation": "Safety-derived"
+   "validation": "Safety-derived",
+   "effective_formula": "InpMinSLPoints \u00d7 g_pointScale",
+   "derived_variable": "g_scaledMinSLPoints (mq5:250)",
+   "dynamic_range": "price-anchored; ~const over run"
   },
   {
    "name": "InpMinSLRangePct",
@@ -3052,7 +3109,10 @@
    "runtime_value": "2.000000",
    "effective_value": "2.0 (x ATR)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "InpShockBarRangeThresh \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpEnableAntiStall",
@@ -3151,7 +3211,10 @@
    "runtime_value": "50.000000",
    "effective_value": "InpMinTrailMovement * g_pointScale = 50.0 * g_pointScale",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "\u00d7 g_pointScale",
+   "derived_variable": "g_scaledMinTrailMovement (mq5:251)",
+   "dynamic_range": "price-anchored"
   },
   {
    "name": "InpTrailChandelierMult",
@@ -3173,7 +3236,10 @@
    "runtime_value": "60",
    "effective_value": "InpTrailMinProfit * g_pointScale = 60 * g_pointScale (int-truncated)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "\u00d7 g_pointScale",
+   "derived_variable": "g_scaledTrailMinProfit (mq5:252)",
+   "dynamic_range": "price-anchored"
   },
   {
    "name": "InpTrailStrategy",
@@ -3657,7 +3723,10 @@
    "runtime_value": "0.250000",
    "effective_value": "inert (master InpEnableConfirmedQualityFilter=false, a DIFFERENT master in group 45)",
    "activation": "Gated-off",
-   "validation": "Rejected"
+   "validation": "Rejected",
+   "effective_formula": "InpConfirmedMinBodyATR \u00d7 ATR(14,H1)  (state-dependent)",
+   "derived_variable": "SL/threshold distance (price)",
+   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
   },
   {
    "name": "InpConfirmedMinClosePos",
@@ -4064,7 +4133,10 @@
    "runtime_value": "1.000000",
    "effective_value": "1.00 -> hard ceiling; CLIPS every >1.0 relax/ceiling (InpECVolLowRelax 1.03, InpECVolCeiling 1.05) to 1.0",
    "activation": "Active",
-   "validation": "Engineering-default[defensive-only design]"
+   "validation": "Engineering-default[defensive-only design]",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECv2WarmupMult",
@@ -4097,7 +4169,10 @@
    "runtime_value": "0.700000",
    "effective_value": "labeled 0.70 worst-case, but effective post-warmup composite floor = 0.70*0.90*0.92 = 0.58 (ctrl:501); 0.70 only in the warmup path (ctrl:480)",
    "activation": "Active",
-   "validation": "Evidence-backed-adopted[floor tuned in EC v3]"
+   "validation": "Evidence-backed-adopted[floor tuned in EC v3]",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECv2ModerateZone",
@@ -4130,7 +4205,10 @@
    "runtime_value": "0.080000",
    "effective_value": "0.08 per closed trade (faster than StepUp 0.05)",
    "activation": "Active",
-   "validation": "Engineering-default[cut-faster-than-add asymmetry]"
+   "validation": "Engineering-default[cut-faster-than-add asymmetry]",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECv2DeadZone",
@@ -4273,7 +4351,10 @@
    "runtime_value": "0.050000",
    "effective_value": "0.05 per closed trade",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECStratDeadZone",
@@ -4361,7 +4442,10 @@
    "runtime_value": "1.050000",
    "effective_value": "1.05 nominal, effectively 1.0 \u2014 partially inert (composite capped at MaxMult=1.0)",
    "activation": "Clipped",
-   "validation": "Rejected[upside unreachable]"
+   "validation": "Rejected[upside unreachable]",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECVolEnable",
@@ -4383,7 +4467,10 @@
    "runtime_value": "0.930000",
    "effective_value": "0.93 (bounded below by VolFloor 0.90)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECVolExtremeThreshold",
@@ -4405,7 +4492,10 @@
    "runtime_value": "0.900000",
    "effective_value": "0.90 -> contributes the 0.90 factor to the 0.58 stacked composite floor",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECVolHighReduce",
@@ -4416,7 +4506,10 @@
    "runtime_value": "0.970000",
    "effective_value": "0.97 (downside active \u2014 real risk cut in high vol)",
    "activation": "Active",
-   "validation": "Engineering-default"
+   "validation": "Engineering-default",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECVolHighThreshold",
@@ -4438,7 +4531,10 @@
    "runtime_value": "1.030000",
    "effective_value": "1.03 nominal, but DOUBLY dead on upside: MaxMult=1.0 clip (ctrl:501) AND orchestrator <1.0 guard (mqh:479); can only offset a concurrent core cut, never boost",
    "activation": "Clipped",
-   "validation": "Rejected[upside unreachable by design]"
+   "validation": "Rejected[upside unreachable by design]",
+   "effective_formula": "feeds composite m_currentMult \u00d7 m_volAdjustment \u00d7 m_fwdAdjustment, clamp [0.58,1.00]",
+   "derived_variable": "EC composite multiplier (CEquityCurveRiskController:501)",
+   "dynamic_range": "[0.58, 1.00] (MinMult\u00d7VolFloor\u00d7FwdFloor .. MaxMult)"
   },
   {
    "name": "InpECVolLowThreshold",
@@ -4572,5 +4668,7 @@
    "activation": "Gated-off",
    "validation": "Unvalidated[dev toggle, baseline-identical off]"
   }
- ]
+ ],
+ "authoritative_identity": "SHA-256 (release-identity-manifest.json config_sha256)",
+ "config_sha256": "e6c7a2169c757833f833ea5f3d26a8f4ef5e7aa5d8aaa9c64c5746e9f27bb9cb"
 }

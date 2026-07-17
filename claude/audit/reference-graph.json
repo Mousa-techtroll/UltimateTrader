@@ -1,0 +1,7123 @@
+{
+"_finding": {
+"claim": "Zero COMPLETELY UNREFERENCED inputs (every input has >=1 non-declaration textual reference).",
+"caveat": "Textual references do NOT imply reachability. Reachability is established separately via static guard proofs + runtime fill counts (per-trade CSV) + runtime call counters (AUDIT_BUILD).",
+"ctor_transfer_resolved": 22,
+"mismatch_explanation": "The ~200 consumer-claim vs name-graph 'mismatches' are constructor/member transfer paths: input -> ctor arg -> member var -> read in the consuming class (the input NAME does not appear in the consumer). 22 resolved to their constructed class here; the remainder are member-transfers, marked PARTIALLY MACHINE-VERIFIED (agent-traced, name-graph cannot follow)."
+},
+"ctor_transfer_targets": {
+"InpSignalFile": [
+"CFileEntry"
+],
+"InpSignalTimeTolerance": [
+"CFileEntry"
+],
+"InpFileCheckInterval": [
+"CFileEntry"
+],
+"InpMaxTotalExposure": [
+"CDisplay"
+],
+"InpMAFastPeriod": [
+"CPinBarEntry"
+],
+"InpMASlowPeriod": [
+"CPinBarEntry"
+],
+"InpATRPeriod": [
+"CATRTrailing",
+"CChandelierTrailing",
+"CEngulfingEntry",
+"CParabolicSARTrailing",
+"CPinBarEntry"
+],
+"InpATRMultiplierSL": [
+"CEngulfingEntry",
+"CPinBarEntry"
+],
+"InpBOChandelierLookback": [
+"CATRTrailing"
+],
+"InpTrailATRMult": [
+"CATRTrailing"
+],
+"InpTrailSwingLookback": [
+"CATRTrailing"
+],
+"InpTrailChandelierMult": [
+"CATRTrailing"
+],
+"InpTrailStepSize": [
+"CChandelierTrailing"
+],
+"InpEnableLogging": [
+"CTradeLogger"
+],
+"InpDisplacementATRMult": [
+"CDisplacementEntry",
+"CLiquidityEngine"
+],
+"InpAsianRangeStartHour": [
+"CDisplacementEntry"
+],
+"InpAsianRangeEndHour": [
+"CDisplacementEntry"
+],
+"InpLondonOpenHour": [
+"CDisplacementEntry"
+],
+"InpNYOpenHour": [
+"CDisplacementEntry"
+],
+"InpDayRouterADXThresh": [
+"CDayTypeRouter"
+],
+"InpInstCandleMult": [
+"CExpansionEngine"
+],
+"InpCompressionMinBars": [
+"CExpansionEngine"
+]
+},
+"graph": {
+"InpSymbolProfile": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:14"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:268"
+],
+"direct-read": [
+"UltimateTrader.mq5:962"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:267"
+]
+},
+"InpSignalSource": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:22"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:940",
+"UltimateTrader.mq5:1175"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1280"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:1032",
+"UltimateTrader.mq5:1281",
+"UltimateTrader.mq5:1400",
+"UltimateTrader.mq5:3254"
+]
+},
+"InpSignalFile": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:23"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:939"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1402"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpSignalTimeTolerance": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:24"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:941"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1402"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpFileMaxSlippagePct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:25"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:304"
+],
+"direct-read": [
+"UltimateTrader.mq5:758"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:287",
+"Include/Core/CTradeOrchestrator.mqh:290"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CTradeOrchestrator.mqh:301"
+]
+},
+"InpFileCheckInterval": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:26"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:754"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1402"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalQuality": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:27"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:761"
+],
+"derived-assignment": [
+"Include/EntryPlugins/CFileEntry.mqh:836",
+"Include/EntryPlugins/CFileEntry.mqh:837"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/EntryPlugins/CFileEntry.mqh:838",
+"Include/EntryPlugins/CFileEntry.mqh:839"
+]
+},
+"InpFileSignalRiskPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:28"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:763"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:3289",
+"Include/EntryPlugins/CFileEntry.mqh:842"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalSkipRegime": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:29"
+],
+"direct-read(gate)": [
+"Include/EntryPlugins/CFileEntry.mqh:749"
+],
+"direct-read": [
+"UltimateTrader.mq5:765"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalSkipConfirmation": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:30"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:764"
+],
+"derived-assignment": [
+"Include/EntryPlugins/CFileEntry.mqh:840"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalMode": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:31"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:760"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:3311"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/EntryPlugins/CFileEntry.mqh:364",
+"Include/EntryPlugins/CFileEntry.mqh:374",
+"Include/EntryPlugins/CFileEntry.mqh:392"
+]
+},
+"InpFileUseTP3": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:32"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:770"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:384",
+"Include/Core/CPositionCoordinator.mqh:2125"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:386"
+]
+},
+"InpFileTrailAfterTP2": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:33"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2252"
+],
+"direct-read": [
+"UltimateTrader.mq5:769"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileCSVRiskMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:34"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:753"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:3280"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileCSVRiskMax": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:35"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:752"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:3280"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileMaxRiskPerTrade": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:36"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:757"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:513"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalTrailing": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:37",
+"UltimateTrader_Inputs.mqh:38"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2310"
+],
+"direct-read": [
+"UltimateTrader.mq5:766",
+"UltimateTrader.mq5:767"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2315"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:2316"
+]
+},
+"InpFileSignalTrailingMode": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:38"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:767"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2315"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:2316"
+]
+},
+"InpFileTrailATRMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:39"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:768"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2328"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalExitPlugins": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:40"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2357"
+],
+"direct-read": [
+"UltimateTrader.mq5:759"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileSignalRegimeExit": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:41"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:762"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:2376"
+]
+},
+"InpBestEffortFullManagement": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:42"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2393"
+],
+"direct-read": [
+"UltimateTrader.mq5:614"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFileLotMode": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:43"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:756"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:547"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:3266",
+"UltimateTrader.mq5:3277"
+]
+},
+"InpFileFixedLots": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:44"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:755"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:3273",
+"Include/Core/CTradeOrchestrator.mqh:551"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRiskAPlusSetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:53"
+],
+"direct-read(gate)": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:70"
+],
+"direct-read": [
+"UltimateTrader.mq5:890",
+"UltimateTrader.mq5:1254",
+"UltimateTrader.mq5:1779"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1931",
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:244"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRiskASetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:54"
+],
+"direct-read(gate)": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:71"
+],
+"direct-read": [
+"UltimateTrader.mq5:891",
+"UltimateTrader.mq5:1254",
+"UltimateTrader.mq5:1779"
+],
+"derived-assignment": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:245"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRiskBPlusSetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:55"
+],
+"direct-read(gate)": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:72"
+],
+"direct-read": [
+"UltimateTrader.mq5:892",
+"UltimateTrader.mq5:1254",
+"UltimateTrader.mq5:1779"
+],
+"derived-assignment": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:245"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPinBarFlatRiskPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:56"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:842"
+],
+"derived-assignment": [
+"Include/Core/CSignalOrchestrator.mqh:880"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:879"
+]
+},
+"InpVolFilterEngulfing": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:58"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:989"
+],
+"derived-assignment": [
+"Include/Core/CSignalOrchestrator.mqh:737"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVolFilterCrash": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:59"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:988"
+],
+"derived-assignment": [
+"Include/Core/CSignalOrchestrator.mqh:738"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVolFilterVolBreakout": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:60"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:990"
+],
+"derived-assignment": [
+"Include/Core/CSignalOrchestrator.mqh:739"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxSameDirRisk": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:62"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:726"
+],
+"direct-read": [
+"UltimateTrader.mq5:792",
+"Include/Core/CTradeOrchestrator.mqh:743",
+"Include/Core/CTradeOrchestrator.mqh:753"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:722",
+"Include/Core/CTradeOrchestrator.mqh:728"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSameDirCapResize": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:63"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:730"
+],
+"direct-read": [
+"UltimateTrader.mq5:927"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRiskBSetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:64"
+],
+"direct-read(gate)": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:73",
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:74"
+],
+"direct-read": [
+"UltimateTrader.mq5:893",
+"UltimateTrader.mq5:1254",
+"UltimateTrader.mq5:1779"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1931",
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:245"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxRiskPerTrade": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:65"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:791"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1932",
+"Include/Core/CTradeOrchestrator.mqh:513",
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:357"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxTotalExposure": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:66"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:649",
+"Include/Core/CTradeOrchestrator.mqh:688",
+"Include/Core/CTradeOrchestrator.mqh:703"
+],
+"direct-read": [
+"UltimateTrader.mq5:795"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:637",
+"Include/Core/CTradeOrchestrator.mqh:651"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1919"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpDailyLossLimit": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:73"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:639",
+"UltimateTrader.mq5:1813",
+"Include/ExitPlugins/CDailyLossHaltExit.mqh:198",
+"Include/ExitPlugins/CDailyLossHaltExit.mqh:207"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1932",
+"Include/ExitPlugins/CDailyLossHaltExit.mqh:151",
+"Include/ExitPlugins/CDailyLossHaltExit.mqh:185",
+"Include/ExitPlugins/CDailyLossHaltExit.mqh:192"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxPositions": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:74"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2330",
+"UltimateTrader.mq5:2837",
+"UltimateTrader.mq5:3256",
+"Include/Core/CTradeOrchestrator.mqh:1227",
+"Include/Core/CTradeOrchestrator.mqh:1231"
+],
+"direct-read": [
+"UltimateTrader.mq5:790",
+"UltimateTrader.mq5:1113",
+"UltimateTrader.mq5:2504",
+"UltimateTrader.mq5:2508"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1933",
+"UltimateTrader.mq5:2501"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableClusterGuard": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:75"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:693",
+"UltimateTrader.mq5:1081"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CTradeOrchestrator.mqh:258"
+]
+},
+"InpAutoCloseOnChoppy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:76"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:593",
+"UltimateTrader.mq5:1938"
+],
+"derived-assignment": [
+"Include/ExitPlugins/CRegimeAwareExit.mqh:114"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:1572",
+"Include/ExitPlugins/CRegimeAwareExit.mqh:152"
+]
+},
+"InpStructureBasedExit": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:77"
+],
+"direct-read(gate)": [
+"Include/ExitPlugins/CRegimeAwareExit.mqh:93",
+"Include/ExitPlugins/CRegimeAwareExit.mqh:157"
+],
+"direct-read": [
+"UltimateTrader.mq5:960"
+],
+"derived-assignment": [
+"Include/ExitPlugins/CRegimeAwareExit.mqh:115"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableCIScoring": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:78"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:690"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:291"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableWednesdayReduction": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:79"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2883"
+],
+"direct-read": [
+"UltimateTrader.mq5:744"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpWednesdayRiskMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:80"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:996",
+"UltimateTrader.mq5:2893"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2890"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableQualityTrendBoost": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:81"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2960"
+],
+"direct-read": [
+"UltimateTrader.mq5:721"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpStallHours": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:82"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:958"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2808"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableATRVelocity": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:83"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2983"
+],
+"direct-read": [
+"UltimateTrader.mq5:684"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpATRVelocityBoostPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:84"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2989"
+],
+"direct-read": [
+"UltimateTrader.mq5:589",
+"UltimateTrader.mq5:2995"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpATRVelocityRiskMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:85"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:590"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2992"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableThrashCooldown": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:86"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2792"
+],
+"direct-read": [
+"UltimateTrader.mq5:741"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableS3S6": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:87"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1297"
+],
+"direct-read": [
+"UltimateTrader.mq5:727"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableS6Short": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:88"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:728"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:293"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableAntiStall": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:89"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2831"
+],
+"direct-read": [
+"UltimateTrader.mq5:687"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxPositionAgeHours": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:90"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:789",
+"UltimateTrader.mq5:1049",
+"UltimateTrader.mq5:1937",
+"Include/ExitPlugins/CMaxAgeExit.mqh:113"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1048",
+"Include/ExitPlugins/CMaxAgeExit.mqh:56",
+"Include/ExitPlugins/CMaxAgeExit.mqh:94",
+"Include/ExitPlugins/CMaxAgeExit.mqh:146",
+"Include/ExitPlugins/CMaxAgeExit.mqh:148"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:1571",
+"Include/ExitPlugins/CMaxAgeExit.mqh:81",
+"Include/ExitPlugins/CMaxAgeExit.mqh:142"
+]
+},
+"InpCloseBeforeWeekend": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:91"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:621",
+"UltimateTrader.mq5:1043",
+"UltimateTrader.mq5:1795",
+"UltimateTrader.mq5:1936"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1042"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpWeekendCloseHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:92"
+],
+"direct-read(gate)": [
+"Include/ExitPlugins/CWeekendCloseExit.mqh:74",
+"Include/ExitPlugins/CWeekendCloseExit.mqh:123",
+"Include/ExitPlugins/CWeekendCloseExit.mqh:187"
+],
+"direct-read": [
+"UltimateTrader.mq5:997",
+"UltimateTrader.mq5:1044",
+"UltimateTrader.mq5:1795"
+],
+"derived-assignment": [
+"Include/ExitPlugins/CWeekendCloseExit.mqh:125",
+"Include/ExitPlugins/CWeekendCloseExit.mqh:188"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxTradesPerDay": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:93"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:796",
+"UltimateTrader.mq5:1813",
+"UltimateTrader.mq5:2491",
+"UltimateTrader.mq5:2496"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1934"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBrokerGMTOffset": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:94"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:615",
+"UltimateTrader.mq5:1411"
+],
+"derived-assignment": [
+"Include/EntryPlugins/CSessionEngine.mqh:352",
+"Include/MarketAnalysis/CMarketContext.mqh:1073"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTesterDSTFix": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:107"
+],
+"direct-read(gate)": [
+"Include/EntryPlugins/CFileEntry.mqh:94",
+"Include/EntryPlugins/CSessionEngine.mqh:333",
+"Include/MarketAnalysis/CMarketContext.mqh:1059"
+],
+"direct-read": [
+"UltimateTrader.mq5:969",
+"Include/EntryPlugins/CSessionEngine.mqh:346"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/EntryPlugins/CSessionEngine.mqh:354"
+]
+},
+"InpShortRiskMultiplier": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:111"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:936",
+"Include/Core/CTradeOrchestrator.mqh:500"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:494",
+"Include/Core/CTradeOrchestrator.mqh:497"
+],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:294"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBullMRShortAdxCap": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:112"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:617",
+"UltimateTrader.mq5:1241"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBullMRShortMacroMax": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:113"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:618",
+"UltimateTrader.mq5:1241"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpShortTrendMinADX": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:114"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:938",
+"UltimateTrader.mq5:1240"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpShortTrendMaxADX": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:115"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:937",
+"UltimateTrader.mq5:1242"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpShortMRMacroMax": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:116"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:934",
+"UltimateTrader.mq5:1242"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMAFastPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:123"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:785",
+"UltimateTrader.mq5:1184",
+"UltimateTrader.mq5:1723"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1277"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpMASlowPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:124"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:786",
+"UltimateTrader.mq5:1184",
+"UltimateTrader.mq5:1723"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1277"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpSwingLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:125"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:961",
+"UltimateTrader.mq5:1185"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpUseH4AsPrimary": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:126"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:984",
+"UltimateTrader.mq5:1185",
+"UltimateTrader.mq5:1239"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpADXPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:130"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:584",
+"UltimateTrader.mq5:1183"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpADXTrending": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:131"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:586",
+"UltimateTrader.mq5:1186"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpADXRanging": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:132"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:585",
+"UltimateTrader.mq5:1186"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpATRPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:133"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:588",
+"UltimateTrader.mq5:1183"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1273",
+"UltimateTrader.mq5:1275",
+"UltimateTrader.mq5:1277",
+"UltimateTrader.mq5:1585",
+"UltimateTrader.mq5:1586",
+"UltimateTrader.mq5:1589",
+"UltimateTrader.mq5:1591"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpATRMultiplierSL": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:137"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:587"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1273",
+"UltimateTrader.mq5:1277"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpMinSLPoints": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:138"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:801"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:250"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpAutoScalePoints": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:139"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:239"
+],
+"direct-read": [
+"UltimateTrader.mq5:597"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1137",
+"Include/Core/CPositionCoordinator.mqh:2912",
+"Include/Core/CPositionCoordinator.mqh:2914",
+"Include/Core/CPositionCoordinator.mqh:3207",
+"Include/Core/CPositionCoordinator.mqh:3209",
+"Include/Core/CPositionCoordinator.mqh:3928",
+"Include/Core/CPositionCoordinator.mqh:3930"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpScaleAnchorPrice": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:140"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:928",
+"UltimateTrader.mq5:1136"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:236",
+"UltimateTrader.mq5:238"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinSLRangePct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:141"
+],
+"direct-read(gate)": [
+"Include/Core/CSignalOrchestrator.mqh:1006",
+"Include/Core/CSignalOrchestrator.mqh:1008"
+],
+"direct-read": [
+"UltimateTrader.mq5:802",
+"UltimateTrader.mq5:1077"
+],
+"derived-assignment": [
+"Include/Core/CSignalOrchestrator.mqh:1040"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:1037"
+]
+},
+"InpMinRRRatio": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:142"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:798",
+"UltimateTrader.mq5:1775"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinRRShortCrash": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:143"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:799"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:412"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRRGateSymmetric": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:144"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:852"
+],
+"derived-assignment": [
+"Include/Core/CTradeOrchestrator.mqh:399",
+"Include/Core/CTradeOrchestrator.mqh:1095"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableRewardRoom": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:145"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:437"
+],
+"direct-read": [
+"UltimateTrader.mq5:725"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinRoomToObstacle": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:146"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:437",
+"Include/Core/CTradeOrchestrator.mqh:445",
+"Include/Core/CTradeOrchestrator.mqh:449",
+"Include/Core/CTradeOrchestrator.mqh:454"
+],
+"direct-read": [
+"UltimateTrader.mq5:800"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRSIPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:147"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:853",
+"UltimateTrader.mq5:1309",
+"UltimateTrader.mq5:1427"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinTrailMovement": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:151"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:805"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:251"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTP1Distance": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:152"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:965",
+"UltimateTrader.mq5:1693",
+"UltimateTrader.mq5:1775"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1955",
+"Include/Core/CPositionCoordinator.mqh:2407"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTP2Distance": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:153"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:967",
+"UltimateTrader.mq5:1693",
+"UltimateTrader.mq5:1775"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1956",
+"Include/Core/CPositionCoordinator.mqh:2409"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTP1Volume": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:154"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:966"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2408"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTP2Volume": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:155"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:968"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2410"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableVolBreakout": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:159"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:742"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1331"
+],
+"assignment-target": []
+},
+"InpBODonchianPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:160"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:601",
+"UltimateTrader.mq5:1328"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOKeltnerEMAPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:161"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:604",
+"UltimateTrader.mq5:1328"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOKeltnerATRPeriod": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:162"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:603",
+"UltimateTrader.mq5:1328"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOKeltnerMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:163"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:605",
+"UltimateTrader.mq5:1329"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOADXMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:164"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:598",
+"UltimateTrader.mq5:1329"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOEntryBuffer": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:165"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:602"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:254"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOPullbackATRFrac": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:166"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:606",
+"UltimateTrader.mq5:1329"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOCooldownBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:167"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:600",
+"UltimateTrader.mq5:1330"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOChandelierLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:168"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:599"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1586"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableSMC": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:172",
+"UltimateTrader_Inputs.mqh:181"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1177",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1200",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1221",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1238",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1259",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1307",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1316",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1325",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1334"
+],
+"direct-read": [
+"UltimateTrader.mq5:729",
+"UltimateTrader.mq5:730",
+"UltimateTrader.mq5:1189"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:325"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCOBLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:173"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:920",
+"UltimateTrader.mq5:1189"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCOBBodyPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:174"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:918",
+"UltimateTrader.mq5:1193"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCOBImpulseMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:175"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:919",
+"UltimateTrader.mq5:1193"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCFVGMinPoints": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:176"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:915",
+"UltimateTrader.mq5:1194"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCBOSLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:177"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:914",
+"UltimateTrader.mq5:1194"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCLiqTolerance": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:178"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:917",
+"UltimateTrader.mq5:1195"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCLiqMinTouches": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:179"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:916",
+"UltimateTrader.mq5:1195"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCZoneMaxAge": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:180"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:924",
+"UltimateTrader.mq5:1196"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableSMCZoneDecay": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:181"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1177",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1200",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1221",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1238",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1259",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1307",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1316",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1325",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1334"
+],
+"direct-read": [
+"UltimateTrader.mq5:730"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:325"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCZoneDecayRate": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:182"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:923"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1282"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCZoneMinStrength": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:183"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1289"
+],
+"direct-read": [
+"UltimateTrader.mq5:925"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:325"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCZoneRecycleAge": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:184"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:926"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1287"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCTouchStrengthBoost": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:185"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:921"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1183",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1206",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1227",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1244",
+"Include/MarketAnalysis/CSMCOrderBlocks.mqh:1281"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSMCUseHTFConfluence": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:186"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:922",
+"UltimateTrader.mq5:1196"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableMomentum": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:190"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:715",
+"UltimateTrader.mq5:1192"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailStrategy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:194"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:979",
+"UltimateTrader.mq5:1622",
+"UltimateTrader.mq5:1633",
+"UltimateTrader.mq5:1648"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1066",
+"UltimateTrader.mq5:1950"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:1617"
+]
+},
+"InpTrailATRMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:195"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:973"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1951"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1585"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailSwingLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:196"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:980"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1587"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailChandelierMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:197"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:976",
+"Include/Core/CPositionCoordinator.mqh:653",
+"Include/Core/CPositionCoordinator.mqh:3717"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1952",
+"Include/Core/CPositionCoordinator.mqh:3684"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1586"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailStepSize": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:198"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:978"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1589"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailMinProfit": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:199"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:977"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:252"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailBETrigger": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:200"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:975"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1953",
+"claude/phase0/UT_Phase0.mq5:240",
+"Include/Core/CPositionCoordinator.mqh:3200",
+"Include/Core/CPositionCoordinator.mqh:3920"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTrailBEOffset": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:201"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:974"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2912",
+"Include/Core/CPositionCoordinator.mqh:2914",
+"Include/Core/CPositionCoordinator.mqh:3207",
+"Include/Core/CPositionCoordinator.mqh:3209",
+"Include/Core/CPositionCoordinator.mqh:3928",
+"Include/Core/CPositionCoordinator.mqh:3930"
+],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:253"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableBEMover": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:202"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:688",
+"UltimateTrader.mq5:1079"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:3800"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"claude/phase0/UT_Phase0.mq5:240"
+]
+},
+"InpEnableAdaptiveTP": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:206"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:685",
+"UltimateTrader.mq5:1698",
+"UltimateTrader.mq5:1706",
+"UltimateTrader.mq5:1776"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLowVolTP1Mult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:207"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:783",
+"UltimateTrader.mq5:1694"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLowVolTP2Mult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:208"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:784",
+"UltimateTrader.mq5:1694"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNormalVolTP1Mult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:209"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:824",
+"UltimateTrader.mq5:1695"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNormalVolTP2Mult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:210"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:825",
+"UltimateTrader.mq5:1695"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpHighVolTP1Mult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:211"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:772",
+"UltimateTrader.mq5:1696"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpHighVolTP2Mult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:212"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:773",
+"UltimateTrader.mq5:1696"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpStrongTrendTPBoost": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:213"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:959",
+"UltimateTrader.mq5:1697"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpWeakTrendTPCut": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:214"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:995",
+"UltimateTrader.mq5:1697"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableVolRegime": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:218"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:743",
+"UltimateTrader.mq5:1191"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVolVeryLowThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:219"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:994",
+"UltimateTrader.mq5:1210"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVolLowThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:220"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:992",
+"UltimateTrader.mq5:1210"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVolNormalThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:221"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:993",
+"UltimateTrader.mq5:1210"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVolHighThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:222"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:991",
+"UltimateTrader.mq5:1210"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableCrashDetector": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:233"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:697",
+"UltimateTrader.mq5:1190"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1342"
+],
+"assignment-target": []
+},
+"InpEnableCrashEntry": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:234"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:698"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1342"
+],
+"assignment-target": []
+},
+"InpCrashATRMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:235"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:630",
+"UltimateTrader.mq5:1335"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashSLATRMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:243"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:635",
+"UltimateTrader.mq5:1335"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashTPExtension": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:244"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:636",
+"UltimateTrader.mq5:1083",
+"UltimateTrader.mq5:1339"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashRegimeGate": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:245"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:632",
+"UltimateTrader.mq5:1339"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashRequireFallingEMA50": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:246"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:633",
+"UltimateTrader.mq5:1340"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashRequireFreshDeathCross": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:247"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:634",
+"UltimateTrader.mq5:1341"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashFreshDCBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:248"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:631",
+"UltimateTrader.mq5:1341"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpDXYSymbol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:252"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:638",
+"UltimateTrader.mq5:1187"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVIXSymbol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:253"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:987",
+"UltimateTrader.mq5:1187"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVIXElevated": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:254"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:985",
+"UltimateTrader.mq5:1188"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpVIXLow": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:255"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:986",
+"UltimateTrader.mq5:1188"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableEngulfing": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:259"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:708"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1283"
+],
+"assignment-target": []
+},
+"InpEngulfingRegimePolicy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:260"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:747",
+"UltimateTrader.mq5:1274"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEngulfingBodyRatio": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:261"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:746",
+"UltimateTrader.mq5:1274"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEngulfingBlockSetupA": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:262"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:745"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:850"
+]
+},
+"InpEnablePinBar": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:263"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:718"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1284"
+],
+"assignment-target": []
+},
+"InpPinBarProximityFilter": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:264"
+],
+"direct-read(gate)": [
+"Include/EntryPlugins/CPinBarEntry.mqh:176"
+],
+"direct-read": [
+"UltimateTrader.mq5:844"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPinBarHighLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:265"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:843",
+"Include/EntryPlugins/CPinBarEntry.mqh:189"
+],
+"derived-assignment": [
+"Include/EntryPlugins/CPinBarEntry.mqh:178"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPinBarProximityPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:266"
+],
+"direct-read(gate)": [
+"Include/EntryPlugins/CPinBarEntry.mqh:185"
+],
+"direct-read": [
+"UltimateTrader.mq5:845",
+"Include/EntryPlugins/CPinBarEntry.mqh:191"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableLiquiditySweep": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:267"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:712"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1285"
+],
+"assignment-target": []
+},
+"InpEnableMACross": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:268"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:714"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1286"
+],
+"assignment-target": []
+},
+"InpEnableRangeBox": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:269"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:722"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1320"
+],
+"assignment-target": []
+},
+"InpEnableFalseBreakout": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:270"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:710"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1321"
+],
+"assignment-target": []
+},
+"InpBearPinBarAsiaOnly": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:281"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:609"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:287"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBearPinBarBlockNY": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:282"
+],
+"direct-read(gate)": [
+"Include/EntryPlugins/CPinBarEntry.mqh:238"
+],
+"direct-read": [
+"UltimateTrader.mq5:610"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRubberBandAPlusOnly": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:283"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:894"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:289"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBullMACrossBlockNY": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:284"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:616"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:288"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLongExtensionFilter": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:285"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:781"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [
+"UltimateTrader.mq5:290"
+],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLongExtensionPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:286"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:457",
+"UltimateTrader.mq5:484"
+],
+"direct-read": [
+"UltimateTrader.mq5:782",
+"UltimateTrader.mq5:2521",
+"UltimateTrader.mq5:2527",
+"UltimateTrader.mq5:2824"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableConfidenceScoring": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:290"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:694",
+"UltimateTrader.mq5:1722"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinPatternConfidence": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:291"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:797",
+"UltimateTrader.mq5:1722"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpUseDaily200EMA": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:292"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:982",
+"UltimateTrader.mq5:1239",
+"UltimateTrader.mq5:1776"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTradeLondon": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:296"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:971",
+"UltimateTrader.mq5:1719"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1958"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTradeNY": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:297"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:972",
+"UltimateTrader.mq5:1719"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1958"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTradeAsia": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:298"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:970",
+"UltimateTrader.mq5:1719"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1957"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSkipStartHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:299",
+"UltimateTrader_Inputs.mqh:301"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:946",
+"UltimateTrader.mq5:947",
+"UltimateTrader.mq5:1720",
+"UltimateTrader.mq5:1740"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1959",
+"UltimateTrader.mq5:1960"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSkipEndHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:300",
+"UltimateTrader_Inputs.mqh:302"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:944",
+"UltimateTrader.mq5:945",
+"UltimateTrader.mq5:1720",
+"UltimateTrader.mq5:1740"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1959",
+"UltimateTrader.mq5:1960"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSkipStartHour2": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:301"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:947",
+"UltimateTrader.mq5:1740"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1960"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSkipEndHour2": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:302"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:945",
+"UltimateTrader.mq5:1740"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1960"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpFridayEntryCutoffGMT": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:309"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:771",
+"UltimateTrader.mq5:1092"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2423"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableConfirmation": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:313"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2454"
+],
+"direct-read": [
+"UltimateTrader.mq5:695",
+"UltimateTrader.mq5:1707",
+"UltimateTrader.mq5:1717"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpConfirmationStrictness": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:314"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:623",
+"UltimateTrader.mq5:1718"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSoftRevalidation": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:315"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:956"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2467"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpConfirmationWindowBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:316"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:624",
+"UltimateTrader.mq5:2708",
+"UltimateTrader.mq5:2711",
+"UltimateTrader.mq5:2716"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2435",
+"UltimateTrader.mq5:2705"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPointsAPlusSetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:320"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:847",
+"UltimateTrader.mq5:1255",
+"UltimateTrader.mq5:1479"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1961"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPointsASetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:321"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:848",
+"UltimateTrader.mq5:1255",
+"UltimateTrader.mq5:1479"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1961"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPointsBPlusSetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:322"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:849",
+"UltimateTrader.mq5:1255",
+"UltimateTrader.mq5:1480"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1962"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPointsBSetup": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:323",
+"UltimateTrader_Inputs.mqh:324"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1256"
+],
+"direct-read": [
+"UltimateTrader.mq5:850",
+"UltimateTrader.mq5:851",
+"UltimateTrader.mq5:1480"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1962"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPointsBSetupOverride": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:324"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1256"
+],
+"direct-read": [
+"UltimateTrader.mq5:851"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMagicNumber": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:328"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:787",
+"UltimateTrader.mq5:1673",
+"UltimateTrader.mq5:1777",
+"UltimateTrader.mq5:1795",
+"Include/ExitPlugins/CStandardExitStrategy.mqh:286",
+"Include/TrailingPlugins/CSmartTrailingStrategy.mqh:283"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1686",
+"UltimateTrader.mq5:3181"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSlippage": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:329"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:955",
+"UltimateTrader.mq5:1674",
+"Include/Core/CPositionCoordinator.mqh:2147",
+"Include/Core/CPositionCoordinator.mqh:2206",
+"Include/Core/CPositionCoordinator.mqh:2439",
+"Include/Core/CPositionCoordinator.mqh:2515",
+"Include/Core/CPositionCoordinator.mqh:2590",
+"Include/Core/CPositionCoordinator.mqh:2639",
+"Include/Core/CPositionCoordinator.mqh:2816",
+"Include/Core/CPositionCoordinator.mqh:2882",
+"Include/Core/CPositionCoordinator.mqh:3310",
+"Include/Core/CPositionCoordinator.mqh:3348",
+"Include/Core/CPositionCoordinator.mqh:3390",
+"Include/Core/CPositionCoordinator.mqh:3471",
+"Include/Core/CPositionCoordinator.mqh:3509",
+"Include/Core/CPositionCoordinator.mqh:3551",
+"Include/Core/CPositionCoordinator.mqh:4167"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1686"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableAlerts": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:330"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:686",
+"UltimateTrader.mq5:1778",
+"UltimateTrader.mq5:1814"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnablePush": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:331"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:720",
+"UltimateTrader.mq5:1778",
+"UltimateTrader.mq5:1814"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableEmail": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:332"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:703",
+"UltimateTrader.mq5:1778",
+"UltimateTrader.mq5:1814"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableLogging": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:333"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:713",
+"UltimateTrader.mq5:1708"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1703"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableShadowKillLog": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:334"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:735",
+"UltimateTrader.mq5:1085"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:724",
+"Include/Core/CSignalOrchestrator.mqh:752"
+]
+},
+"InpMaxSpreadPoints": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:338"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:794",
+"UltimateTrader.mq5:1684"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1687",
+"UltimateTrader.mq5:1963"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxSlippagePoints": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:339"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:793",
+"UltimateTrader.mq5:1684"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1687",
+"UltimateTrader.mq5:1965"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEmergencyDisable": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:343"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2264"
+],
+"direct-read": [
+"UltimateTrader.mq5:683",
+"UltimateTrader.mq5:1941"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMaxConsecutiveErrors": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:344"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:788",
+"UltimateTrader.mq5:1815",
+"UltimateTrader.mq5:1942"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpDisableAutoKill": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:348"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:642",
+"UltimateTrader.mq5:1737",
+"UltimateTrader.mq5:1939"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:1428"
+]
+},
+"InpAutoKillPFThreshold": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:349"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:596",
+"UltimateTrader.mq5:1737"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:1940"
+]
+},
+"InpAutoKillMinTrades": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:350"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:595",
+"UltimateTrader.mq5:1738"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1940"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpAutoKillEarlyPF": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:351"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:594",
+"UltimateTrader.mq5:1738"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableDisplacementEntry": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:355"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:700"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1408"
+],
+"assignment-target": []
+},
+"InpEnableSessionBreakout": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:356"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:731"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1413"
+],
+"assignment-target": []
+},
+"InpDisplacementATRMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:357"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:644"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1407",
+"UltimateTrader.mq5:1426"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpAsianRangeStartHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:358"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:592",
+"UltimateTrader.mq5:1436"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1410"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpAsianRangeEndHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:359"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:591",
+"UltimateTrader.mq5:1436"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1410"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpLondonOpenHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:360"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:779",
+"UltimateTrader.mq5:1437"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1410"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpNYOpenHour": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:361"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:806",
+"UltimateTrader.mq5:1437"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1410"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableDayRouter": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:365"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1420"
+],
+"direct-read": [
+"UltimateTrader.mq5:699"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpDayRouterADXThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:366"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:640"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1421"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableLiquidityEngine": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:370"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1424"
+],
+"direct-read": [
+"UltimateTrader.mq5:711"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLiqEngineOBRetest": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:371"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:776",
+"UltimateTrader.mq5:1428"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLiqEngineFVGMitigation": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:372"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:775",
+"UltimateTrader.mq5:1428"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLiqEngineSFP": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:373"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:777",
+"UltimateTrader.mq5:1428"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpUseDivergenceFilter": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:374"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:983",
+"UltimateTrader.mq5:1428"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableSessionEngine": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:378"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1412",
+"UltimateTrader.mq5:1433"
+],
+"direct-read": [
+"UltimateTrader.mq5:732"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSessionLondonBO": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:379"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:929",
+"UltimateTrader.mq5:1440"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSessionNYCont": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:380"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:931",
+"UltimateTrader.mq5:1440"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSessionSilverBullet": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:381"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:932",
+"UltimateTrader.mq5:1440"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSessionLondonClose": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:382"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:930",
+"UltimateTrader.mq5:1440"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLondonCloseExtMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:383"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:778",
+"UltimateTrader.mq5:1440"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSilverBulletStartGMT": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:384"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:943",
+"UltimateTrader.mq5:1438"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSilverBulletEndGMT": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:385"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:942",
+"UltimateTrader.mq5:1438"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableExpansionEngine": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:389"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1445"
+],
+"direct-read": [
+"UltimateTrader.mq5:709"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpExpInstitutionalCandle": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:390"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:751",
+"UltimateTrader.mq5:1448"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpExpCompressionBO": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:391"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:750",
+"UltimateTrader.mq5:1448"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpInstCandleMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:392"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:774",
+"UltimateTrader.mq5:1448"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1447"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpCompressionMinBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:393"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:622",
+"UltimateTrader.mq5:1448"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [
+"UltimateTrader.mq5:1447"
+],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableSessionQualityGate": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:397"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:733"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:2760"
+]
+},
+"InpExecQualityBlockThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:398"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2763"
+],
+"direct-read": [
+"UltimateTrader.mq5:748"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2765"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpExecQualityReduceThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:399"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2768"
+],
+"direct-read": [
+"UltimateTrader.mq5:749"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2770"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinSessionRiskFactor": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:400"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:804"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2904"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnablePullbackCont": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:404"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1453"
+],
+"direct-read": [
+"UltimateTrader.mq5:719"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCLookbackBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:405"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:830",
+"UltimateTrader.mq5:1457"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCMinPullbackBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:406"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:836",
+"UltimateTrader.mq5:1457"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCMaxPullbackBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:407"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:833",
+"UltimateTrader.mq5:1457"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCMinPullbackATR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:408"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:835",
+"UltimateTrader.mq5:1458"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCMaxPullbackATR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:409"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:832",
+"UltimateTrader.mq5:1458"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCSignalBodyATR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:410"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:839",
+"UltimateTrader.mq5:1459"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCStopBufferATR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:411"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:840",
+"UltimateTrader.mq5:1459"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCMinADX": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:412"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:834",
+"UltimateTrader.mq5:1460"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCBlockChoppy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:413"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:826",
+"UltimateTrader.mq5:1461"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCEnableMultiCycle": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:415"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:829",
+"UltimateTrader.mq5:1464"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCCycleCooldownBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:416"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:828",
+"UltimateTrader.mq5:1464"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCMaxCyclesPerTrend": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:417"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:831",
+"UltimateTrader.mq5:1465"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCRearmMinPullbackATR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:418"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:838",
+"UltimateTrader.mq5:1465"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCRearmMinBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:419"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:837",
+"UltimateTrader.mq5:1466"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCTrendResetBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:420"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:841",
+"UltimateTrader.mq5:1466"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpPBCBlockSetupA": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:421"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:827"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:835"
+]
+},
+"InpEnableRegimeExit": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:425"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1836"
+],
+"direct-read": [
+"UltimateTrader.mq5:723",
+"UltimateTrader.mq5:1835"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendBE": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:427"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:870"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1840"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendChand": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:428"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:871"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1841"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendTP0Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:429"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:872"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1842"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendTP0Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:430"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:873"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1843"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendTP1Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:431"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:874"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1844"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendTP1Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:432"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:875"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1845"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendTP2Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:433"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:876"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1846"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitTrendTP2Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:434"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:877"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1847"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalBE": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:436"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:862"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1853"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalChand": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:437"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:863"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1854"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalTP0Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:438"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:864"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1855"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalTP0Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:439"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:865"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1856"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalTP1Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:440"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:866"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1857"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalTP1Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:441"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:867"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1858"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalTP2Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:442"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:868"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1859"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitNormalTP2Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:443"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:869"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1860"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyBE": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:445"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:854"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1866"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyChand": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:446"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:855"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1867"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyTP0Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:447"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:856"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1868"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyTP0Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:448"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:857"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1869"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyTP1Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:449"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:858"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1870"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyTP1Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:450"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:859"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1871"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyTP2Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:451"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:860"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1872"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitChoppyTP2Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:452"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:861"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1873"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolBE": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:454"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:878"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1879"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolChand": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:455"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:879"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1880"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolTP0Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:456"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:880"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1881"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolTP0Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:457"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:881"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1882"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolTP1Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:458"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:882"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1883"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolTP1Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:459"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:883"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1884"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolTP2Dist": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:460"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:884"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1885"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegExitVolTP2Vol": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:461"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:885"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1886"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableRegimeRisk": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:465"
+],
+"direct-read(gate)": [
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:109",
+"Include/RiskPlugins/CQualityTierRiskStrategy.mqh:335"
+],
+"direct-read": [
+"UltimateTrader.mq5:724",
+"UltimateTrader.mq5:1827",
+"UltimateTrader.mq5:1830"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegimeRiskTrending": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:466"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:888",
+"UltimateTrader.mq5:1828"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1831"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegimeRiskNormal": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:467"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:887",
+"UltimateTrader.mq5:1828"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1831"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegimeRiskChoppy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:468"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:886",
+"UltimateTrader.mq5:1829"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1832"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRegimeRiskVolatile": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:469"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:889",
+"UltimateTrader.mq5:1829"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1832"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableShockDetection": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:473"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:736"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1964"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:2737"
+]
+},
+"InpShockBarRangeThresh": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:474"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:933"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2740"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBatchedTrailing": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:478"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:595"
+],
+"direct-read": [
+"UltimateTrader.mq5:608"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpDisableBrokerTrailing": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:479"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:815",
+"Include/Core/CPositionCoordinator.mqh:2959",
+"Include/Core/CPositionCoordinator.mqh:3982"
+],
+"direct-read": [
+"UltimateTrader.mq5:643"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableTP0": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:483"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2487"
+],
+"direct-read": [
+"UltimateTrader.mq5:740"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1954",
+"Include/Core/CPositionCoordinator.mqh:2488",
+"Include/Core/CPositionCoordinator.mqh:3184",
+"Include/Core/CPositionCoordinator.mqh:3907"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:2412"
+]
+},
+"InpTP0Distance": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:484"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:963"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1954",
+"Include/Core/CPositionCoordinator.mqh:2405"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTP0Volume": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:485"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:964"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1955",
+"Include/Core/CPositionCoordinator.mqh:2406"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableEarlyInvalidation": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:489"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2672"
+],
+"direct-read": [
+"UltimateTrader.mq5:702"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1946"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEarlyInvalidationBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:490"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:680"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1947",
+"Include/Core/CPositionCoordinator.mqh:2679"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEarlyInvalidationMaxMFE_R": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:491"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:681"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1948",
+"Include/Core/CPositionCoordinator.mqh:2689"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEarlyInvalidationMinMAE_R": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:492"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:682"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1949",
+"Include/Core/CPositionCoordinator.mqh:2689"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableSessionRiskAdjust": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:496"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2849"
+],
+"direct-read": [
+"UltimateTrader.mq5:734"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpLondonRiskMultiplier": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:497"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:780"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2858"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewYorkRiskMultiplier": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:498"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:807"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2863"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpMinSLToSpreadRatio": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:502"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2919",
+"UltimateTrader.mq5:2929",
+"UltimateTrader.mq5:2932"
+],
+"direct-read": [
+"UltimateTrader.mq5:803"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableConfirmedQualityFilter": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:506"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2186"
+],
+"direct-read": [
+"UltimateTrader.mq5:696"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableSmartRunnerExit": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:510"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2727"
+],
+"direct-read": [
+"UltimateTrader.mq5:738"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerVolDecayThreshold": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:511"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2750"
+],
+"direct-read": [
+"UltimateTrader.mq5:911"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerWeakCandleCount": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:512"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:912"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2767"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerWeakCandleRatio": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:513"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2764"
+],
+"direct-read": [
+"UltimateTrader.mq5:913"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerRegimeKill": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:514"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:906"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:2775"
+]
+},
+"InpConfirmedMinBodyATR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:515"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:625"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2214"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpConfirmedMinClosePos": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:516"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:626"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2222"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpConfirmedRequireStructureReclaim": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:517"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2227"
+],
+"direct-read": [
+"UltimateTrader.mq5:628"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpConfirmedMinScore": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:518"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:627"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:2231"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpConfirmedStricterInChop": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:519"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:2232"
+],
+"direct-read": [
+"UltimateTrader.mq5:629"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableRunnerExitMode": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:523"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:600",
+"Include/Core/CPositionCoordinator.mqh:620"
+],
+"direct-read": [
+"UltimateTrader.mq5:726"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerRegimeConditional": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:524"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:2625"
+],
+"direct-read": [
+"UltimateTrader.mq5:905"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerCloseInChoppy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:525"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:897"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2631"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerCloseInVolatile": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:526"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:899"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2632"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerCloseInRanging": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:527"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:898"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:2633"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerMinQuality": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:528"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:545"
+],
+"direct-read": [
+"UltimateTrader.mq5:901"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerMinConfluence": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:529"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:551",
+"Include/Core/CPositionCoordinator.mqh:553",
+"Include/Core/CPositionCoordinator.mqh:556"
+],
+"direct-read": [
+"UltimateTrader.mq5:900"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerNormalMinConfluence": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:530"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:551",
+"Include/Core/CPositionCoordinator.mqh:555",
+"Include/Core/CPositionCoordinator.mqh:569"
+],
+"direct-read": [
+"UltimateTrader.mq5:902"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerUseEntryLockedChandFloor": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:531"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:851"
+],
+"direct-read": [
+"UltimateTrader.mq5:910"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerAllowPromotion": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:532"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:620"
+],
+"direct-read": [
+"UltimateTrader.mq5:895"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerPromoteAtR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:533"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:576",
+"Include/Core/CPositionCoordinator.mqh:578",
+"Include/Core/CPositionCoordinator.mqh:580",
+"Include/Core/CPositionCoordinator.mqh:581"
+],
+"direct-read": [
+"UltimateTrader.mq5:903"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerPromoteMaxMAE_R": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:534"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:587",
+"Include/Core/CPositionCoordinator.mqh:589",
+"Include/Core/CPositionCoordinator.mqh:590"
+],
+"direct-read": [
+"UltimateTrader.mq5:904"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerTrailLockStepR1": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:535"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:908",
+"Include/Core/CPositionCoordinator.mqh:786"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerTrailLockStepR2": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:536"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:909",
+"Include/Core/CPositionCoordinator.mqh:786"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerTrailBarCloseMinStepR": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:537"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:907"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:801"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpRunnerBrokerTrailCooldownBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:538"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:896"
+],
+"derived-assignment": [
+"Include/Core/CPositionCoordinator.mqh:780"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableMultiStrategy": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:542"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1476",
+"UltimateTrader.mq5:1754",
+"Include/MarketAnalysis/CMarketContext.mqh:1208"
+],
+"direct-read": [
+"UltimateTrader.mq5:716",
+"UltimateTrader.mq5:1094"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:2301"
+]
+},
+"InpEnableEngineTrend": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:543"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:707"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1095"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1492"
+],
+"assignment-target": []
+},
+"InpEnableEngineReversal": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:544"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:706"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1096"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1498"
+],
+"assignment-target": []
+},
+"InpEnableEngineRange": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:545"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:705"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1097"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [
+"UltimateTrader.mq5:1504"
+],
+"assignment-target": []
+},
+"InpEnableEngineExpansion": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:546"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:704"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1098",
+"UltimateTrader.mq5:1514"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBOSFreshnessBars": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:547"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:607",
+"UltimateTrader.mq5:1481"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSpineMinConfluence": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:548"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:957",
+"UltimateTrader.mq5:1482"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpDealingRangeD1Lookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:549"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:641",
+"UltimateTrader.mq5:1197"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpTrendSwingLookback": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:550"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:981",
+"UltimateTrader.mq5:1490"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableNewsFlat": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:560"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CMarketContext.mqh:1208"
+],
+"direct-read": [
+"UltimateTrader.mq5:717"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsWindowMinutes": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:561"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CMarketContext.mqh:1220"
+],
+"direct-read": [
+"UltimateTrader.mq5:822"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CMarketContext.mqh:1134",
+"Include/MarketAnalysis/CMarketContext.mqh:1174"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsFilterEnable": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:579"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1645",
+"Include/ExitPlugins/CNewsFlattenExit.mqh:40",
+"Include/ExitPlugins/CNewsFlattenExit.mqh:58",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:62",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:86"
+],
+"direct-read": [
+"UltimateTrader.mq5:810",
+"UltimateTrader.mq5:1058",
+"UltimateTrader.mq5:1087"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:2540",
+"UltimateTrader.mq5:2797"
+]
+},
+"InpNewsBlockEntries": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:580"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:808"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1088"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:2540",
+"UltimateTrader.mq5:2797"
+]
+},
+"InpNewsT1PreMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:581"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:816"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:93",
+"Include/MarketAnalysis/CNewsGate.mqh:502"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsT1PostMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:582"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:815"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:95",
+"Include/MarketAnalysis/CNewsGate.mqh:508"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsT2PreMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:583"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CNewsGate.mqh:463"
+],
+"direct-read": [
+"UltimateTrader.mq5:818"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:93",
+"Include/MarketAnalysis/CNewsGate.mqh:502"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsT2PostMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:584"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CNewsGate.mqh:463"
+],
+"direct-read": [
+"UltimateTrader.mq5:817"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:95",
+"Include/MarketAnalysis/CNewsGate.mqh:508"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsIncludeModerate": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:585"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:813"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:495"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsFlattenEnable": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:586"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1645",
+"Include/ExitPlugins/CNewsFlattenExit.mqh:40",
+"Include/ExitPlugins/CNewsFlattenExit.mqh:58",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:88"
+],
+"direct-read": [
+"UltimateTrader.mq5:811",
+"UltimateTrader.mq5:1058"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1089"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsFlattenLeadMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:587"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:812",
+"Include/ExitPlugins/CNewsFlattenExit.mqh:41",
+"Include/MarketAnalysis/CNewsGate.mqh:94"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:255"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsTightenEnable": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:588"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1645",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:62",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:86"
+],
+"direct-read": [
+"UltimateTrader.mq5:820"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1090"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsTightenLeadMin": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:589"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:821",
+"Include/MarketAnalysis/CNewsGate.mqh:94",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:65"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:284"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsTightenATRMult": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:590"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:819",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:64",
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:125"
+],
+"derived-assignment": [
+"Include/TrailingPlugins/CNewsTightenTrailing.mqh:109"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsCsvFile": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:591"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CNewsGate.mqh:134"
+],
+"direct-read": [
+"UltimateTrader.mq5:809",
+"Include/MarketAnalysis/CNewsGate.mqh:137"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsWinterGMTOffset": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:592"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:823",
+"Include/MarketAnalysis/CNewsGate.mqh:128"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CNewsGate.mqh:179",
+"Include/MarketAnalysis/CNewsGate.mqh:196"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpNewsServerFollowsUSDST": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:593"
+],
+"direct-read(gate)": [
+"Include/MarketAnalysis/CNewsGate.mqh:180"
+],
+"direct-read": [
+"UltimateTrader.mq5:814",
+"Include/MarketAnalysis/CNewsGate.mqh:128"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableCEG": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:603"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:3728"
+],
+"direct-read": [
+"UltimateTrader.mq5:689",
+"UltimateTrader.mq5:1072"
+],
+"derived-assignment": [
+"Include/Core/CSignalOrchestrator.mqh:1005"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCEGFloorPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:604"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:619"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1073",
+"Include/Core/CSignalOrchestrator.mqh:1005",
+"Include/Core/CSignalOrchestrator.mqh:1016"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCEGTrailFloor": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:605"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:3728"
+],
+"direct-read": [
+"UltimateTrader.mq5:620",
+"Include/Core/CPositionCoordinator.mqh:3738"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1074"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpCrashTrailSuppress": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:615"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:637",
+"UltimateTrader.mq5:1075"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:3781"
+]
+},
+"InpPinTrailSuppress": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:620"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:846"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:3782"
+]
+},
+"InpEnableShortSleeve": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:635"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1350",
+"UltimateTrader.mq5:1368",
+"UltimateTrader.mq5:1386",
+"Include/Core/CTradeOrchestrator.mqh:1199"
+],
+"direct-read": [
+"UltimateTrader.mq5:737",
+"UltimateTrader.mq5:1102"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1125"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:3119",
+"UltimateTrader.mq5:3137",
+"UltimateTrader.mq5:3155",
+"Include/Core/CTradeOrchestrator.mqh:1201"
+]
+},
+"InpSleeveMaxPositions": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:636"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:951",
+"Include/Core/CTradeOrchestrator.mqh:1224",
+"Include/Core/CTradeOrchestrator.mqh:1344"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1103",
+"Include/Core/CTradeOrchestrator.mqh:1220"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSleeveRiskPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:637"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:953",
+"Include/Core/CTradeOrchestrator.mqh:1241",
+"Include/Core/CTradeOrchestrator.mqh:1242"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1104"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSleeveMaxFamilyRiskPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:638"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:1256",
+"Include/Core/CTradeOrchestrator.mqh:1257"
+],
+"direct-read": [
+"UltimateTrader.mq5:950",
+"Include/Core/CTradeOrchestrator.mqh:1262"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1105"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSleeveMaxTotalRiskPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:639"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:1246",
+"Include/Core/CTradeOrchestrator.mqh:1247"
+],
+"direct-read": [
+"UltimateTrader.mq5:952",
+"Include/Core/CTradeOrchestrator.mqh:1252"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1106"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSleeveMaxDDPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:640"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:948",
+"Include/Core/CPositionCoordinator.mqh:1207"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1109"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CPositionCoordinator.mqh:1204"
+]
+},
+"InpSleeveMaxDailyLossPct": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:641"
+],
+"direct-read(gate)": [
+"Include/Core/CPositionCoordinator.mqh:1210"
+],
+"direct-read": [
+"UltimateTrader.mq5:949",
+"Include/Core/CPositionCoordinator.mqh:1214"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1110",
+"Include/Core/CPositionCoordinator.mqh:1211"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpSleeveSlotReserve": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:642"
+],
+"direct-read(gate)": [
+"Include/Core/CTradeOrchestrator.mqh:1227",
+"Include/Core/CTradeOrchestrator.mqh:1231"
+],
+"direct-read": [
+"UltimateTrader.mq5:954",
+"UltimateTrader.mq5:1113"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1111"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpEnableCREV": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:654"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1350"
+],
+"direct-read": [
+"UltimateTrader.mq5:692"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:3119"
+]
+},
+"InpEnableCONT": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:667"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1368"
+],
+"direct-read": [
+"UltimateTrader.mq5:691"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:3137"
+]
+},
+"InpEnableTMF": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:685"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1386"
+],
+"direct-read": [
+"UltimateTrader.mq5:739",
+"UltimateTrader.mq5:1124"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"UltimateTrader.mq5:3155"
+]
+},
+"InpBearStateLedger": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:688"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:612",
+"UltimateTrader.mq5:1231"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1132"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBearStateSource": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:689"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:613"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1131",
+"Include/MarketAnalysis/CMarketContext.mqh:338"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpBearStateFile": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:690"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:611"
+],
+"derived-assignment": [
+"Include/MarketAnalysis/CMarketContext.mqh:342",
+"Include/MarketAnalysis/CMarketContext.mqh:344"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpShortOnlyMode": {
+"declaration": [
+"UltimateTrader_Inputs.mqh:699"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:935"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CSignalOrchestrator.mqh:619",
+"Include/Core/CTradeOrchestrator.mqh:232"
+]
+},
+"InpEnableECv2": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:11"
+],
+"direct-read(gate)": [
+"UltimateTrader.mq5:1786",
+"Include/Core/CEquityCurveRiskController.mqh:472"
+],
+"direct-read": [
+"UltimateTrader.mq5:701",
+"UltimateTrader.mq5:1788"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:315"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2FastPeriod": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:12"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:667"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:391"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2SlowPeriod": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:13"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:676"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:392"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2MinTrades": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:14"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:425",
+"Include/Core/CEquityCurveRiskController.mqh:476"
+],
+"direct-read": [
+"UltimateTrader.mq5:671"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2WarmupMult": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:15"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:679"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:478"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2DeadZone": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:16"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:666"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:420"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2ModerateZone": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:17"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:672"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:124"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2SevereZone": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:18"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:675"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:125"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2MaxMult": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:19"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:480",
+"Include/Core/CEquityCurveRiskController.mqh:501"
+],
+"direct-read": [
+"UltimateTrader.mq5:669"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:439",
+"Include/Core/CEquityCurveRiskController.mqh:459"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2MinMult": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:20"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:480",
+"Include/Core/CEquityCurveRiskController.mqh:501"
+],
+"direct-read": [
+"UltimateTrader.mq5:670"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1789",
+"Include/Core/CEquityCurveRiskController.mqh:126",
+"Include/Core/CEquityCurveRiskController.mqh:319",
+"Include/Core/CEquityCurveRiskController.mqh:439",
+"Include/Core/CEquityCurveRiskController.mqh:459"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2StepDown": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:21"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:677"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:455"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2StepUp": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:22"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:678"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:457"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2Hysteresis": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:23"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:668"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:446"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2ProtectRecovery": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:24"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:436"
+],
+"direct-read": [
+"UltimateTrader.mq5:673"
+],
+"derived-assignment": [
+"UltimateTrader.mq5:1790"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECv2RecoveryBias": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:25"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:674"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:437"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolEnable": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:29"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:145"
+],
+"direct-read": [
+"UltimateTrader.mq5:658"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:316"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolLowThreshold": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:30"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:665"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:148"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolHighThreshold": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:31"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:663",
+"Include/Core/CEquityCurveRiskController.mqh:161"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:152",
+"Include/Core/CEquityCurveRiskController.mqh:155",
+"Include/Core/CEquityCurveRiskController.mqh:160"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolExtremeThreshold": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:32"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:660",
+"Include/Core/CEquityCurveRiskController.mqh:161"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:158"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolLowRelax": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:33"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:664"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:149"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolHighReduce": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:34"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:662"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:156",
+"Include/Core/CEquityCurveRiskController.mqh:162"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolExtremeReduce": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:35"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:659"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:162",
+"Include/Core/CEquityCurveRiskController.mqh:165"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolFloor": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:36"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:167",
+"Include/Core/CEquityCurveRiskController.mqh:501"
+],
+"direct-read": [
+"UltimateTrader.mq5:661"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECVolCeiling": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:37"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:167"
+],
+"direct-read": [
+"UltimateTrader.mq5:657"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECFwdEnable": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:41"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:646"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:317"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CEquityCurveRiskController.mqh:173"
+]
+},
+"InpECFwdStressThreshold": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:42"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:185"
+],
+"direct-read": [
+"UltimateTrader.mq5:649"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:181"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECFwdStressMult": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:43"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:648"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:186"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECFwdFloor": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:44"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:196",
+"Include/Core/CEquityCurveRiskController.mqh:501"
+],
+"direct-read": [
+"UltimateTrader.mq5:647"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECFwdCeiling": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:45"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:196"
+],
+"direct-read": [
+"UltimateTrader.mq5:645"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECStratEnable": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:49"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:202"
+],
+"direct-read": [
+"UltimateTrader.mq5:651"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:318"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": [
+"Include/Core/CEquityCurveRiskController.mqh:399",
+"Include/Core/CEquityCurveRiskController.mqh:493"
+]
+},
+"InpECStratFastPeriod": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:50"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:652"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:408"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECStratSlowPeriod": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:51"
+],
+"direct-read(gate)": [],
+"direct-read": [
+"UltimateTrader.mq5:656"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:409"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECStratMinTrades": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:52"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:204"
+],
+"direct-read": [
+"UltimateTrader.mq5:655"
+],
+"derived-assignment": [],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECStratMinAdj": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:53"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:223"
+],
+"direct-read": [
+"UltimateTrader.mq5:654"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:214"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECStratMaxAdj": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:54"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:223"
+],
+"direct-read": [
+"UltimateTrader.mq5:653"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:220"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+},
+"InpECStratDeadZone": {
+"declaration": [
+"Include/Core/CEquityCurveRiskController.mqh:55"
+],
+"direct-read(gate)": [
+"Include/Core/CEquityCurveRiskController.mqh:216"
+],
+"direct-read": [
+"UltimateTrader.mq5:650"
+],
+"derived-assignment": [
+"Include/Core/CEquityCurveRiskController.mqh:207",
+"Include/Core/CEquityCurveRiskController.mqh:219"
+],
+"derived-assignment(profile/scale)": [],
+"ctor-arg": [],
+"registration": [],
+"assignment-target": []
+}
+}
+}
