@@ -1,8 +1,8 @@
 {
- "schema": "ultimatetrader-release-identity-v4-post-cleanup",
+ "schema": "ultimatetrader-release-identity-v5-388",
  "authoritative_identity": "SHA-256 over canonical name\\ttype\\tvalue serialization (sorted by name)",
- "config_sha256": "9bc147a70c8c5c7c67d6d8f7ff6063d3021b8e69427b6b1976823ee5129ec477",
- "config_fnv1a32_journal": "EA5892E1  (393-config; fast journal checksum only \u2014 was 12BA6E3E for 414)",
+ "config_sha256": "8da3257e8af2093578402c0e6c9520ff02d00c86a803007e7c72f701f991dfe4",
+ "config_fnv1a32_journal": "A7B19793  (388-config; journal-only)",
  "components": {
   "source_commit_HEAD": "568189214d2cdf249e547f57b608cd182ad1b3cc",
   "release_source_commit": "eee95ed (release-ultimate-gold-v1-32490)",
@@ -21,11 +21,11 @@
  },
  "note": "FNV-1a32 retained only as an optional fast journal checksum; SHA-256 config_sha256 is the authoritative release identity.",
  "layered_config_hashes": {
-  "config_raw_sha256": "9bc147a70c8c5c7c67d6d8f7ff6063d3021b8e69427b6b1976823ee5129ec477",
-  "config_raw_note": "SHA-256 over sorted raw name\\ttype\\tvalue for the 393 CURRENT inputs (21 retired\u2192const, migration-manifest.json). AUTHORITATIVE.",
-  "config_init_effective_sha256": "9bc147a70c8c5c7c67d6d8f7ff6063d3021b8e69427b6b1976823ee5129ec477",
+  "config_raw_sha256": "8da3257e8af2093578402c0e6c9520ff02d00c86a803007e7c72f701f991dfe4",
+  "config_raw_note": "SHA-256 over sorted raw name\\ttype\\tvalue for the 388 CURRENT inputs (26 retired\u2192const). AUTHORITATIVE.",
+  "config_init_effective_sha256": "8da3257e8af2093578402c0e6c9520ff02d00c86a803007e7c72f701f991dfe4",
   "config_init_effective_note": "On the gold profile the init-effective DISCRETE config == raw: all 10 ApplySymbolProfile overrides resolve 1:1 (verified; g_profileShortRiskMultiplier=InpShortRiskMultiplier=1.0). The 5 point-scaled inputs (InpMinSLPoints/InpMinTrailMovement/InpTrailMinProfit/InpTrailBEOffset/InpBOEntryBuffer) are runtime price-scaled (\u00d7g_pointScale) \u2014 documented as per-input effective_formula, not discrete pins. So init-effective discrete hash == raw hash; dynamic scaling is formula-captured.",
-  "config_fnv1a32_journal": "EA5892E1"
+  "config_fnv1a32_journal": "A7B19793"
  },
  "forensic_gate": {
   "tick_dataset": "one shared read-only tick cache (hashed above), identical terminal build + tester settings + symbol spec across all runs",
@@ -41,15 +41,21 @@
    "CVolatilityBreakoutEntry_checked_compat_emitted": "42161/5186/0 \u2192 HISTORICALLY-INACTIVE (VOLATILE regime occurred 5186x, engine called, 0 emissions \u2014 breakout trigger never fires; NOT unreachable-by-regime as the source comment implied)"
   },
   "verdict": "ALL 5 CONDITIONS PASS \u2014 cleanup gate is OPEN (deprecate/merge/rename/value-change now permitted, per-subcategory with identity re-test)",
-  "reconciliation_393": "PASS \u2014 audit emitter 393 unique rows (config_hash EA5892E1); Stats 96415ff0 + TradeEvents 9c08bcfa byte-identical on 393-pin current-canonical.set"
+  "reconciliation_393": "PASS \u2014 audit emitter 393 unique rows (config_hash EA5892E1); Stats 96415ff0 + TradeEvents 9c08bcfa byte-identical on 393-pin current-canonical.set",
+  "reconciliation_388": "PASS \u2014 audit emitter 388 unique rows (config_hash A7B19793); Stats 96415ff0 + TradeEvents 9c08bcfa byte-identical on 388-pin current-canonical.set"
  },
  "release_manifest_sha256": "(computed over this file after write \u2014 see manifest.sha256 sidecar)",
- "input_count": 393,
+ "input_count": 388,
  "cleanup_lineage": {
   "tag_baseline": "baseline-input-cleanup-414 @ 4a2ec4e",
   "runner_exit_mode": "dc0531e (16 retired)",
   "smart_runner": "d7f7313 (5 retired)",
   "migration": "migration-manifest.json",
-  "archive": "archive/current-canonical-414.set (immutable)"
+  "archive": "archive/current-canonical-414.set (immutable)",
+  "entry_confirmation": "258cd4d (5 retired)",
+  "archives": [
+   "archive/current-canonical-414.set",
+   "archive/current-canonical-393.set"
+  ]
  }
 }

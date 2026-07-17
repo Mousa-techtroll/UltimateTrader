@@ -1,6 +1,8 @@
-; current-canonical.set — reconciled production config (388 inputs, v4, post entry-confirmation cleanup)
-; Exactly 388 current inputs, NO retired keys. 26 total retired (Runner-Exit-Mode+Smart-Runner+entry-confirmation)→consts;
-; see migration-manifest.json. Prior sets archived immutably in archive/.
+; IMMUTABLE ARCHIVE — 393-input canonical set (post runner cleanups, pre entry-confirmation cleanup).
+; Superseded by ../current-canonical.set (388 pins) after commit 258cd4d. DO NOT EDIT.
+; current-canonical.set — reconciled production config (393 inputs, v3, post-cleanup)
+; Exactly 393 current inputs, NO retired keys. 21 retired (Runner-Exit-Mode+Smart-Runner) → consts;
+; see migration-manifest.json. Previous 414-set archived at archive/current-canonical-414.set (immutable).
 
 InpADXPeriod=14
 InpADXRanging=15.0
@@ -43,6 +45,11 @@ InpCloseBeforeWeekend=true
 InpCompressionMinBars=8
 InpConfirmationStrictness=0.9
 InpConfirmationWindowBars=1
+InpConfirmedMinBodyATR=0.25
+InpConfirmedMinClosePos=0.6
+InpConfirmedMinScore=2
+InpConfirmedRequireStructureReclaim=false
+InpConfirmedStricterInChop=true
 InpCrashATRMult=2.0
 InpCrashFreshDCBars=150
 InpCrashRegimeGate=0

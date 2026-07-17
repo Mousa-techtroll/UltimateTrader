@@ -3539,64 +3539,6 @@
    "validation": "Rejected"
   },
   {
-   "name": "InpConfirmedMinBodyATR",
-   "type": "double",
-   "unit": "ATR-mult",
-   "source_default": "0.25",
-   "set_value": "0.25",
-   "runtime_value": "0.250000",
-   "effective_value": "inert (master InpEnableConfirmedQualityFilter=false, a DIFFERENT master in group 45)",
-   "activation": "Gated-off",
-   "validation": "Rejected",
-   "effective_formula": "InpConfirmedMinBodyATR \u00d7 ATR(14,H1)  (state-dependent)",
-   "derived_variable": "SL/threshold distance (price)",
-   "dynamic_range": "ATR(14,H1) gold ~$3\u2013$45 over 2019\u20132026"
-  },
-  {
-   "name": "InpConfirmedMinClosePos",
-   "type": "double",
-   "unit": "ratio/%",
-   "source_default": "0.60",
-   "set_value": "0.6",
-   "runtime_value": "0.600000",
-   "effective_value": "inert (CQF master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpConfirmedMinScore",
-   "type": "int",
-   "unit": "count/level",
-   "source_default": "2",
-   "set_value": "2",
-   "runtime_value": "2",
-   "effective_value": "inert (CQF master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpConfirmedRequireStructureReclaim",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "false",
-   "set_value": "false",
-   "runtime_value": "false",
-   "effective_value": "inert (CQF master off); note default false makes Rule C auto-pass even if CQF were on",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
-   "name": "InpConfirmedStricterInChop",
-   "type": "bool",
-   "unit": "bool",
-   "source_default": "true",
-   "set_value": "true",
-   "runtime_value": "true",
-   "effective_value": "inert (CQF master off)",
-   "activation": "Gated-off",
-   "validation": "Rejected"
-  },
-  {
    "name": "InpEnableTP0",
    "type": "bool",
    "unit": "bool",
@@ -4439,6 +4381,6 @@
   }
  ],
  "authoritative_identity": "SHA-256 (release-identity-manifest.json config_sha256)",
- "config_sha256": "9bc147a70c8c5c7c67d6d8f7ff6063d3021b8e69427b6b1976823ee5129ec477",
- "input_count": 393
+ "config_sha256": "8da3257e8af2093578402c0e6c9520ff02d00c86a803007e7c72f701f991dfe4",
+ "input_count": 388
 }

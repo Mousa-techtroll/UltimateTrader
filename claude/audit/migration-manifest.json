@@ -238,6 +238,62 @@
    "subcategory": "Smart-runner exit",
    "commit": "d7f7313",
    "reason": "gated-off/behaviorally-inactive; input\u2192const, config-surface removal"
+  },
+  {
+   "name": "InpConfirmedMinBodyATR",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.25",
+   "former_value_runtime": "0.250000",
+   "const_value": "0.25",
+   "subcategory": "Entry-confirmation (mis-filed in SMART RUNNER EXIT group)",
+   "commit": "258cd4d",
+   "reason": "gated-off entry filter (InpEnableConfirmedQualityFilter=false); static+runtime(0 exec) proven; input\u2192const"
+  },
+  {
+   "name": "InpConfirmedMinClosePos",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "0.6",
+   "former_value_runtime": "0.600000",
+   "const_value": "0.6",
+   "subcategory": "Entry-confirmation (mis-filed in SMART RUNNER EXIT group)",
+   "commit": "258cd4d",
+   "reason": "gated-off entry filter (InpEnableConfirmedQualityFilter=false); static+runtime(0 exec) proven; input\u2192const"
+  },
+  {
+   "name": "InpConfirmedMinScore",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "2",
+   "former_value_runtime": "2",
+   "const_value": "2",
+   "subcategory": "Entry-confirmation (mis-filed in SMART RUNNER EXIT group)",
+   "commit": "258cd4d",
+   "reason": "gated-off entry filter (InpEnableConfirmedQualityFilter=false); static+runtime(0 exec) proven; input\u2192const"
+  },
+  {
+   "name": "InpConfirmedRequireStructureReclaim",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "false",
+   "former_value_runtime": "false",
+   "const_value": "false",
+   "subcategory": "Entry-confirmation (mis-filed in SMART RUNNER EXIT group)",
+   "commit": "258cd4d",
+   "reason": "gated-off entry filter (InpEnableConfirmedQualityFilter=false); static+runtime(0 exec) proven; input\u2192const"
+  },
+  {
+   "name": "InpConfirmedStricterInChop",
+   "former_type": "input",
+   "replacement": "const",
+   "former_value_set": "true",
+   "former_value_runtime": "true",
+   "const_value": "true",
+   "subcategory": "Entry-confirmation (mis-filed in SMART RUNNER EXIT group)",
+   "commit": "258cd4d",
+   "reason": "gated-off entry filter (InpEnableConfirmedQualityFilter=false); static+runtime(0 exec) proven; input\u2192const"
   }
- ]
+ ],
+ "total_retired": 26
 }
