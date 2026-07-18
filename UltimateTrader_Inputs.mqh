@@ -225,6 +225,10 @@ input double InpVolVeryLowThresh = 0.5;      // Very low threshold
 input double InpVolLowThresh = 0.7;          // Low threshold
 input double InpVolNormalThresh = 1.0;       // Normal threshold
 input double InpVolHighThresh = 1.3;         // High threshold
+// CANDIDATE P1 (QA#6, candidate-volatr/DESIGN.md): classify the volatility regime on the last CLOSED bar's
+// ATR ([1]) instead of the still-forming bar ([0], ~5-7% deflated → under-classifies VOL_HIGH/EXTREME). The
+// regime feeds CExpansionEngine::IsExpansionContext (live). false (default) = legacy forming-bar = baseline.
+input bool   InpVolRegimeClosedBar = false;  // QA#6: vol regime on CLOSED bar [1] (false=legacy forming-bar baseline)
 // ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09, Sprint-1C hole): the 5 risk multipliers and the SL-adjust
 // family below ARE configured into CVolatilityRegimeManager (UltimateTrader.mq5 ~:568), but the
 // manager's outputs have ZERO live consumers — GetRiskMultiplier()'s only caller chain ends in

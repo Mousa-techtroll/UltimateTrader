@@ -235,7 +235,10 @@ public:
          return;
       }
 
-      m_current_analysis.current_atr = atr_buffer[0];
+      // CANDIDATE P1 (QA#6): the vol-regime gate should use the last CLOSED bar [1], not the still-forming
+      // bar [0] (~5-7% ATR deflation → under-classifies VOL_HIGH/EXTREME). CopyBuffer above fetches 2 values
+      // so [1] is present. Default false = legacy [0] = baseline (identity-preserving).
+      m_current_analysis.current_atr = InpVolRegimeClosedBar ? atr_buffer[1] : atr_buffer[0];
       m_current_analysis.average_atr = m_atr_average;
 
       // Calculate ATR ratio
