@@ -2313,6 +2313,13 @@ void OnTick()
       // combined ONCE at the apply site with a floor (InpMinSessionRiskFactor).
       g_session_quality_factor = 1.0;
 
+      // L6-1 BUG 4(b): auto-clear any post-fill binding block at the top of every new
+      // bar so a transient ambiguity can NEVER brick trading for the rest of the
+      // session. No-op (and silent) when nothing is blocked -> byte-identical in the
+      // deterministic tester, where no fill is ever ambiguous.
+      if(g_tradeExecutor != NULL)
+         g_tradeExecutor.ClearBindingBlock();
+
       //--- 1. Update market state (all Stack17 analysis components)
       g_stateManager.UpdateMarketState();
 
@@ -3316,29 +3323,34 @@ void OnTick()
                   // L6-1 orphan-adopt volume-INCREASE case: this ticket is already
                   // tracked, but on a NETTING account a same-direction ADD can GROW
                   // the live merged volume between ticks without a new position id.
-                  // Reconcile ONLY on a genuine INCREASE (broker_vol > tracked). A
-                  // partial-TP close DECREASES volume and is owned by the exit path,
-                  // so we deliberately skip decreases here — that keeps this every-
-                  // tick branch a strict no-op in the clean tester (no netting adds
-                  // -> volume never increases) -> byte-identical.
-                  double tracked_vol = 0.0;
-                  bool   tracked_ok  = false;
+                  //
+                  // BUG 5: gate on broker_vol > ORIGINAL_LOTS (not remaining_lots). An
+                  // in-flight partial-TP close decrements remaining_lots BEFORE its
+                  // close deal confirms, so the broker still shows the full volume ->
+                  // broker_vol > remaining would FALSE-FIRE and ReconcileNettingFill
+                  // would restore full volume, clobbering the in-flight partial. A true
+                  // net ADD grows volume ABOVE the original base, while a partial race
+                  // keeps broker_vol <= original_lots, so anchoring on original_lots
+                  // isolates real adds from partial-close races. Strict no-op in the
+                  // tester (synchronous fills, no netting adds) -> byte-identical.
+                  double base_lots  = 0.0;
+                  bool   tracked_ok = false;
                   for(int tp3 = 0; tp3 < g_posCoordinator.GetPositionCount(); tp3++)
                   {
                      if(g_posCoordinator.GetPositionTicket(tp3) == bp_ticket)
                      {
                         SPosition trec = g_posCoordinator.GetPosition(tp3);
-                        tracked_vol = trec.remaining_lots;
-                        tracked_ok  = true;
+                        base_lots  = trec.original_lots;
+                        tracked_ok = true;
                         break;
                      }
                   }
                   double broker_vol = PositionGetDouble(POSITION_VOLUME);
-                  if(tracked_ok && broker_vol > tracked_vol + 1e-6)
+                  if(tracked_ok && base_lots > 0.0 && broker_vol > base_lots + 1e-6)
                   {
                      Print("[L6-1 RECONCILE] Ticket=", bp_ticket,
-                           " | tracked_vol=", DoubleToString(tracked_vol, 2),
-                           " | broker_vol=", DoubleToString(broker_vol, 2), " (netting add)");
+                           " | original_lots=", DoubleToString(base_lots, 2),
+                           " | broker_vol=", DoubleToString(broker_vol, 2), " (netting add beyond base)");
                      g_posCoordinator.ReconcileNettingFill(bp_ticket);
                   }
                }

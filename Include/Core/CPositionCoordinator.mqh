@@ -1663,18 +1663,32 @@ public:
 
       if(!PositionSelectByTicket(pos_ticket))
       {
-         // Position is no longer live (an opposite fill fully closed it). Leave the
-         // normal close/exit path to retire the record with full accounting.
+         // BUG 3: the position is no longer live — an opposite equal-volume fill
+         // fully CLOSED it. This is NOT a reconcile and MUST NOT become a tracked
+         // record. Return false; the AddPosition guard treats a tracked id as
+         // "do not append", and the normal close/exit path retires the record with
+         // full accounting. (Never mutate a record for a dead position.)
          LogPrint("ReconcileNettingFill: ticket ", pos_ticket,
-                  " not live — deferring to close path (no in-place mutation).");
+                  " not live (fully closed by opposite) — no reconcile; close path retires it.");
          return false;
       }
 
-      double            live_vol = PositionGetDouble(POSITION_VOLUME);
-      ENUM_SIGNAL_TYPE  live_dir = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
-                                   ? SIGNAL_LONG : SIGNAL_SHORT;
-      double            old_vol  = m_positions[idx].remaining_lots;
-      ENUM_SIGNAL_TYPE  old_dir  = m_positions[idx].direction;
+      double            live_vol   = PositionGetDouble(POSITION_VOLUME);
+      ENUM_SIGNAL_TYPE  live_dir   = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                                     ? SIGNAL_LONG : SIGNAL_SHORT;
+      double            live_entry = PositionGetDouble(POSITION_PRICE_OPEN);
+      double            live_sl    = PositionGetDouble(POSITION_SL);
+      double            live_tp    = PositionGetDouble(POSITION_TP);
+
+      double            old_vol    = m_positions[idx].remaining_lots;
+      ENUM_SIGNAL_TYPE  old_dir    = m_positions[idx].direction;
+      double            old_entry  = m_positions[idx].entry_price;
+      double            old_sl     = (m_positions[idx].original_sl > 0.0)
+                                     ? m_positions[idx].original_sl : m_positions[idx].stop_loss;
+      bool              flipped    = (live_dir != old_dir);
+
+      string rsym = PositionGetString(POSITION_SYMBOL);
+      if(rsym == "") rsym = _Symbol;
 
       // Volume accounting: remaining/current lots follow the live merged volume; a
       // net ADD grows the base (original_lots); a reduction leaves the base intact.
@@ -1682,13 +1696,80 @@ public:
       m_positions[idx].lot_size       = live_vol;
       if(live_vol > m_positions[idx].original_lots)
          m_positions[idx].original_lots = live_vol;
-      m_positions[idx].direction = live_dir;    // a reversal flips the tracked side
 
-      // Risk accounting: recompute entry risk from the EXISTING geometry (entry vs
-      // stop) at the new merged volume so exposure caps and persisted risk track
-      // the real book. Uses the position's own symbol economics.
-      string rsym = PositionGetString(POSITION_SYMBOL);
-      if(rsym == "") rsym = _Symbol;
+      // BUG 2: the tracked entry MUST follow the broker's blended open price on every
+      // add/reduce/reverse, or R / BE / MFE / MAE (and entry_risk_amount) key off the
+      // stale first-fill entry. POSITION_PRICE_OPEN is the authoritative merged entry.
+      m_positions[idx].entry_price = live_entry;
+
+      if(flipped)
+      {
+         // BUG 1: a REVERSAL is a NEW position on the opposite side. The old SL/TPs
+         // sit on the wrong side of the new entry — reset geometry + lifecycle so the
+         // record never holds an inverted stop that management could push to broker.
+         m_positions[idx].direction = live_dir;
+
+         // Protective stop for the new side: prefer the broker's live SL if it is
+         // valid for the new direction; else derive a safe protective stop from the
+         // prior risk magnitude so the record NEVER holds an inverted stop.
+         bool broker_sl_valid = (live_sl > 0.0) &&
+                                ((live_dir == SIGNAL_LONG  && live_sl < live_entry) ||
+                                 (live_dir == SIGNAL_SHORT && live_sl > live_entry));
+         double new_sl;
+         if(broker_sl_valid)
+            new_sl = live_sl;
+         else
+         {
+            double prot = MathAbs(old_entry - old_sl);        // prior risk magnitude
+            if(prot <= 0.0)
+            {
+               double pt      = SymbolInfoDouble(rsym, SYMBOL_POINT);
+               long   sl_lvl  = SymbolInfoInteger(rsym, SYMBOL_TRADE_STOPS_LEVEL);
+               prot = (pt > 0.0 && sl_lvl > 0) ? (sl_lvl * pt) : (live_entry * 0.001);
+            }
+            new_sl = (live_dir == SIGNAL_LONG) ? (live_entry - prot) : (live_entry + prot);
+         }
+         m_positions[idx].stop_loss   = new_sl;
+         m_positions[idx].original_sl = new_sl;
+
+         // TPs: keep the broker TP only if valid for the new side; clear the ladder we
+         // cannot reconstruct (management/exit layer re-derives from the new geometry).
+         bool broker_tp_valid = (live_tp > 0.0) &&
+                                ((live_dir == SIGNAL_LONG  && live_tp > live_entry) ||
+                                 (live_dir == SIGNAL_SHORT && live_tp < live_entry));
+         m_positions[idx].tp1          = broker_tp_valid ? live_tp : 0.0;
+         m_positions[idx].tp2          = 0.0;
+         m_positions[idx].tp3          = 0.0;
+         m_positions[idx].original_tp1 = m_positions[idx].tp1;
+
+         // Lifecycle reset for the fresh opposite-side position.
+         m_positions[idx].tp1_closed    = false;
+         m_positions[idx].tp2_closed    = false;
+         m_positions[idx].at_breakeven  = false;
+         m_positions[idx].stage         = STAGE_INITIAL;
+         m_positions[idx].stage_label   = "INITIAL";
+         m_positions[idx].mae           = 0.0;
+         m_positions[idx].mfe           = 0.0;
+         m_positions[idx].reached_050r  = false;
+         m_positions[idx].reached_100r  = false;
+         m_positions[idx].original_lots = live_vol;    // the reversal is the new base
+         // TP0 / partial-ladder accounting must also reset — else a reversal whose PRE-flip
+         // leg hit TP0 keeps tp0_closed=true with stage=INITIAL, which stalls the R-ladder
+         // (TP0 gate needs !tp0_closed, TP1 gate needs stage==STAGE_TP0_HIT) AND double-counts
+         // the old leg's partial_realized_pnl into the new leg's final PnL.
+         m_positions[idx].tp0_closed          = false;
+         m_positions[idx].tp0_lots            = 0.0;
+         m_positions[idx].tp0_profit          = 0.0;
+         m_positions[idx].tp0_time            = 0;
+         m_positions[idx].partial_close_count = 0;
+         m_positions[idx].partial_realized_pnl= 0.0;
+         m_positions[idx].peak_r_before_be    = 0.0;
+         m_positions[idx].be_before_tp1       = false;
+         m_positions[idx].bar_time_at_entry   = iTime(rsym, PERIOD_H1, 0);  // re-tag session for the new leg
+      }
+
+      // Risk accounting: recompute entry risk from the NOW-VALID entry<->stop at the
+      // new merged volume so exposure caps and persisted risk track the real book.
       double risk_dist = MathAbs(m_positions[idx].entry_price - m_positions[idx].stop_loss);
       double tv = SymbolInfoDouble(rsym, SYMBOL_TRADE_TICK_VALUE);
       double ts = SymbolInfoDouble(rsym, SYMBOL_TRADE_TICK_SIZE);
@@ -1699,6 +1780,8 @@ public:
                " | vol ", DoubleToString(old_vol, 2), " -> ", DoubleToString(live_vol, 2),
                " | dir ", (old_dir == SIGNAL_LONG ? "LONG" : "SHORT"),
                " -> ", (live_dir == SIGNAL_LONG ? "LONG" : "SHORT"),
+               " | entry ", DoubleToString(old_entry, _Digits), " -> ", DoubleToString(live_entry, _Digits),
+               (flipped ? " | REVERSAL: geometry+lifecycle reset" : ""),
                " | risk$=", DoubleToString(m_positions[idx].entry_risk_amount, 2));
 
       SaveOnStateChange();
@@ -1710,18 +1793,22 @@ public:
    //+------------------------------------------------------------------+
    void AddPosition(SPosition &position)
    {
-      // L6-1 (flag-gated): a fill whose authoritative position id is ALREADY
-      // tracked is a netting add/reduce/reverse MERGE, not a new position —
-      // reconcile the existing record instead of appending a duplicate. NEVER
-      // fires for a fresh position id: in the common single-fill case
+      // L6-1 (flag-gated): a fill whose authoritative position id is ALREADY tracked
+      // is a netting add/reduce/reverse/close on an EXISTING position, not a new one.
+      // NEVER fires for a fresh position id: in the common single-fill case
       // FindTrackedPositionIndex == -1, so the legacy append below runs verbatim
-      // (byte-identical, flag on or off). If the id is tracked but no live
-      // position resolves, fall through to the legacy append rather than drop it.
+      // (byte-identical, flag on or off).
+      //
+      // BUG 3: whether ReconcileNettingFill returns true (a live merge, updated in
+      // place) or false (the position was fully CLOSED by an opposite fill and is no
+      // longer live), we MUST NOT append. Appending a tracked id creates a phantom
+      // duplicate; a live merge is already reconciled, and a full close is retired by
+      // the normal close/exit path. Return unconditionally once the id is tracked.
       if(m_safe_binding && position.ticket > 0 &&
          FindTrackedPositionIndex(position.ticket) >= 0)
       {
-         if(ReconcileNettingFill(position.ticket))
-            return;
+         ReconcileNettingFill(position.ticket);
+         return;
       }
 
       InitializeRunnerExitMode(position);

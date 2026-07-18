@@ -1782,6 +1782,73 @@ private:
    }
 
    //+------------------------------------------------------------------+
+   //| L6-1: DEAL_ENTRY of our fill (ResultDeal). Distinguishes a deal   |
+   //| that OPENED/added/reversed a position (IN / INOUT) from one that  |
+   //| CLOSED/reduced an existing position (OUT / OUT_BY). Returns -1 if |
+   //| it cannot be read (treated as "opened" by the caller, the safe    |
+   //| legacy default that keeps a genuine instant-TP a success).        |
+   //+------------------------------------------------------------------+
+   int ResultDealEntry()
+   {
+      ulong d = m_trade.ResultDeal();
+      if(d == 0) return -1;
+      if(!HistoryDealSelect(d))
+      {
+         HistorySelect(0, TimeCurrent() + 1);
+         if(!HistoryDealSelect(d)) return -1;
+      }
+      return (int)HistoryDealGetInteger(d, DEAL_ENTRY);
+   }
+
+   //+------------------------------------------------------------------+
+   //| L6-1: attempt to bind the fill from the resolved position id.     |
+   //| Return codes:                                                     |
+   //|   1 = BOUND LIVE  (netting merge; ticket rewritten to the id)     |
+   //|   2 = INSTANT-CLOSE SUCCESS (opened & closed same tick; no live   |
+   //|       bind — the AddPosition guard reconciles/skips a tracked id) |
+   //|   3 = CLOSE-BY-OPPOSITE (our order CLOSED an existing position;    |
+   //|       NO new position opened -> caller reports non-success so no   |
+   //|       phantom record is appended; NOT ambiguous)                  |
+   //|   0 = UNRESOLVED (caller may refresh history and retry, else block)|
+   //+------------------------------------------------------------------+
+   int TryDealBind(ulong &ticket, ulong positionId, string &validationErrors)
+   {
+      // (1) Netting ADD / reversal: the resolved id is a LIVE position distinct
+      // from the order ticket -> bind it and rewrite the ticket to the authority.
+      if(positionId > 0 && positionId != ticket && PositionSelectByTicket(positionId))
+      {
+         Log.Warning("L6-1: order ticket " + IntegerToString(ticket) +
+                     " bound to authoritative position id " + IntegerToString(positionId) +
+                     " (netting add / merged position, deal DEAL_POSITION_ID)");
+         ticket = positionId;
+         return 1;
+      }
+
+      // (2) Resolved id is NOT live. Consult deal history for the resolved id.
+      ulong histId = (positionId > 0) ? positionId : ticket;
+      if(histId > 0 && HistorySelectByPosition(histId) && HistoryDealsTotal() > 0)
+      {
+         // BUG 3: only a DEFINITIVE close/reduce (DEAL_ENTRY_OUT / OUT_BY) means our
+         // order closed a pre-existing position -> NO new open -> non-success (the
+         // caller must not append a phantom; the close/exit path retires the record).
+         // IN / INOUT / unknown => opened (possibly instant-TP closed): success.
+         int entry = ResultDealEntry();
+         if(entry == DEAL_ENTRY_OUT || entry == DEAL_ENTRY_OUT_BY)
+         {
+            Log.Info("L6-1: order closed/reduced existing position " + IntegerToString(histId) +
+                     " (netting close-by-opposite, DEAL_ENTRY_OUT) — no new position to bind.");
+            validationErrors += "No new position (close-by-opposite); ";
+            return 3;
+         }
+         Log.Info("L6-1: position " + IntegerToString(histId) +
+                  " opened then closed same tick (instant TP) — treating as success.");
+         return 2;
+      }
+
+      return 0;   // unresolved
+   }
+
+   //+------------------------------------------------------------------+
    //| Validate position exists (L6-1 deal-id binding)                  |
    //| positionId is an OUT param: the authoritative broker position id  |
    //| this fill bound to (== ticket for a fresh fill).                  |
@@ -1815,28 +1882,26 @@ private:
          // (ResultDeal -> DEAL_POSITION_ID) — the broker's own fill->position linkage.
          positionId = ResolvePositionIdFromDeal();
 
-         // (1) Netting ADD: the merged position id is live -> bind it and rewrite the
-         // ticket to the authoritative id so downstream reconciles the EXISTING record.
-         if(positionId > 0 && positionId != ticket && PositionSelectByTicket(positionId))
-         {
-            Log.Warning("L6-1: order ticket " + IntegerToString(ticket) +
-                        " bound to authoritative position id " + IntegerToString(positionId) +
-                        " (netting add / merged position, deal DEAL_POSITION_ID)");
-            ticket = positionId;
-            return true;
-         }
+         int st = TryDealBind(ticket, positionId, validationErrors);
+         if(st == 1) return true;    // netting merge live (ticket rewritten)
+         if(st == 2) return true;    // opened & closed same tick (instant TP)
+         if(st == 3) return false;   // close-by-opposite: no new position (no phantom, NOT ambiguous)
 
-         // (2) Confirm the fill via deal history for the RESOLVED id; a fill that
-         // closed the same tick (instant TP) is a success with no live position to
-         // bind. Otherwise the identity is AMBIGUOUS -> signal the caller to block
-         // sends and reconcile rather than binding blind or reporting plain failure.
-         ulong histId = (positionId > 0) ? positionId : ticket;
-         if(histId > 0 && HistorySelectByPosition(histId) && HistoryDealsTotal() > 0)
-         {
-            Log.Info("L6-1: position " + IntegerToString(histId) +
-                     " filled then closed same tick (deal history) — treating as success.");
-            return true;
-         }
+         // BUG 4(a): st == 0 (UNRESOLVED). A fast async fill can leave the deal not
+         // yet in the history cache (ResolvePositionIdFromDeal -> 0), which would
+         // otherwise latch a PERMANENT per-symbol block. Refresh history and retry
+         // resolution ONCE so a transient cache miss never bricks trading.
+         HistorySelect(0, TimeCurrent());
+         positionId = ResolvePositionIdFromDeal();
+         st = TryDealBind(ticket, positionId, validationErrors);
+         if(st == 1) return true;
+         if(st == 2) return true;
+         if(st == 3) return false;
+
+         // Still unresolved after the refresh+retry -> genuinely ambiguous. Latch a
+         // per-symbol block (auto-cleared on the next new bar / clean bind, see
+         // ClearBindingBlock callers) rather than binding blind or reporting plain
+         // failure that could corrupt state.
          ambiguous = true;
          validationErrors += "Position identity unresolved (L6-1 safe-binding); ";
          return false;
