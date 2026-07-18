@@ -215,7 +215,7 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
       ArraySetAsSeries(high, true);
       
       int bars_needed = m_swing_lookback + 5;
-      if(CopyHigh(_Symbol, tf, 0, bars_needed, high) <= 0)
+      if(CopyHigh(_Symbol, tf, 0, bars_needed, high) < bars_needed)
          return false;
       
       double swing_highs[3];
@@ -253,7 +253,7 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
       ArraySetAsSeries(low, true);
       
       int bars_needed = m_swing_lookback + 5;
-      if(CopyLow(_Symbol, tf, 0, bars_needed, low) <= 0)
+      if(CopyLow(_Symbol, tf, 0, bars_needed, low) < bars_needed)
          return false;
       
       double swing_lows[3];

@@ -396,7 +396,7 @@ private:
       double atr_buffer[];
       ArraySetAsSeries(atr_buffer, true);
 
-      if(CopyBuffer(m_handle_atr_h1, 0, 0, m_atr_history_size, atr_buffer) > 0)
+      if(CopyBuffer(m_handle_atr_h1, 0, 0, m_atr_history_size, atr_buffer) >= m_atr_history_size)
       {
          double sum = 0;
          for(int i = 0; i < m_atr_history_size; i++)

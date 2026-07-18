@@ -1,5 +1,22 @@
 # Candidate: short-history array-bounds fix (QA#7) — results + decision
 
+> **RECONSIDERATION (Task D, post SL-sync baseline `d6549628` / $34,940.18): ADOPTED.**
+> The directive required reconsidering this patch *after defining the minimum usable history at each site*.
+> That derivation (`MIN-USABLE-HISTORY.md`) proves each new guard is the **exact** minimum (6 sites exact, 1
+> conservative by 4 bars in the harmless warm-up direction) and that the old `<= 0` / `> 0` guards are
+> **genuinely unsafe on a real short copy** — sharpest at `CAdaptiveTPManager::UpdateATRHistory`, where a
+> partial `CopyBuffer` resizes the dynamic array shorter than `m_atr_history_size` yet the averaging loop
+> still reads to `size-1` → array-out-of-range (aborts `OnTick`). That reframes the benefit from the
+> unreproducible "un-break a failing run" (there is none — the tester warm-loads full history) to a
+> **proven-latent live-robustness hardening at zero backtest cost** — the identical profile on which SL-sync
+> was adopted. **Re-proven byte-identical on the new baseline:** BNDFIX2 primary = Stats `d6549628` /
+> $34,940.18 / 869 / Events `e413cbd8` (exact); GoldHistory leg = Stats `f11c4b2c` / $29,525.79 / 820 (exact). Decision below (original
+> DO-NOT-ADOPT) is **SUPERSEDED** — see `MIN-USABLE-HISTORY.md`.
+
+---
+## Original assessment (superseded by the Task-D reconsideration above)
+
+
 Isolated candidate. Tightens six copy-guards so a partial CopyX can't out-of-range the read loops:
 - `CTrendDetector.mqh` ~218/256: `CopyHigh/Low(...,bars_needed,...) <= 0` → `< bars_needed`.
 - `CSMCOrderBlocks.mqh` ~779/848/889/1019 (11 guards): `<= 0` → `< bars_to_copy` / `< bars`.
