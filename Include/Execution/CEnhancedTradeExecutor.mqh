@@ -2082,6 +2082,24 @@ public:
       return true;
    }
 
+#ifdef AUDIT_BUILD
+   //+------------------------------------------------------------------+
+   //| AUDIT-ONLY: side-effect-free spread-gate evaluation.             |
+   //| Mirrors CheckSpreadGate()'s BLOCK condition EXACTLY but does NOT |
+   //| append a spread_samples[] entry or touch order_rejections — so   |
+   //| the ShadowGate measurement cannot perturb DetectShock /          |
+   //| GetSessionExecutionQuality (both read spread_samples). Never     |
+   //| compiled or called in production (AUDIT_BUILD undefined).        |
+   //+------------------------------------------------------------------+
+   bool CheckSpreadGateShadow()
+   {
+      double spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+      if(m_max_spread_points > 0 && spread > m_max_spread_points)
+         return false;
+      return true;
+   }
+#endif
+
    //+------------------------------------------------------------------+
    //| Closed-bar ATR (handle-free TR average) — OPT-SHOCK fix          |
    //| Mirrors CMarketContext::GetATRVelocity idiom: read TR directly   |

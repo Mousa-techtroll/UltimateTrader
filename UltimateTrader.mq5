@@ -1979,6 +1979,19 @@ void OnDeinit(const int reason)
    Print("[AuditDiag2] VIX materiality: elevated-hits=", g_auditVixElevatedHits,
          " low-hits=", g_auditVixLowHits, " nonzero-contrib=", g_auditVixNonzero,
          " macro-band-flips=", g_auditVixBiasFlip, "  (band-flip = VIX changed bullish/neutral/bearish class)");
+   // ShadowGate: what the CONFIRMED-pending path (omits these 5 gates) WOULD have blocked (MEASURE-ONLY)
+   Print("[ShadowGate] confirmed-fills=", g_auditShadowFills,
+         "  WOULD-block  shock=", g_auditShadowGate[0],
+         " sessionQ=", g_auditShadowGate[1],
+         " spread=", g_auditShadowGate[2],
+         " thrash=", g_auditShadowGate[3],
+         " slSanity=", g_auditShadowGate[4],
+         "  (enforced=NONE — behavior-neutral)");
+   if(g_auditShadowGateHandle != INVALID_HANDLE)
+   {
+      FileClose(g_auditShadowGateHandle);
+      g_auditShadowGateHandle = INVALID_HANDLE;
+   }
 #endif
 
    // Phase 0.1: Save position state before shutdown
@@ -2570,9 +2583,52 @@ void OnTick()
                // Session scaling remains active for immediate signals only (shorts).
 
                // Execute confirmed signal
+#ifdef AUDIT_BUILD
+               // ── SHADOWGATE (AUDIT-ONLY, BEHAVIOR-NEUTRAL): measure which of the
+               //    5 immediate-path entry-block gates WOULD have rejected this
+               //    confirmed fill (the confirmed-pending path omits all 5). This
+               //    ENFORCES NOTHING — pure measurement. Every call below is
+               //    read-only: DetectShock / GetSessionExecutionQuality /
+               //    IsRegimeThrashing mutate no state, and CheckSpreadGateShadow()
+               //    replicates CheckSpreadGate()'s condition WITHOUT its
+               //    spread_samples[] append (which would perturb shock/sessionQ).
+               //    Entry is derived exactly as ProcessConfirmedSignal does (live
+               //    ASK/BID). mask bits: 0=shock 1=sessionQ 2=spread 3=thrash 4=slSanity.
+               int shadow_gate_mask = 0;
+               {
+                  if(InpEnableShockDetection && g_tradeExecutor != NULL)
+                  {
+                     ShockState sg_shock = g_tradeExecutor.DetectShock(g_marketContext.GetATRCurrent(), InpShockBarRangeThresh);
+                     if(sg_shock.is_extreme) shadow_gate_mask |= (1 << 0);
+                  }
+                  if(InpEnableSessionQualityGate && g_tradeExecutor != NULL &&
+                     g_tradeExecutor.GetSessionExecutionQuality() < InpExecQualityBlockThresh)
+                     shadow_gate_mask |= (1 << 1);
+                  if(g_tradeExecutor != NULL && !g_tradeExecutor.CheckSpreadGateShadow())
+                     shadow_gate_mask |= (1 << 2);
+                  if(InpEnableThrashCooldown && g_marketContext.IsRegimeThrashing())
+                     shadow_gate_mask |= (1 << 3);
+                  if(InpMinSLToSpreadRatio > 0)
+                  {
+                     double sg_entry = (pending.signal_type == SIGNAL_LONG)
+                                       ? SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                                       : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+                     double sg_spread   = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
+                     double sg_sl_dist  = MathAbs(sg_entry - pending.stop_loss);
+                     if(pending.ceg_bound && pending.ceg_s_pat > 0)
+                        sg_sl_dist = pending.ceg_s_pat;
+                     if(sg_sl_dist > 0 && sg_sl_dist < sg_spread * InpMinSLToSpreadRatio)
+                        shadow_gate_mask |= (1 << 4);
+                  }
+               }
+#endif
                SPosition position = g_tradeOrchestrator.ProcessConfirmedSignal(pending);
                if(position.ticket > 0)
                {
+#ifdef AUDIT_BUILD
+                  // SHADOWGATE: record the confirmed fill + would-block mask (measure-only)
+                  AUDIT_SHADOWGATE(position.ticket, shadow_gate_mask);
+#endif
                   // Populate Phase 0.1/1.2 fields
                   position.stage = STAGE_INITIAL;
                   position.original_lots = position.lot_size;

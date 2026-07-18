@@ -44,6 +44,34 @@ long g_auditVixBiasFlip = 0;                                 // VIX contribution
 #define AUDIT_VIX_LOW          g_auditVixLowHits++
 #define AUDIT_VIX_NONZERO      g_auditVixNonzero++
 #define AUDIT_VIX_BIASFLIP     g_auditVixBiasFlip++
+// --- ShadowGate (divergent-gate finding): SHADOW-evaluate the 5 immediate-path
+//     entry-block gates at the CONFIRMED-fill moment. MEASURE-ONLY: nothing is
+//     enforced/blocked — this counts what the confirmed-pending path WOULD have
+//     rejected. One CSV row per confirmed fill (ticket,mask) lands in FILE_COMMON.
+//     mask bits: 0=shock 1=sessionQ 2=spread 3=thrash 4=slSanity ---
+long g_auditShadowFills = 0;                     // confirmed fills seen (shadow-eval invoked at fill)
+long g_auditShadowGate[5] = {0,0,0,0,0};         // per-gate WOULD-block counts
+int  g_auditShadowGateHandle = INVALID_HANDLE;   // FILE_COMMON CSV handle (lazy-opened, closed in OnDeinit)
+void AuditShadowGateRecord(ulong ticket, int mask)
+{
+   g_auditShadowFills++;
+   for(int i = 0; i < 5; i++)
+      if((mask & (1 << i)) != 0)
+         g_auditShadowGate[i]++;
+   if(g_auditShadowGateHandle == INVALID_HANDLE)
+   {
+      g_auditShadowGateHandle = FileOpen("UltTrader_ShadowGate_XAUUSD+_20190101_0000.csv",
+                                         FILE_WRITE|FILE_CSV|FILE_COMMON, ',');
+      if(g_auditShadowGateHandle != INVALID_HANDLE)
+         FileWrite(g_auditShadowGateHandle, "ticket", "mask");
+   }
+   if(g_auditShadowGateHandle != INVALID_HANDLE)
+   {
+      FileWrite(g_auditShadowGateHandle, (string)ticket, IntegerToString(mask));
+      FileFlush(g_auditShadowGateHandle);
+   }
+}
+#define AUDIT_SHADOWGATE(ticket, mask)   AuditShadowGateRecord((ulong)(ticket), (int)(mask))
 #else
 #define AUDIT_TIER(i)
 #define AUDIT_VOLBO_CHECK
@@ -62,6 +90,7 @@ long g_auditVixBiasFlip = 0;                                 // VIX contribution
 #define AUDIT_VIX_LOW
 #define AUDIT_VIX_NONZERO
 #define AUDIT_VIX_BIASFLIP
+#define AUDIT_SHADOWGATE(ticket, mask)
 #endif
 
 #endif // AUDIT_COUNTERS_MQH
