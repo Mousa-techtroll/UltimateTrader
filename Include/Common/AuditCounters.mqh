@@ -72,6 +72,31 @@ void AuditShadowGateRecord(ulong ticket, int mask)
    }
 }
 #define AUDIT_SHADOWGATE(ticket, mask)   AuditShadowGateRecord((ulong)(ticket), (int)(mask))
+// --- VolRegime ATR-ratio recorder (Task E frequency-match): one row per H1 vol-regime
+//     Update() bar = (time, atr_forming[0], atr_closed[1], atr_average). MEASURE-ONLY:
+//     logs BOTH the forming-bar and closed-bar ATR the manager sees on the SAME bar with the
+//     SAME average, so the forming vs closed gate-frequency at (VOL_HIGH||VOL_EXTREME) i.e.
+//     ratio >= InpVolNormalThresh can be derived offline and the closed-bar threshold
+//     frequency-matched. Nothing about trading behavior changes. CSV -> FILE_COMMON. ---
+long g_auditVolRatioRows = 0;
+int  g_auditVolRatioHandle = INVALID_HANDLE;
+void AuditVolRatioRecord(datetime t, double atr0, double atr1, double avg)
+{
+   g_auditVolRatioRows++;
+   if(g_auditVolRatioHandle == INVALID_HANDLE)
+   {
+      g_auditVolRatioHandle = FileOpen("UltTrader_VolRatio_XAUUSD+_20190101_0000.csv",
+                                       FILE_WRITE|FILE_CSV|FILE_COMMON, ',');
+      if(g_auditVolRatioHandle != INVALID_HANDLE)
+         FileWrite(g_auditVolRatioHandle, "time", "atr0", "atr1", "avg");
+   }
+   if(g_auditVolRatioHandle != INVALID_HANDLE)
+   {
+      FileWrite(g_auditVolRatioHandle, (string)t, DoubleToString(atr0,6), DoubleToString(atr1,6), DoubleToString(avg,6));
+      FileFlush(g_auditVolRatioHandle);
+   }
+}
+#define AUDIT_VOLRATIO(t,a0,a1,avg)   AuditVolRatioRecord((datetime)(t),(double)(a0),(double)(a1),(double)(avg))
 #else
 #define AUDIT_TIER(i)
 #define AUDIT_VOLBO_CHECK
@@ -91,6 +116,7 @@ void AuditShadowGateRecord(ulong ticket, int mask)
 #define AUDIT_VIX_NONZERO
 #define AUDIT_VIX_BIASFLIP
 #define AUDIT_SHADOWGATE(ticket, mask)
+#define AUDIT_VOLRATIO(t,a0,a1,avg)
 #endif
 
 #endif // AUDIT_COUNTERS_MQH

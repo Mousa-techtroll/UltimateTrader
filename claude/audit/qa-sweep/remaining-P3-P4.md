@@ -57,8 +57,10 @@ they cannot be validated by a tester A/B. Documented with fix spec + a synthetic
 ## Net disposition of the whole QA campaign (updated post-directive)
 - **SL re-sync — ADOPTED** via the canonical production configuration (new production tag; see `candidate-slsync/`).
 - **Hysteresis (QA#1), vol-ATR (QA#6), bounds (QA#7) — DO-NOT-ADOPT** as-decided, BUT **REOPENED** for further
-  work: bounds under min-usable-history reconsideration; vol-ATR under frequency-matched threshold recalibration;
-  hysteresis on a separate clean-architecture branch (deterministic exit state + recalibration). NOT closed.
+  work: bounds under min-usable-history reconsideration; hysteresis on a separate clean-architecture branch (deterministic exit state + recalibration). NOT closed.
+  **vol-ATR (closed-bar) — now CLOSED/REJECTED on a fair basis (Task E, candidate-voz): frequency-matched
+  recalibration confirmed the prior −2.1%% was frequency inflation, but the matched candidate is +0.68%% primary
+  / −5.47%% GoldHistory — sign inverts across feeds ⇒ feed-specific artifact, not a portable edge.**
 - **Gate-parity — measured benign** (enforcing removes profit); the unification refactor is a maintainability
   proposal only.
 - **P3a/P3b/P3c + P4a/P4b — PROPOSED BUT UNIMPLEMENTED** (see banner above). Not resolved.

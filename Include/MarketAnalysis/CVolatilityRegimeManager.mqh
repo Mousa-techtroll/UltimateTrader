@@ -241,6 +241,11 @@ public:
       m_current_analysis.current_atr = InpVolRegimeClosedBar ? atr_buffer[1] : atr_buffer[0];
       m_current_analysis.average_atr = m_atr_average;
 
+      // Task E (measure-only, AUDIT_BUILD): record forming[0] vs closed[1] ATR on the same bar
+      // with the same average, so the closed-bar InpVolNormalThresh can be frequency-matched to
+      // the forming-bar (VOL_HIGH||VOL_EXTREME) gate rate offline. No-op in production.
+      AUDIT_VOLRATIO(current_bar, atr_buffer[0], atr_buffer[1], m_atr_average);
+
       // Calculate ATR ratio
       if(m_atr_average > 0)
          m_current_analysis.atr_ratio = m_current_analysis.current_atr / m_atr_average;
