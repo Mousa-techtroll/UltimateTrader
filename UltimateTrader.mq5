@@ -2306,6 +2306,11 @@ void OnTick()
       //--- 1. Update market state (all Stack17 analysis components)
       g_stateManager.UpdateMarketState();
 
+      // CANDIDATE (QA#1): advance the regime/chandelier hysteresis ONCE PER BAR here, book-independent
+      // (beside the market-state snapshot) — not inside the per-position trailing loop. No-op unless the flag.
+      if(InpRegimeHysteresisPerBar && g_posCoordinator != NULL)
+         g_posCoordinator.UpdateRegimeHysteresis();
+
       //--- 1a. Update shared range box detector (S3/S6)
       if(g_rangeBoxDetector != NULL)
          g_rangeBoxDetector.Update();

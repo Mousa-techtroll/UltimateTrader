@@ -428,6 +428,11 @@ input bool   InpPBCBlockSetupA = false;                        // PBC Arm C': bl
 //--- Group 44: REGIME EXIT PROFILES (v2.0 — locked per trade at entry)
 input group "══════ REGIME EXIT PROFILES ══════"
 input bool   InpEnableRegimeExit = true;                // Phase 3: dynamic trailing only (BE/TP fixed, trailing adapts to live regime)
+// CANDIDATE (QA finding #1, candidate-hysteresis/DESIGN.md): advance the regime/chandelier hysteresis ONCE
+// PER BAR (market-global, book-independent) instead of inside the per-position trailing loop — fixes the
+// cross-bar trail-coupling (a position's open/close timing perturbing unrelated positions' trailing).
+// false (default) = legacy per-position-loop advance = baseline 1ed88d41 (kill-switch); true = the fix.
+input bool   InpRegimeHysteresisPerBar = false;         // QA#1: once-per-bar market hysteresis (false=legacy baseline)
 // TRENDING: let winners run — wider trailing, later BE, smaller TP0
 input double InpRegExitTrendBE = 1.2;                   // TRENDING: BE trigger (R)
 input double InpRegExitTrendChand = 4.2;                // TRENDING: Chandelier multiplier

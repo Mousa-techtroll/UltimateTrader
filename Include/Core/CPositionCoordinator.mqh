@@ -1063,6 +1063,39 @@ public:
    void SetPBCEngine(CPullbackContinuationEngine *pbc) { m_pbc_engine = pbc; }
 
    //+------------------------------------------------------------------+
+   //| CANDIDATE (QA#1): advance the regime/chandelier hysteresis ONCE  |
+   //| PER BAR, book-independent — called from OnTick's new-bar block   |
+   //| (beside the market-state update), NOT the per-position loop. The |
+   //| hold-bar counter then tracks wall-clock MARKET bars regardless   |
+   //| of which positions are open. ApplyTrailingPlugins READS the      |
+   //| resolved m_smoothed_chand_mult (see the InpRegimeHysteresisPerBar |
+   //| branch there). No-op unless the candidate flag is on.            |
+   //+------------------------------------------------------------------+
+   void UpdateRegimeHysteresis()
+   {
+      if(m_regime_scaler == NULL || !m_regime_scaler.IsExitEnabled() || m_context == NULL)
+         return;
+      datetime cur_bar = iTime(_Symbol, PERIOD_H1, 0);
+      if(cur_bar == m_last_regime_bar)
+         return;                                   // once per bar
+      m_last_regime_bar = cur_bar;
+      SRegimeRiskScore rScore = m_regime_scaler.Evaluate(*m_context);
+      if((int)rScore.riskClass == m_last_regime_class)
+         m_regime_hold_bars++;
+      else
+      {
+         m_last_regime_class = (int)rScore.riskClass;
+         m_regime_hold_bars = 1;
+      }
+      double live = InpTrailChandelierMult;
+      if(m_regime_hold_bars >= 3)
+         live = m_regime_scaler.GetExitProfile(rScore.riskClass).chandelierMult;
+      else if(m_smoothed_chand_mult > 0)
+         live = m_smoothed_chand_mult;             // keep previous during the 3-bar settle
+      m_smoothed_chand_mult = live;
+   }
+
+   //+------------------------------------------------------------------+
    //| Register trailing strategy plugin                                 |
    //+------------------------------------------------------------------+
    void RegisterTrailingPlugin(CTrailingStrategy* plugin)
@@ -3687,8 +3720,22 @@ private:
       // Safety: SL can never loosen (existing is_better check handles this).
       double live_chand_mult = InpTrailChandelierMult;  // Default
 
-      if(m_regime_scaler != NULL && m_regime_scaler.IsExitEnabled() && m_context != NULL)
+      if(InpRegimeHysteresisPerBar)
       {
+         // CANDIDATE FIX (QA#1): the market hysteresis is advanced ONCE PER BAR in OnTick via
+         // UpdateRegimeHysteresis() (book-independent). Here we only READ the resolved market
+         // multiplier — the coordinator no longer advances shared state inside the per-position loop.
+         if(m_regime_scaler != NULL && m_regime_scaler.IsExitEnabled() && m_context != NULL
+            && m_smoothed_chand_mult > 0)
+         {  AUDIT_CHAND_SMOOTHED;
+            live_chand_mult = m_smoothed_chand_mult;  }
+         else
+         {  AUDIT_CHAND_FLAT;  }
+      }
+      else if(m_regime_scaler != NULL && m_regime_scaler.IsExitEnabled() && m_context != NULL)
+      {
+         // LEGACY (flag=false, = baseline 1ed88d41): advance-in-loop hysteresis — the trail-coupling
+         // bug (QA#1). Retained only as the kill-switch. See candidate-hysteresis/DESIGN.md.
          SRegimeRiskScore rScore = m_regime_scaler.Evaluate(*m_context);
          SRegimeExitProfile liveProfile = m_regime_scaler.GetExitProfile(rScore.riskClass);
 
