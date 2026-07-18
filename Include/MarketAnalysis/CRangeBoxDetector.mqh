@@ -139,9 +139,35 @@ public:
       // --- Validation checks ---
 
       // 1. Check if most recent H1 close accepted outside (reset trigger)
+      // L2-3 (InpRangeBoxResetFix): legacy builds hh/ll INCLUDING bar 1 (shifts
+      // 1..lookback) then tests close[1] against that box's own high/low — but
+      // bar 1's own high is in hh (and its low in ll), so close[1] <= hh and
+      // close[1] >= ll always hold: the accepted-outside reset is mathematically
+      // unreachable. FIX (flag on): test close[1] against the PRIOR box built
+      // from shifts 2..lookback+1 (bar 1 excluded) so a genuine breakout resets.
+      // Flag OFF = byte-identical legacy (reset_hh/reset_ll == hh/ll).
+      double reset_hh = hh, reset_ll = ll;
+      if(InpRangeBoxResetFix)
+      {
+         double ph[], pl[];
+         ArraySetAsSeries(ph, true);
+         ArraySetAsSeries(pl, true);
+         if(CopyHigh(_Symbol, PERIOD_H1, 2, m_box_lookback, ph) >= m_box_lookback &&
+            CopyLow(_Symbol, PERIOD_H1, 2, m_box_lookback, pl) >= m_box_lookback)
+         {
+            double hhp = ph[0], llp = pl[0];
+            for(int k = 1; k < m_box_lookback; k++)
+            {
+               if(ph[k] > hhp) hhp = ph[k];
+               if(pl[k] < llp) llp = pl[k];
+            }
+            reset_hh = hhp;
+            reset_ll = llp;
+         }
+      }
       double last_close = close[0];
-      if(last_close > hh + m_acceptance_atr_mult * m_atr_h1 ||
-         last_close < ll - m_acceptance_atr_mult * m_atr_h1)
+      if(last_close > reset_hh + m_acceptance_atr_mult * m_atr_h1 ||
+         last_close < reset_ll - m_acceptance_atr_mult * m_atr_h1)
       {
          if(m_box_valid)
          {

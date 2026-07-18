@@ -130,11 +130,31 @@ public:
       // (the snapshot was almost always already > 2). Isolating the real 0-3
       // subtotal lets us apply the intended EXCLUSIVE max against CHoCH while
       // preserving the other axes.
+      // L4-1 (InpDirectionalAlignment): the legacy branch awards trend-alignment
+      // points whenever D1 and H4 AGREE, WITHOUT checking whether that agreed
+      // direction actually supports the signal — so a SHORT under bullish D1==H4
+      // still banks +2 (and +1 from context). The fix awards the points ONLY when
+      // the signed trend direction supports the signal (long->bullish,
+      // short->bearish); opposing OR neutral earns nothing. OFF = legacy.
       int trend_alignment = 0;
-      if(daily == h4 && daily != TREND_NEUTRAL)
-         trend_alignment += 2;
-      else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL)
-         trend_alignment += 1;
+      if(InpDirectionalAlignment)
+      {
+         if(daily == h4 && daily != TREND_NEUTRAL &&
+            ((pattern_bullish && daily == TREND_BULLISH) ||
+             (pattern_bearish && daily == TREND_BEARISH)))
+            trend_alignment += 2;
+         else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL &&
+                 ((pattern_bullish && h4 == TREND_BULLISH) ||
+                  (pattern_bearish && h4 == TREND_BEARISH)))
+            trend_alignment += 1;
+      }
+      else
+      {
+         if(daily == h4 && daily != TREND_NEUTRAL)
+            trend_alignment += 2;
+         else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL)
+            trend_alignment += 1;
+      }
 
       // Check trend alignment from context
       if(m_context != NULL)
@@ -142,7 +162,13 @@ public:
          ENUM_TREND_DIRECTION d1 = m_context.GetTrendDirection();
          ENUM_TREND_DIRECTION h4_ctx = m_context.GetH4TrendDirection();
          if(d1 == h4_ctx && d1 != TREND_NEUTRAL)
-            trend_alignment += 1;  // Aligned bonus
+         {
+            // L4-1: context aligned bonus only when it supports the signal direction
+            if(!InpDirectionalAlignment ||
+               (pattern_bullish && d1 == TREND_BULLISH) ||
+               (pattern_bearish && d1 == TREND_BEARISH))
+               trend_alignment += 1;  // Aligned bonus
+         }
       }
 
       // Bonus for pattern direction matching H4 trend
@@ -205,12 +231,32 @@ public:
          points += 1;
 
       // Factor 3: Macro alignment (0-3 points)
-      if(MathAbs(macro_score) >= 3)
-         points += 3;
-      else if(MathAbs(macro_score) >= 1)
-         points += 1;
-      else if(macro_score == 0)
-         points += 1;  // Neutral macro fallback
+      // L4-1 (InpDirectionalAlignment): the legacy branch uses MathAbs(macro_score),
+      // so a strongly BULLISH macro (e.g. +3) hands 3 "alignment" points to a SHORT
+      // it actually opposes. The fix awards points ONLY on the SIGNED support
+      // (positive macro supports longs, negative supports shorts); opposing macro
+      // earns nothing while a neutral macro (0) keeps the fallback point. OFF = legacy.
+      if(InpDirectionalAlignment)
+      {
+         int macro_support = 0;
+         if(pattern_bullish)      macro_support = macro_score;
+         else if(pattern_bearish) macro_support = -macro_score;
+         if(macro_support >= 3)
+            points += 3;
+         else if(macro_support >= 1)
+            points += 1;
+         else if(macro_score == 0)
+            points += 1;  // Neutral macro fallback
+      }
+      else
+      {
+         if(MathAbs(macro_score) >= 3)
+            points += 3;
+         else if(MathAbs(macro_score) >= 1)
+            points += 1;
+         else if(macro_score == 0)
+            points += 1;  // Neutral macro fallback
+      }
 
       // Factor 4: Pattern quality (0-2 points)
       // Multi-strategy fix: also match "Liquidity Sweep" (with space) — the

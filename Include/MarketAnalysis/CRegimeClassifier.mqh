@@ -42,6 +42,7 @@ private:
       ENUM_REGIME_TYPE     m_candidate_regime;     // pending candidate
       int                  m_candidate_bars;       // bars at candidate
       int                  m_confirm_required;     // bars needed to confirm (default 2)
+      datetime             m_last_h4_bar_time;     // L2-4: closed-H4 bar time last advanced on (0 = none)
 
       // Volatility expansion hysteresis (Phase H6)
       int                  m_vol_expanding_bars;   // consecutive bars of expansion
@@ -76,6 +77,7 @@ public:
             m_candidate_regime = REGIME_UNKNOWN;
             m_candidate_bars   = 0;
             m_confirm_required = 2;
+            m_last_h4_bar_time = 0;   // L2-4: no H4 bar advanced on yet
 
             // Volatility expansion hysteresis
             m_vol_expanding_bars = 0;
@@ -173,28 +175,50 @@ public:
             ENUM_REGIME_TYPE raw_regime = ClassifyRegimeRaw();
 
             // Step 2: Apply classifier-wide hysteresis (bar-confirmation)
-            if(raw_regime != m_confirmed_regime)
+            // L2-4 (InpH4ConfirmPerBar): Update() runs every H1 while the regime
+            // reads the FROZEN closed H4 bar [1]. Legacy advances the hysteresis
+            // counter on EVERY H1 call, so a regime confirms after 2 H1 bars
+            // (~2h) instead of 2 distinct H4 bars (~8h). FIX (flag on): advance
+            // the hysteresis state machine only when the closed H4 bar time
+            // changes since the last advance. Within one frozen H4 bar raw_regime
+            // is constant, so skipping repeat H1 calls is idempotent-equivalent
+            // to legacy except it no longer double-counts the same H4 close.
+            // Flag OFF = byte-identical legacy (advance on every call).
+            bool advance_hysteresis = true;
+            if(InpH4ConfirmPerBar)
             {
-                  if(raw_regime == m_candidate_regime)
-                  {
-                        m_candidate_bars++;
-                        if(m_candidate_bars >= m_confirm_required)
-                        {
-                              m_confirmed_regime = m_candidate_regime;
-                              m_candidate_bars = 0;
-                        }
-                  }
+                  datetime h4_bar_time = iTime(_Symbol, PERIOD_H4, 1);
+                  if(h4_bar_time == m_last_h4_bar_time)
+                        advance_hysteresis = false;
                   else
-                  {
-                        m_candidate_regime = raw_regime;
-                        m_candidate_bars = 1;
-                  }
+                        m_last_h4_bar_time = h4_bar_time;
             }
-            else
+
+            if(advance_hysteresis)
             {
-                  // Raw matches confirmed: reset candidate tracking
-                  m_candidate_regime = REGIME_UNKNOWN;
-                  m_candidate_bars = 0;
+               if(raw_regime != m_confirmed_regime)
+               {
+                     if(raw_regime == m_candidate_regime)
+                     {
+                           m_candidate_bars++;
+                           if(m_candidate_bars >= m_confirm_required)
+                           {
+                                 m_confirmed_regime = m_candidate_regime;
+                                 m_candidate_bars = 0;
+                           }
+                     }
+                     else
+                     {
+                           m_candidate_regime = raw_regime;
+                           m_candidate_bars = 1;
+                     }
+               }
+               else
+               {
+                     // Raw matches confirmed: reset candidate tracking
+                     m_candidate_regime = REGIME_UNKNOWN;
+                     m_candidate_bars = 0;
+               }
             }
 
             // Step 3: Output the confirmed (hysteresis-filtered) regime

@@ -900,7 +900,21 @@ public:
          candidate_count++;
 
          // Sprint 3A: Keep the best signal by qualityScore (not first-wins)
-         if(signal.qualityScore > best_quality_score)
+         // L3-4 (InpEqualTierTiebreak): the legacy strict-`>` replaces the winner
+         // only when the challenger's bucketed qualityScore is HIGHER, so equal-tier
+         // ties silently fall to the earliest-REGISTERED plugin. The fix breaks an
+         // equal-score tie deterministically by higher engine confluence, then better
+         // R:R (registration order only when those are equal too). OFF = legacy.
+         bool take_candidate = (signal.qualityScore > best_quality_score);
+         if(!take_candidate && InpEqualTierTiebreak && best_signal.valid &&
+            signal.qualityScore == best_quality_score)
+         {
+            if(signal.engine_confluence != best_signal.engine_confluence)
+               take_candidate = (signal.engine_confluence > best_signal.engine_confluence);
+            else
+               take_candidate = (signal.riskReward > best_signal.riskReward);
+         }
+         if(take_candidate)
          {
             // Copy field-by-field to avoid MQL5 struct-with-strings array issues
             best_signal.valid          = signal.valid;
@@ -1127,12 +1141,22 @@ public:
       double pattern_range = pattern_high - pattern_low;
       double strictness_offset = pattern_range * MathMax(0, m_confirmation_strictness);
 
+      // L4-3 (InpNoBreakTolFix): the legacy "no break" tolerance is a fraction of
+      // ABSOLUTE price (pattern_low*0.998 / pattern_high*1.002 == +-0.2%, ~= $6.80 at
+      // gold 3400) — often a large multiple of a tight pattern's own range, so a
+      // structurally-invalidating wick still "confirms". The fix expresses the
+      // tolerance as a fraction (10%) of the pattern's OWN range, making the check
+      // price/symbol invariant. OFF = legacy absolute-price tolerance.
+      double no_break_tol = pattern_range * 0.10;  // 10% of the pattern range
+
       if(m_pending_signal.signal_type == SIGNAL_LONG)
       {
          double confirm_level = pattern_high - strictness_offset;
          bool closed_higher = (conf_close > confirm_level);
          bool is_bullish    = (conf_close > conf_open);
-         bool no_break_low  = (conf_low >= pattern_low * 0.998);
+         bool no_break_low  = InpNoBreakTolFix
+            ? (conf_low >= pattern_low - no_break_tol)
+            : (conf_low >= pattern_low * 0.998);
 
          LogPrint(">>> LONG Confirmation Check:");
          LogPrint("    Pattern High: ", pattern_high, " | Confirm Level: ", confirm_level,
@@ -1147,7 +1171,9 @@ public:
          double confirm_level = pattern_low + strictness_offset;
          bool closed_lower  = (conf_close < confirm_level);
          bool is_bearish    = (conf_close < conf_open);
-         bool no_break_high = (conf_high <= pattern_high * 1.002);
+         bool no_break_high = InpNoBreakTolFix
+            ? (conf_high <= pattern_high + no_break_tol)
+            : (conf_high <= pattern_high * 1.002);
 
          LogPrint(">>> SHORT Confirmation Check:");
          LogPrint("    Pattern Low: ", pattern_low, " | Confirm Level: ", confirm_level,
@@ -1218,6 +1244,20 @@ public:
          }
       }
 
+      // L4-4 (InpFullRevalidation): the legacy revalidation reruns ONLY the TF/MR
+      // (or ATR-for-short) structural check and RETAINS the signal-time tier/risk,
+      // so a signal whose dynamic context (volume/SMC/confidence) or quality has
+      // decayed below threshold still confirms at its stale (often A/A+) risk. The
+      // fix additionally reruns the dynamic qualification gates and re-derives the
+      // tier + risk from CURRENT context, freezing only signal-time-only geometry
+      // (pattern_high/low, entry/SL/TP, detection_time, engine/CEG stamps). Reuses
+      // the same validator/evaluator helpers as the initial CheckForNewSignals
+      // qualification. OFF = legacy TF/MR-only revalidation.
+      if(validated && InpFullRevalidation)
+         validated = FullRevalidateDynamic(current_regime, current_daily, current_h4,
+                                           current_macro, current_atr, current_adx,
+                                           isBearRegime);
+
       if(!validated)
       {
          LogPrint(">>> Pending signal INVALIDATED by current conditions");
@@ -1268,6 +1308,111 @@ public:
    }
 
 private:
+   //+------------------------------------------------------------------+
+   //| L4-4: rerun the dynamic qualification gates + re-derive tier/risk  |
+   //| for the pending signal at confirmation. Reuses the SAME validator/ |
+   //| evaluator helpers as the initial CheckForNewSignals qualification  |
+   //| (volume filter, SMC confluence, pattern confidence, quality tier,  |
+   //| plugin-specific tier gates, risk-from-tier) rather than            |
+   //| duplicating them. Mutates m_pending_signal.quality/base_risk_pct   |
+   //| in place on success; returns false (no mutation) if any dynamic    |
+   //| gate now fails or the tier decayed to SETUP_NONE / a blocked tier. |
+   //| Called ONLY under InpFullRevalidation, so the OFF path is legacy.  |
+   //+------------------------------------------------------------------+
+   bool FullRevalidateDynamic(ENUM_REGIME_TYPE regime, ENUM_TREND_DIRECTION daily,
+                              ENUM_TREND_DIRECTION h4, int macro_score,
+                              double current_atr, double current_adx, bool isBearRegime)
+   {
+      ENUM_SIGNAL_TYPE  sig_type = m_pending_signal.signal_type;
+      ENUM_PATTERN_TYPE pat_type = m_pending_signal.pattern_type;
+      string            comment  = m_pending_signal.pattern_name;
+
+      // Volume filter — identical per-pattern ablation flags as initial qualification.
+      bool apply_vol_filter = true;
+      if(pat_type == PATTERN_ENGULFING)                apply_vol_filter = InpVolFilterEngulfing;
+      else if(pat_type == PATTERN_CRASH_BREAKOUT)      apply_vol_filter = InpVolFilterCrash;
+      else if(pat_type == PATTERN_VOLATILITY_BREAKOUT) apply_vol_filter = InpVolFilterVolBreakout;
+      if(apply_vol_filter && !m_validator.ValidateVolumeSpread(pat_type))
+      {
+         LogPrint(">>> Pending REVALIDATE rejected: volume filter");
+         return false;
+      }
+
+      // SMC confluence check (against the frozen signal-time entry/stop geometry).
+      int smc_score = 0;
+      if(!m_validator.ValidateSMCConditions(sig_type, m_pending_signal.entry_price,
+                                            m_pending_signal.stop_loss, smc_score))
+      {
+         LogPrint(">>> Pending REVALIDATE rejected: SMC filter");
+         return false;
+      }
+
+      // Pattern confidence scoring.
+      if(m_enable_confidence_scoring)
+      {
+         int confidence = CMarketFilters::CalculatePatternConfidence(
+            comment, m_pending_signal.entry_price, m_ma_fast_period, m_ma_slow_period,
+            current_atr, current_adx);
+         if(confidence < m_min_pattern_confidence)
+         {
+            LogPrint(">>> Pending REVALIDATE rejected: low confidence (", confidence,
+                     " < ", m_min_pattern_confidence, ")");
+            return false;
+         }
+      }
+
+      // Re-derive the quality tier from CURRENT context via the legacy evaluator.
+      // The pending/confirmation path carries only legacy candlestick/trend signals
+      // (routed engines skip confirmation), so the legacy evaluator overload is the
+      // correct scorer here — matching the non-engine branch of initial qualification.
+      ENUM_SETUP_QUALITY quality = m_evaluator.EvaluateSetupQuality(
+         daily, h4, regime, macro_score, comment, isBearRegime, sig_type);
+
+      if(quality == SETUP_NONE)
+      {
+         LogPrint(">>> Pending REVALIDATE rejected: quality decayed to SETUP_NONE");
+         return false;
+      }
+
+      // Plugin-specific tier gates (mirror initial qualification; each is a no-op
+      // when its own flag/profile is off).
+      if(InpPBCBlockSetupA && quality == SETUP_A &&
+         m_pending_signal.plugin_name == "PullbackContinuationEngine")
+      {
+         LogPrint(">>> Pending REVALIDATE rejected: PBC SETUP_A tier blocked");
+         return false;
+      }
+      if(InpEngulfingBlockSetupA && quality == SETUP_A &&
+         m_pending_signal.plugin_name == "EngulfingEntry")
+      {
+         LogPrint(">>> Pending REVALIDATE rejected: Engulfing SETUP_A tier blocked");
+         return false;
+      }
+      if(g_profileRubberBandAPlusOnly && quality == SETUP_B_PLUS &&
+         StringFind(comment, "Rubber Band") >= 0)
+      {
+         LogPrint(">>> Pending REVALIDATE rejected: Rubber Band B+ quality");
+         return false;
+      }
+
+      // Re-derive risk from the (possibly downgraded) tier; apply the PinBar flat
+      // override exactly as the initial path does (no-op when InpPinBarFlatRiskPct=0).
+      double risk_pct = m_evaluator.GetRiskForQuality(quality, comment);
+      if(InpPinBarFlatRiskPct > 0.0 && m_pending_signal.plugin_name == "PinBarEntry")
+         risk_pct = InpPinBarFlatRiskPct;
+
+      // Commit the re-derived tier + risk. Downstream ProcessConfirmedSignal sizes
+      // from m_pending_signal.quality (via GetRiskForQuality), so a tier downgrade
+      // here shrinks the executed risk; base_risk_pct is updated for telemetry parity.
+      if(quality != m_pending_signal.quality)
+         LogPrint(">>> Pending REVALIDATE: tier ", EnumToString(m_pending_signal.quality),
+                  " -> ", EnumToString(quality), " (risk ", DoubleToString(risk_pct, 2), "%)");
+      m_pending_signal.quality       = quality;
+      m_pending_signal.base_risk_pct = risk_pct;
+
+      return true;
+   }
+
    //+------------------------------------------------------------------+
    //| Store signal as pending (waiting for confirmation candle)          |
    //+------------------------------------------------------------------+

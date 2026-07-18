@@ -225,7 +225,14 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
       double min_swing_distance = 50.0 * _Point;
 
       // Find last 3 swing highs
-      for(int i = 2; i < m_swing_lookback + 3 && swing_count < 3; i++)
+      // L2-6 (InpTrendClosedWings): legacy starts at i=2, so the newest pivot
+      // candidate uses the FORMING bar 0 (high[i-2]=high[0]) as one right-hand
+      // wing — a pivot can qualify at the first tick then be invalidated later
+      // in the same forming bar (premature confirmation). FIX (flag on): start at
+      // i=3 so BOTH right wings (high[i-1],high[i-2] = high[2],high[1]) are CLOSED
+      // bars. Flag OFF = byte-identical legacy (i=2).
+      int start_i = InpTrendClosedWings ? 3 : 2;
+      for(int i = start_i; i < m_swing_lookback + 3 && swing_count < 3; i++)
       {
          if(high[i] > high[i-1] && high[i] > high[i-2] &&
             high[i] > high[i+1] && high[i] > high[i+2])
@@ -263,7 +270,14 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
       double min_swing_distance = 50.0 * _Point;
 
       // Find last 3 swing lows
-      for(int i = 2; i < m_swing_lookback + 3 && swing_count < 3; i++)
+      // L2-6 (InpTrendClosedWings): legacy starts at i=2, so the newest pivot
+      // candidate uses the FORMING bar 0 (low[i-2]=low[0]) as one right-hand
+      // wing — a pivot can qualify at the first tick then be invalidated later
+      // in the same forming bar (premature confirmation). FIX (flag on): start at
+      // i=3 so BOTH right wings (low[i-1],low[i-2] = low[2],low[1]) are CLOSED
+      // bars. Flag OFF = byte-identical legacy (i=2).
+      int start_i = InpTrendClosedWings ? 3 : 2;
+      for(int i = start_i; i < m_swing_lookback + 3 && swing_count < 3; i++)
       {
          if(low[i] < low[i-1] && low[i] < low[i-2] &&
             low[i] < low[i+1] && low[i] < low[i+2])

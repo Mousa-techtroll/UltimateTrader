@@ -1158,7 +1158,14 @@ private:
    {
       double current_price = SymbolInfoDouble(_Symbol, SYMBOL_BID);
 
-      double close = iClose(_Symbol, PERIOD_H1, 0);
+      // L2-5 (InpSMCClosedBar): the OB "candle closed beyond zone" rule legacy
+      // reads iClose(H1,0) = the just-opened FORMING bar (≈ its open price on the
+      // first tick of the new H1), so it evaluates an intrabar open snapshot, not
+      // a closed candle. FIX (flag on): use the CLOSED bar [1] close for the OB
+      // close-rule (and the OB touch check that shares this variable).
+      // Flag OFF = byte-identical legacy (shift 0).
+      double close = InpSMCClosedBar ? iClose(_Symbol, PERIOD_H1, 1)
+                                     : iClose(_Symbol, PERIOD_H1, 0);
       datetime now = TimeCurrent();
 
       // Fix 3: wick/dip tolerance on OB invalidation. An OB-retest REQUIRES price
@@ -1213,6 +1220,17 @@ private:
          }
       }
 
+      // L2-5 (InpSMCClosedBar): FVG fill/mitigation legacy samples ONE
+      // instantaneous SYMBOL_BID (current_price) at the first tick of the new H1
+      // bar, so an intrahour spike/recovery on the prior bar is never seen and a
+      // single-instant sample decides validity. FIX (flag on): fill a bullish FVG
+      // when the CLOSED bar [1] LOW pierced its bottom, and a bearish FVG when the
+      // CLOSED bar [1] HIGH pierced its top (uses the true bar extreme, not a
+      // point sample). Touch tracking keeps using the live price (decay feature).
+      // Flag OFF = byte-identical legacy (current_price bid sample).
+      double fvg_low_closed  = InpSMCClosedBar ? iLow(_Symbol,  PERIOD_H1, 1) : 0.0;
+      double fvg_high_closed = InpSMCClosedBar ? iHigh(_Symbol, PERIOD_H1, 1) : 0.0;
+
       // Mark FVGs as mitigated when price fills them (+ touch tracking)
       for(int i = 0; i < m_bullish_fvg_count; i++)
       {
@@ -1226,7 +1244,8 @@ private:
                m_bullish_fvgs[i].last_touch_time = now;
                m_bullish_fvgs[i].strength = MathMin(100, m_bullish_fvgs[i].strength + InpSMCTouchStrengthBoost);
             }
-            if(current_price <= m_bullish_fvgs[i].bottom)
+            if(InpSMCClosedBar ? (fvg_low_closed <= m_bullish_fvgs[i].bottom)
+                               : (current_price   <= m_bullish_fvgs[i].bottom))
                m_bullish_fvgs[i].is_valid = false;
          }
       }
@@ -1243,7 +1262,8 @@ private:
                m_bearish_fvgs[i].last_touch_time = now;
                m_bearish_fvgs[i].strength = MathMin(100, m_bearish_fvgs[i].strength + InpSMCTouchStrengthBoost);
             }
-            if(current_price >= m_bearish_fvgs[i].top)
+            if(InpSMCClosedBar ? (fvg_high_closed >= m_bearish_fvgs[i].top)
+                               : (current_price    >= m_bearish_fvgs[i].top))
                m_bearish_fvgs[i].is_valid = false;
          }
       }
