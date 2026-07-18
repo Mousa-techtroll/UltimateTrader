@@ -1357,6 +1357,40 @@ public:
          return result;
       }
 
+      // L6-3: final tick-grid / volume-step snap at the single live send choke
+      // point (all market sends funnel through ExecuteTradeAttempt in the retry
+      // loop below, so the normalized locals cover every attempt). Aligns SL/TP to
+      // the symbol's tick grid so a digit-valid-but-off-grid stop on a
+      // non-decimal-tick symbol (e.g. 0.05 / 0.25 tick) is not rejected as
+      // INVALID_STOPS, and floors volume to the symbol step. Reuses NormalizePrice
+      // (CTradeUtils::NormalizePrice -> round to SYMBOL_TRADE_TICK_SIZE). Volume is
+      // floored to step ONLY — never rounded UP toward broker minimum (that
+      // min-lot policy is owned upstream in the sizing path; audit L5-1). No-op
+      // where tick_size == point and the incoming lot is already step-aligned
+      // (e.g. XAUUSD, where NormalizeLots already produced a clean 2-dp step lot),
+      // so the reference backtest send stays byte-identical.
+      {
+         double norm_sl = NormalizePrice(stopLoss, symbol);
+         if(norm_sl > 0.0) stopLoss = norm_sl;            // never overwrite a valid SL with 0
+         if(takeProfit > 0.0)
+         {
+            double norm_tp = NormalizePrice(takeProfit, symbol);
+            if(norm_tp > 0.0) takeProfit = norm_tp;       // TP==0 (no broker TP) stays 0
+         }
+         double vol_step = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+         if(vol_step > 0.0)
+         {
+            // Floor to step, but treat a lot that is already dust-close to an
+            // integer step count as aligned so the reference lot snaps to ITSELF
+            // (no floating-point down-step). Never inflates toward min-lot.
+            double ratio   = lotSize / vol_step;
+            double rounded = MathRound(ratio);
+            double steps   = (MathAbs(ratio - rounded) < 1e-6) ? rounded : MathFloor(ratio);
+            double snapped = NormalizeDouble(steps * vol_step, 2);
+            if(snapped > 0.0) lotSize = snapped;          // never floor a valid lot to 0
+         }
+      }
+
       // Set magic number
       m_trade.SetExpertMagicNumber(magicNumber);
 

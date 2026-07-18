@@ -819,6 +819,23 @@ public:
       {
          if(IsTradeReadyForExecution(m_trades[i]))
          {
+            // L1-2 (fail-closed): SPosition/persistence/recovery/logging are all
+            // single-symbol (_Symbol). A file row carrying a FOREIGN symbol would
+            // fill on that symbol but then be tracked, exited, logged and adopted
+            // with chart-symbol economics — and refused on restart. Reject it here
+            // at the emit choke point so ONLY chart-symbol file signals are ever
+            // executed. Mark it Executed so it is logged once and never re-emitted
+            // (a durable in-memory skip; NOT the cross-reload dedup key).
+            if(m_trades[i].Symbol != _Symbol)
+            {
+               Print("CFileEntry: REJECT foreign-symbol file signal — row symbol '",
+                     m_trades[i].Symbol, "' != chart symbol '", _Symbol,
+                     "'. Multi-symbol file execution is unsupported (single-symbol",
+                     " lifecycle/recovery/telemetry); skipping this row.");
+               m_trades[i].Executed = true;
+               continue;
+            }
+
             // Fill signal from trade data
             signal.valid = true;
             signal.symbol = m_trades[i].Symbol;

@@ -272,7 +272,28 @@ public:
          return position;
       }
 
-      // Use signal's symbol for file signals (multi-symbol CSV support)
+      // L1-2 (fail-closed, defense-in-depth): a file signal may only execute on
+      // the chart symbol. SPosition carries no symbol member and restart/adoption,
+      // slippage attribution and logging all assume _Symbol, so a foreign-symbol
+      // CSV row would fill but be mistracked (and refused on restart). CFileEntry
+      // already rejects these at the emit choke point; this is the authoritative
+      // execute-choke backstop. Never fires in the reference backtest (no CSV
+      // feed), and skipped entirely for non-file signals.
+      if(signal.source == SIGNAL_SOURCE_FILE && signal.symbol != "" && signal.symbol != _Symbol)
+      {
+         LogPrint(">>> FILE SIGNAL REJECT: row symbol '", signal.symbol,
+                  "' != chart symbol '", _Symbol,
+                  "' — multi-symbol file execution unsupported; trade blocked.");
+         LogRiskAudit(signal, sig_type, requested_risk_pct,
+                      false, false, "FILE_FOREIGN_SYMBOL",
+                      adjusted_risk_pct, false,
+                      false, 1.0, final_risk_pct, 0, 0,
+                      "REJECT_FILE_FOREIGN_SYMBOL");
+         m_last_reject_reason = "FILE_FOREIGN_SYMBOL";
+         return position;
+      }
+
+      // Use signal's symbol for file signals (chart-symbol only, enforced above)
       string trade_symbol = (signal.source == SIGNAL_SOURCE_FILE && signal.symbol != "") ?
                             signal.symbol : _Symbol;
 
@@ -336,9 +357,20 @@ public:
          else
             sl = entry_price + min_stop_dist;
          signal.stopLoss = sl;
-         // Don't override risk_distance for file signals — keep CSV-based distance for sizing
-         if(signal.source != SIGNAL_SOURCE_FILE)
-            risk_distance = min_stop_dist;
+         // L6-2 (Critical): size on the ACTUAL submitted geometry. After the SL
+         // was widened to the broker minimum, risk_distance must be at least the
+         // distance to the SL we will actually send. The prior `source != FILE`
+         // carve-out left FILE risk_distance on the tiny CSV entry-to-SL value, so
+         // the fallback sizer — the ONLY sizing path since the risk strategy is
+         // NULL by design — computed lots on a phantom-tight stop and oversized
+         // ~20x while the broker stop risked the full widened distance. Applies to
+         // every source now; MathMax also preserves an already-wider intended CSV
+         // distance. min_stop_dist IS the post-widen entry-to-SL distance
+         // (sl = entry +/- min_stop_dist). Byte-identical for non-file: this block
+         // only runs when the original risk_distance was < min_stop_dist, so the
+         // MathMax resolves to exactly min_stop_dist — the old assignment,
+         // bit-for-bit.
+         risk_distance = MathMax(risk_distance, min_stop_dist);
       }
 
       // CEG (Tier-3): every accept/reject + missing-TP fill below must evaluate
