@@ -382,6 +382,36 @@ struct PersistedPosition
    // enforceable across restarts while a sleeve position is open.
    bool     is_sleeve;
    char     sleeve_family[16];
+
+   // L7-2 (state file version 8): decision-critical fields the live SPosition
+   // carries that were previously DROPPED on restart. Two groups:
+   //  (1) Adaptive exit geometry frozen at entry — without these a restored
+   //      trade silently reverts to current global Inp* exit policy (wrong
+   //      targets/BE timing/volume splits/chandelier width). exit_chandelier_mult
+   //      also seeds the entry-locked chandelier snapshot in RestoreFromPersisted,
+   //      which previously read a still-zero field.
+   //  (2) Partial-close accounting — banked TP1/TP2 lots/PnL/time and the
+   //      running partial totals. Without partial_realized_pnl a net winner with
+   //      a red runner is misclassified as a loss (consecutive-loss scaler / EC /
+   //      strategy attribution). Older files are rejected by the EXACT-MATCH
+   //      version gate (broker-only fallback), so no migration path is needed.
+   int      exit_regime_class;    // ENUM_REGIME_RISK_CLASS snapshot at entry
+   double   exit_be_trigger;      // BE threshold for this trade (R)
+   double   exit_chandelier_mult; // chandelier multiplier for this trade
+   double   exit_tp0_distance;    // TP0 R-distance for this trade
+   double   exit_tp0_volume;      // TP0 volume % for this trade
+   double   exit_tp1_distance;    // TP1 R-distance
+   double   exit_tp1_volume;      // TP1 volume %
+   double   exit_tp2_distance;    // TP2 R-distance
+   double   exit_tp2_volume;      // TP2 volume %
+   double   tp1_lots;             // lots closed at TP1
+   double   tp1_profit;           // profit captured at TP1
+   datetime tp1_time;             // time TP1 partial executed
+   double   tp2_lots;             // lots closed at TP2
+   double   tp2_profit;           // profit captured at TP2
+   datetime tp2_time;             // time TP2 partial executed
+   int      partial_close_count;  // total number of partial close executions
+   double   partial_realized_pnl; // total realized PnL from partial closes
 };
 
 //+------------------------------------------------------------------+

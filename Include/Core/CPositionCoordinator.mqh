@@ -41,8 +41,13 @@
 //| Constants for state persistence                                   |
 //+------------------------------------------------------------------+
 #define STATE_FILE_SIGNATURE  0x554C5452   // "ULTR"
-#define STATE_FILE_VERSION    7             // v7 (SB-0.1): PersistedPosition adds is_sleeve + sleeve_family[16]; sleeve ledger block appended after mode-perf records (v6 added CEG stamps)
+#define STATE_FILE_VERSION    8             // v8 (L7-2/L7-1): PersistedPosition adds adaptive exit_* geometry + partial accounting (tp1/tp2 lots/profit/time, partial_close_count, partial_realized_pnl); whole-payload CRC now covers mode-perf + sleeve trailer (v7 added is_sleeve+family; v6 added CEG stamps)
 #define STATE_FILE_NAME       "UltimateTrader_State.bin"
+// L7-3: durable processed-closure ledger. A ticket that closed while offline is
+// accounted exactly once; its ticket is appended here (persisted immediately)
+// so a crash BEFORE the reconciled state-file rewrite cannot double-count it on
+// the next restart. Sidecar (not part of the versioned state file).
+#define PROCESSED_CLOSURES_FILE_NAME "UltimateTrader_ProcessedClosures.bin"
 
 //+------------------------------------------------------------------+
 //| [SB-0.1] Sleeve accounting ledger block (state file v7)           |
@@ -128,6 +133,10 @@ private:
    // SB-TMF: iTime(H1,1) at the close of the last TMF position that finished
    // R<0. Feeds the plugin's post-loss cooldown (§7). Runtime-only.
    datetime m_tmf_last_loss_bar;
+
+   // L7-3: in-memory copy of the durable processed-closure ledger (loaded at
+   // ReconcileWithBroker entry). Bounded ring; see MarkClosureProcessed.
+   ulong    m_processed_closures[];
 
    //+------------------------------------------------------------------+
    //| CRC32 lookup table (generated once, used for checksums)          |
@@ -218,6 +227,236 @@ private:
    }
 
    //+------------------------------------------------------------------+
+   //| L7-1: append `sz` raw bytes of an already-serialized struct temp  |
+   //| (uchar[] from StructToCharArray) into a growing buffer, padding    |
+   //| with zeros if the serialization was short. Non-template to avoid   |
+   //| any template-instantiation ambiguity; used by CalculatePayloadCRC. |
+   //+------------------------------------------------------------------+
+   void AppendSerialized(uchar &buf[], int &len, const uchar &tmp[], int sz)
+   {
+      ArrayResize(buf, len + sz);
+      int cl = MathMin(ArraySize(tmp), sz);
+      for(int b = 0; b < sz; b++)
+         buf[len + b] = (b < cl) ? tmp[b] : (uchar)0;
+      len += sz;
+   }
+
+   //+------------------------------------------------------------------+
+   //| L7-1: whole-payload CRC32 — records + mode-perf count/records +   |
+   //| sleeve trailer, in the EXACT order written after the header. The  |
+   //| checksum therefore covers the ENTIRE serialized payload, not just |
+   //| PersistedPosition[] (previously the mode-perf and sleeve trailers |
+   //| were unprotected AND applied before the records CRC was checked). |
+   //| Computed identically on save and load. Uses the same              |
+   //| StructToCharArray-into-temp pattern as CalculateRecordsCRC.       |
+   //+------------------------------------------------------------------+
+   uint CalculatePayloadCRC(const PersistedPosition &records[], int record_count,
+                            const PersistedModePerformance &mode_perf[], int mode_count,
+                            const PersistedSleeveState &sleeve_state)
+   {
+      uchar buf[];
+      int len = 0;
+      uchar tmp[];
+
+      int rec_sz = sizeof(PersistedPosition);
+      for(int i = 0; i < record_count; i++)
+      {
+         PersistedPosition rp = records[i];
+         if(!StructToCharArray(rp, tmp)) ArrayResize(tmp, 0);
+         AppendSerialized(buf, len, tmp, rec_sz);   // always advances rec_sz (zero-pad on fail)
+      }
+
+      // mode_count as 4 little-endian bytes (mirrors FileWriteInteger)
+      ArrayResize(buf, len + 4);
+      buf[len + 0] = (uchar)(mode_count & 0xFF);
+      buf[len + 1] = (uchar)((mode_count >> 8) & 0xFF);
+      buf[len + 2] = (uchar)((mode_count >> 16) & 0xFF);
+      buf[len + 3] = (uchar)((mode_count >> 24) & 0xFF);
+      len += 4;
+
+      int mp_sz = sizeof(PersistedModePerformance);
+      for(int i = 0; i < mode_count; i++)
+      {
+         PersistedModePerformance mp = mode_perf[i];
+         if(!StructToCharArray(mp, tmp)) ArrayResize(tmp, 0);
+         AppendSerialized(buf, len, tmp, mp_sz);
+      }
+
+      PersistedSleeveState ss = sleeve_state;
+      if(!StructToCharArray(ss, tmp)) ArrayResize(tmp, 0);
+      AppendSerialized(buf, len, tmp, sizeof(PersistedSleeveState));
+
+      if(len <= 0) return 0;
+      return CalculateCRC32(buf, len);
+   }
+
+   //+------------------------------------------------------------------+
+   //| L7-3: durable processed-closure ledger (sidecar). Loaded before  |
+   //| offline-close reconciliation; a ticket is marked (and persisted   |
+   //| immediately) the instant its offline close is accounted, so a     |
+   //| crash before the state-file rewrite cannot double-count it.       |
+   //+------------------------------------------------------------------+
+   void LoadProcessedClosures()
+   {
+      ArrayResize(m_processed_closures, 0);
+      int h = FileOpen(PROCESSED_CLOSURES_FILE_NAME, FILE_READ | FILE_BIN | FILE_COMMON);
+      if(h == INVALID_HANDLE)
+         return;
+      int n = (int)(FileSize(h) / (long)sizeof(ulong));
+      if(n < 0) n = 0;
+      if(n > 100000) n = 100000;   // sanity clamp
+      ArrayResize(m_processed_closures, n);
+      for(int i = 0; i < n; i++)
+         m_processed_closures[i] = (ulong)FileReadLong(h);
+      FileClose(h);
+   }
+
+   bool IsClosureProcessed(ulong ticket)
+   {
+      for(int i = 0; i < ArraySize(m_processed_closures); i++)
+         if(m_processed_closures[i] == ticket)
+            return true;
+      return false;
+   }
+
+   void MarkClosureProcessed(ulong ticket)
+   {
+      if(IsClosureProcessed(ticket))
+         return;
+      int n = ArraySize(m_processed_closures);
+      ArrayResize(m_processed_closures, n + 1);
+      m_processed_closures[n] = ticket;
+
+      // Bound growth: keep only the most recent 1000 tickets.
+      int cap = 1000;
+      int cur = ArraySize(m_processed_closures);
+      if(cur > cap)
+      {
+         int start = cur - cap;
+         for(int i = 0; i < cap; i++)
+            m_processed_closures[i] = m_processed_closures[start + i];
+         ArrayResize(m_processed_closures, cap);
+      }
+
+      // Persist immediately (fail-safe: the whole ledger is small).
+      int h = FileOpen(PROCESSED_CLOSURES_FILE_NAME, FILE_WRITE | FILE_BIN | FILE_COMMON);
+      if(h == INVALID_HANDLE)
+      {
+         LogPrint("WARN: MarkClosureProcessed - cannot persist processed-closure ledger (error ",
+                  GetLastError(), ")");
+         return;
+      }
+      for(int i = 0; i < ArraySize(m_processed_closures); i++)
+         FileWriteLong(h, (long)m_processed_closures[i]);
+      FileClose(h);
+   }
+
+   //+------------------------------------------------------------------+
+   //| L7-3: idempotent offline-close accounting for a persisted ticket  |
+   //| that no longer exists at the broker (closed by SL/TP/manual while |
+   //| the terminal was down). Mirrors the NUMERIC feedback of           |
+   //| HandleClosedPosition — deal resolution, total PnL incl. banked    |
+   //| partials, consecutive-loss scaler, strategy/EC telemetry, sleeve  |
+   //| ledger + family post-loss cooldowns. String-keyed recorders       |
+   //| degrade gracefully (pattern_name/engine_name are not persisted).  |
+   //| Persists a processed-closure key so a second restart cannot       |
+   //| double-count.                                                     |
+   //+------------------------------------------------------------------+
+   void ProcessOfflineClose(const PersistedPosition &pp)
+   {
+      ulong ticket = pp.ticket;
+      if(IsClosureProcessed(ticket))
+      {
+         LogPrint("ReconcileWithBroker: Position ", ticket,
+                  " closed while offline (already accounted - idempotent skip)");
+         return;
+      }
+
+      // Reconstruct the accounting-relevant SPosition fields from the persisted
+      // record (strings are not persisted and stay empty via Init()).
+      SPosition pos;
+      pos.Init();
+      pos.ticket            = ticket;
+      pos.direction         = (ENUM_SIGNAL_TYPE)pp.direction;
+      pos.pattern_type      = (ENUM_PATTERN_TYPE)pp.pattern_type;
+      pos.setup_quality     = (ENUM_SETUP_QUALITY)pp.setup_quality;
+      pos.signal_source     = (ENUM_SIGNAL_SOURCE)pp.signal_source;
+      pos.entry_price       = pp.entry_price;
+      pos.stop_loss         = pp.stop_loss;
+      pos.original_sl       = (pp.original_sl != 0) ? pp.original_sl : pp.stop_loss;
+      pos.tp1               = pp.tp1;
+      pos.tp2               = pp.tp2;
+      pos.tp3               = pp.tp3;
+      pos.original_lots     = pp.original_lots;
+      pos.lot_size          = pp.original_lots;
+      pos.remaining_lots    = pp.remaining_lots;
+      pos.open_time         = pp.open_time;
+      pos.entry_risk_amount = pp.entry_risk_amount;
+      pos.partial_realized_pnl = pp.partial_realized_pnl;   // L7-2 banked partials
+      pos.is_sleeve         = pp.is_sleeve;
+      pos.sleeve_family     = CharArrayToString(pp.sleeve_family);
+
+      // Resolve the FINAL leg via deal history (mirrors HandleClosedPosition).
+      // Online partials are already in partial_realized_pnl, so the total is
+      // final-leg + banked partials — identical to the live-closure path.
+      double profit = 0.0, exit_price = 0.0;
+      datetime exit_time = TimeCurrent();
+      double exit_volume = pos.remaining_lots;
+      ulong deal_ticket = 0;
+      GetLatestExitDeal(ticket, deal_ticket, profit, exit_price, exit_time, exit_volume);
+      if(exit_price <= 0.0)
+         exit_price = pos.entry_price;
+
+      double total_trade_pnl = profit + pos.partial_realized_pnl;
+
+      if(m_trade_logger != NULL)
+         m_trade_logger.LogTradeExit(pos, profit, exit_price, exit_time);
+
+      // Consecutive-loss scaler (baseline only) — the key risk feedback the
+      // skip-and-forget path dropped.
+      if(m_quality_risk_strategy != NULL && !pos.is_sleeve)
+         m_quality_risk_strategy.RecordTradeResult(total_trade_pnl);
+
+      // Strategy/EC telemetry (string-keyed; degrades on empty pattern_name).
+      if(m_trade_logger != NULL)
+      {
+         double risk_dollars = CalculatePositionRiskDollars(pos);
+         double r_mult = (risk_dollars > 0) ? total_trade_pnl / risk_dollars : 0;
+         m_trade_logger.RecordStrategyTrade(pos.pattern_name, total_trade_pnl, r_mult);
+         if(g_ecController != NULL && !pos.is_sleeve)
+            g_ecController.RecordClosedTradeR(r_mult, pos.pattern_name);
+      }
+
+      // Sleeve ledger + family post-loss cooldowns (mirror HandleClosedPosition).
+      // This is the audit's core L7-3 concern: an offline sleeve loss must still
+      // consume its DD/daily budget and arm the family cooldown.
+      if(pos.is_sleeve)
+      {
+         RecordSleeveClose(total_trade_pnl);
+         if(pos.sleeve_family == "CREV" && total_trade_pnl < 0.0)
+            m_crev_last_loss_bar = iTime(_Symbol, PERIOD_H1, 1);
+         if(pos.sleeve_family == "CONT" && total_trade_pnl < 0.0)
+            m_cont_last_loss_bar = iTime(_Symbol, PERIOD_H1, 1);
+         if(pos.sleeve_family == "TMF" && total_trade_pnl < 0.0)
+            m_tmf_last_loss_bar = iTime(_Symbol, PERIOD_H1, 1);
+         Print("[Sleeve] OFFLINE_CLOSE ticket=", ticket, " family=", pos.sleeve_family,
+               " pnl=", DoubleToString(total_trade_pnl, 2),
+               " | cum=", DoubleToString(m_sleeve_realized_pnl, 2),
+               " hwm=", DoubleToString(m_sleeve_hwm, 2),
+               " dailyLoss$=", DoubleToString(m_sleeve_daily_loss, 2));
+      }
+
+      LogPrint("ReconcileWithBroker: Position ", ticket,
+               " closed while offline - accounted (final=$", DoubleToString(profit, 2),
+               " + partials=$", DoubleToString(pos.partial_realized_pnl, 2),
+               " = $", DoubleToString(total_trade_pnl, 2), ", idempotent)");
+
+      // Persist the processed-closure key BEFORE returning so a crash before the
+      // reconciled state-file rewrite cannot double-count on the next restart.
+      MarkClosureProcessed(ticket);
+   }
+
+   //+------------------------------------------------------------------+
    //| Convert SPosition to PersistedPosition for serialization         |
    //+------------------------------------------------------------------+
    PersistedPosition PositionToPersisted(const SPosition &pos)
@@ -290,6 +529,31 @@ private:
       for(int fc = 0; fc < fam_len; fc++)
          pp.sleeve_family[fc] = (char)StringGetCharacter(pos.sleeve_family, fc);
 
+      // L7-2 (v8): persist the entry-frozen adaptive exit geometry so a restarted
+      // trade keeps its OWN targets/BE/volume splits/chandelier width instead of
+      // reverting to current global Inp* exit policy.
+      pp.exit_regime_class    = pos.exit_regime_class;
+      pp.exit_be_trigger      = pos.exit_be_trigger;
+      pp.exit_chandelier_mult = pos.exit_chandelier_mult;
+      pp.exit_tp0_distance    = pos.exit_tp0_distance;
+      pp.exit_tp0_volume      = pos.exit_tp0_volume;
+      pp.exit_tp1_distance    = pos.exit_tp1_distance;
+      pp.exit_tp1_volume      = pos.exit_tp1_volume;
+      pp.exit_tp2_distance    = pos.exit_tp2_distance;
+      pp.exit_tp2_volume      = pos.exit_tp2_volume;
+
+      // L7-2 (v8): persist the partial-close accounting so banked TP1/TP2 PnL
+      // survives restart and total-trade classification stays correct (a
+      // net-winner-with-red-runner must not be recorded as a loss).
+      pp.tp1_lots             = pos.tp1_lots;
+      pp.tp1_profit           = pos.tp1_profit;
+      pp.tp1_time             = pos.tp1_time;
+      pp.tp2_lots             = pos.tp2_lots;
+      pp.tp2_profit           = pos.tp2_profit;
+      pp.tp2_time             = pos.tp2_time;
+      pp.partial_close_count  = pos.partial_close_count;
+      pp.partial_realized_pnl = pos.partial_realized_pnl;
+
       return pp;
    }
 
@@ -329,6 +593,31 @@ private:
       pos.runner_promotion_time = pp.runner_promotion_time;
       pos.trail_send_policy = (ENUM_TRAIL_SEND_POLICY)pp.trail_send_policy;
       pos.last_broker_trailing_time = pp.last_broker_trailing_time;
+
+      // L7-2 (v8): restore the entry-frozen adaptive exit geometry + partial
+      // accounting. MUST precede the chandelier-snapshot derivation below, which
+      // seeds the entry-locked/live/effective chandelier multipliers from
+      // pos.exit_chandelier_mult — previously a still-zero field (position is
+      // ZeroMemory'd in ReconcileWithBroker, never Init()'d), which silently
+      // disabled the entry-locked chandelier floor after a restart.
+      pos.exit_regime_class    = pp.exit_regime_class;
+      pos.exit_be_trigger      = pp.exit_be_trigger;
+      pos.exit_chandelier_mult = pp.exit_chandelier_mult;
+      pos.exit_tp0_distance    = pp.exit_tp0_distance;
+      pos.exit_tp0_volume      = pp.exit_tp0_volume;
+      pos.exit_tp1_distance    = pp.exit_tp1_distance;
+      pos.exit_tp1_volume      = pp.exit_tp1_volume;
+      pos.exit_tp2_distance    = pp.exit_tp2_distance;
+      pos.exit_tp2_volume      = pp.exit_tp2_volume;
+      pos.tp1_lots             = pp.tp1_lots;
+      pos.tp1_profit           = pp.tp1_profit;
+      pos.tp1_time             = pp.tp1_time;
+      pos.tp2_lots             = pp.tp2_lots;
+      pos.tp2_profit           = pp.tp2_profit;
+      pos.tp2_time             = pp.tp2_time;
+      pos.partial_close_count  = pp.partial_close_count;
+      pos.partial_realized_pnl = pp.partial_realized_pnl;
+
       pos.last_entry_locked_chandelier_mult = pos.exit_chandelier_mult;
       pos.last_live_chandelier_mult = pos.exit_chandelier_mult;
       pos.last_effective_chandelier_mult = pos.exit_chandelier_mult;
@@ -1031,6 +1320,7 @@ public:
       m_crev_last_loss_bar = 0;
       m_cont_last_loss_bar = 0;
       m_tmf_last_loss_bar = 0;
+      ArrayResize(m_processed_closures, 0);   // L7-3
    }
 
    //+------------------------------------------------------------------+
@@ -1415,39 +1705,13 @@ public:
       for(int i = 0; i < m_position_count; i++)
          records[i] = PositionToPersisted(m_positions[i]);
 
-      // Calculate CRC32 over all record bytes
-      uint checksum = CalculateRecordsCRC(records, m_position_count);
-
-      // Build header
-      StateFileHeader header;
-      ZeroMemory(header);
-      header.signature    = STATE_FILE_SIGNATURE;
-      header.version      = STATE_FILE_VERSION;
-      header.record_count = m_position_count;
-      header.checksum     = checksum;
-      header.saved_at     = TimeCurrent();
-
-      // Open file for writing
-      int handle = FileOpen(STATE_FILE_NAME, FILE_WRITE | FILE_BIN | FILE_COMMON);
-      if(handle == INVALID_HANDLE)
-      {
-         LogPrint("ERROR: SavePositionState - cannot open file for writing: ",
-                  STATE_FILE_NAME, " (error ", GetLastError(), ")");
-         return false;
-      }
-
-      // Write header
-      FileWriteStruct(handle, header);
-
-      // Write each record
-      for(int i = 0; i < m_position_count; i++)
-         FileWriteStruct(handle, records[i]);
-
-      // v3.1: Write mode performance records
+      // L7-1: collect the mode-performance trailer BEFORE computing the checksum
+      // (ExportModePerformance is a pure read-only export). Previously this ran
+      // after the header was written, so the mode-perf/sleeve trailers sat OUTSIDE
+      // the checksum. Now the whole payload is checksummed together.
       int total_mode_records = 0;
       PersistedModePerformance all_mode_perf[];
 
-      // Collect from all engines
       if(m_liquidity_engine != NULL)
       {
          PersistedModePerformance liq_perf[];
@@ -1482,21 +1746,50 @@ public:
          }
       }
 
-      // Write mode perf count
-      FileWriteInteger(handle, total_mode_records);
-
-      // Write mode perf records
-      for(int i = 0; i < total_mode_records; i++)
-         FileWriteStruct(handle, all_mode_perf[i]);
-
-      // [SB-0.1] (v7): sleeve accounting ledger — appended after the mode-perf
-      // records. Always written so every v7 file has a fixed trailer layout.
+      // [SB-0.1] (v7): sleeve accounting ledger — built before the checksum too.
       PersistedSleeveState sleeve_state;
       ZeroMemory(sleeve_state);
       sleeve_state.realized_pnl        = m_sleeve_realized_pnl;
       sleeve_state.hwm                 = m_sleeve_hwm;
       sleeve_state.daily_realized_loss = m_sleeve_daily_loss;
       sleeve_state.daily_anchor        = m_sleeve_day_anchor;
+
+      // L7-1: whole-payload CRC32 (records + mode-perf count/records + sleeve).
+      uint checksum = CalculatePayloadCRC(records, m_position_count,
+                                          all_mode_perf, total_mode_records,
+                                          sleeve_state);
+
+      // Build header
+      StateFileHeader header;
+      ZeroMemory(header);
+      header.signature    = STATE_FILE_SIGNATURE;
+      header.version      = STATE_FILE_VERSION;
+      header.record_count = m_position_count;
+      header.checksum     = checksum;
+      header.saved_at     = TimeCurrent();
+
+      // Open file for writing
+      int handle = FileOpen(STATE_FILE_NAME, FILE_WRITE | FILE_BIN | FILE_COMMON);
+      if(handle == INVALID_HANDLE)
+      {
+         LogPrint("ERROR: SavePositionState - cannot open file for writing: ",
+                  STATE_FILE_NAME, " (error ", GetLastError(), ")");
+         return false;
+      }
+
+      // Write header
+      FileWriteStruct(handle, header);
+
+      // Write each record
+      for(int i = 0; i < m_position_count; i++)
+         FileWriteStruct(handle, records[i]);
+
+      // Write mode perf count + records (must match the byte order the CRC used)
+      FileWriteInteger(handle, total_mode_records);
+      for(int i = 0; i < total_mode_records; i++)
+         FileWriteStruct(handle, all_mode_perf[i]);
+
+      // Write the sleeve trailer last (fixed v8 trailer layout).
       FileWriteStruct(handle, sleeve_state);
 
       FileClose(handle);
@@ -1621,68 +1914,106 @@ public:
          }
       }
 
-      // v3.1: Read mode performance records (if version supports it)
+      // L7-1: read the mode-performance trailer into a TEMPORARY (do NOT dispatch
+      // to engines yet). A truncated/short read here is a HARD failure that leaves
+      // ALL in-memory state unchanged. (Previously the mode-perf trailer was both
+      // outside the checksum AND dispatched to the engines before the CRC check —
+      // a corrupt file could mutate engine mode state before rejection.)
+      int mode_perf_count = 0;
+      PersistedModePerformance mode_records[];
       if(header.version >= 2)
       {
-         int mode_perf_count = FileReadInteger(handle);
-         if(mode_perf_count > 0 && mode_perf_count <= 100)
+         mode_perf_count = FileReadInteger(handle);
+         if(mode_perf_count < 0 || mode_perf_count > 100)
          {
-            PersistedModePerformance mode_records[];
+            LogPrint("ERROR: LoadPositionState - invalid mode_perf_count: ", mode_perf_count,
+                     " - rejecting file (in-memory state unchanged)");
+            FileClose(handle);
+            ArrayResize(records, 0);
+            return false;
+         }
+         if(mode_perf_count > 0)
+         {
             ArrayResize(mode_records, mode_perf_count);
             for(int i = 0; i < mode_perf_count; i++)
-               FileReadStruct(handle, mode_records[i]);
-
-            // Dispatch to engines
-            if(m_liquidity_engine != NULL)
-               m_liquidity_engine.ImportModePerformance(mode_records, mode_perf_count);
-            if(m_session_engine != NULL)
-               m_session_engine.ImportModePerformance(mode_records, mode_perf_count);
-            if(m_expansion_engine != NULL)
-               m_expansion_engine.ImportModePerformance(mode_records, mode_perf_count);
-
-            LogPrint("LoadPositionState: Restored ", mode_perf_count, " mode performance records");
+            {
+               if(FileReadStruct(handle, mode_records[i]) != sizeof(PersistedModePerformance))
+               {
+                  LogPrint("ERROR: LoadPositionState - short read on mode-perf record ", i,
+                           " (truncated file) - rejecting (in-memory state unchanged)");
+                  FileClose(handle);
+                  ArrayResize(records, 0);
+                  return false;
+               }
+            }
          }
       }
 
-      // [SB-0.1] (v7): restore the sleeve accounting ledger. The EXACT-MATCH
-      // version gate above guarantees a v7 trailer. A short read (truncated
-      // file) leaves the ledger fresh — the sleeve DD/daily caps re-arm from
-      // zero (documented residual: a corrupted file forgets a DD breach);
-      // baseline behavior is unaffected either way.
+      // L7-1: read the sleeve trailer into a TEMPORARY (do NOT apply yet). The
+      // EXACT-MATCH version gate above guarantees a v8 trailer, so a short read
+      // is a HARD failure — the truncated case previously silently re-armed the
+      // sleeve DD/daily caps from zero (forgetting a prior breach) while keeping
+      // any records/mode-perf it had already applied.
+      PersistedSleeveState sleeve_state;
+      ZeroMemory(sleeve_state);
       if(header.version >= 7)
       {
-         PersistedSleeveState sleeve_state;
-         ZeroMemory(sleeve_state);
-         if(FileReadStruct(handle, sleeve_state) == sizeof(PersistedSleeveState))
+         if(FileReadStruct(handle, sleeve_state) != sizeof(PersistedSleeveState))
          {
-            m_sleeve_realized_pnl = sleeve_state.realized_pnl;
-            m_sleeve_hwm          = sleeve_state.hwm;
-            m_sleeve_daily_loss   = sleeve_state.daily_realized_loss;
-            m_sleeve_day_anchor   = sleeve_state.daily_anchor;
-            LogPrint("LoadPositionState: [Sleeve] ledger restored | cum=$",
-                     DoubleToString(m_sleeve_realized_pnl, 2),
-                     " hwm=$", DoubleToString(m_sleeve_hwm, 2),
-                     " dailyLoss=$", DoubleToString(m_sleeve_daily_loss, 2));
+            LogPrint("ERROR: LoadPositionState - short read on sleeve trailer (truncated file)"
+                     " - rejecting (in-memory state unchanged)");
+            FileClose(handle);
+            ArrayResize(records, 0);
+            return false;
          }
       }
 
       FileClose(handle);
 
-      // Verify CRC32 checksum
-      uint computed_crc = CalculateRecordsCRC(records, header.record_count);
+      // L7-1: verify the WHOLE-PAYLOAD checksum (records + mode-perf count/records
+      // + sleeve) BEFORE applying anything. A corrupt/truncated payload leaves ALL
+      // in-memory state unchanged (engine mode-perf untouched, sleeve ledger
+      // untouched, no partial application).
+      uint computed_crc = CalculatePayloadCRC(records, header.record_count,
+                                              mode_records, mode_perf_count,
+                                              sleeve_state);
       if(computed_crc != header.checksum)
       {
-         LogPrint("ERROR: LoadPositionState - CRC32 mismatch! File=",
+         LogPrint("ERROR: LoadPositionState - payload CRC32 mismatch! File=",
                   header.checksum, " Computed=", computed_crc,
-                  " - state file may be corrupted");
+                  " - state file may be corrupted (in-memory state unchanged)");
          ArrayResize(records, 0);
          return false;
+      }
+
+      // L7-1: payload validated — NOW atomically apply the trailers.
+      if(mode_perf_count > 0)
+      {
+         if(m_liquidity_engine != NULL)
+            m_liquidity_engine.ImportModePerformance(mode_records, mode_perf_count);
+         if(m_session_engine != NULL)
+            m_session_engine.ImportModePerformance(mode_records, mode_perf_count);
+         if(m_expansion_engine != NULL)
+            m_expansion_engine.ImportModePerformance(mode_records, mode_perf_count);
+         LogPrint("LoadPositionState: Restored ", mode_perf_count, " mode performance records");
+      }
+
+      if(header.version >= 7)
+      {
+         m_sleeve_realized_pnl = sleeve_state.realized_pnl;
+         m_sleeve_hwm          = sleeve_state.hwm;
+         m_sleeve_daily_loss   = sleeve_state.daily_realized_loss;
+         m_sleeve_day_anchor   = sleeve_state.daily_anchor;
+         LogPrint("LoadPositionState: [Sleeve] ledger restored | cum=$",
+                  DoubleToString(m_sleeve_realized_pnl, 2),
+                  " hwm=$", DoubleToString(m_sleeve_hwm, 2),
+                  " dailyLoss=$", DoubleToString(m_sleeve_daily_loss, 2));
       }
 
       LogPrint("LoadPositionState: Loaded ", header.record_count,
                " record(s) | saved_at=",
                TimeToString(header.saved_at, TIME_DATE | TIME_SECONDS),
-               " | CRC32 verified");
+               " | whole-payload CRC32 verified");
       return true;
    }
 
@@ -1703,6 +2034,11 @@ public:
 
       LogPrint("ReconcileWithBroker: Reconciling ", persisted_count,
                " persisted record(s) with broker...");
+
+      // L7-3: load the durable processed-closure ledger so an offline close that
+      // was already accounted (but whose reconciled state-file rewrite was
+      // interrupted) is not counted a second time.
+      LoadProcessedClosures();
 
       int restored = 0;
       int skipped  = 0;
@@ -1762,9 +2098,11 @@ public:
          }
          else
          {
-            // Position closed while offline
-            LogPrint("ReconcileWithBroker: Position ", ticket,
-                     " closed while offline, skipping");
+            // L7-3: position closed while offline. Previously this only logged +
+            // skipped, dropping ALL lifecycle accounting (risk feedback, sleeve
+            // ledger/cooldowns, exit CSV). Now resolve it through deal history and
+            // run the idempotent offline-close accounting path.
+            ProcessOfflineClose(persisted_records[i]);
             skipped++;
          }
       }
@@ -2182,10 +2520,29 @@ public:
                   {
                      if(tp_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
                      {
+                        // L7-4: resolve the actual deal volume/PnL for this partial
+                        // (file TP1 maps to the tp0 slot) — mirrors the baseline
+                        // TP0/TP1/TP2 stages that record deal PnL + register + save.
+                        double file_tp1_profit = 0.0;
+                        double file_tp1_price  = cur_price;
+                        datetime file_tp1_time = TimeCurrent();
+                        double file_tp1_vol    = close_lots;
+                        ulong file_tp1_deal    = 0;
+                        GetLatestExitDeal(m_positions[i].ticket, file_tp1_deal, file_tp1_profit,
+                                          file_tp1_price, file_tp1_time, file_tp1_vol);
+
                         m_positions[i].tp0_closed = true;
+                        m_positions[i].tp0_lots   = close_lots;
+                        m_positions[i].tp0_profit = file_tp1_profit;
+                        m_positions[i].tp0_time   = file_tp1_time;
                         m_positions[i].remaining_lots -= close_lots;
                         m_positions[i].stage = STAGE_TP0_HIT;
                         m_positions[i].stage_label = "FILE_TP1";
+
+                        // L7-4: resync internal remaining lots to broker truth
+                        // (partial-fill safety) before persisting.
+                        if(PositionSelectByTicket(m_positions[i].ticket))
+                           m_positions[i].remaining_lots = PositionGetDouble(POSITION_VOLUME);
 
                         // SL to breakeven
                         double be_sl = m_positions[i].entry_price;
@@ -2197,10 +2554,19 @@ public:
                            tp_trade.PositionModify(m_positions[i].ticket, be_sl, 0);
                         }
 
+                        // L7-4: one idempotent lifecycle event — accrue banked
+                        // partial PnL + log the partial, then persist immediately so
+                        // a restart cannot re-issue this partial with price past TP1.
+                        RegisterPartialClose(m_positions[i], "TP0_PARTIAL", "FILE_TP1",
+                                             close_lots, file_tp1_profit,
+                                             file_tp1_price, file_tp1_time);
+
                         LogPrint("[FileTP1] Close ", DoubleToString(tp1_pct*100, 0), "%: ticket=",
                                  m_positions[i].ticket, " @ ", DoubleToString(cur_price, 2),
                                  " | SL→BE | Remaining=", DoubleToString(m_positions[i].remaining_lots, 2),
                                  has_tp3 ? " | Runner→TP3" : "");
+
+                        SaveOnStateChange();
                      }
                   }
                   else
@@ -2239,10 +2605,27 @@ public:
                         tp2_trade.SetDeviationInPoints(InpSlippage);  // P0.6: config deviation
                         if(tp2_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
                         {
+                           // L7-4: resolve the actual deal volume/PnL for this
+                           // partial (file TP2 maps to the tp1 slot).
+                           double file_tp2_profit = 0.0;
+                           double file_tp2_price  = cur_price;
+                           datetime file_tp2_time = TimeCurrent();
+                           double file_tp2_vol    = close_lots;
+                           ulong file_tp2_deal    = 0;
+                           GetLatestExitDeal(m_positions[i].ticket, file_tp2_deal, file_tp2_profit,
+                                             file_tp2_price, file_tp2_time, file_tp2_vol);
+
                            m_positions[i].tp1_closed = true;
+                           m_positions[i].tp1_lots   = close_lots;
+                           m_positions[i].tp1_profit = file_tp2_profit;
+                           m_positions[i].tp1_time   = file_tp2_time;
                            m_positions[i].remaining_lots -= close_lots;
                            m_positions[i].stage = STAGE_TP1_HIT;
                            m_positions[i].stage_label = "FILE_TP2_RUNNER";
+
+                           // L7-4: resync internal remaining lots to broker truth.
+                           if(PositionSelectByTicket(m_positions[i].ticket))
+                              m_positions[i].remaining_lots = PositionGetDouble(POSITION_VOLUME);
 
                            // Move SL to TP1 level (lock profit)
                            double trail_sl = m_positions[i].tp1;
@@ -2253,10 +2636,17 @@ public:
                               tp2_trade.PositionModify(m_positions[i].ticket, trail_sl, 0);
                            }
 
+                           // L7-4: register the partial + persist immediately.
+                           RegisterPartialClose(m_positions[i], "TP1_PARTIAL", "FILE_TP2",
+                                                close_lots, file_tp2_profit,
+                                                file_tp2_price, file_tp2_time);
+
                            LogPrint("[FileTP2] Partial close, runner alive: ticket=",
                                     m_positions[i].ticket, " @ ", DoubleToString(cur_price, 2),
                                     " | SL→TP1(", DoubleToString(trail_sl, 2), ")",
                                     " | Runner→TP3(", DoubleToString(m_positions[i].tp3, 2), ")");
+
+                           SaveOnStateChange();
                         }
                      }
                      else
