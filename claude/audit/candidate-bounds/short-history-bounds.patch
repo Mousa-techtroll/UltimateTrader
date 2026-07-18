@@ -1,0 +1,89 @@
+diff --git a/Include/Core/CAdaptiveTPManager.mqh b/Include/Core/CAdaptiveTPManager.mqh
+index 1f29867..fc3cef0 100644
+--- a/Include/Core/CAdaptiveTPManager.mqh
++++ b/Include/Core/CAdaptiveTPManager.mqh
+@@ -396,7 +396,7 @@ private:
+       double atr_buffer[];
+       ArraySetAsSeries(atr_buffer, true);
+ 
+-      if(CopyBuffer(m_handle_atr_h1, 0, 0, m_atr_history_size, atr_buffer) > 0)
++      if(CopyBuffer(m_handle_atr_h1, 0, 0, m_atr_history_size, atr_buffer) >= m_atr_history_size)
+       {
+          double sum = 0;
+          for(int i = 0; i < m_atr_history_size; i++)
+diff --git a/Include/MarketAnalysis/CSMCOrderBlocks.mqh b/Include/MarketAnalysis/CSMCOrderBlocks.mqh
+index de4ae84..5adb08c 100644
+--- a/Include/MarketAnalysis/CSMCOrderBlocks.mqh
++++ b/Include/MarketAnalysis/CSMCOrderBlocks.mqh
+@@ -776,10 +776,10 @@ private:
+       ArraySetAsSeries(close, true);
+ 
+       int bars_to_copy = m_config.ob_lookback + 5;
+-      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars_to_copy, high) <= 0) return;
+-      if(CopyLow(_Symbol, PERIOD_H1, 0, bars_to_copy, low) <= 0) return;
+-      if(CopyOpen(_Symbol, PERIOD_H1, 0, bars_to_copy, open) <= 0) return;
+-      if(CopyClose(_Symbol, PERIOD_H1, 0, bars_to_copy, close) <= 0) return;
++      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars_to_copy, high) < bars_to_copy) return;
++      if(CopyLow(_Symbol, PERIOD_H1, 0, bars_to_copy, low) < bars_to_copy) return;
++      if(CopyOpen(_Symbol, PERIOD_H1, 0, bars_to_copy, open) < bars_to_copy) return;
++      if(CopyClose(_Symbol, PERIOD_H1, 0, bars_to_copy, close) < bars_to_copy) return;
+ 
+       double atr = GetCurrentATR();
+       if(atr <= 0) return;
+@@ -845,8 +845,8 @@ private:
+       ArraySetAsSeries(low, true);
+ 
+       int bars_to_copy = m_config.ob_lookback;
+-      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars_to_copy, high) <= 0) return;
+-      if(CopyLow(_Symbol, PERIOD_H1, 0, bars_to_copy, low) <= 0) return;
++      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars_to_copy, high) < bars_to_copy) return;
++      if(CopyLow(_Symbol, PERIOD_H1, 0, bars_to_copy, low) < bars_to_copy) return;
+ 
+       double point = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+ 
+@@ -886,8 +886,8 @@ private:
+       ArraySetAsSeries(low, true);
+ 
+       int bars = m_config.ob_lookback;
+-      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars, high) <= 0) return;
+-      if(CopyLow(_Symbol, PERIOD_H1, 0, bars, low) <= 0) return;
++      if(CopyHigh(_Symbol, PERIOD_H1, 0, bars, high) < bars) return;
++      if(CopyLow(_Symbol, PERIOD_H1, 0, bars, low) < bars) return;
+ 
+       ArrayInitialize(m_swing_highs, 0.0);
+       ArrayInitialize(m_swing_lows, 0.0);
+@@ -1016,9 +1016,9 @@ private:
+ 
+       int bars = m_config.ob_lookback;
+       // Phase 1.1: start_pos 0->1 — scan closed bars only (skip the forming bar)
+-      if(CopyHigh(_Symbol, PERIOD_H1, 1, bars, high) <= 0) return;
+-      if(CopyLow(_Symbol, PERIOD_H1, 1, bars, low) <= 0) return;
+-      if(CopyTime(_Symbol, PERIOD_H1, 1, bars, time) <= 0) return;
++      if(CopyHigh(_Symbol, PERIOD_H1, 1, bars, high) < bars) return;
++      if(CopyLow(_Symbol, PERIOD_H1, 1, bars, low) < bars) return;
++      if(CopyTime(_Symbol, PERIOD_H1, 1, bars, time) < bars) return;
+ 
+       // Phase 3.1: ATR-derived tolerance for equal highs/lows detection
+       double current_atr = GetCurrentATR();
+diff --git a/Include/MarketAnalysis/CTrendDetector.mqh b/Include/MarketAnalysis/CTrendDetector.mqh
+index d9ac921..31b7c86 100644
+--- a/Include/MarketAnalysis/CTrendDetector.mqh
++++ b/Include/MarketAnalysis/CTrendDetector.mqh
+@@ -215,7 +215,7 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
+       ArraySetAsSeries(high, true);
+       
+       int bars_needed = m_swing_lookback + 5;
+-      if(CopyHigh(_Symbol, tf, 0, bars_needed, high) <= 0)
++      if(CopyHigh(_Symbol, tf, 0, bars_needed, high) < bars_needed)
+          return false;
+       
+       double swing_highs[3];
+@@ -253,7 +253,7 @@ bool UpdateTimeframe(ENUM_TIMEFRAMES tf, STrendData &trend_data,
+       ArraySetAsSeries(low, true);
+       
+       int bars_needed = m_swing_lookback + 5;
+-      if(CopyLow(_Symbol, tf, 0, bars_needed, low) <= 0)
++      if(CopyLow(_Symbol, tf, 0, bars_needed, low) < bars_needed)
+          return false;
+       
+       double swing_lows[3];
