@@ -49,12 +49,17 @@ struct MarketData
 struct ExecutionResult
 {
    bool      success;        // Was execution successful
-   ulong     resultTicket;   // Resulting ticket if successful
+   ulong     resultTicket;   // Resulting ticket if successful (== positionId in the common single-fill case)
    double    executedPrice;  // Actual execution price
    double    executedLots;   // Actual executed lot size
    int       lastError;      // Last error code if failed (GetLastError)
    uint      retcode;        // Fix 6.1: MQL5 server retcode (m_trade.ResultRetcode())
    string    message;        // Success or error message
+   // L6-1: authoritative broker POSITION id resolved from the entry deal
+   // (ResultDeal -> DEAL_POSITION_ID). Equals resultTicket / ResultOrder() for a
+   // fresh single fill; differs only on a netting ADD (merged older id). 0 = unresolved.
+   ulong     positionId;     // L6-1: deal-resolved position identifier
+   bool      bindingAmbiguous; // L6-1: identity could not be resolved -> caller must block+reconcile
 
    void Init()
    {
@@ -65,6 +70,8 @@ struct ExecutionResult
       lastError = 0;
       retcode = 0;
       message = "";
+      positionId = 0;          // L6-1
+      bindingAmbiguous = false; // L6-1
    }
 };
 
@@ -92,6 +99,15 @@ private:
    datetime          m_executionStartTime; // Time when execution started
 #endif // ULTIMATETRADER_ENABLE_LEGACY_EXECUTE  (Phase 6.9 / 6.5 FU-2: label)
    datetime          m_lastSendTime;       // Fix 6.2: server time captured immediately BEFORE the order send (netting-fallback discriminator)
+
+   // L6-1: safe post-fill position binding. When true, the post-fill identity is
+   // resolved from the entry deal's DEAL_POSITION_ID and NEVER first-matched by
+   // symbol/magic; an unresolvable identity blocks further sends for the symbol.
+   // The deal-id resolution itself is ALWAYS-ON (byte-identical in the common
+   // single-fill case where DEAL_POSITION_ID == ResultOrder()); this flag only
+   // toggles the edge-case fallback (safe-block vs legacy symbol/magic match).
+   bool              m_safeBinding;
+   string            m_bindingBlockedSymbol; // L6-1: symbol whose sends are blocked pending reconciliation ("" = none)
 
    // Phase 3.2: Execution Realism
    double            m_max_spread_points;     // reject if spread > X
@@ -1345,6 +1361,18 @@ public:
       ExecutionResult result;
       result.Init();
 
+      // L6-1: refuse to send while this symbol is blocked pending post-fill
+      // identity reconciliation. Flag-gated + only latched after an AMBIGUOUS
+      // bind (never in the clean deterministic tester) -> byte-identical there.
+      if(IsBindingBlocked(symbol))
+      {
+         result.success = false;
+         result.message = "L6-1: sends blocked for " + symbol +
+                          " pending position-binding reconciliation";
+         Log.Error(result.message);
+         return result;
+      }
+
       // Signal logging for trade execution attempt
       Log.Signal("ATTEMPTING TRADE EXECUTION WITH RETRIES");
       Log.Signal("TRADE DETAILS: " + symbol + " " + action + " " + DoubleToString(lotSize, 2) +
@@ -1427,6 +1455,17 @@ public:
             }
             else
             {
+               // L6-1: if the post-fill identity was AMBIGUOUS (no deal id
+               // resolvable and no live/closed position to bind), do NOT retry a
+               // send that could corrupt state — latch a per-symbol block and
+               // surface an explicit reconcile/log path. Flag-gated; never fires
+               // for a clean fill, so the reference backtest is unaffected.
+               if(result.bindingAmbiguous && m_safeBinding)
+               {
+                  m_bindingBlockedSymbol = symbol;
+                  Log.Error("L6-1: post-fill identity AMBIGUOUS for " + symbol +
+                            " — BLOCKING further sends; manual/reconcile required.");
+               }
                // Validation failed, set as failure for retry or return
                Log.Signal("✗ TRADE VALIDATION FAILED AFTER EXECUTION: " + result.message);
                return result;
@@ -1624,9 +1663,13 @@ private:
       if(!ValidateExecutedVolume(result.executedLots, lotSize, validationErrors))
          resultValid = false;
 
-      // Validate position exists (lotSize passed for the Fix 6.2 netting-fallback
-      // volume-within-step discriminator)
-      if(!ValidatePositionExists(symbol, magicNumber, lotSize, result.resultTicket, validationErrors))
+      // L6-1: bind the position. The deal-resolved authoritative id is used ONLY
+      // when the direct order-ticket select fails (never in the common single-fill
+      // case), so the common path makes NO extra deal/history call and stays
+      // byte-identical. resultTicket is rewritten to the authoritative id on a
+      // netting ADD; positionId is reported; ambiguity latches bindingAmbiguous.
+      if(!ValidatePositionExists(symbol, magicNumber, lotSize, result.resultTicket,
+                                 result.positionId, result.bindingAmbiguous, validationErrors))
          resultValid = false;
 
       // Handle validation results
@@ -1698,15 +1741,108 @@ private:
    }
 
    //+------------------------------------------------------------------+
-   //| Validate position exists                                         |
+   //| L6-1: resolve the authoritative broker POSITION id from the entry |
+   //| deal. ResultDeal() -> DEAL_POSITION_ID is the broker's own linkage |
+   //| from the fill to the position it opened/modified, which NEVER      |
+   //| first-matches by symbol/magic. Guards a stale ResultDeal() by      |
+   //| confirming the deal's DEAL_ORDER == the order we just sent.        |
+   //| Returns 0 if unresolvable (caller falls back to the order ticket). |
+   //|                                                                    |
+   //| Common single-fill invariant: for a market order that OPENS a new  |
+   //| position, DEAL_POSITION_ID == the opening order ticket ==          |
+   //| ResultOrder(). So this returns exactly ResultOrder() there and the |
+   //| downstream binding is byte-identical. Only a netting ADD (the fill |
+   //| merges into an OLDER position) makes it differ, which is precisely  |
+   //| the case the legacy ResultOrder() path bound wrong.                |
+   //+------------------------------------------------------------------+
+   ulong ResolvePositionIdFromDeal()
+   {
+      ulong deal = m_trade.ResultDeal();
+      if(deal == 0)
+         return 0;
+
+      // Ensure the deal is in the history cache (usually already true after a
+      // synchronous market send; the extra select is harmless and defensive).
+      if(!HistoryDealSelect(deal))
+      {
+         HistorySelect(0, TimeCurrent() + 1);
+         if(!HistoryDealSelect(deal))
+            return 0;
+      }
+
+      // Confirm this deal was produced by OUR order (guards a stale ResultDeal
+      // left over from a prior op — in which case we return 0 and fall back to
+      // the order ticket, preserving byte-identity).
+      ulong dealOrder = (ulong)HistoryDealGetInteger(deal, DEAL_ORDER);
+      ulong ourOrder  = m_trade.ResultOrder();
+      if(ourOrder > 0 && dealOrder != ourOrder)
+         return 0;
+
+      return (ulong)HistoryDealGetInteger(deal, DEAL_POSITION_ID);
+   }
+
+   //+------------------------------------------------------------------+
+   //| Validate position exists (L6-1 deal-id binding)                  |
+   //| positionId is an OUT param: the authoritative broker position id  |
+   //| this fill bound to (== ticket for a fresh fill).                  |
    //+------------------------------------------------------------------+
    bool ValidatePositionExists(string symbol, int magicNumber, double expectedLots,
-                               ulong &ticket, string &validationErrors)
+                               ulong &ticket, ulong &positionId, bool &ambiguous,
+                               string &validationErrors)
    {
-      // Try to select position by ticket
+      // (0) Common / fresh-hedging fill: the new position's ticket == ResultOrder()
+      // == `ticket`, so a direct select succeeds with NO deal/history call and the
+      // path is byte-identical to the legacy first check — INDEPENDENT of the flag,
+      // because this is reached and returns before any flag-gated branch. positionId
+      // is reported as the order ticket (the authoritative id equals it for a NEW
+      // position).
       if(PositionSelectByTicket(ticket))
+      {
+         positionId = ticket;
          return true;
+      }
 
+      // Direct select FAILED -> this is NOT a plain new fill: either a netting ADD
+      // (fill merged into an OLDER position whose id != our order ticket) or an
+      // instant same-tick close. The L6-1 SAFE binding (flag ON) resolves identity
+      // from the entry deal and NEVER first-matches by symbol/magic. Flag OFF falls
+      // straight through to the verbatim legacy fallback below (exact pre-change
+      // behaviour). Either way the common case above already returned, so the flag
+      // has NO effect on a clean fill.
+      if(m_safeBinding)
+      {
+         // Resolve the AUTHORITATIVE position id from the entry deal
+         // (ResultDeal -> DEAL_POSITION_ID) — the broker's own fill->position linkage.
+         positionId = ResolvePositionIdFromDeal();
+
+         // (1) Netting ADD: the merged position id is live -> bind it and rewrite the
+         // ticket to the authoritative id so downstream reconciles the EXISTING record.
+         if(positionId > 0 && positionId != ticket && PositionSelectByTicket(positionId))
+         {
+            Log.Warning("L6-1: order ticket " + IntegerToString(ticket) +
+                        " bound to authoritative position id " + IntegerToString(positionId) +
+                        " (netting add / merged position, deal DEAL_POSITION_ID)");
+            ticket = positionId;
+            return true;
+         }
+
+         // (2) Confirm the fill via deal history for the RESOLVED id; a fill that
+         // closed the same tick (instant TP) is a success with no live position to
+         // bind. Otherwise the identity is AMBIGUOUS -> signal the caller to block
+         // sends and reconcile rather than binding blind or reporting plain failure.
+         ulong histId = (positionId > 0) ? positionId : ticket;
+         if(histId > 0 && HistorySelectByPosition(histId) && HistoryDealsTotal() > 0)
+         {
+            Log.Info("L6-1: position " + IntegerToString(histId) +
+                     " filled then closed same tick (deal history) — treating as success.");
+            return true;
+         }
+         ambiguous = true;
+         validationErrors += "Position identity unresolved (L6-1 safe-binding); ";
+         return false;
+      }
+
+      // (legacy, flag OFF) original symbol+magic fallback preserved verbatim.
       // Fix 6.2 (Infra-2): the direct ResultOrder/ResultDeal binding above did not
       // yield a live ticket, so fall back to a symbol+magic position lookup. On a
       // NETTING account (ACCOUNT_MARGIN_MODE_RETAIL_NETTING) same-symbol positions
@@ -2023,6 +2159,8 @@ public:
       m_executionStartTime = 0;
 #endif // ULTIMATETRADER_ENABLE_LEGACY_EXECUTE  (Phase 6.9 / 6.5 FU-2: label)
       m_lastSendTime = 0;               // Fix 6.2: set per-attempt right before each send
+      m_safeBinding = true;             // L6-1: default = the fix (safe deal-id binding)
+      m_bindingBlockedSymbol = "";      // L6-1: no symbol blocked at construction
 
       // Phase 3.2: Execution Realism defaults
       m_max_spread_points = 0;       // 0 = disabled
@@ -2094,6 +2232,37 @@ public:
       m_max_slippage_points = max_slippage;
       Log.Info("Spread/Slippage limits set: max spread=" + DoubleToString(max_spread, 1) +
                " pts, max slippage=" + DoubleToString(max_slippage, 1) + " pts");
+   }
+
+   //+------------------------------------------------------------------+
+   //| L6-1: enable/disable safe post-fill position binding.            |
+   //| Only toggles the EDGE-CASE fallback (safe-block vs legacy         |
+   //| symbol/magic match). The deal-id resolution stays always-on and  |
+   //| is byte-identical in the common single-fill case regardless.     |
+   //+------------------------------------------------------------------+
+   void SetSafeBinding(bool enabled)
+   {
+      m_safeBinding = enabled;
+      Log.Info("L6-1 SafePositionBinding = " + (enabled ? "ON" : "OFF"));
+   }
+
+   //+------------------------------------------------------------------+
+   //| L6-1: is this symbol currently blocked pending reconciliation?   |
+   //+------------------------------------------------------------------+
+   bool IsBindingBlocked(string symbol)
+   {
+      return (m_safeBinding && m_bindingBlockedSymbol != "" && m_bindingBlockedSymbol == symbol);
+   }
+
+   //+------------------------------------------------------------------+
+   //| L6-1: clear the binding block once reconciliation has resolved   |
+   //| the ambiguous identity (explicit operator/reconcile action).     |
+   //+------------------------------------------------------------------+
+   void ClearBindingBlock()
+   {
+      if(m_bindingBlockedSymbol != "")
+         Log.Info("L6-1 binding block cleared for " + m_bindingBlockedSymbol);
+      m_bindingBlockedSymbol = "";
    }
 
    //+------------------------------------------------------------------+

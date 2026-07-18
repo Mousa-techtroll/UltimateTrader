@@ -865,8 +865,17 @@ public:
 
       if(exec_result.success && exec_result.resultTicket > 0)
       {
-         // Create position tracking
-         position.ticket = exec_result.resultTicket;
+         // Create position tracking.
+         // L6-1: bind local state to the AUTHORITATIVE broker position id resolved
+         // from the entry deal (ResultDeal -> DEAL_POSITION_ID). In the common
+         // single-fill case this equals ResultOrder() == resultTicket, so the bound
+         // ticket is UNCHANGED (byte-identical). The executor already rewrote
+         // resultTicket to the resolved id on a netting ADD, so both expressions
+         // yield the same value here; the explicit preference documents the source
+         // and is a no-op otherwise. AddPosition() reconciles into the existing
+         // record when this id is already tracked (a netting merge).
+         position.ticket = (exec_result.positionId > 0) ? exec_result.positionId
+                                                        : exec_result.resultTicket;
          position.direction = sig_type;
          position.pattern_type = signal.patternType;
          // Fix 4.7: seed lot_size from the ACTUAL filled volume, not the requested

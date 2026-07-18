@@ -85,6 +85,12 @@ private:
    int                    m_position_count;
    int                    m_magic_number;
 
+   // L6-1: safe position binding. When true, AddPosition reconciles a fill whose
+   // authoritative position id is ALREADY tracked (a netting add/reduce/reverse
+   // merge) into the existing record instead of appending a duplicate. Dormant
+   // for a fresh id (common single-fill case) -> byte-identical either way.
+   bool                   m_safe_binding;
+
    // Weekend closure settings
    bool                   m_close_before_weekend;
    int                    m_weekend_close_hour;
@@ -1296,6 +1302,7 @@ public:
       m_position_count = 0;
       m_trailing_count = 0;
       m_exit_count = 0;
+      m_safe_binding = true;   // L6-1: default = the fix (reconcile netting merges)
       ArrayResize(m_positions, 0);
 
       // v3.1: Engine pointers init
@@ -1635,10 +1642,88 @@ public:
    }
 
    //+------------------------------------------------------------------+
+   //| L6-1: enable/disable safe position binding (netting reconcile).  |
+   //+------------------------------------------------------------------+
+   void SetSafeBinding(bool enabled) { m_safe_binding = enabled; }
+
+   //+------------------------------------------------------------------+
+   //| L6-1: netting add/reduce/reverse reconciliation entry point.     |
+   //| Called when a fill's authoritative position id is ALREADY tracked |
+   //| (a merge into an existing netting position) or when orphan-adopt  |
+   //| sees a tracked position whose broker volume changed. Re-reads the |
+   //| LIVE merged volume/direction from the broker and updates the      |
+   //| existing record's volume + risk in place (no duplicate record).   |
+   //| Returns true iff an existing record was reconciled.               |
+   //+------------------------------------------------------------------+
+   bool ReconcileNettingFill(ulong pos_ticket)
+   {
+      int idx = FindTrackedPositionIndex(pos_ticket);
+      if(idx < 0)
+         return false;                       // not tracked -> caller should append
+
+      if(!PositionSelectByTicket(pos_ticket))
+      {
+         // Position is no longer live (an opposite fill fully closed it). Leave the
+         // normal close/exit path to retire the record with full accounting.
+         LogPrint("ReconcileNettingFill: ticket ", pos_ticket,
+                  " not live — deferring to close path (no in-place mutation).");
+         return false;
+      }
+
+      double            live_vol = PositionGetDouble(POSITION_VOLUME);
+      ENUM_SIGNAL_TYPE  live_dir = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY)
+                                   ? SIGNAL_LONG : SIGNAL_SHORT;
+      double            old_vol  = m_positions[idx].remaining_lots;
+      ENUM_SIGNAL_TYPE  old_dir  = m_positions[idx].direction;
+
+      // Volume accounting: remaining/current lots follow the live merged volume; a
+      // net ADD grows the base (original_lots); a reduction leaves the base intact.
+      m_positions[idx].remaining_lots = live_vol;
+      m_positions[idx].lot_size       = live_vol;
+      if(live_vol > m_positions[idx].original_lots)
+         m_positions[idx].original_lots = live_vol;
+      m_positions[idx].direction = live_dir;    // a reversal flips the tracked side
+
+      // Risk accounting: recompute entry risk from the EXISTING geometry (entry vs
+      // stop) at the new merged volume so exposure caps and persisted risk track
+      // the real book. Uses the position's own symbol economics.
+      string rsym = PositionGetString(POSITION_SYMBOL);
+      if(rsym == "") rsym = _Symbol;
+      double risk_dist = MathAbs(m_positions[idx].entry_price - m_positions[idx].stop_loss);
+      double tv = SymbolInfoDouble(rsym, SYMBOL_TRADE_TICK_VALUE);
+      double ts = SymbolInfoDouble(rsym, SYMBOL_TRADE_TICK_SIZE);
+      if(risk_dist > 0 && tv > 0 && ts > 0 && live_vol > 0)
+         m_positions[idx].entry_risk_amount = (risk_dist / ts) * tv * live_vol;
+
+      LogPrint("ReconcileNettingFill: ticket ", pos_ticket,
+               " | vol ", DoubleToString(old_vol, 2), " -> ", DoubleToString(live_vol, 2),
+               " | dir ", (old_dir == SIGNAL_LONG ? "LONG" : "SHORT"),
+               " -> ", (live_dir == SIGNAL_LONG ? "LONG" : "SHORT"),
+               " | risk$=", DoubleToString(m_positions[idx].entry_risk_amount, 2));
+
+      SaveOnStateChange();
+      return true;
+   }
+
+   //+------------------------------------------------------------------+
    //| Add position to tracking                                          |
    //+------------------------------------------------------------------+
    void AddPosition(SPosition &position)
    {
+      // L6-1 (flag-gated): a fill whose authoritative position id is ALREADY
+      // tracked is a netting add/reduce/reverse MERGE, not a new position —
+      // reconcile the existing record instead of appending a duplicate. NEVER
+      // fires for a fresh position id: in the common single-fill case
+      // FindTrackedPositionIndex == -1, so the legacy append below runs verbatim
+      // (byte-identical, flag on or off). If the id is tracked but no live
+      // position resolves, fall through to the legacy append rather than drop it.
+      if(m_safe_binding && position.ticket > 0 &&
+         FindTrackedPositionIndex(position.ticket) >= 0)
+      {
+         if(ReconcileNettingFill(position.ticket))
+            return;
+      }
+
       InitializeRunnerExitMode(position);
 
       ArrayResize(m_positions, m_position_count + 1);

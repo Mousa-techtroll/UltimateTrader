@@ -1661,6 +1661,11 @@ int OnInit()
    // Phase 3.2: Set execution realism parameters
    g_tradeExecutor.SetSpreadSlippageLimits(InpMaxSpreadPoints, InpMaxSlippagePoints);
 
+   // L6-1: safe post-fill position binding (deal-id resolution is always-on; this
+   // flag toggles the edge-case fallback + netting reconcile). Byte-identical in
+   // the common single-fill case regardless of the flag.
+   g_tradeExecutor.SetSafeBinding(InpSafePositionBinding);
+
    Print("[Init] Trade Executor: Magic=", InpMagicNumber, " Slippage=", InpSlippage,
          " | SpreadGate=", InpMaxSpreadPoints, "pts | SlippageLimit=", InpMaxSlippagePoints, "pts");
 
@@ -1777,6 +1782,10 @@ int OnInit()
       Print("[Init] CRITICAL: CPositionCoordinator creation failed!");
       return(INIT_FAILED);
    }
+
+   // L6-1: match the executor's safe-binding setting so a netting merge whose id is
+   // already tracked reconciles the existing record instead of duplicating it.
+   g_posCoordinator.SetSafeBinding(InpSafePositionBinding);
 
    // Register trailing plugins with position coordinator
    for(int t = 0; t < g_trailingPluginCount; t++)
@@ -3301,6 +3310,37 @@ void OnTick()
                         " | Entry=", orphan.entry_price,
                         " | SL=", orphan.stop_loss,
                         " | Lots=", orphan.lot_size);
+               }
+               else if(InpSafePositionBinding)
+               {
+                  // L6-1 orphan-adopt volume-INCREASE case: this ticket is already
+                  // tracked, but on a NETTING account a same-direction ADD can GROW
+                  // the live merged volume between ticks without a new position id.
+                  // Reconcile ONLY on a genuine INCREASE (broker_vol > tracked). A
+                  // partial-TP close DECREASES volume and is owned by the exit path,
+                  // so we deliberately skip decreases here — that keeps this every-
+                  // tick branch a strict no-op in the clean tester (no netting adds
+                  // -> volume never increases) -> byte-identical.
+                  double tracked_vol = 0.0;
+                  bool   tracked_ok  = false;
+                  for(int tp3 = 0; tp3 < g_posCoordinator.GetPositionCount(); tp3++)
+                  {
+                     if(g_posCoordinator.GetPositionTicket(tp3) == bp_ticket)
+                     {
+                        SPosition trec = g_posCoordinator.GetPosition(tp3);
+                        tracked_vol = trec.remaining_lots;
+                        tracked_ok  = true;
+                        break;
+                     }
+                  }
+                  double broker_vol = PositionGetDouble(POSITION_VOLUME);
+                  if(tracked_ok && broker_vol > tracked_vol + 1e-6)
+                  {
+                     Print("[L6-1 RECONCILE] Ticket=", bp_ticket,
+                           " | tracked_vol=", DoubleToString(tracked_vol, 2),
+                           " | broker_vol=", DoubleToString(broker_vol, 2), " (netting add)");
+                     g_posCoordinator.ReconcileNettingFill(bp_ticket);
+                  }
                }
             }
          }

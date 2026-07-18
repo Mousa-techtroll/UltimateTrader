@@ -358,6 +358,7 @@ input double InpMaxSlippagePoints = 10;                        // Max acceptable
 input group "══════ LIVE SAFEGUARDS ══════"
 input bool   InpEmergencyDisable = false;                      // Emergency kill switch
 input int    InpMaxConsecutiveErrors = 5;                      // Max consecutive errors before halt
+input bool   InpSafePositionBinding = true;                    // L6-1: safe post-fill binding (deal-id; reconcile netting merges; block ambiguous)
 
 //--- Group 28: AUTO-KILL GATE (Phase 3.5)
 input group "══════ AUTO-KILL GATE ══════"
