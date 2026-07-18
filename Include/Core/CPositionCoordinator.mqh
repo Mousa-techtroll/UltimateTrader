@@ -4087,12 +4087,33 @@ private:
                   {
                      pos.trailing_broker_failures++;
                      uint trail_retcode = trail_trade.ResultRetcode();
+                     // CANDIDATE P2 (InpSLResyncOnFail, default false=baseline): on ANY modify failure re-read
+                     // the broker's ACTUAL SL into pos.stop_loss (single source of truth). A non-INVALID_STOPS
+                     // reject otherwise leaves pos.stop_loss at the advanced normalized_sl (phantom) while the
+                     // broker holds the old SL, so later is_better proposals (new_sl>broker but <phantom) are
+                     // silently rejected and the SL freezes for the trade's life. See candidate-slsync/DESIGN.md.
+                     if(InpSLResyncOnFail)
+                     {
+                        double resync_broker_sl = old_sl;
+                        if(PositionSelectByTicket(pos.ticket))
+                           resync_broker_sl = PositionGetDouble(POSITION_SL);
+                        pos.stop_loss = resync_broker_sl;
+                        pos.last_trailing_to_sl = resync_broker_sl;
+                        if(pos.at_breakeven && !was_at_breakeven)
+                        {
+                           pos.at_breakeven = false;
+                           if(pos.breakeven_time == trail_time)
+                              pos.breakeven_time = 0;
+                        }
+                        gate_reason = "MODIFY_FAIL_RESYNC";
+                        pos.last_trail_gate_reason = gate_reason;
+                     }
                      // M4-FIX (4.9): on an INVALID_STOPS reject the broker keeps the OLD stop,
                      // so the internal stop_loss (already advanced to normalized_sl) has
                      // desynced. Revert it to old_sl + set a DISTINCT gate_reason so internal
                      // tracking matches what the broker actually holds (a runner is never left
                      // believing it is protected at a level the broker rejected).
-                     if(trail_retcode == TRADE_RETCODE_INVALID_STOPS)
+                     else if(trail_retcode == TRADE_RETCODE_INVALID_STOPS)
                      {
                         pos.stop_loss = old_sl;
                         pos.last_trailing_to_sl = old_sl;

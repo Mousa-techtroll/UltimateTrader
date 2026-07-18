@@ -491,6 +491,10 @@ input double InpShockBarRangeThresh = 2.0;                     // Bar range / AT
 input group "══════ TRAILING SL MODE ══════"
 input bool   InpBatchedTrailing = false;                       // Batched trailing — false=baseline behavior (send every update to broker). Analyst set true which only updates broker SL at R-levels, causing reversals between levels to hit stale broker SL
 input bool   InpDisableBrokerTrailing = false;                 // REVERT: disable broker SL modification entirely (pre-fix behavior)
+// CANDIDATE P2 (QA SL-sync, candidate-slsync/DESIGN.md): on ANY trailing-modify failure, re-read the broker's
+// actual SL into pos.stop_loss (re-sync) instead of only reverting on TRADE_RETCODE_INVALID_STOPS — a
+// non-INVALID_STOPS reject otherwise leaves a phantom advanced SL that blocks later legit is_better trails.
+input bool   InpSLResyncOnFail = false;                        // QA: re-sync internal SL to broker on any modify fail (false=baseline)
 
 //--- Group 40: TP0 EARLY PARTIAL (Phase 2)
 input group "══════ TP0 EARLY PARTIAL ══════"
