@@ -1,0 +1,26 @@
+{
+ "schema": "ultimatetrader-release-identity-v6-390",
+ "baseline": "SL-internal-broker-resync adopted over Gold-v1-fixed-UTC",
+ "net_profit": 34940.18,
+ "positions": 869,
+ "reference_run": "XAUUSD+ H1 Model-4 2019.01.01-2026.06.27, canonical config (InpSLResyncOnFail pinned true)",
+ "stats_md5": "d6549628763200a44ed4bbcd6aed40b9",
+ "events_md5": "e413cbd80ee75cefb2619a56462748aa",
+ "config": {
+   "canonical_set_pins": 390,
+   "canonical_set_sha256": "bd7c02753c67f129ab20fe1d949760dbd9a581e8419c3fd3821bf4221dfc278f",
+   "canonical_config_sha256_sorted_namevalue": "b765d4b86562ee3b0d80ecb032a5234f1e70b502e91f0f296183cda156dbbfd8",
+   "risk_R90_ini_md5": "808776cd98512aa7efa9fb1e710b8a87",
+   "adopted_flags": ["InpSessionBreakoutDST=true (fixed-UTC breakout, prior adoption)", "InpSLResyncOnFail=true (SL internal-broker re-sync, this adoption)"],
+   "removed_from_surface": ["InpRegimeHysteresisPerBar (rejected, const under RESEARCH_CANDIDATES)", "InpVolRegimeClosedBar (rejected, const under RESEARCH_CANDIDATES)"]
+ },
+ "binary": { "ex5_md5": "160436fdec1020a29e71bb5a350595f1", "ex5_sha256": "61081c66dc4ebf67cac6e2d80f3c0e0c8ec46ed82f0722263c212e7fac87bb68", "note": "clean production build (rejected candidate flags guarded out); .ex5 embeds a compile timestamp - reproducible invariant is Stats md5 d6549628" },
+ "reproduction_proof": {
+   "flag_false_reverts_to_prior_baseline": "1ed88d4183f1... / $34,858.89 (kill-switch clean, both feeds)",
+   "flag_true_production_binary_plus_pinned_config": "d6549628... / $34,940.18 / 869 (self-contained, no override)",
+   "goldhistory_flag_true": "f11c4b2c... / $29,525.79 / 820 (neutral vs GH baseline)",
+   "synthetic_recovery_tests": "UT_SLSync 36/36 PASS across 6 broker retcodes (SL/BE/subsequent-trailing recover)"
+ },
+ "supersedes": "baseline-session-breakout-utc-34858 (Gold-v1 fixed-UTC, Stats 1ed88d41, $34,858.89) — reversible via InpSLResyncOnFail=false",
+ "note": "Full per-input effective-input-manifest.json (AUDIT_BUILD [EffCfg] emitter + assemble.py) regen pending as a follow-up; this manifest records the authoritative config/binary/result hashes for the new baseline."
+}

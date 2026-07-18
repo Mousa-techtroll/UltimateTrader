@@ -1,7 +1,12 @@
 # Remaining QA candidates — P3 (byte-identical hardenings) + P4 (live-only)
 
-Completing the candidate cycle. Each finding assessed against the EXACT baseline (`1ed88d41`) + given a
-precise fix spec so the owner can implement any of them as a follow-up. Production unchanged.
+> **STATUS (reclassified per owner directive): PROPOSED BUT UNIMPLEMENTED.** None of P3a/P3b/P3c or P4a/P4b
+> is implemented, tested, or adopted — each is a *documented proposal* with a fix spec and exact-baseline
+> impact evidence only. Do NOT read any of these as "resolved." They remain open work items. (The SL re-sync
+> candidate is the ONLY finding being promoted to adoption; see `candidate-slsync/`.)
+
+Each finding assessed against the EXACT baseline (`1ed88d41`) + given a precise fix spec so the owner can
+implement any of them as a follow-up. Production unchanged.
 
 ## P3 — byte-identical correctness hardenings (nil baseline impact ⇒ HOLD as documented hardenings)
 Each is byte-identical on the shipped config (the failure it guards does not occur on `1ed88d41`), so
@@ -49,11 +54,13 @@ they cannot be validated by a tester A/B. Documented with fix spec + a synthetic
   backtest identity unaffected. **Decision: recommend implement** (real restart-correctness bug, zero tester
   impact) — its own commit. Note: P3a's persisted latch field should land WITH this if both are implemented.
 
-## Net disposition of the whole QA campaign
-7 findings surfaced by the sweep → each driven to a decision: **1 recommend-adopt** (SL re-sync, cost-free +
-higher live value), **2 recommend-implement live-only** (DST-refresh, state-persistence — no tester impact),
-**3 do-not-adopt** (hysteresis −1–2.4%, vol-ATR −2.1/−5.4%, bounds byte-identical/halt-not-reproducible), and
-**gate-parity closed benign**. The 3 P3 hardenings HOLD (byte-identical, no demonstrated benefit). The
-dominant, validated conclusion: the `1ed88d41` baseline is a **robust local optimum** — its internal
-imperfections are load-bearing, and the only clearly-worth-adopting fix (SL re-sync) is backtest-neutral and
-justified by live-robustness, not P&L. Production stays `baseline-session-breakout-utc-34858`.
+## Net disposition of the whole QA campaign (updated post-directive)
+- **SL re-sync — ADOPTED** via the canonical production configuration (new production tag; see `candidate-slsync/`).
+- **Hysteresis (QA#1), vol-ATR (QA#6), bounds (QA#7) — DO-NOT-ADOPT** as-decided, BUT **REOPENED** for further
+  work: bounds under min-usable-history reconsideration; vol-ATR under frequency-matched threshold recalibration;
+  hysteresis on a separate clean-architecture branch (deterministic exit state + recalibration). NOT closed.
+- **Gate-parity — measured benign** (enforcing removes profit); the unification refactor is a maintainability
+  proposal only.
+- **P3a/P3b/P3c + P4a/P4b — PROPOSED BUT UNIMPLEMENTED** (see banner above). Not resolved.
+Nothing except SL re-sync is adopted; nothing except gate-parity is closed. The reopened items (bounds, vol-ATR,
+hysteresis) are explicitly NOT accepted-as-is on the "it earned more historically" basis.

@@ -228,7 +228,14 @@ input double InpVolHighThresh = 1.3;         // High threshold
 // CANDIDATE P1 (QA#6, candidate-volatr/DESIGN.md): classify the volatility regime on the last CLOSED bar's
 // ATR ([1]) instead of the still-forming bar ([0], ~5-7% deflated → under-classifies VOL_HIGH/EXTREME). The
 // regime feeds CExpansionEngine::IsExpansionContext (live). false (default) = legacy forming-bar = baseline.
-input bool   InpVolRegimeClosedBar = false;  // QA#6: vol regime on CLOSED bar [1] (false=legacy forming-bar baseline)
+// QA#6 vol-regime closed-bar candidate — DO-NOT-ADOPT (−2.1%/−5.4%); removed from the production input surface.
+// Kept as const=false (byte-identical baseline) in production; restored as an input under RESEARCH_CANDIDATES for
+// the frequency-matched recalibration re-test (candidate-volatr).
+#ifdef RESEARCH_CANDIDATES
+input bool   InpVolRegimeClosedBar = false;  // RESEARCH: vol regime on CLOSED bar [1]
+#else
+const bool   InpVolRegimeClosedBar = false;  // production: rejected candidate forced off (not an input)
+#endif
 // ▼▼▼ DEAD SUB-GROUP (T0 2026-07-09, Sprint-1C hole): the 5 risk multipliers and the SL-adjust
 // family below ARE configured into CVolatilityRegimeManager (UltimateTrader.mq5 ~:568), but the
 // manager's outputs have ZERO live consumers — GetRiskMultiplier()'s only caller chain ends in
@@ -436,7 +443,14 @@ input bool   InpEnableRegimeExit = true;                // Phase 3: dynamic trai
 // PER BAR (market-global, book-independent) instead of inside the per-position trailing loop — fixes the
 // cross-bar trail-coupling (a position's open/close timing perturbing unrelated positions' trailing).
 // false (default) = legacy per-position-loop advance = baseline 1ed88d41 (kill-switch); true = the fix.
-input bool   InpRegimeHysteresisPerBar = false;         // QA#1: once-per-bar market hysteresis (false=legacy baseline)
+// QA#1 hysteresis candidate — DO-NOT-ADOPT (−1.0%/−2.4%); removed from the production input surface. Kept as
+// const=false (byte-identical baseline) in production; restored as an input under RESEARCH_CANDIDATES for the
+// clean-architecture branch recalibration (candidate-hysteresis).
+#ifdef RESEARCH_CANDIDATES
+input bool   InpRegimeHysteresisPerBar = false;         // RESEARCH: once-per-bar market hysteresis
+#else
+const bool   InpRegimeHysteresisPerBar = false;         // production: rejected candidate forced off (not an input)
+#endif
 // TRENDING: let winners run — wider trailing, later BE, smaller TP0
 input double InpRegExitTrendBE = 1.2;                   // TRENDING: BE trigger (R)
 input double InpRegExitTrendChand = 4.2;                // TRENDING: Chandelier multiplier
