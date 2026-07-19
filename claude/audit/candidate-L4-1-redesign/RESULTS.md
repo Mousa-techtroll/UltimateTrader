@@ -1,3 +1,49 @@
+# L4-1 — FINAL: four approaches FAIL; ROOT CAUSE proven (exhaustion-evidence is anti-predictive)
+
+## The decisive finding (Arm C v2 attribution, dual-policy AUDIT run)
+Arm C v2 (per-setup-subtype intent + **evidence-gated** opposition: reward counter/reversal only when backed by
+≥2 directional signals — RSI extreme, OB/FVG zone, H1-ATR extension, BOS, failed-break) was built with EXACT
+candidate attribution (`signal_id` threaded end-to-end; both legacy_tier and v2_tier logged per candidate).
+Result: **v2-on = $7,434.57 / 310 pos = −77%** — the worst L4-1 result. The attribution shows why, decisively:
+
+**Evidence-count is ANTI-PREDICTIVE of counter-setup profitability** (legacy-live fills, avg $/trade):
+| evidence signals | n | avg $ |
+|---|--:|--:|
+| 0 | 173 | +10.6 |
+| **1** | 375 | **+40.0** |
+| 2 | 19 | −57.4 |
+| 3 | 1 | −118.8 |
+PinBar earns +$44/trade at evidence=1 and LOSES (−$66) at evidence≥2; Crash is best at evidence=0. v2 removed
+475 legacy fills worth **+$12,717** (the target was to remove *losers*) — it kept the tiny high-evidence cohort,
+which is the LOSING one, and dropped the profitable moderate fades.
+
+**Conclusion: the book's counter-trend alpha is MODERATE-FADE, not textbook-exhaustion-reversal.** When RSI is
+extreme AND price is at an order block AND ATR is stretched (≥2 evidence), the move is too far gone to fade
+safely — it continues — so those "well-supported" fades LOSE. The profitable fades are the moderate ones the
+direction-blind scoring admits. Therefore the owner's principle ("reward opposition only when supported by
+exhaustion/overextension/structural evidence") is EMPIRICALLY FALSE for this book, and no evidence-gated or
+direction-aware rescoring can beat the current scoring — every such scheme selects the losing extreme cohort.
+
+## All four measured approaches
+| Approach | Net | vs base | verdict |
+|---|--:|--:|---|
+| Raw global directional patch | $19,876 | −43% | REJECTED |
+| + global threshold recal | $26,996 | −22.7% | REJECTED (floods book) |
+| Engine-aware Arm C v1 (plugin-coarse, blanket credit) | $25,967 | −20.4% | REJECTED (over-admits) |
+| **Evidence-gated Arm C v2** (per-setup, ≥2 evidence) | **$7,435** | **−77%** | **REJECTED (over-removes; evidence anti-predictive)** |
+
+## Verdict — L4-1 is a documented, root-caused architectural limitation (NOT force-merged)
+The evaluator's conflation of context-strength with alignment is a real architectural imperfection, but it is
+**load-bearing**: correcting it — by any of four measured methods, including a fully evidence-attributed
+engine-aware redesign — destroys the counter-trend alpha, because that alpha is a moderate-fade edge the
+"correct" scoring premises actively select against. **Do-not-relitigate L4-1 rescoring.** All code (v1
+`InpEngineAwareEval`, v2 `InpEAAv2`) + the dual-policy attribution instrument stay in source flag-off
+(byte-identical, verified `c051f97b`) so a future *different* thesis (e.g. a moderate-fade-specific signal, or
+the deferred rejection-wick quality metric shown here to be the only plausible remaining separator) can reopen
+from a known baseline. Production stays `baseline-codex-seven-32617` / `c051f97b` / $32,617.90.
+
+---
+## (superseded) three-approach summary
 # L4-1 — final results: all three approaches FAIL; held as a documented architectural limitation
 
 L4-1 (the audit's most "material" finding — the evaluator conflates context strength with directional

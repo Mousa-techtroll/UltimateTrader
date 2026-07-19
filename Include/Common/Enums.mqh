@@ -373,6 +373,30 @@ enum ENUM_CTX_RELATIONSHIP
 };
 
 //+------------------------------------------------------------------+
+//| Setup subtype (L4-1 Arm C v2 engine-aware eval, InpEAAv2)         |
+//| Per-EMITTED-SETUP intent (v1 was plugin-coarse). Classified from  |
+//| plugin_name (+direction/regime available; the taxonomy is single- |
+//| subtype per plugin per the recon). ALIGNMENT subtypes             |
+//| (TREND_CONTINUATION/PULLBACK/BREAKOUT) earn from ALIGNED context;  |
+//| COUNTER subtypes (EXHAUSTION_REVERSAL/MEAN_REVERSION/              |
+//| FAILED_BREAK_REVERSAL) earn ONLY from an EVIDENCE COUNT >= 2 of    |
+//| DIRECTIONAL signals (no blanket counter credit — v1's defect).    |
+//| HYBRID (unlisted) routes to the byte-identical legacy path.        |
+//| Consumed ONLY on the InpEAAv2 ON path. See                        |
+//| claude/audit/candidate-L4-1-redesign/ARMC-V2-IMPL.md.             |
+//+------------------------------------------------------------------+
+enum ENUM_SETUP_SUBTYPE
+{
+   SUBTYPE_TREND_CONTINUATION,    // (0) MACross, Engulfing(bull) — alignment
+   SUBTYPE_PULLBACK,              // (1) PullbackContinuationEngine — alignment (ALIGNED+MIXED)
+   SUBTYPE_BREAKOUT,              // (2) Expansion, VolatilityBreakout, Session — alignment
+   SUBTYPE_EXHAUSTION_REVERSAL,   // (3) PinBar — counter, evidence-gated; MIXED demoted
+   SUBTYPE_MEAN_REVERSION,        // (4) CrashBreakout — counter, death-cross GATED, evidence-gated
+   SUBTYPE_FAILED_BREAK_REVERSAL, // (5) FailedBreakReversal, Displacement — counter; inherent failed-break evidence
+   SUBTYPE_HYBRID                 // (6) unlisted -> legacy direction-blind scoring (unaffected)
+};
+
+//+------------------------------------------------------------------+
 //| SB-1.1 Correction & Bear-Event state (SHADOW-ONLY)               |
 //| 8-state model from workflowAnalysis/sb11-state-model.md, ported  |
 //| verbatim by CBearStateModel. DECISION-FREE: never read on any    |

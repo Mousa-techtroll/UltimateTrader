@@ -749,6 +749,14 @@ input group "══════ L4-1 ARM C — ENGINE-AWARE EVALUATOR ═══�
 input bool   InpEngineAwareEval        = false; // L4-1 Arm C MASTER: engine-aware two-output setup evaluator (context_strength + relationship, per-engine-intent policy replacing the global trend/macro alignment points). OFF = verbatim legacy (byte-identical c051f97b). Only affects the NON-engine legacy evaluator path.
 input int    InpEAAThreshOffsetCounter = 0;     // L4-1 Arm C: points SUBTRACTED from the tier thresholds for COUNTER-seeking engines (MEAN_REVERSION/REVERSAL/CRASH) on the ON path — so they aren't judged on the alignment ladder. 0 = unchanged ladder; positive = easier qualification.
 input int    InpEAAThreshOffsetAlign   = 0;     // L4-1 Arm C: points SUBTRACTED from the tier thresholds for ALIGNMENT-seeking engines (TREND/PULLBACK/BREAKOUT) on the ON path. 0 = unchanged ladder; positive = easier qualification.
+// L4-1 Arm C v2 (redesign of the REJECTED v1 InpEngineAwareEval, -20.4%): per-SETUP-SUBTYPE
+// intent (not plugin-coarse) + EVIDENCE-GATED counter credit (counter subtypes earn ONLY when
+// backed by >=2 DIRECTIONAL evidence signals — removes v1's blanket direction-blind counter
+// admissions). Replaces the SAME two axes as v1 (Factor-1 trend-align + Factor-3 macro); every
+// other factor stays shared/unchanged. OFF = EXACT legacy (byte-identical c051f97b). v2 takes
+// precedence over v1 when both are set. Reuses the two offsets above (default 0 = unchanged
+// ladder). Full spec: claude/audit/candidate-L4-1-redesign/ARMC-V2-IMPL.md.
+input bool   InpEAAv2                   = false; // L4-1 Arm C v2 MASTER: setup-subtype, evidence-gated engine-aware evaluator. OFF = verbatim legacy (byte-identical c051f97b). Only affects the NON-engine legacy evaluator path; HYBRID (unlisted plugin) routes to legacy.
 
 input group "══════ CODEX L2 MARKET-DATA CORRECTNESS ══════"
 // Each flag isolates one closed-bar / MTF correctness fix in the MarketAnalysis

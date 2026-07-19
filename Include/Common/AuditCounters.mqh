@@ -113,7 +113,9 @@ int  g_auditEngineRelHandle = INVALID_HANDLE;
 void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
                           ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
                           int macro_score, double adx, ENUM_REGIME_TYPE regime, int points,
-                          int p_aplus, int p_a, int p_bplus, int p_b)
+                          int p_aplus, int p_a, int p_bplus, int p_b,
+                          string signal_id, ENUM_SETUP_SUBTYPE subtype, int evidence_flags,
+                          int legacy_points, int v2_points)
 {
    g_auditEngineRelRows++;
    if(g_auditEngineRelHandle == INVALID_HANDLE)
@@ -123,7 +125,10 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
       if(g_auditEngineRelHandle != INVALID_HANDLE)
          FileWrite(g_auditEngineRelHandle,
                    "time","pattern","direction","d1_dir","h4_dir","macro_score","adx",
-                   "regime","context_strength","relationship","tier","points");
+                   "regime","context_strength","relationship","tier","points",
+                   // L4-1 Arm C v2 attribution columns
+                   "signal_id","setup_subtype","evidence_flags",
+                   "legacy_tier","legacy_points","v2_tier","v2_points");
    }
    if(g_auditEngineRelHandle == INVALID_HANDLE)
       return;
@@ -167,16 +172,36 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
    else
       rel = "NEUTRAL";                                      // no directional signal (SIGNAL_NONE)
 
+   // L4-1 Arm C v2: legacy_tier / v2_tier DERIVED here from the two point totals + the
+   // SAME four thresholds (mirrors the live ladder — no restructuring needed). Both totals
+   // are computed flag-independently in EvaluateSetupQuality, so ONE AUDIT run yields the
+   // retained/removed/newly-admitted partition once joined to the Stats SignalID column.
+   string legacy_tier;
+   if(legacy_points >= p_aplus)      legacy_tier = "A_PLUS";
+   else if(legacy_points >= p_a)     legacy_tier = "A";
+   else if(legacy_points >= p_bplus) legacy_tier = "B_PLUS";
+   else if(legacy_points >= p_b)     legacy_tier = "B";
+   else                              legacy_tier = "NONE";
+   string v2_tier;
+   if(v2_points >= p_aplus)      v2_tier = "A_PLUS";
+   else if(v2_points >= p_a)     v2_tier = "A";
+   else if(v2_points >= p_bplus) v2_tier = "B_PLUS";
+   else if(v2_points >= p_b)     v2_tier = "B";
+   else                          v2_tier = "NONE";
+
    FileWrite(g_auditEngineRelHandle, (string)t, pattern, dir,
              EnumToString(daily), EnumToString(h4), IntegerToString(macro_score),
              DoubleToString(adx, 2), EnumToString(regime),
-             IntegerToString(context_strength), rel, tier, IntegerToString(points));
+             IntegerToString(context_strength), rel, tier, IntegerToString(points),
+             signal_id, EnumToString(subtype), IntegerToString(evidence_flags),
+             legacy_tier, IntegerToString(legacy_points),
+             v2_tier, IntegerToString(v2_points));
    FileFlush(g_auditEngineRelHandle);
 }
-#define AUDIT_ENGINEREL(t,pat,sig,d1,h4,ms,adx,reg,pts,pa,pA,pbp,pb) \
-   AuditEngineRelRecord((datetime)(t),(string)(pat),(ENUM_SIGNAL_TYPE)(sig), \
-      (ENUM_TREND_DIRECTION)(d1),(ENUM_TREND_DIRECTION)(h4),(int)(ms),(double)(adx), \
-      (ENUM_REGIME_TYPE)(reg),(int)(pts),(int)(pa),(int)(pA),(int)(pbp),(int)(pb))
+// NOTE: the old AUDIT_ENGINEREL macro is gone — EvaluateSetupQuality now calls
+// AuditEngineRelRecord() directly inside its own #ifdef AUDIT_BUILD block (it must
+// compute the flag-independent dual-policy points there anyway). No production impact:
+// AuditEngineRelRecord exists ONLY under AUDIT_BUILD.
 #else
 #define AUDIT_TIER(i)
 #define AUDIT_VOLBO_CHECK
@@ -197,7 +222,8 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
 #define AUDIT_VIX_BIASFLIP
 #define AUDIT_SHADOWGATE(ticket, mask)
 #define AUDIT_VOLRATIO(t,a0,a1,avg)
-#define AUDIT_ENGINEREL(t,pat,sig,d1,h4,ms,adx,reg,pts,pa,pA,pbp,pb)
+// AUDIT_ENGINEREL macro removed (L4-1 Arm C v2): the sole caller now invokes
+// AuditEngineRelRecord() directly inside #ifdef AUDIT_BUILD. Nothing to no-op here.
 #endif
 
 #endif // AUDIT_COUNTERS_MQH

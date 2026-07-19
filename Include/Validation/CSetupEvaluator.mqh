@@ -200,6 +200,211 @@ private:
       return 0;
    }
 
+   //==================================================================
+   //  L4-1 Arm C v2 — setup-subtype, EVIDENCE-GATED evaluator (used
+   //  ONLY on the InpEAAv2 ON path). Redesigns the REJECTED v1
+   //  (InpEngineAwareEval, -20.4%): v1 was plugin-coarse and gave
+   //  BLANKET counter credit from near-universal always-on signals.
+   //  v2 classifies per EMITTED setup and awards counter credit ONLY
+   //  when backed by an EVIDENCE COUNT >= 2 of DIRECTIONAL signals.
+   //  Every method below is unreachable when InpEAAv2 is OFF, so the
+   //  legacy (and v1) scoring paths stay byte-identical.
+   //  See claude/audit/candidate-L4-1-redesign/ARMC-V2-IMPL.md.
+   //==================================================================
+
+   //--- Setup-subtype classifier (keyed on the canonical plugin_name; the
+   //    v2 taxonomy is single-subtype per plugin per the recon, so direction/
+   //    regime are not needed to disambiguate the listed plugins). Anything
+   //    unlisted -> SUBTYPE_HYBRID, which routes to the byte-identical legacy path.
+   ENUM_SETUP_SUBTYPE ClassifySubtype(const string p)
+   {
+      // ALIGNMENT subtypes (earn from ALIGNED trend confluence)
+      if(p == "MACrossEntry" || p == "EngulfingEntry")   // Engulfing bull-in-practice; alignment reward is correct FOR IT
+         return SUBTYPE_TREND_CONTINUATION;
+      if(p == "PullbackContinuationEngine")
+         return SUBTYPE_PULLBACK;                          // credits ALIGNED + MIXED (the pullback)
+      if(p == "ExpansionEngine" || p == "VolatilityBreakoutEntry" ||
+         p == "SessionEngine" || p == "SessionBreakoutEntry")
+         return SUBTYPE_BREAKOUT;
+      // COUNTER subtypes (earn ONLY from an evidence count >= 2; never penalized for counter)
+      if(p == "PinBarEntry")
+         return SUBTYPE_EXHAUSTION_REVERSAL;
+      if(p == "CrashBreakoutEntry")
+         return SUBTYPE_MEAN_REVERSION;                    // death-cross is a required GATE
+      if(p == "FailedBreakReversal" || p == "DisplacementEntry")
+         return SUBTYPE_FAILED_BREAK_REVERSAL;             // the failed break itself = 1 inherent evidence
+      // File / unknown / anything else -> legacy-equivalent (safe)
+      return SUBTYPE_HYBRID;
+   }
+
+   bool IsAlignmentSubtype(ENUM_SETUP_SUBTYPE s)
+   { return (s == SUBTYPE_TREND_CONTINUATION || s == SUBTYPE_PULLBACK || s == SUBTYPE_BREAKOUT); }
+   bool IsCounterSubtype(ENUM_SETUP_SUBTYPE s)
+   { return (s == SUBTYPE_EXHAUSTION_REVERSAL || s == SUBTYPE_MEAN_REVERSION || s == SUBTYPE_FAILED_BREAK_REVERSAL); }
+
+   //--- DIRECTIONAL evidence bitmask. This is the core v2 fix: unlike v1 (which
+   //    used the always-on GetSMCConfluenceScore base-50 + H4 ATR), every bit here
+   //    is CONDITIONAL and DIRECTIONAL. Bits:
+   //      1  = directional RSI extreme   (LONG: rsi<oversold; SHORT: rsi>overbought)  [H1]
+   //      2  = directional structural zone (LONG: bull OB||FVG; SHORT: bear OB||FVG)
+   //      4  = H1-ATR extension >= 1.5   (correct H1 pair GetATRH1Current/GetATRAverage)
+   //      8  = directional BOS/CHoCH     (reversal confirmation in the signal direction)
+   //      16 = D1 death-cross            (RECORDED; a GATE for MEAN_REVERSION, NOT counted)
+   //      32 = inherent failed-break     (set for FAILED_BREAK_REVERSAL; counts as 1)
+   //    The COUNTING mask is {1,2,4,8,32}; bit 16 is a gate/telemetry bit only.
+   int ComputeEvidenceBits(ENUM_SETUP_SUBTYPE s, ENUM_SIGNAL_TYPE sig)
+   {
+      int bits = 0;
+      if(s == SUBTYPE_FAILED_BREAK_REVERSAL) bits |= 32;   // inherent evidence (independent of m_context)
+      if(m_context == NULL) return bits;
+
+      bool isLong  = (sig == SIGNAL_LONG);
+      bool isShort = (sig == SIGNAL_SHORT);
+
+      double rsi = m_context.GetCurrentRSI();              // H1 RSI
+      if((isLong && rsi < m_rsi_oversold) || (isShort && rsi > m_rsi_overbought))
+         bits |= 1;
+
+      if(isLong  && (m_context.IsInBullishOrderBlock() || m_context.IsInBullishFVG()))  bits |= 2;
+      if(isShort && (m_context.IsInBearishOrderBlock() || m_context.IsInBearishFVG()))  bits |= 2;
+
+      double atr_h1  = m_context.GetATRH1Current();        // H1 (1.0-centered vs the H1 average)
+      double atr_avg = m_context.GetATRAverage();
+      if(atr_avg > 0 && atr_h1 / atr_avg >= 1.5) bits |= 4;
+
+      ENUM_BOS_TYPE bos = m_context.GetRecentBOS();
+      if(isLong  && (bos == BOS_BULLISH || bos == CHOCH_BULLISH)) bits |= 8;
+      if(isShort && (bos == BOS_BEARISH || bos == CHOCH_BEARISH)) bits |= 8;
+
+      if(m_context.GetD1DeathCross()) bits |= 16;          // GATE for MEAN_REVERSION (not counted)
+      return bits;
+   }
+
+   //--- Evidence COUNT over the counting mask {1,2,4,8,32}. Bit 16 (death-cross)
+   //    is deliberately excluded — it is the MEAN_REVERSION gate, not a reward.
+   int EvidenceCount(int bits)
+   {
+      int c = 0;
+      if((bits & 1)  != 0) c++;
+      if((bits & 2)  != 0) c++;
+      if((bits & 4)  != 0) c++;
+      if((bits & 8)  != 0) c++;
+      if((bits & 32) != 0) c++;
+      return c;
+   }
+
+   //--- v2 trend-alignment slot (0..3). REPLACES the legacy Factor-1 subtotal on the
+   //    InpEAAv2 ON path; still competes with CHoCH via the shared MathMax below.
+   //    ALIGNMENT subtypes: IDENTICAL to v1's alignment branch (that part was never the
+   //    problem) — award ONLY when ALIGNED (PULLBACK also MIXED), scaled by context_strength.
+   //    COUNTER subtypes: award ONLY when evidence count >= 2 (2->+2, 3+->+3); < 2 -> 0
+   //    (removes v1's unsupported direction-blind counter admissions). MIXED -> 0 for ALL
+   //    counter subtypes (incl. PinBar's only-losing MIXED cohort). MEAN_REVERSION requires
+   //    the D1 death-cross gate. NEVER subtracts for COUNTER.
+   int V2AlignSlot(ENUM_SETUP_SUBTYPE s, ENUM_CTX_RELATIONSHIP rel, int cs,
+                   int evbits, ENUM_SIGNAL_TYPE sig)
+   {
+      if(IsAlignmentSubtype(s))
+      {
+         bool award = (rel == REL_ALIGNED) || (s == SUBTYPE_PULLBACK && rel == REL_MIXED);
+         if(!award) return 0;                       // counter/neutral -> no points (no penalty)
+         if(cs >= 4) return 3;
+         if(cs >= 2) return 2;
+         if(cs >= 1) return 1;
+         return 0;
+      }
+      if(IsCounterSubtype(s))
+      {
+         if(rel == REL_MIXED) return 0;             // MIXED gets 0 for counter subtypes
+         if(s == SUBTYPE_MEAN_REVERSION && (evbits & 16) == 0)
+            return 0;                               // death-cross GATE (no cross -> low-evidence)
+         int evc = EvidenceCount(evbits);
+         if(evc >= 3) return 3;
+         if(evc >= 2) return 2;
+         return 0;                                  // evidence < 2 -> no opposition points
+      }
+      return 0;                                     // HYBRID never reaches here (legacy path)
+   }
+
+   //--- v2 macro slot (0..3). REPLACES the legacy Factor-3 macro points on the ON path.
+   //    ALIGNMENT subtypes: IDENTICAL to v1's alignment macro branch — signed macro SUPPORT
+   //    only, and only when awarded (ALIGNED, or PULLBACK+MIXED); opposing macro earns 0;
+   //    neutral macro keeps the +1 fallback (aligned only).
+   //    COUNTER subtypes: 0. v1's blanket opposing-context "confirmation" credit (fired
+   //    near-universally) is REMOVED — counter setups earn ONLY through the evidence-gated
+   //    Slot A; there is no macro slot for them.
+   int V2MacroSlot(ENUM_SETUP_SUBTYPE s, ENUM_CTX_RELATIONSHIP rel, int cs,
+                   int macro_score, bool pat_bull, bool pat_bear)
+   {
+      if(IsAlignmentSubtype(s))
+      {
+         bool award = (rel == REL_ALIGNED) || (s == SUBTYPE_PULLBACK && rel == REL_MIXED);
+         if(!award) return 0;
+         int macro_support = pat_bull ? macro_score : (pat_bear ? -macro_score : 0);
+         if(macro_support >= 3) return 3;
+         if(macro_support >= 1) return 1;
+         if(macro_score == 0)   return 1;           // neutral-macro fallback (aligned only)
+         return 0;
+      }
+      return 0;                                     // COUNTER + HYBRID: no macro slot
+   }
+
+#ifdef AUDIT_BUILD
+   //--- AUDIT-ONLY legacy-slot mirrors (compile-gated out of production). These reproduce
+   //    the LIVE legacy Factor-1 (trend_alignment incl. the context +1 bonus) and Factor-3
+   //    (macro) branches so the dual-policy attribution can compute legacy_points
+   //    FLAG-INDEPENDENTLY. They MUST be kept byte-identical to the live legacy branches in
+   //    EvaluateSetupQuality. Never called in production (whole block absent).
+   int AuditLegacyAlignSlot(ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
+                            bool pat_bull, bool pat_bear)
+   {
+      int ta = 0;
+      if(InpDirectionalAlignment)
+      {
+         if(daily == h4 && daily != TREND_NEUTRAL &&
+            ((pat_bull && daily == TREND_BULLISH) || (pat_bear && daily == TREND_BEARISH)))
+            ta += 2;
+         else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL &&
+                 ((pat_bull && h4 == TREND_BULLISH) || (pat_bear && h4 == TREND_BEARISH)))
+            ta += 1;
+      }
+      else
+      {
+         if(daily == h4 && daily != TREND_NEUTRAL)        ta += 2;
+         else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL) ta += 1;
+      }
+      if(m_context != NULL)
+      {
+         ENUM_TREND_DIRECTION d1     = m_context.GetTrendDirection();
+         ENUM_TREND_DIRECTION h4_ctx = m_context.GetH4TrendDirection();
+         if(d1 == h4_ctx && d1 != TREND_NEUTRAL)
+         {
+            if(!InpDirectionalAlignment ||
+               (pat_bull && d1 == TREND_BULLISH) || (pat_bear && d1 == TREND_BEARISH))
+               ta += 1;
+         }
+      }
+      return ta;
+   }
+   int AuditLegacyMacroSlot(int macro_score, bool pat_bull, bool pat_bear)
+   {
+      if(InpDirectionalAlignment)
+      {
+         int macro_support = 0;
+         if(pat_bull)      macro_support = macro_score;
+         else if(pat_bear) macro_support = -macro_score;
+         if(macro_support >= 3)    return 3;
+         else if(macro_support >= 1) return 1;
+         else if(macro_score == 0) return 1;
+         return 0;
+      }
+      if(MathAbs(macro_score) >= 3)    return 3;
+      else if(MathAbs(macro_score) >= 1) return 1;
+      else if(macro_score == 0)        return 1;
+      return 0;
+   }
+#endif
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -228,7 +433,7 @@ public:
    ENUM_SETUP_QUALITY EvaluateSetupQuality(ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
                                            ENUM_REGIME_TYPE regime, int macro_score, string pattern,
                                            bool isBearRegime = false, ENUM_SIGNAL_TYPE signal = SIGNAL_NONE,
-                                           string plugin_name = "")
+                                           string plugin_name = "", string signal_id = "")
    {
       int points = 0;
 
@@ -250,6 +455,24 @@ public:
          ea_cs     = ComputeContextStrength(daily, h4, macro_score, ea_adx);
       }
       bool ea_on = (InpEngineAwareEval && ea_intent != INTENT_HYBRID);
+
+      // L4-1 Arm C v2 prelude: setup-subtype + directional-evidence outputs. Computed ONLY
+      // when InpEAAv2 is ON (guarded so the OFF path performs NO extra context reads and stays
+      // byte-identical). HYBRID (unlisted plugin) routes to the legacy branches below, so an
+      // out-of-taxonomy plugin is unaffected even with the flag ON. v2 takes precedence over v1.
+      ENUM_SETUP_SUBTYPE    eav2_subtype = SUBTYPE_HYBRID;
+      ENUM_CTX_RELATIONSHIP eav2_rel     = REL_NEUTRAL;
+      int                   eav2_cs      = 0;
+      int                   eav2_evbits  = 0;
+      if(InpEAAv2)
+      {
+         eav2_subtype = ClassifySubtype(plugin_name);
+         eav2_rel     = ComputeRelationship(daily, h4, signal);
+         double v2_adx = (m_context != NULL) ? m_context.GetADXValue() : 0.0;
+         eav2_cs      = ComputeContextStrength(daily, h4, macro_score, v2_adx);
+         eav2_evbits  = ComputeEvidenceBits(eav2_subtype, signal);
+      }
+      bool eav2_on = (InpEAAv2 && eav2_subtype != SUBTYPE_HYBRID);
 
       if(signal == SIGNAL_NONE)
       {
@@ -309,7 +532,15 @@ public:
       // the signed trend direction supports the signal (long->bullish,
       // short->bearish); opposing OR neutral earns nothing. OFF = legacy.
       int trend_alignment = 0;
-      if(ea_on)
+      if(eav2_on)
+      {
+         // L4-1 Arm C v2 (ON path): the setup-subtype/evidence-gated slot REPLACES the whole
+         // legacy Factor-1 trend-alignment subtotal. ALIGNMENT subtypes reuse the v1 alignment
+         // formula; COUNTER subtypes earn ONLY on evidence count >= 2 (no blanket counter credit).
+         // Still competes exclusively with CHoCH via the MathMax below.
+         trend_alignment = V2AlignSlot(eav2_subtype, eav2_rel, eav2_cs, eav2_evbits, signal);
+      }
+      else if(ea_on)
       {
          // L4-1 Arm C (ON path): the engine-aware alignment/exhaustion slot REPLACES
          // the whole legacy Factor-1 trend-alignment subtotal (the InpDirectionalAlignment
@@ -419,7 +650,15 @@ public:
       // it actually opposes. The fix awards points ONLY on the SIGNED support
       // (positive macro supports longs, negative supports shorts); opposing macro
       // earns nothing while a neutral macro (0) keeps the fallback point. OFF = legacy.
-      if(ea_on)
+      if(eav2_on)
+      {
+         // L4-1 Arm C v2 (ON path): macro slot REPLACES the legacy Factor-3 macro points.
+         // Alignment subtypes earn signed macro support only when ALIGNED; counter subtypes
+         // earn 0 here (they earn ONLY through the evidence-gated Slot A above).
+         points += V2MacroSlot(eav2_subtype, eav2_rel, eav2_cs, macro_score,
+                               pattern_bullish, pattern_bearish);
+      }
+      else if(ea_on)
       {
          // L4-1 Arm C (ON path): engine-aware macro slot REPLACES the legacy Factor-3
          // macro points. Alignment engines earn signed macro support only when ALIGNED;
@@ -559,20 +798,59 @@ public:
       // Quality point approach caused butterfly effect: changed signal selection order,
       // killing 80 trades in 2025 even as boost-only.
 
+#ifdef AUDIT_BUILD
+      // Pre-cap total, captured for the dual-policy attribution below so the shared-factor
+      // base (everything except the two swappable slots) can be reconstructed exactly.
+      int points_precap = points;
+#endif
       // Cap total quality score at 10
       if(points > 10)
          points = 10;
 
-      // AUDIT_BUILD (L4-1 setup-evaluator redesign): MEASURE-ONLY telemetry. Logs one CSV
-      // row per scored candidate — engine identity (pattern=comment; true plugin_name is
-      // NOT in scope here), signal→context relationship (D1/H4 dir, macro, ADX, regime),
-      // a direction-neutral context_strength, the derived tier, and the final points — so
-      // candidate + trade performance can be sliced by engine and by relationship offline.
-      // The whole call vanishes in production (empty define), so the tier ladder below is
-      // byte-identical; `points` is captured here, just before that if-ladder.
-      AUDIT_ENGINEREL(iTime(_Symbol, PERIOD_H1, 0), pattern, signal, daily, h4, macro_score,
-                      (m_context != NULL ? m_context.GetADXValue() : 0.0), regime, points,
-                      m_points_aplus, m_points_a, m_points_bplus, m_points_b);
+#ifdef AUDIT_BUILD
+      // AUDIT_BUILD (L4-1 Arm C v2 attribution): MEASURE-ONLY. One CSV row per scored
+      // candidate carrying the exact linkage id (signal_id) + BOTH scoring policies computed
+      // FLAG-INDEPENDENTLY (legacy_points/tier AND v2_points/tier) + the setup_subtype +
+      // directional-evidence bitmask + relationship — so one AUDIT run joins to the Stats
+      // SignalID and partitions every fill into legacy-retained / legacy-removed / newly-
+      // admitted. The whole block vanishes in production (byte-identical); it reads `points`
+      // and getters but NEVER writes `points` or the returned tier.
+      {
+         ENUM_SETUP_SUBTYPE    aud_subtype = ClassifySubtype(plugin_name);
+         ENUM_CTX_RELATIONSHIP aud_rel     = ComputeRelationship(daily, h4, signal);
+         double aud_adx = (m_context != NULL) ? m_context.GetADXValue() : 0.0;
+         int    aud_cs  = ComputeContextStrength(daily, h4, macro_score, aud_adx);
+         int    aud_ev  = ComputeEvidenceBits(aud_subtype, signal);
+
+         // Both policies' slot values (flag-independent).
+         int aud_legacy_align = AuditLegacyAlignSlot(daily, h4, pattern_bullish, pattern_bearish);
+         int aud_legacy_macro = AuditLegacyMacroSlot(macro_score, pattern_bullish, pattern_bearish);
+         int aud_v2_align     = V2AlignSlot(aud_subtype, aud_rel, aud_cs, aud_ev, signal);
+         int aud_v2_macro     = V2MacroSlot(aud_subtype, aud_rel, aud_cs, macro_score,
+                                            pattern_bullish, pattern_bearish);
+
+         // Back out the LIVE slots to recover the shared-factor base (policy-independent).
+         // trend_alignment holds the LIVE policy Slot-A (pre-CHoCH); Slot-A competes with
+         // CHoCH via the same MathMax the live path used.
+         int aud_live_slotA = (int)MathMax(trend_alignment, choch_points);
+         int aud_live_slotB;
+         if(eav2_on)    aud_live_slotB = aud_v2_macro;
+         else if(ea_on) aud_live_slotB = EngineAwareMacroSlot(ea_intent, ea_rel, ea_cs,
+                                                              macro_score, pattern_bullish, pattern_bearish);
+         else           aud_live_slotB = aud_legacy_macro;
+         int aud_base = points_precap - aud_live_slotA - aud_live_slotB;
+
+         int aud_legacy_points = (int)MathMin(10, aud_base +
+                                    MathMax(aud_legacy_align, choch_points) + aud_legacy_macro);
+         int aud_v2_points     = (int)MathMin(10, aud_base +
+                                    MathMax(aud_v2_align, choch_points) + aud_v2_macro);
+
+         AuditEngineRelRecord(iTime(_Symbol, PERIOD_H1, 0), pattern, signal, daily, h4, macro_score,
+                              aud_adx, regime, points, m_points_aplus, m_points_a, m_points_bplus,
+                              m_points_b, signal_id, aud_subtype, aud_ev,
+                              aud_legacy_points, aud_v2_points);
+      }
+#endif
 
       // Determine quality tier.
       // L4-1 Arm C (ON path): the global InpPoints*Setup ladder is the default; a per-intent
@@ -584,7 +862,17 @@ public:
       int t_a     = m_points_a;
       int t_bplus = m_points_bplus;
       int t_b     = m_points_b;
-      if(ea_on)
+      if(eav2_on)
+      {
+         // v2 reuses the same two per-intent offsets (default 0 = unchanged global ladder;
+         // no global threshold lowering). Counter subtypes use the counter offset.
+         int t_off = IsCounterSubtype(eav2_subtype) ? InpEAAThreshOffsetCounter : InpEAAThreshOffsetAlign;
+         t_aplus -= t_off;
+         t_a     -= t_off;
+         t_bplus -= t_off;
+         t_b     -= t_off;
+      }
+      else if(ea_on)
       {
          int t_off = IsCounterIntent(ea_intent) ? InpEAAThreshOffsetCounter : InpEAAThreshOffsetAlign;
          t_aplus -= t_off;

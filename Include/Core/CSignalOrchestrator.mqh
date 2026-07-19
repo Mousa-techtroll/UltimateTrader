@@ -817,7 +817,8 @@ public:
          else
             quality = m_evaluator.EvaluateSetupQuality(
                daily_trend, h4_trend, regime, macro_score, signal.comment,
-               isBearRegime, sig_type, signal.plugin_name);   // L4-1 Arm C: engine identity for intent
+               isBearRegime, sig_type, signal.plugin_name,    // L4-1 Arm C: engine identity for intent
+               signal.signal_id);                             // L4-1 Arm C v2: exact candidate linkage (AUDIT attribution)
 
          if(quality == SETUP_NONE)
          {
@@ -1388,7 +1389,8 @@ private:
       // correct scorer here — matching the non-engine branch of initial qualification.
       ENUM_SETUP_QUALITY quality = m_evaluator.EvaluateSetupQuality(
          daily, h4, regime, macro_score, comment, isBearRegime, sig_type,
-         m_pending_signal.plugin_name);   // L4-1 Arm C: engine identity for intent (confirmation revalidation)
+         m_pending_signal.plugin_name,    // L4-1 Arm C: engine identity for intent (confirmation revalidation)
+         m_pending_signal.signal_id);     // L4-1 Arm C v2: exact candidate linkage (AUDIT attribution)
 
       if(quality == SETUP_NONE)
       {

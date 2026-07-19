@@ -16,7 +16,7 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 | L7-2 | High | CONFIRMED | 1 | live-restart | persist exit_* + partial PnL (P4b) | ✅ | e5c7b8e | 0 (BI primary) |
 | L7-3 | High | CONFIRMED | 1 | live-restart | offline-close idempotent accounting | ✅ | e5c7b8e | 0 (BI primary) |
 | L7-4 | High | CONFIRMED-DORMANT | 1 | live-file+restart | file TP partials persist | ✅ | e5c7b8e | 0 (BI primary) |
-| L4-1 | High | **ARCHITECTURAL LIMITATION (held)** | 2* | live-default | 3 approaches all FAIL: raw −43%, global-recal −22.7%, engine-aware ArmC −20.4% (candidate-L4-1-redesign/RESULTS.md). Flag-off byte-identical; do-not-relitigate | ⏸ held | flag-off | rejected |
+| L4-1 | High | **ROOT-CAUSED LIMITATION (held)** | 2* | live-default | 4 approaches FAIL: raw −43%, global-recal −22.7%, engine-aware v1 −20.4%, evidence-gated v2 −77%. ROOT CAUSE: exhaustion-evidence ANTI-predictive (ev≥2 loses; alpha is moderate-fade). Do-not-relitigate | ⏸ held | flag-off | rejected |
 | L2-4 | Med | CONFIRMED | 2 | live-default | H4 confirm only on H4-bar change | ↻ REDESIGN | first-fix rejected (−$3,627) | defect-open |
 | L2-3 | Med | CONFIRMED | 2 | live-default | range-box reset vs prior box | ☐ | | |
 | L2-5 | Med | CONFIRMED | 2 | live-default | SMC zone close-rule on [1] | ☐ | | |
