@@ -817,7 +817,7 @@ public:
          else
             quality = m_evaluator.EvaluateSetupQuality(
                daily_trend, h4_trend, regime, macro_score, signal.comment,
-               isBearRegime, sig_type);
+               isBearRegime, sig_type, signal.plugin_name);   // L4-1 Arm C: engine identity for intent
 
          if(quality == SETUP_NONE)
          {
@@ -1387,7 +1387,8 @@ private:
       // (routed engines skip confirmation), so the legacy evaluator overload is the
       // correct scorer here — matching the non-engine branch of initial qualification.
       ENUM_SETUP_QUALITY quality = m_evaluator.EvaluateSetupQuality(
-         daily, h4, regime, macro_score, comment, isBearRegime, sig_type);
+         daily, h4, regime, macro_score, comment, isBearRegime, sig_type,
+         m_pending_signal.plugin_name);   // L4-1 Arm C: engine identity for intent (confirmation revalidation)
 
       if(quality == SETUP_NONE)
       {

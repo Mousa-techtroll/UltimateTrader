@@ -740,6 +740,16 @@ input bool   InpNoBreakTolFix          = true; // L4-3: express the confirmation
 input bool   InpFullRevalidation       = true; // L4-4: at confirmation also rerun the dynamic gates (volume/SMC/confidence/quality-tier) and re-derive tier+risk from current context, freezing only signal-time geometry. OFF = legacy TF/MR-only revalidation retaining stale tier/risk
 input bool   InpEqualTierTiebreak      = false; // L3-4: on EQUAL bucketed qualityScore, break arbitration ties by higher engine confluence then better R:R instead of registration order. OFF = legacy first-registered-wins
 
+input group "══════ L4-1 ARM C — ENGINE-AWARE EVALUATOR ══════"
+// L4-1 Arm C engine-aware setup evaluator (redesign of the REJECTED raw InpDirectionalAlignment
+// global patch, -43%). ONE master flag: OFF = EXACT legacy scoring (reproduces Stats c051f97b);
+// ON = per-engine-intent context policy. The two threshold offsets are the small per-intent config
+// surface (default 0 = unchanged global ladder). Full architecture + byte-identity argument in
+// claude/audit/candidate-L4-1-redesign/ARMC-IMPL.md.
+input bool   InpEngineAwareEval        = false; // L4-1 Arm C MASTER: engine-aware two-output setup evaluator (context_strength + relationship, per-engine-intent policy replacing the global trend/macro alignment points). OFF = verbatim legacy (byte-identical c051f97b). Only affects the NON-engine legacy evaluator path.
+input int    InpEAAThreshOffsetCounter = 0;     // L4-1 Arm C: points SUBTRACTED from the tier thresholds for COUNTER-seeking engines (MEAN_REVERSION/REVERSAL/CRASH) on the ON path — so they aren't judged on the alignment ladder. 0 = unchanged ladder; positive = easier qualification.
+input int    InpEAAThreshOffsetAlign   = 0;     // L4-1 Arm C: points SUBTRACTED from the tier thresholds for ALIGNMENT-seeking engines (TREND/PULLBACK/BREAKOUT) on the ON path. 0 = unchanged ladder; positive = easier qualification.
+
 input group "══════ CODEX L2 MARKET-DATA CORRECTNESS ══════"
 // Each flag isolates one closed-bar / MTF correctness fix in the MarketAnalysis
 // layer. Default OFF = EXACT current legacy behavior (all-OFF reproduces the

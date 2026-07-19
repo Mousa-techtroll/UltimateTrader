@@ -334,6 +334,45 @@ enum ENUM_MAJOR_ENGINE
 };
 
 //+------------------------------------------------------------------+
+//| Engine Intent Classification (L4-1 Arm C engine-aware evaluator) |
+//| Every entry engine carries an explicit trading INTENT so the      |
+//| setup evaluator can score its relationship to the market context  |
+//| correctly. ALIGNMENT-seeking engines (TREND/PULLBACK/BREAKOUT)    |
+//| earn from trend confluence; COUNTER-seeking engines               |
+//| (MEAN_REVERSION/REVERSAL/CRASH) earn from exhaustion/rejection    |
+//| and must NOT be penalized for trading against the context.        |
+//| Consumed ONLY on the InpEngineAwareEval ON path; HYBRID reproduces|
+//| the byte-identical legacy direction-blind scoring (safe fallback  |
+//| for any engine not in the taxonomy). See                          |
+//| claude/audit/candidate-L4-1-redesign/ARMC-IMPL.md.                |
+//+------------------------------------------------------------------+
+enum ENUM_ENGINE_INTENT
+{
+   INTENT_TREND,           // (0) trend-following: reward aligned strong context
+   INTENT_PULLBACK,        // (1) pullback-continuation: reward ALIGNED + MIXED (the pullback)
+   INTENT_BREAKOUT,        // (2) expansion/breakout: reward aligned strong context
+   INTENT_MEAN_REVERSION,  // (3) fade: reward exhaustion, never penalize counter
+   INTENT_REVERSAL,        // (4) rejection reversal (bidirectional): rejection quality; MIXED demotable
+   INTENT_CRASH,           // (5) crash/death-cross fade: counter sibling of MEAN_REVERSION
+   INTENT_HYBRID           // (6) unclassified: reproduce legacy direction-blind scoring
+};
+
+//+------------------------------------------------------------------+
+//| Signal-to-Context Relationship (L4-1 Arm C engine-aware eval)    |
+//| The SIGNED half of the two-output evaluator: how THIS signal's    |
+//| direction relates to the dominant (D1-first, else H4) trend.      |
+//| Derivation mirrors the Phase-1 AUDIT_ENGINEREL recorder EXACTLY   |
+//| (Include/Common/AuditCounters.mqh).                               |
+//+------------------------------------------------------------------+
+enum ENUM_CTX_RELATIONSHIP
+{
+   REL_NEUTRAL,   // (0) context neutral (no directional trend) or no signal
+   REL_ALIGNED,   // (1) signal direction supports the dominant trend
+   REL_COUNTER,   // (2) signal direction opposes the dominant trend
+   REL_MIXED      // (3) D1 and H4 both non-neutral but disagree
+};
+
+//+------------------------------------------------------------------+
 //| SB-1.1 Correction & Bear-Event state (SHADOW-ONLY)               |
 //| 8-state model from workflowAnalysis/sb11-state-model.md, ported  |
 //| verbatim by CBearStateModel. DECISION-FREE: never read on any    |

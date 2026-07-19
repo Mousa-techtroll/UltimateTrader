@@ -45,6 +45,161 @@ private:
    double               m_rsi_overbought;
    double               m_rsi_oversold;
 
+   //==================================================================
+   //  L4-1 Arm C — engine-aware evaluator (used ONLY on the
+   //  InpEngineAwareEval ON path; every method below is unreachable
+   //  when the flag is OFF, so the legacy scoring path stays byte-
+   //  identical). See claude/audit/candidate-L4-1-redesign/ARMC-IMPL.md.
+   //==================================================================
+
+   //--- Engine-intent classifier (keyed on the canonical engine identity,
+   //    signal.plugin_name — more robust than the noisy comment token).
+   //    Taxonomy is from PHASE1-AUDIT.md + the engine audit. Any engine not
+   //    listed falls to INTENT_HYBRID, which reproduces the legacy path.
+   ENUM_ENGINE_INTENT ClassifyIntent(const string p)
+   {
+      // ALIGNMENT-seeking (earn from trend confluence)
+      if(p == "MACrossEntry" || p == "EngulfingEntry" ||
+         p == "TrendContinuationEngine" || p == "CONT")
+         return INTENT_TREND;                       // EngulfingEntry is TREND (bull-only in practice)
+      if(p == "ExpansionEngine" || p == "VolatilityBreakoutEntry" ||
+         p == "SessionBreakoutEntry" || p == "SessionEngine")
+         return INTENT_BREAKOUT;
+      if(p == "PullbackContinuationEngine" || p == "LiquidityEngine")
+         return INTENT_PULLBACK;
+      // COUNTER-seeking (earn from exhaustion/rejection; never penalized for counter)
+      if(p == "PinBarEntry" || p == "FailedBreakReversal" ||
+         p == "DisplacementEntry" || p == "ReversalSweepEngine" || p == "CREV")
+         return INTENT_REVERSAL;
+      if(p == "CrashBreakoutEntry")
+         return INTENT_MEAN_REVERSION;              // explicit taxonomy: crash fade == mean-reversion
+      if(p == "RangeEdgeFade" || p == "RangeBoxEntry" ||
+         p == "RangeReversionEngine" || p == "FalseBreakoutFadeEntry" || p == "TMF")
+         return INTENT_MEAN_REVERSION;
+      // File / unknown / anything else → legacy-equivalent (safe)
+      return INTENT_HYBRID;
+   }
+
+   //--- context_strength (0..7): direction-NEUTRAL magnitude scalar. Formula is
+   //    IDENTICAL to the Phase-1 AUDIT_ENGINEREL recorder (AuditCounters.mqh):
+   //    |macro| + trend-agreement(0..2) + adx-band(0..2).
+   int ComputeContextStrength(ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
+                              int macro_score, double adx)
+   {
+      int macroMag   = (macro_score < 0) ? -macro_score : macro_score;
+      int nNeutral   = ((daily == TREND_NEUTRAL) ? 1 : 0) + ((h4 == TREND_NEUTRAL) ? 1 : 0);
+      int trendAgree = (nNeutral == 0) ? ((daily == h4) ? 2 : 0) : ((nNeutral == 1) ? 1 : 0);
+      int adxBand    = (adx >= 25.0) ? 2 : ((adx >= 20.0) ? 1 : 0);
+      return macroMag + trendAgree + adxBand;      // 0..7
+   }
+
+   //--- relationship (SIGNED): signal direction vs the dominant (D1-first, else H4)
+   //    trend. Derivation IDENTICAL to the Phase-1 AUDIT_ENGINEREL recorder.
+   ENUM_CTX_RELATIONSHIP ComputeRelationship(ENUM_TREND_DIRECTION daily,
+                                             ENUM_TREND_DIRECTION h4, ENUM_SIGNAL_TYPE sig)
+   {
+      bool dirBull = (sig == SIGNAL_LONG);
+      bool dirBear = (sig == SIGNAL_SHORT);
+      ENUM_TREND_DIRECTION dom = (daily != TREND_NEUTRAL) ? daily : h4;
+      if(daily != TREND_NEUTRAL && h4 != TREND_NEUTRAL && daily != h4)
+         return REL_MIXED;                          // D1 and H4 disagree
+      if(dom == TREND_NEUTRAL)
+         return REL_NEUTRAL;                        // both neutral
+      if((dirBull && dom == TREND_BULLISH) || (dirBear && dom == TREND_BEARISH))
+         return REL_ALIGNED;                        // direction supports dominant trend
+      if((dirBull && dom == TREND_BEARISH) || (dirBear && dom == TREND_BULLISH))
+         return REL_COUNTER;                        // direction opposes dominant trend
+      return REL_NEUTRAL;                           // no directional signal
+   }
+
+   //--- Intent-class helpers.
+   bool IsAlignmentIntent(ENUM_ENGINE_INTENT it)
+   { return (it == INTENT_TREND || it == INTENT_BREAKOUT || it == INTENT_PULLBACK); }
+   bool IsCounterIntent(ENUM_ENGINE_INTENT it)
+   { return (it == INTENT_MEAN_REVERSION || it == INTENT_REVERSAL || it == INTENT_CRASH); }
+
+   //--- ENGINE-AWARE trend-alignment slot (0..3). REPLACES the legacy Factor-1
+   //    trend-alignment subtotal on the ON path; still competes with CHoCH via the
+   //    same MathMax below, so CHoCH (a reversal confirmation) can boost either class.
+   //    ALIGNMENT intents: award ONLY when the signal is ALIGNED (PULLBACK also credits
+   //    MIXED — its thesis), scaled by context_strength. No counter reward, no penalty.
+   //    COUNTER intents: award EXHAUSTION/REJECTION structural credit (SMC confluence in
+   //    the signal direction + ATR volatility extension + death-cross regime), direction-
+   //    neutral — NEVER penalized for being COUNTER. REVERSAL (bidirectional, e.g. PinBar)
+   //    keeps ALIGNED+COUNTER; its MIXED cohort is demoted to 0 (its only losing cohort).
+   int EngineAwareAlignSlot(ENUM_ENGINE_INTENT intent, ENUM_CTX_RELATIONSHIP rel,
+                            int cs, ENUM_SIGNAL_TYPE sig)
+   {
+      if(IsAlignmentIntent(intent))
+      {
+         bool award = (rel == REL_ALIGNED) || (intent == INTENT_PULLBACK && rel == REL_MIXED);
+         if(!award) return 0;                       // counter/neutral → no points (no penalty)
+         if(cs >= 4) return 3;
+         if(cs >= 2) return 2;
+         if(cs >= 1) return 1;
+         return 0;
+      }
+      if(IsCounterIntent(intent))
+      {
+         if(intent == INTENT_REVERSAL && rel == REL_MIXED)
+            return 0;                                // PinBar/reversal demotable cohort
+         int exh = 0;
+         if(m_context != NULL)
+         {
+            int smc = m_context.GetSMCConfluenceScore(sig);
+            if(smc >= 3)      exh += 2;
+            else if(smc >= 1) exh += 1;              // structural rejection zone (OB/FVG/sweep)
+            double atr_cur = m_context.GetATRCurrent();
+            double atr_avg = m_context.GetATRAverage();
+            if(atr_avg > 0 && atr_cur / atr_avg >= 1.5) exh += 1;   // volatility extension
+            if(m_context.GetD1DeathCross()) exh += 1; // death-cross fade regime present
+         }
+         return (int)MathMin(3, exh);
+      }
+      return 0;                                      // HYBRID never reaches here (legacy path)
+   }
+
+   //--- ENGINE-AWARE macro slot (0..3). REPLACES the legacy Factor-3 macro points on
+   //    the ON path (added directly to the running total).
+   //    ALIGNMENT intents: signed macro SUPPORT, ONLY when ALIGNED (PULLBACK also MIXED);
+   //    opposing macro earns nothing; neutral macro keeps the +1 fallback (aligned only).
+   //    COUNTER intents: fading a STRONG (exhausted) context is CONFIRMATION — award scaled
+   //    by context_strength when COUNTER; MEAN_REVERSION/CRASH also earn in MIXED (their
+   //    audit cohort); REVERSAL earns a small credit on high-context ALIGNED rejections and
+   //    is demoted (0) in MIXED. Strong opposing context is a POSITIVE, never a demerit.
+   int EngineAwareMacroSlot(ENUM_ENGINE_INTENT intent, ENUM_CTX_RELATIONSHIP rel, int cs,
+                            int macro_score, bool pat_bull, bool pat_bear)
+   {
+      if(IsAlignmentIntent(intent))
+      {
+         bool award = (rel == REL_ALIGNED) || (intent == INTENT_PULLBACK && rel == REL_MIXED);
+         if(!award) return 0;
+         int macro_support = pat_bull ? macro_score : (pat_bear ? -macro_score : 0);
+         if(macro_support >= 3) return 3;
+         if(macro_support >= 1) return 1;
+         if(macro_score == 0)   return 1;            // neutral-macro fallback (aligned only)
+         return 0;                                   // opposing macro earns nothing
+      }
+      if(IsCounterIntent(intent))
+      {
+         if(intent == INTENT_REVERSAL && rel == REL_MIXED)
+            return 0;                                // demotable cohort
+         if(rel == REL_COUNTER)
+         {
+            if(cs >= 4) return 3;
+            if(cs >= 2) return 2;
+            if(cs >= 1) return 1;
+            return 0;
+         }
+         if((intent == INTENT_MEAN_REVERSION || intent == INTENT_CRASH) && rel == REL_MIXED)
+            return (cs >= 2) ? 2 : 1;                // mean-rev/crash earn in MIXED
+         if(intent == INTENT_REVERSAL && rel == REL_ALIGNED)
+            return (cs >= 2) ? 1 : 0;                // aligned rejection = higher quality
+         return 0;
+      }
+      return 0;
+   }
+
 public:
    //+------------------------------------------------------------------+
    //| Constructor                                                       |
@@ -72,12 +227,29 @@ public:
    //+------------------------------------------------------------------+
    ENUM_SETUP_QUALITY EvaluateSetupQuality(ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
                                            ENUM_REGIME_TYPE regime, int macro_score, string pattern,
-                                           bool isBearRegime = false, ENUM_SIGNAL_TYPE signal = SIGNAL_NONE)
+                                           bool isBearRegime = false, ENUM_SIGNAL_TYPE signal = SIGNAL_NONE,
+                                           string plugin_name = "")
    {
       int points = 0;
 
       bool pattern_bullish = (signal == SIGNAL_LONG);
       bool pattern_bearish = (signal == SIGNAL_SHORT);
+
+      // L4-1 Arm C: the two engine-aware outputs + the engine intent. Computed ONLY
+      // when InpEngineAwareEval is ON — guarded so the OFF path performs NO extra
+      // context reads and stays byte-identical. HYBRID (unclassified) also routes to
+      // the legacy branches below, so an engine outside the taxonomy is unaffected.
+      ENUM_ENGINE_INTENT    ea_intent = INTENT_HYBRID;
+      ENUM_CTX_RELATIONSHIP ea_rel    = REL_NEUTRAL;
+      int                   ea_cs     = 0;
+      if(InpEngineAwareEval)
+      {
+         ea_intent = ClassifyIntent(plugin_name);
+         ea_rel    = ComputeRelationship(daily, h4, signal);
+         double ea_adx = (m_context != NULL) ? m_context.GetADXValue() : 0.0;
+         ea_cs     = ComputeContextStrength(daily, h4, macro_score, ea_adx);
+      }
+      bool ea_on = (InpEngineAwareEval && ea_intent != INTENT_HYBRID);
 
       if(signal == SIGNAL_NONE)
       {
@@ -137,37 +309,48 @@ public:
       // the signed trend direction supports the signal (long->bullish,
       // short->bearish); opposing OR neutral earns nothing. OFF = legacy.
       int trend_alignment = 0;
-      if(InpDirectionalAlignment)
+      if(ea_on)
       {
-         if(daily == h4 && daily != TREND_NEUTRAL &&
-            ((pattern_bullish && daily == TREND_BULLISH) ||
-             (pattern_bearish && daily == TREND_BEARISH)))
-            trend_alignment += 2;
-         else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL &&
-                 ((pattern_bullish && h4 == TREND_BULLISH) ||
-                  (pattern_bearish && h4 == TREND_BEARISH)))
-            trend_alignment += 1;
+         // L4-1 Arm C (ON path): the engine-aware alignment/exhaustion slot REPLACES
+         // the whole legacy Factor-1 trend-alignment subtotal (the InpDirectionalAlignment
+         // if/else AND the context +1 bonus). It still competes exclusively with CHoCH via
+         // the MathMax below, so CHoCH can still boost either engine class.
+         trend_alignment = EngineAwareAlignSlot(ea_intent, ea_rel, ea_cs, signal);
       }
       else
       {
-         if(daily == h4 && daily != TREND_NEUTRAL)
-            trend_alignment += 2;
-         else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL)
-            trend_alignment += 1;
-      }
-
-      // Check trend alignment from context
-      if(m_context != NULL)
-      {
-         ENUM_TREND_DIRECTION d1 = m_context.GetTrendDirection();
-         ENUM_TREND_DIRECTION h4_ctx = m_context.GetH4TrendDirection();
-         if(d1 == h4_ctx && d1 != TREND_NEUTRAL)
+         if(InpDirectionalAlignment)
          {
-            // L4-1: context aligned bonus only when it supports the signal direction
-            if(!InpDirectionalAlignment ||
-               (pattern_bullish && d1 == TREND_BULLISH) ||
-               (pattern_bearish && d1 == TREND_BEARISH))
-               trend_alignment += 1;  // Aligned bonus
+            if(daily == h4 && daily != TREND_NEUTRAL &&
+               ((pattern_bullish && daily == TREND_BULLISH) ||
+                (pattern_bearish && daily == TREND_BEARISH)))
+               trend_alignment += 2;
+            else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL &&
+                    ((pattern_bullish && h4 == TREND_BULLISH) ||
+                     (pattern_bearish && h4 == TREND_BEARISH)))
+               trend_alignment += 1;
+         }
+         else
+         {
+            if(daily == h4 && daily != TREND_NEUTRAL)
+               trend_alignment += 2;
+            else if(daily == TREND_NEUTRAL && h4 != TREND_NEUTRAL)
+               trend_alignment += 1;
+         }
+
+         // Check trend alignment from context
+         if(m_context != NULL)
+         {
+            ENUM_TREND_DIRECTION d1 = m_context.GetTrendDirection();
+            ENUM_TREND_DIRECTION h4_ctx = m_context.GetH4TrendDirection();
+            if(d1 == h4_ctx && d1 != TREND_NEUTRAL)
+            {
+               // L4-1: context aligned bonus only when it supports the signal direction
+               if(!InpDirectionalAlignment ||
+                  (pattern_bullish && d1 == TREND_BULLISH) ||
+                  (pattern_bearish && d1 == TREND_BEARISH))
+                  trend_alignment += 1;  // Aligned bonus
+            }
          }
       }
 
@@ -236,7 +419,15 @@ public:
       // it actually opposes. The fix awards points ONLY on the SIGNED support
       // (positive macro supports longs, negative supports shorts); opposing macro
       // earns nothing while a neutral macro (0) keeps the fallback point. OFF = legacy.
-      if(InpDirectionalAlignment)
+      if(ea_on)
+      {
+         // L4-1 Arm C (ON path): engine-aware macro slot REPLACES the legacy Factor-3
+         // macro points. Alignment engines earn signed macro support only when ALIGNED;
+         // counter engines earn confirmation from a strong opposing context instead.
+         points += EngineAwareMacroSlot(ea_intent, ea_rel, ea_cs, macro_score,
+                                        pattern_bullish, pattern_bearish);
+      }
+      else if(InpDirectionalAlignment)
       {
          int macro_support = 0;
          if(pattern_bullish)      macro_support = macro_score;
@@ -383,11 +574,28 @@ public:
                       (m_context != NULL ? m_context.GetADXValue() : 0.0), regime, points,
                       m_points_aplus, m_points_a, m_points_bplus, m_points_b);
 
-      // Determine quality tier
-      if(points >= m_points_aplus) { AUDIT_TIER(0); return SETUP_A_PLUS; }
-      if(points >= m_points_a)     { AUDIT_TIER(1); return SETUP_A; }
-      if(points >= m_points_bplus) { AUDIT_TIER(2); return SETUP_B_PLUS; }
-      if(points >= m_points_b)     { AUDIT_TIER(3); return SETUP_B; }
+      // Determine quality tier.
+      // L4-1 Arm C (ON path): the global InpPoints*Setup ladder is the default; a per-intent
+      // offset SUBTRACTS from every threshold so counter-seeking engines (which no longer bank
+      // the alignment points) aren't judged on the alignment ladder. Both offsets default 0 =>
+      // unchanged ladder, so even ON-with-default is threshold-identical to legacy. HYBRID
+      // keeps the global ladder (offset 0). OFF path: t_* == m_points_* (byte-identical).
+      int t_aplus = m_points_aplus;
+      int t_a     = m_points_a;
+      int t_bplus = m_points_bplus;
+      int t_b     = m_points_b;
+      if(ea_on)
+      {
+         int t_off = IsCounterIntent(ea_intent) ? InpEAAThreshOffsetCounter : InpEAAThreshOffsetAlign;
+         t_aplus -= t_off;
+         t_a     -= t_off;
+         t_bplus -= t_off;
+         t_b     -= t_off;
+      }
+      if(points >= t_aplus) { AUDIT_TIER(0); return SETUP_A_PLUS; }
+      if(points >= t_a)     { AUDIT_TIER(1); return SETUP_A; }
+      if(points >= t_bplus) { AUDIT_TIER(2); return SETUP_B_PLUS; }
+      if(points >= t_b)     { AUDIT_TIER(3); return SETUP_B; }
 
       AUDIT_TIER(4);
       return SETUP_NONE;
