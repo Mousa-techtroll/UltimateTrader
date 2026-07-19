@@ -767,6 +767,23 @@ input bool   InpH4ConfirmPerBar    = false; // L2-4: CRegimeClassifier advances 
 input bool   InpSMCClosedBar       = true; // L2-5: CSMCOrderBlocks OB close-rule uses closed bar [1] close (not forming iClose(H1,0)); FVG fill uses closed bar [1] low/high (not one-instant bid). OFF = legacy.
 input bool   InpTrendClosedWings   = true; // L2-6: CTrendDetector swing pivots exclude the forming bar 0 as a right-hand wing (loop starts i=3 so both right wings are CLOSED). OFF = legacy.
 
+input group "══════ L2-4 REGIME-CONFIRM REDESIGN (ADAPTIVE) ══════"
+// Adaptive H4 regime-confirmation duration — the redesign of the REJECTED fixed-8h
+// InpH4ConfirmPerBar first-fix (-10.4%, a single fixed delay was load-bearing).
+// Keeps the per-H1 advance cadence (does NOT reintroduce distinct-H4 gating); only
+// the REQUIRED confirmation COUNT adapts to closed-H4 transition strength, recomputed
+// per new candidate (never leaks across episodes). MASTER OFF => m_confirm_required
+// stays the constant 2 => byte-identical to the seven-fix baseline (Stats c051f97b /
+// $32,617.90). With Strong==Weak==2 the ON path is also byte-identical. Defaults
+// Strong=2 (load-bearing fast path, unchanged) / Weak=3 make ON the candidate — only
+// the WEAK/ambiguous flips are slowed. Full spec + adoption criteria:
+// claude/audit/candidate-L2-4-redesign/DESIGN.md.
+input bool   InpRegimeAdaptiveConfirm = false; // L2-4 REDESIGN MASTER: adapt the H4 regime-confirmation count to transition strength (STRONG flip -> fast, WEAK flip -> slow). OFF = constant 2 (byte-identical c051f97b).
+input int    InpRegimeConfirmStrong   = 2;     // L2-4: H1-advances required to confirm a STRONG/clean flip (the load-bearing fast path — keep at 2).
+input int    InpRegimeConfirmWeak     = 3;     // L2-4: H1-advances required to confirm a WEAK/ambiguous flip (slower — only the weak cohort is delayed).
+input double InpRegimeStrongADX       = 25.0;  // L2-4: STRONG-flip test — closed-H4 ADX level (adx[1]) at/above this qualifies as strong.
+input double InpRegimeStrongADXSlope  = 0.0;   // L2-4: STRONG-flip test — closed-H4 ADX slope (adx[1]-adx[2]) at/above this (0 = rising) qualifies as strong.
+
 input group "══════ CODEX L1/L3 CANDIDATE-ROUTING CORRECTNESS ══════"
 // Three independent, default-OFF correctness fixes on the OnTick candidate-routing /
 // arbitration hotspot (codex L1-1 / L1-4 / L3-3). Each guards ONE behavior change; with

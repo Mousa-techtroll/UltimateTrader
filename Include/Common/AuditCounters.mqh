@@ -202,6 +202,51 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
 // AuditEngineRelRecord() directly inside its own #ifdef AUDIT_BUILD block (it must
 // compute the flag-independent dual-policy points there anyway). No production impact:
 // AuditEngineRelRecord exists ONLY under AUDIT_BUILD.
+
+// --- RegimeConfirm strength-attribution recorder (L2-4 redesign): one row per
+//     CONFIRMED-regime-change event, emitted decision-free from CMarketContext::
+//     UpdateRegimeAge at the confirm point. MEASURE-ONLY — the whole call is inside
+//     #ifdef AUDIT_BUILD at the sole call site, so the classifier/context are
+//     byte-identical in production. Lets the confirmed-regime EPISODE be joined to
+//     trade R (by confirm_time -> the H4 episode the fill lands in) and tests whether
+//     the transition-STRENGTH signals separate good-fresh from bad-fresh regimes
+//     BEFORE the adaptive policy is trusted. CSV -> FILE_COMMON.
+//     Episode-join key: order confirm rows by confirm_time; each row opens a regime
+//     EPISODE that runs until the NEXT row's confirm_time. Bucket every trade by its
+//     open time into [confirm_time_k, confirm_time_{k+1}) and attribute its R to that
+//     episode's (to_regime, strong_flip, adx_level, ...) strength profile.
+long g_auditRegimeConfirmRows = 0;
+int  g_auditRegimeConfirmHandle = INVALID_HANDLE;
+void AuditRegimeConfirmRecord(datetime confirm_time,
+                              ENUM_REGIME_TYPE from_regime, ENUM_REGIME_TYPE to_regime,
+                              int confirm_latency_h1, double adx_level, double adx_slope,
+                              double atr_ratio, double bb_width, int trend_agree,
+                              double chop_index, int scaler_trend, int scaler_chop,
+                              int scaler_vol, int strong_flip)
+{
+   g_auditRegimeConfirmRows++;
+   if(g_auditRegimeConfirmHandle == INVALID_HANDLE)
+   {
+      g_auditRegimeConfirmHandle = FileOpen("UltTrader_RegimeConfirm_XAUUSD+_20190101_0000.csv",
+                                            FILE_WRITE|FILE_CSV|FILE_COMMON, ',');
+      if(g_auditRegimeConfirmHandle != INVALID_HANDLE)
+         FileWrite(g_auditRegimeConfirmHandle,
+                   "confirm_time","from_regime","to_regime","confirm_latency_h1",
+                   "adx_level","adx_slope","atr_ratio","bb_width","trend_agree",
+                   "chop_index","scaler_trend","scaler_chop","scaler_vol","strong_flip");
+   }
+   if(g_auditRegimeConfirmHandle == INVALID_HANDLE)
+      return;
+   FileWrite(g_auditRegimeConfirmHandle, (string)confirm_time,
+             EnumToString(from_regime), EnumToString(to_regime),
+             IntegerToString(confirm_latency_h1),
+             DoubleToString(adx_level, 2), DoubleToString(adx_slope, 2),
+             DoubleToString(atr_ratio, 4), DoubleToString(bb_width, 4),
+             IntegerToString(trend_agree), DoubleToString(chop_index, 2),
+             IntegerToString(scaler_trend), IntegerToString(scaler_chop),
+             IntegerToString(scaler_vol), IntegerToString(strong_flip));
+   FileFlush(g_auditRegimeConfirmHandle);
+}
 #else
 #define AUDIT_TIER(i)
 #define AUDIT_VOLBO_CHECK

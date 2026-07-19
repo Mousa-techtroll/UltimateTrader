@@ -18,6 +18,19 @@
 #include "CBearStateModel.mqh"   // SB-1.1 shadow bear-state stamp (computed, decision-free)
 #include "CBearStateLedger.mqh"  // SB-1.1 LEDGER source: frozen validated states (decision-free)
 
+#ifdef AUDIT_BUILD
+// L2-4 redesign strength-attribution AUDIT (AUDIT_BUILD only — both vanish in
+// production, so CMarketContext is byte-behavior identical there):
+//  - CRegimeRiskScaler: reused read-only in the confirm emit for the trend/chop/vol
+//    scores (reads only via ctx getters — no new indicators/state). Guarded include
+//    (its own include guard makes the later Core/ include a no-op).
+//  - AuditCounters: AuditRegimeConfirmRecord() declaration. Already in TU scope via
+//    UltimateTrader.mq5, re-included here (include-guarded) so CMarketContext is
+//    self-contained under AUDIT_BUILD.
+#include "../Core/CRegimeRiskScaler.mqh"
+#include "../Common/AuditCounters.mqh"
+#endif
+
 //+------------------------------------------------------------------+
 //| CMarketContext - Concrete implementation of IMarketContext        |
 //| Owns and coordinates all 7 Stack17 analysis components            |
@@ -1342,8 +1355,59 @@ private:
       ENUM_REGIME_TYPE reg = GetCurrentRegime();
       if(reg != m_regime_age_last)
       {
+#ifdef AUDIT_BUILD
+         // L2-4 strength-attribution AUDIT: one decision-free CSV row per
+         // CONFIRMED-regime change. Emit BEFORE updating m_regime_age_last so
+         // from_regime is the OLD confirmed regime. AUDIT_BUILD-only.
+         EmitRegimeConfirmAudit(m_regime_age_last, reg);
+#endif
          m_regime_age_last = reg;
          m_regime_change_h4_time = iTime(_Symbol, PERIOD_H4, 0);
       }
    }
+
+#ifdef AUDIT_BUILD
+   //+------------------------------------------------------------------+
+   //| L2-4 redesign strength-attribution AUDIT (AUDIT_BUILD only)       |
+   //| Emit one strength row per CONFIRMED regime change. DECISION-FREE. |
+   //| Reads the classifier's confirm-instant strength signals + sibling |
+   //| trend/chop/scaler context; nothing here feeds a trade decision.   |
+   //+------------------------------------------------------------------+
+   void EmitRegimeConfirmAudit(ENUM_REGIME_TYPE from_regime, ENUM_REGIME_TYPE to_regime)
+   {
+      if(m_regime_classifier == NULL)
+         return;
+
+      datetime confirm_time = iTime(_Symbol, PERIOD_H4, 0);
+      int    latency   = m_regime_classifier.GetLastConfirmLatency();
+      double adx_level = m_regime_classifier.GetADX();       // adx[1] (closed H4)
+      double adx_slope = m_regime_classifier.GetADXSlope();  // adx[1]-adx[2]
+      double atr_ratio = m_regime_classifier.GetATRRatio();  // H4 atr_current/atr_average
+      double bb_width  = m_regime_classifier.GetBBWidth();
+
+      ENUM_TREND_DIRECTION d1 = GetTrendDirection();
+      ENUM_TREND_DIRECTION h4 = GetH4TrendDirection();
+      int trend_agree = (d1 != TREND_NEUTRAL && h4 != TREND_NEUTRAL && d1 == h4) ? 1 : 0;
+      double chop = GetChoppinessIndex();
+
+      // Reuse the LIVE risk-scaler scoring (reads only via ctx getters — no new
+      // indicators, no persisted state) so the AUDIT reflects the exact
+      // trend/chop/vol scores the risk layer would assign at this confirm.
+      CRegimeRiskScaler scaler;
+      scaler.Enable(true);
+      SRegimeRiskScore rs = scaler.Evaluate(GetPointer(this));
+
+      // strong_flip: the adaptive policy's STRONG classification recomputed at the
+      // confirm instant (same thresholds as the in-class policy) — the discriminator
+      // under test. NOTE: the policy decides at candidate-establishment, which is
+      // the same frozen-H4 read as confirm in the common (intra-H4) case.
+      int strong_flip = (adx_level >= InpRegimeStrongADX &&
+                         adx_slope >= InpRegimeStrongADXSlope) ? 1 : 0;
+
+      AuditRegimeConfirmRecord(confirm_time, from_regime, to_regime, latency,
+                               adx_level, adx_slope, atr_ratio, bb_width,
+                               trend_agree, chop,
+                               rs.trendScore, rs.chopScore, rs.volScore, strong_flip);
+   }
+#endif
 };

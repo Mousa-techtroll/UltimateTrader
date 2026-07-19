@@ -44,6 +44,12 @@ private:
       int                  m_confirm_required;     // bars needed to confirm (default 2)
       datetime             m_last_h4_bar_time;     // L2-4: closed-H4 bar time last advanced on (0 = none)
 
+      // L2-4 REDESIGN (InpRegimeAdaptiveConfirm) + strength AUDIT. Written every
+      // Update()/confirm but READ only under the adaptive flag / AUDIT_BUILD, so
+      // both are behavior-inert when the flag is off (byte-identical legacy).
+      double               m_adx_prev;             // prior CLOSED-H4 ADX (adx[2]) — backs adx_slope
+      int                  m_last_confirm_latency; // m_candidate_bars captured AT the confirm instant (before reset)
+
       // Volatility expansion hysteresis (Phase H6)
       int                  m_vol_expanding_bars;   // consecutive bars of expansion
 
@@ -78,6 +84,8 @@ public:
             m_candidate_bars   = 0;
             m_confirm_required = 2;
             m_last_h4_bar_time = 0;   // L2-4: no H4 bar advanced on yet
+            m_adx_prev             = 0.0;   // L2-4 redesign: seeded on first Update()
+            m_last_confirm_latency = 0;     // L2-4 redesign/AUDIT: set at each confirm
 
             // Volatility expansion hysteresis
             m_vol_expanding_bars = 0;
@@ -135,7 +143,8 @@ public:
             // Fix 1.4: read the CLOSED bar [1] (not the forming bar [0]); counts bumped so [1] is valid.
             // Fix 1.5: capture realized ATR count (51 so atr[1..50] = 50 CLOSED bars), divide by realized count.
             int atr_got = CopyBuffer(m_handle_atr, 0, 0, 51, atr);
-            if(CopyBuffer(m_handle_adx, 0, 0, 4, adx) < 2 ||
+            int adx_got = CopyBuffer(m_handle_adx, 0, 0, 4, adx);
+            if(adx_got < 2 ||
                atr_got < 2 ||
                CopyBuffer(m_handle_bb, 1, 0, 4, bb_upper) < 2 ||
                CopyBuffer(m_handle_bb, 2, 0, 4, bb_lower) < 2 ||
@@ -148,6 +157,13 @@ public:
             // Store values (closed bar [1])
             m_regime_data.adx_value = adx[1];
             m_regime_data.atr_current = atr[1];
+
+            // L2-4 redesign: prior CLOSED-H4 ADX (adx[2]) for the slope strength
+            // signal. adx[] was copied count-4 above; adx[2] is present when the
+            // realized read reached >=3 (falls back to adx[1] => slope 0 during
+            // warmup). Written unconditionally, READ only under the adaptive flag /
+            // AUDIT — no behavior change when off.
+            m_adx_prev = (adx_got >= 3) ? adx[2] : adx[1];
 
             // Calculate ATR average over CLOSED bars (realized-count, no fixed-50 OOB / zero-pad).
             // Sum atr[1..MathMin(50,atr_got-1)], divide by the realized count (CMomentumFilter idiom).
@@ -203,6 +219,10 @@ public:
                            m_candidate_bars++;
                            if(m_candidate_bars >= m_confirm_required)
                            {
+                                 // L2-4/AUDIT: capture the confirm latency (=m_candidate_bars
+                                 // at confirm) before the reset. Behavior-inert — read only
+                                 // via GetLastConfirmLatency() from the AUDIT emit.
+                                 m_last_confirm_latency = m_candidate_bars;
                                  m_confirmed_regime = m_candidate_regime;
                                  m_candidate_bars = 0;
                            }
@@ -211,6 +231,27 @@ public:
                      {
                            m_candidate_regime = raw_regime;
                            m_candidate_bars = 1;
+
+                           // L2-4 REDESIGN (InpRegimeAdaptiveConfirm): recompute the
+                           // confirmation duration for THIS new candidate from the local
+                           // closed-H4 transition strength. STRONG/clean flip -> fast
+                           // (InpRegimeConfirmStrong, default 2 = the load-bearing fast
+                           // path, unchanged); WEAK/ambiguous flip -> slower
+                           // (InpRegimeConfirmWeak, default 3 — only the weak cohort is
+                           // delayed). Recomputed per new candidate so it never leaks
+                           // across episodes. Flag OFF => m_confirm_required is never
+                           // reassigned (stays the constructor's constant 2) => the confirm
+                           // logic is byte-identical to legacy. Strong==Weak==2 => also
+                           // byte-identical even with the flag on.
+                           if(InpRegimeAdaptiveConfirm)
+                           {
+                                 double adx_level = m_regime_data.adx_value;               // adx[1] (closed H4)
+                                 double adx_slope = m_regime_data.adx_value - m_adx_prev;  // adx[1]-adx[2]
+                                 bool   strong    = (adx_level >= InpRegimeStrongADX &&
+                                                     adx_slope >= InpRegimeStrongADXSlope);
+                                 m_confirm_required = strong ? InpRegimeConfirmStrong
+                                                             : InpRegimeConfirmWeak;
+                           }
                      }
                }
                else
@@ -265,6 +306,15 @@ public:
       double GetBBWidth() const { return m_regime_data.bb_width; }
       bool IsVolatilityExpanding() const { return m_regime_data.volatility_expanding; }
       bool IsThrashCooldownActive() const { return (m_thrash_cooldown_end > 0 && TimeCurrent() < m_thrash_cooldown_end); }
+
+      // L2-4 redesign / strength-AUDIT getters. Pure reads — never consulted in
+      // the live decision path; used by the CMarketContext regime-confirm AUDIT
+      // emit (and mirror the values the in-class adaptive policy reads). No
+      // production behavior when the adaptive flag is off.
+      double GetADXSlope() const           { return m_regime_data.adx_value - m_adx_prev; }
+      double GetATRRatio() const           { return (m_regime_data.atr_average > 0.0)
+                                                    ? m_regime_data.atr_current / m_regime_data.atr_average : 1.0; }
+      int    GetLastConfirmLatency() const { return m_last_confirm_latency; }
 
 private:
       //+------------------------------------------------------------------+
