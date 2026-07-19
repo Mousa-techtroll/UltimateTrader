@@ -1,0 +1,22 @@
+{
+ "schema": "ultimatetrader-release-identity-v7-codex-seven",
+ "baseline": "codex-remediation seven-fix risk-improved (INTERMEDIATE milestone; final release pending L4-1 engine-aware redesign + L2-4/L1-4/L3-4 redesigns + Tier 3/4)",
+ "net_profit": 32617.90, "positions": 801, "profit_factor": 1.47, "sharpe": 3.13, "eq_dd_pct": 11.32,
+ "stats_md5": "c051f97b8bd5ce3083b31317526998bb",
+ "goldhistory": {"net": 24086.34, "stats_md5": "fb82104ab3475a3cbef96f60e2b23d23", "positions": 748},
+ "supersedes": "baseline-bounds-hardening-34940 (d6549628 / $34,940.18 / 869)",
+ "adopted_since_34940": {
+   "L6-1_InpSafePositionBinding": "deal-id post-fill binding (byte-identical primary; 6 defects repaired)",
+   "Tier1_live_robustness": "L6-2/L6-3/L1-2/L7-1..L7-4 (byte-identical)",
+   "seven_fix_correctness": "L2-3/L2-5/L2-6/L1-1/L3-3 (byte-identical) + L4-3/L4-4 (risk-improving: PF 1.42->1.47, Sharpe 2.96->3.13, EqDD 15.24->11.32)"
+ },
+ "held_flag_off": {
+   "L4-1_InpDirectionalAlignment": "architectural defect - engine-aware evaluator redesign in progress",
+   "L2-4_InpH4ConfirmPerBar": "confirmed defect - adaptive-confirmation redesign open",
+   "L1-4_InpConfirmedPathGates": "confirmed defect - route-policy-matrix redesign open",
+   "L3-4_InpEqualTierTiebreak": "confirmed defect - normalized-arbitration redesign open"
+ },
+ "reproduction": "production build (7 codex flags default-on, 4 held default-off, InpSafePositionBinding on) reproduces c051f97b/$32,617.90/801 + GH fb82104a/$24,086.34/748 self-contained (no overrides). Each flag reversible.",
+ "canonical_set_sha256_prefix": "284d3a5f9103601c", "ex5_md5_prefix": "82336ae2bd9e",
+ "note": "risk-adjusted: return/DD 22.9->28.8; -6.6% net on primary, -18.4% GH (L4-3/L4-4 port less well - flagged for follow-up). NOT the final release."
+}

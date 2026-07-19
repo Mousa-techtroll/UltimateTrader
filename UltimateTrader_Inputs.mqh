@@ -736,18 +736,18 @@ input group "══════ CODEX REMEDIATION (SCORING/ARBITRATION) ══�
 // Each guards ONE behavior change; with all four OFF the backtest is byte-identical
 // legacy (result identity d6549628). See claude/audit/candidate-scoring-L4/DESIGN.md.
 input bool   InpDirectionalAlignment   = false; // L4-1: award trend/macro alignment points ONLY when the signed D1/H4/macro direction supports the signal (long->bullish, short->bearish); opposing/neutral earn none. OFF = legacy direction-blind alignment. (Tier thresholds NOT recalibrated — deferred follow-up.)
-input bool   InpNoBreakTolFix          = false; // L4-3: express the confirmation no-break tolerance as a fraction (10%) of the pattern's OWN range, not of absolute price (legacy +-0.2% ~= $6.80 at gold 3400). OFF = legacy absolute-price tolerance
-input bool   InpFullRevalidation       = false; // L4-4: at confirmation also rerun the dynamic gates (volume/SMC/confidence/quality-tier) and re-derive tier+risk from current context, freezing only signal-time geometry. OFF = legacy TF/MR-only revalidation retaining stale tier/risk
+input bool   InpNoBreakTolFix          = true; // L4-3: express the confirmation no-break tolerance as a fraction (10%) of the pattern's OWN range, not of absolute price (legacy +-0.2% ~= $6.80 at gold 3400). OFF = legacy absolute-price tolerance
+input bool   InpFullRevalidation       = true; // L4-4: at confirmation also rerun the dynamic gates (volume/SMC/confidence/quality-tier) and re-derive tier+risk from current context, freezing only signal-time geometry. OFF = legacy TF/MR-only revalidation retaining stale tier/risk
 input bool   InpEqualTierTiebreak      = false; // L3-4: on EQUAL bucketed qualityScore, break arbitration ties by higher engine confluence then better R:R instead of registration order. OFF = legacy first-registered-wins
 
 input group "══════ CODEX L2 MARKET-DATA CORRECTNESS ══════"
 // Each flag isolates one closed-bar / MTF correctness fix in the MarketAnalysis
 // layer. Default OFF = EXACT current legacy behavior (all-OFF reproduces the
 // d6549628 baseline byte-for-byte). Flip ON one at a time to measure in isolation.
-input bool   InpRangeBoxResetFix   = false; // L2-3: CRangeBoxDetector accepted-outside reset tests close[1] vs the PRIOR box (shifts 2..lookback+1) instead of a box that includes bar 1 (currently unreachable). OFF = legacy.
+input bool   InpRangeBoxResetFix   = true; // L2-3: CRangeBoxDetector accepted-outside reset tests close[1] vs the PRIOR box (shifts 2..lookback+1) instead of a box that includes bar 1 (currently unreachable). OFF = legacy.
 input bool   InpH4ConfirmPerBar    = false; // L2-4: CRegimeClassifier advances regime hysteresis only when the closed H4 bar [1] changes (2 distinct H4 bars ~8h), not on every H1 call (~2h). OFF = legacy.
-input bool   InpSMCClosedBar       = false; // L2-5: CSMCOrderBlocks OB close-rule uses closed bar [1] close (not forming iClose(H1,0)); FVG fill uses closed bar [1] low/high (not one-instant bid). OFF = legacy.
-input bool   InpTrendClosedWings   = false; // L2-6: CTrendDetector swing pivots exclude the forming bar 0 as a right-hand wing (loop starts i=3 so both right wings are CLOSED). OFF = legacy.
+input bool   InpSMCClosedBar       = true; // L2-5: CSMCOrderBlocks OB close-rule uses closed bar [1] close (not forming iClose(H1,0)); FVG fill uses closed bar [1] low/high (not one-instant bid). OFF = legacy.
+input bool   InpTrendClosedWings   = true; // L2-6: CTrendDetector swing pivots exclude the forming bar 0 as a right-hand wing (loop starts i=3 so both right wings are CLOSED). OFF = legacy.
 
 input group "══════ CODEX L1/L3 CANDIDATE-ROUTING CORRECTNESS ══════"
 // Three independent, default-OFF correctness fixes on the OnTick candidate-routing /
@@ -755,6 +755,6 @@ input group "══════ CODEX L1/L3 CANDIDATE-ROUTING CORRECTNESS ══
 // all three OFF the backtest is byte-identical legacy (result identity d6549628).
 // Flip ON one at a time to measure in isolation.
 // See claude/audit/candidate-routing-L1L3/DESIGN.md.
-input bool   InpEarlyRiskRefresh    = false; // L1-1: refresh/latch the daily-loss halt at the TOP of OnTick (before ANY entry route) so a threshold crossing blocks entries on the SAME tick instead of one entry late; the end-of-tick CheckRiskLimits() sample is retained. OFF = legacy end-of-tick-only latch.
+input bool   InpEarlyRiskRefresh    = true; // L1-1: refresh/latch the daily-loss halt at the TOP of OnTick (before ANY entry route) so a threshold crossing blocks entries on the SAME tick instead of one entry late; the end-of-tick CheckRiskLimits() sample is retained. OFF = legacy end-of-tick-only latch.
 input bool   InpConfirmedPathGates  = false; // L1-4: enforce the immediate path's 4 market-safety BLOCK gates (shock-extreme, session-quality, regime-thrash, SL-to-spread sanity) on the confirmed-pending fill path too (spread is covered by the executor's own final check). OFF = legacy confirmed path skips all 4.
-input bool   InpVolBOCooldownOnFill = false; // L3-3: CVolatilityBreakoutEntry arms its ~4h per-side cooldown + break/pullback-Add anchor only when its candidate WINS arbitration (orchestrator winner hook), not on emission — a lost/rejected candidate no longer suppresses that side nor seeds a false "Add". OFF = legacy commit-on-emission.
+input bool   InpVolBOCooldownOnFill = true; // L3-3: CVolatilityBreakoutEntry arms its ~4h per-side cooldown + break/pullback-Add anchor only when its candidate WINS arbitration (orchestrator winner hook), not on emission — a lost/rejected candidate no longer suppresses that side nor seeds a false "Add". OFF = legacy commit-on-emission.
