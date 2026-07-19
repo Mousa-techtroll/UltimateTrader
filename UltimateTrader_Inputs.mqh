@@ -120,6 +120,21 @@ input double InpShortTrendMinADX = 22.0;     // Short trend min ADX
 input double InpShortTrendMaxADX = 50.0;     // Short trend max ADX
 input int    InpShortMRMacroMax = 0;         // MR short max macro score (wired: was hardcoded as 0)
 
+//--- Group 3b: COHORT RISK DOWNGRADE (candidate-L4-1-redesign: isolated risk-scale lever)
+input group "══════ COHORT RISK DOWNGRADE ══════"
+// ISOLATED risk-scale lever: shrink the SIZE of a historically-weak cohort WITHOUT
+// touching its quality tier, exit_* profile, or admission. The L4-1 decomposition
+// proved rejection (-$7.4k) and tier->exit coupling (-$6.5k) are the losses; a pure
+// risk-scale avoids both. Byte-identical to c051f97b ($32,617.90 / 801) when
+// InpCohortDowngrade=false (block never runs). Also a no-op with InpDowngradeMult=1.0
+// (exact IEEE multiply-by-1) or InpDowngradeSubtype=SUBTYPE_HYBRID (no live fill is
+// stamped HYBRID once Phase-A subtypes are set). See
+// claude/audit/candidate-L4-1-redesign/SHADOW-DOWNGRADE.md.
+input bool               InpCohortDowngrade  = false;          // master flag (OFF = byte-identical baseline)
+input ENUM_SETUP_SUBTYPE InpDowngradeSubtype = SUBTYPE_HYBRID; // cohort to downgrade (HYBRID = no-op)
+input int                InpDowngradeTier    = -1;             // -1=any tier; else ENUM_SETUP_QUALITY ordinal to scope
+input double             InpDowngradeMult    = 1.0;            // risk% multiplier for the cohort (e.g. 0.5 = half size)
+
 //--- Group 4: CONSECUTIVE LOSS PROTECTION
 input group "══════ CONSECUTIVE LOSS PROTECTION ══════"
 

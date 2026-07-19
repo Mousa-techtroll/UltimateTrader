@@ -532,6 +532,28 @@ public:
                   "% (x", DoubleToString(InpShortRiskMultiplier, 2), ")");
       }
 
+      // candidate-L4-1-redesign: ISOLATED cohort risk-downgrade lever.
+      // Scales the risk% (and thus the lot) of a historically-weak cohort WITHOUT
+      // touching the tier, the exit_* profile, or admission — the decomposition proved
+      // rejection (-$7.4k) and tier->exit coupling (-$6.5k) are the losses; a pure
+      // risk-scale avoids both. Sits in the multiplier stack (after short protection,
+      // before the hard cap) so a downgrade also stays under the cap naturally.
+      // Byte-identical when InpCohortDowngrade=false (block dead), InpDowngradeMult=1.0
+      // (exact x1), or when no live signal carries InpDowngradeSubtype.
+      // See claude/audit/candidate-L4-1-redesign/SHADOW-DOWNGRADE.md.
+      if(InpCohortDowngrade && signal.riskPercent > 0 &&
+         signal.setup_subtype == InpDowngradeSubtype &&
+         (InpDowngradeTier < 0 || (int)signal.setupQuality == InpDowngradeTier))
+      {
+         double pre_cohort = signal.riskPercent;
+         signal.riskPercent *= InpDowngradeMult;
+         LogPrint("[CohortDowngrade] subtype=", EnumToString(signal.setup_subtype),
+                  " tier=", EnumToString(signal.setupQuality),
+                  " x", DoubleToString(InpDowngradeMult, 2),
+                  " | Risk: ", DoubleToString(pre_cohort, 2),
+                  "% -> ", DoubleToString(signal.riskPercent, 2), "%");
+      }
+
       // Hard cap: separate caps for file signals vs pattern signals.
       // Fix 6.7 (doc-honesty): realized A+ risk routinely HITS this 2.0% cap, it is
       // NOT the 1.5% tier base. Effective band on an A+ TRENDING setup stacks
