@@ -12,6 +12,7 @@
 #define AUDIT_COUNTERS_MQH
 
 #ifdef AUDIT_BUILD
+#include "Enums.mqh"   // AUDIT-only: enum types used by AuditEngineRelRecord (guarded include; no-op in production)
 long g_auditTierReturned[5] = {0,0,0,0,0};  // [0]A+ [1]A [2]B+ [3]B [4]NONE returned by CSetupEvaluator
 long g_auditVolBOChecked = 0;               // CVolatilityBreakoutEntry::CheckForEntrySignal reached (initialized)
 long g_auditVolBOCompat  = 0;               // regime was VOLATILE (engine passed its regime gate)
@@ -97,6 +98,85 @@ void AuditVolRatioRecord(datetime t, double atr0, double atr1, double avg)
    }
 }
 #define AUDIT_VOLRATIO(t,a0,a1,avg)   AuditVolRatioRecord((datetime)(t),(double)(a0),(double)(a1),(double)(avg))
+// --- EngineRel setup-evaluator recorder (L4-1 setup-evaluator redesign): one row per
+//     SCORED candidate as EvaluateSetupQuality reaches its tier ladder. MEASURE-ONLY —
+//     the entire call vanishes in production (empty #else define), so the scoring path is
+//     byte-identical; nothing here feeds the trade decision. The tier + relationship +
+//     context_strength are DERIVED here (not read from scoring) precisely so the live
+//     tier if-ladder in CSetupEvaluator stays untouched. CSV -> FILE_COMMON.
+//     Scope note: the evaluator is invoked ONLY for NON-engine (legacy/pattern/file)
+//     candidates — routed engine signals honor signal.setupQuality and never call it — so
+//     `pattern` is signal.comment (the most engine-identifying value reachable here); the
+//     true plugin_name/routed_engine lives at the orchestrator call site, NOT in scope. ---
+long g_auditEngineRelRows = 0;
+int  g_auditEngineRelHandle = INVALID_HANDLE;
+void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
+                          ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
+                          int macro_score, double adx, ENUM_REGIME_TYPE regime, int points,
+                          int p_aplus, int p_a, int p_bplus, int p_b)
+{
+   g_auditEngineRelRows++;
+   if(g_auditEngineRelHandle == INVALID_HANDLE)
+   {
+      g_auditEngineRelHandle = FileOpen("UltTrader_EngineRel_XAUUSD+_20190101_0000.csv",
+                                        FILE_WRITE|FILE_CSV|FILE_COMMON, ',');
+      if(g_auditEngineRelHandle != INVALID_HANDLE)
+         FileWrite(g_auditEngineRelHandle,
+                   "time","pattern","direction","d1_dir","h4_dir","macro_score","adx",
+                   "regime","context_strength","relationship","tier","points");
+   }
+   if(g_auditEngineRelHandle == INVALID_HANDLE)
+      return;
+
+   // direction (from the signal enum only, as required)
+   string dir = (sig == SIGNAL_LONG) ? "LONG" : (sig == SIGNAL_SHORT ? "SHORT" : "NONE");
+
+   // tier string — DERIVED here from points + the four thresholds, mirroring the live
+   // ladder in EvaluateSetupQuality so that ladder needs no restructuring (byte-identical).
+   string tier;
+   if(points >= p_aplus)      tier = "A_PLUS";
+   else if(points >= p_a)     tier = "A";
+   else if(points >= p_bplus) tier = "B_PLUS";
+   else if(points >= p_b)     tier = "B";
+   else                       tier = "NONE";
+
+   // context_strength — direction-NEUTRAL magnitude scalar (range 0..7). Diagnostic only,
+   // never fed back into scoring. Formula = macroMag + trendAgree + adxBand:
+   //   macroMag  (0..3) = |macro_score|
+   //   trendAgree(0..2) = 2 if D1==H4 and both non-neutral; 1 if exactly one is neutral; else 0
+   //   adxBand   (0..2) = 2 if adx>=25; 1 if adx>=20; else 0
+   int macroMag = (macro_score < 0) ? -macro_score : macro_score;
+   int nNeutral = ((daily == TREND_NEUTRAL) ? 1 : 0) + ((h4 == TREND_NEUTRAL) ? 1 : 0);
+   int trendAgree = (nNeutral == 0) ? ((daily == h4) ? 2 : 0) : ((nNeutral == 1) ? 1 : 0);
+   int adxBand = (adx >= 25.0) ? 2 : ((adx >= 20.0) ? 1 : 0);
+   int context_strength = macroMag + trendAgree + adxBand;
+
+   // relationship — signal direction vs the dominant (D1 first, else H4) trend direction.
+   bool dirBull = (sig == SIGNAL_LONG);
+   bool dirBear = (sig == SIGNAL_SHORT);
+   ENUM_TREND_DIRECTION dom = (daily != TREND_NEUTRAL) ? daily : h4;
+   string rel;
+   if(daily != TREND_NEUTRAL && h4 != TREND_NEUTRAL && daily != h4)
+      rel = "MIXED";                                        // D1 and H4 disagree
+   else if(dom == TREND_NEUTRAL)
+      rel = "NEUTRAL";                                      // trend neutral (both neutral)
+   else if((dirBull && dom == TREND_BULLISH) || (dirBear && dom == TREND_BEARISH))
+      rel = "ALIGNED";                                      // direction supports dominant trend
+   else if((dirBull && dom == TREND_BEARISH) || (dirBear && dom == TREND_BULLISH))
+      rel = "COUNTER";                                      // direction opposes dominant trend
+   else
+      rel = "NEUTRAL";                                      // no directional signal (SIGNAL_NONE)
+
+   FileWrite(g_auditEngineRelHandle, (string)t, pattern, dir,
+             EnumToString(daily), EnumToString(h4), IntegerToString(macro_score),
+             DoubleToString(adx, 2), EnumToString(regime),
+             IntegerToString(context_strength), rel, tier, IntegerToString(points));
+   FileFlush(g_auditEngineRelHandle);
+}
+#define AUDIT_ENGINEREL(t,pat,sig,d1,h4,ms,adx,reg,pts,pa,pA,pbp,pb) \
+   AuditEngineRelRecord((datetime)(t),(string)(pat),(ENUM_SIGNAL_TYPE)(sig), \
+      (ENUM_TREND_DIRECTION)(d1),(ENUM_TREND_DIRECTION)(h4),(int)(ms),(double)(adx), \
+      (ENUM_REGIME_TYPE)(reg),(int)(pts),(int)(pa),(int)(pA),(int)(pbp),(int)(pb))
 #else
 #define AUDIT_TIER(i)
 #define AUDIT_VOLBO_CHECK
@@ -117,6 +197,7 @@ void AuditVolRatioRecord(datetime t, double atr0, double atr1, double avg)
 #define AUDIT_VIX_BIASFLIP
 #define AUDIT_SHADOWGATE(ticket, mask)
 #define AUDIT_VOLRATIO(t,a0,a1,avg)
+#define AUDIT_ENGINEREL(t,pat,sig,d1,h4,ms,adx,reg,pts,pa,pA,pbp,pb)
 #endif
 
 #endif // AUDIT_COUNTERS_MQH

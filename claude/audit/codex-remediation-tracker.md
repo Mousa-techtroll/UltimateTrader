@@ -16,7 +16,7 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 | L7-2 | High | CONFIRMED | 1 | live-restart | persist exit_* + partial PnL (P4b) | ✅ | e5c7b8e | 0 (BI primary) |
 | L7-3 | High | CONFIRMED | 1 | live-restart | offline-close idempotent accounting | ✅ | e5c7b8e | 0 (BI primary) |
 | L7-4 | High | CONFIRMED-DORMANT | 1 | live-file+restart | file TP partials persist | ✅ | e5c7b8e | 0 (BI primary) |
-| L4-1 | High | CONFIRMED (material) | 2 | live-default | direction-aware alignment scoring + tier recalib | ☐ | | |
+| L4-1 | High | **ARCHITECTURAL DEFECT (unresolved)** | 2* | live-default | engine-aware evaluator redesign (see candidate-L4-1-redesign/) — raw −43%, global-recal −22.7%/Sharpe 1.93 both REJECTED | 🔬 | — | held |
 | L2-4 | Med | CONFIRMED | 2 | live-default | H4 confirm only on H4-bar change | ☐ | | |
 | L2-3 | Med | CONFIRMED | 2 | live-default | range-box reset vs prior box | ☐ | | |
 | L2-5 | Med | CONFIRMED | 2 | live-default | SMC zone close-rule on [1] | ☐ | | |

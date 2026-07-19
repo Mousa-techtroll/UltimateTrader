@@ -748,3 +748,13 @@ input bool   InpRangeBoxResetFix   = false; // L2-3: CRangeBoxDetector accepted-
 input bool   InpH4ConfirmPerBar    = false; // L2-4: CRegimeClassifier advances regime hysteresis only when the closed H4 bar [1] changes (2 distinct H4 bars ~8h), not on every H1 call (~2h). OFF = legacy.
 input bool   InpSMCClosedBar       = false; // L2-5: CSMCOrderBlocks OB close-rule uses closed bar [1] close (not forming iClose(H1,0)); FVG fill uses closed bar [1] low/high (not one-instant bid). OFF = legacy.
 input bool   InpTrendClosedWings   = false; // L2-6: CTrendDetector swing pivots exclude the forming bar 0 as a right-hand wing (loop starts i=3 so both right wings are CLOSED). OFF = legacy.
+
+input group "══════ CODEX L1/L3 CANDIDATE-ROUTING CORRECTNESS ══════"
+// Three independent, default-OFF correctness fixes on the OnTick candidate-routing /
+// arbitration hotspot (codex L1-1 / L1-4 / L3-3). Each guards ONE behavior change; with
+// all three OFF the backtest is byte-identical legacy (result identity d6549628).
+// Flip ON one at a time to measure in isolation.
+// See claude/audit/candidate-routing-L1L3/DESIGN.md.
+input bool   InpEarlyRiskRefresh    = false; // L1-1: refresh/latch the daily-loss halt at the TOP of OnTick (before ANY entry route) so a threshold crossing blocks entries on the SAME tick instead of one entry late; the end-of-tick CheckRiskLimits() sample is retained. OFF = legacy end-of-tick-only latch.
+input bool   InpConfirmedPathGates  = false; // L1-4: enforce the immediate path's 4 market-safety BLOCK gates (shock-extreme, session-quality, regime-thrash, SL-to-spread sanity) on the confirmed-pending fill path too (spread is covered by the executor's own final check). OFF = legacy confirmed path skips all 4.
+input bool   InpVolBOCooldownOnFill = false; // L3-3: CVolatilityBreakoutEntry arms its ~4h per-side cooldown + break/pullback-Add anchor only when its candidate WINS arbitration (orchestrator winner hook), not on emission — a lost/rejected candidate no longer suppresses that side nor seeds a false "Add". OFF = legacy commit-on-emission.

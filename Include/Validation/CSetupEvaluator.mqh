@@ -372,6 +372,17 @@ public:
       if(points > 10)
          points = 10;
 
+      // AUDIT_BUILD (L4-1 setup-evaluator redesign): MEASURE-ONLY telemetry. Logs one CSV
+      // row per scored candidate — engine identity (pattern=comment; true plugin_name is
+      // NOT in scope here), signal→context relationship (D1/H4 dir, macro, ADX, regime),
+      // a direction-neutral context_strength, the derived tier, and the final points — so
+      // candidate + trade performance can be sliced by engine and by relationship offline.
+      // The whole call vanishes in production (empty define), so the tier ladder below is
+      // byte-identical; `points` is captured here, just before that if-ladder.
+      AUDIT_ENGINEREL(iTime(_Symbol, PERIOD_H1, 0), pattern, signal, daily, h4, macro_score,
+                      (m_context != NULL ? m_context.GetADXValue() : 0.0), regime, points,
+                      m_points_aplus, m_points_a, m_points_bplus, m_points_b);
+
       // Determine quality tier
       if(points >= m_points_aplus) { AUDIT_TIER(0); return SETUP_A_PLUS; }
       if(points >= m_points_a)     { AUDIT_TIER(1); return SETUP_A; }

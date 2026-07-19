@@ -36,6 +36,17 @@ private:
    double            m_last_long_break;
    double            m_last_short_break;
 
+   // L3-3 (InpVolBOCooldownOnFill): staged (pending) cooldown/break stamp. On
+   // emission the flag-ON path writes here instead of the committed m_last_* fields;
+   // the stamp is promoted into m_last_* ONLY when this plugin's candidate wins
+   // arbitration (CSignalOrchestrator -> CommitTradedCooldown()). Unused on the
+   // legacy flag-OFF path (which still commits directly on emission).
+   datetime          m_pending_long_signal;
+   datetime          m_pending_short_signal;
+   double            m_pending_long_break;
+   double            m_pending_short_break;
+   int               m_pending_side;        // 0=none, 1=long, 2=short (which side is staged)
+
    // Configuration
    int               m_donchian_period;
    int               m_keltner_ema_period;
@@ -97,6 +108,12 @@ public:
       m_last_short_signal = 0;
       m_last_long_break = 0.0;
       m_last_short_break = 0.0;
+
+      m_pending_long_signal = 0;
+      m_pending_short_signal = 0;
+      m_pending_long_break = 0.0;
+      m_pending_short_break = 0.0;
+      m_pending_side = 0;
    }
 
    virtual string GetName() override    { return "VolatilityBreakoutEntry"; }
@@ -105,6 +122,28 @@ public:
    virtual string GetDescription() override { return "Donchian/Keltner volatility breakout with H4 slope filter"; }
 
    void SetContext(IMarketContext *context) { m_context = context; }
+
+   //+------------------------------------------------------------------+
+   //| L3-3: promote the staged per-side cooldown/break stamp into the   |
+   //| committed m_last_* fields. Called by CSignalOrchestrator ONLY when |
+   //| this plugin's candidate WON arbitration (InpVolBOCooldownOnFill    |
+   //| ON). No-op when nothing is staged. Never invoked on the legacy     |
+   //| commit-on-emission path.                                          |
+   //+------------------------------------------------------------------+
+   void CommitTradedCooldown()
+   {
+      if(m_pending_side == 1)
+      {
+         m_last_long_signal = m_pending_long_signal;
+         m_last_long_break  = m_pending_long_break;
+      }
+      else if(m_pending_side == 2)
+      {
+         m_last_short_signal = m_pending_short_signal;
+         m_last_short_break  = m_pending_short_break;
+      }
+      m_pending_side = 0;
+   }
 
    //+------------------------------------------------------------------+
    //| Initialize - create H4 MA and Keltner indicator handles           |
@@ -280,8 +319,22 @@ public:
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
-            m_last_long_signal = TimeCurrent();
-            m_last_long_break = (is_break ? MathMax(donchian_high, upper_k) : m_last_long_break);
+            // L3-3 (InpVolBOCooldownOnFill): OFF = legacy commit-on-emission
+            // (byte-identical). ON = STAGE the cooldown/break stamp as pending; the
+            // orchestrator promotes it via CommitTradedCooldown() only if THIS
+            // candidate wins arbitration, so a lost/rejected candidate no longer arms
+            // the ~4h cooldown nor seeds a false pullback-"Add" anchor.
+            if(InpVolBOCooldownOnFill)
+            {
+               m_pending_long_signal = TimeCurrent();
+               m_pending_long_break  = (is_break ? MathMax(donchian_high, upper_k) : m_last_long_break);
+               m_pending_side        = 1;
+            }
+            else
+            {
+               m_last_long_signal = TimeCurrent();
+               m_last_long_break = (is_break ? MathMax(donchian_high, upper_k) : m_last_long_break);
+            }
 
             Print("CVolatilityBreakoutEntry: LONG | Entry=", entry, " SL=", stop, " TP=", tp,
                   " | Donchian=", donchian_high, " KeltnerUp=", upper_k);
@@ -325,8 +378,22 @@ public:
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
-            m_last_short_signal = TimeCurrent();
-            m_last_short_break = (is_break ? MathMin(donchian_low, lower_k) : m_last_short_break);
+            // L3-3 (InpVolBOCooldownOnFill): OFF = legacy commit-on-emission
+            // (byte-identical). ON = STAGE the cooldown/break stamp as pending; the
+            // orchestrator promotes it via CommitTradedCooldown() only if THIS
+            // candidate wins arbitration, so a lost/rejected candidate no longer arms
+            // the ~4h cooldown nor seeds a false pullback-"Add" anchor.
+            if(InpVolBOCooldownOnFill)
+            {
+               m_pending_short_signal = TimeCurrent();
+               m_pending_short_break  = (is_break ? MathMin(donchian_low, lower_k) : m_last_short_break);
+               m_pending_side         = 2;
+            }
+            else
+            {
+               m_last_short_signal = TimeCurrent();
+               m_last_short_break = (is_break ? MathMin(donchian_low, lower_k) : m_last_short_break);
+            }
 
             Print("CVolatilityBreakoutEntry: SHORT | Entry=", entry, " SL=", stop, " TP=", tp,
                   " | Donchian=", donchian_low, " KeltnerLow=", lower_k);

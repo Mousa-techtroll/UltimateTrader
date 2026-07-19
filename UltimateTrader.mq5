@@ -9,6 +9,7 @@
 #property strict
 
 
+
 //+------------------------------------------------------------------+
 //| Includes                                                          |
 //+------------------------------------------------------------------+
@@ -2281,6 +2282,60 @@ bool PassConfirmedEntryQualityFilter(const SPendingSignal &pending)
 }
 
 //+------------------------------------------------------------------+
+//| L1-4 (InpConfirmedPathGates): confirmed-pending fill safety gates |
+//|                                                                    |
+//| The immediate entry path (OnTick section 3) enforces 5 market-     |
+//| safety gates before a fill; the confirmed-pending path historically|
+//| enforced NONE of them, so conditions that deteriorate DURING the   |
+//| confirmation window let a confirmed order fill where an equivalent |
+//| immediate order is blocked. This mirrors the 4 immediate-path      |
+//| BLOCK gates for the confirmed path (SPREAD is intentionally omitted|
+//| — the executor performs its own final spread check at send time).  |
+//| Read-only: DetectShock / GetSessionExecutionQuality /              |
+//| IsRegimeThrashing mutate no state. Entry is derived exactly as     |
+//| ProcessConfirmedSignal does (live ASK/BID). Returns true (with a   |
+//| reason) if ANY gate would block. Called ONLY under the flag, so    |
+//| flag-OFF is byte-identical legacy.                                 |
+//+------------------------------------------------------------------+
+bool ConfirmedPathGatesBlock(const SPendingSignal &pending, string &reason)
+{
+   // Gate 1 — shock (EXTREME) block. Mirrors immediate path shock override.
+   if(InpEnableShockDetection && g_tradeExecutor != NULL && g_marketContext != NULL)
+   {
+      ShockState cg_shock = g_tradeExecutor.DetectShock(g_marketContext.GetATRCurrent(), InpShockBarRangeThresh);
+      if(cg_shock.is_extreme) { reason = "SHOCK_EXTREME"; return true; }
+   }
+
+   // Gate 2 — session-execution-quality block. Mirrors the immediate path's
+   // block tier only (the risk-reduce tier is a sizing tweak, not a fill gate).
+   if(InpEnableSessionQualityGate && g_tradeExecutor != NULL &&
+      g_tradeExecutor.GetSessionExecutionQuality() < InpExecQualityBlockThresh)
+   { reason = "SESSION_QUALITY"; return true; }
+
+   // Gate 3 — regime-thrash cooldown block. Mirrors the immediate path.
+   if(InpEnableThrashCooldown && g_marketContext != NULL && g_marketContext.IsRegimeThrashing())
+   { reason = "THRASH_COOLDOWN"; return true; }
+
+   // Gate 4 — SL-to-spread sanity block. Mirrors the immediate path (including the
+   // CEG rule: sanity-gate the PATTERN stop, never the CEG-widened effective stop).
+   if(InpMinSLToSpreadRatio > 0)
+   {
+      double cg_entry  = (pending.signal_type == SIGNAL_LONG)
+                         ? SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                         : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double cg_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
+      double cg_sl     = MathAbs(cg_entry - pending.stop_loss);
+      if(pending.ceg_bound && pending.ceg_s_pat > 0)
+         cg_sl = pending.ceg_s_pat;
+      if(cg_sl > 0 && cg_sl < cg_spread * InpMinSLToSpreadRatio)
+      { reason = "SL_SANITY"; return true; }
+   }
+
+   reason = "";
+   return false;
+}
+
+//+------------------------------------------------------------------+
 //| Expert tick function                                               |
 //+------------------------------------------------------------------+
 void OnTick()
@@ -2301,6 +2356,20 @@ void OnTick()
    datetime currentBarTime = iTime(_Symbol, PERIOD_H1, 0);
    bool isNewBar = (currentBarTime != g_lastBarTime);
    g_lastBarTime = currentBarTime;
+
+   //--- L1-1 (InpEarlyRiskRefresh): refresh/latch the daily-loss halt at the TOP of
+   //--- OnTick, BEFORE any entry route (immediate/confirmed/sleeve/file). Legacy only
+   //--- samples CheckRiskLimits() at the END of OnTick (see below), so on the tick
+   //--- equity FIRST crosses the loss threshold the latched m_loss_halted flag is
+   //--- still stale (false) when the entry routes call CanTrade()/IsTradingHalted(),
+   //--- and one entry can still fire past the breach. This early call latches the halt
+   //--- first; every route already gates on the latched flag, so it then blocks them.
+   //--- Runs every tick (the file route runs every tick). The end-of-tick
+   //--- CheckRiskLimits() call is retained. Flag OFF = legacy end-of-tick-only latch
+   //--- (byte-identical). CheckRiskLimits() only READS equity and sets the halt when
+   //--- breached (CheckDayReset is idempotent within a day) — no other side effect.
+   if(InpEarlyRiskRefresh && g_riskMonitor != NULL)
+      g_riskMonitor.CheckRiskLimits();
 
    //=== NEW BAR PROCESSING ===
    if(isNewBar)
@@ -2512,6 +2581,7 @@ void OnTick()
 	               double entry_reference = 0.0;
 	               double price_72h_ago = 0.0;
 	               string news_conf_reason = "";
+	               string gate_block_reason = "";   // L1-4 confirmed-path safety-gate reason (unused when flag OFF)
 	               // ACTION-7 GUARDS (halt/budget + position cap): the confirmed
 	               // path runs OUTSIDE the immediate path's halt/budget gate
 	               // (section 3 below: !IsTradingHalted() && CanTrade()) and has
@@ -2580,6 +2650,18 @@ void OnTick()
 	                  Print("[NewsGate] confirmed entry blocked — ", news_conf_reason,
 	                        " (", pending.pattern_name, ")");
 	                  ClearPendingSignalLogged(pending, "NEWS_GATE", news_conf_reason);
+	               }
+	               // L1-4 (InpConfirmedPathGates): enforce the immediate path's 4
+	               // market-safety BLOCK gates (shock/session-quality/thrash/SL-sanity)
+	               // on the confirmed-pending fill too. When the flag is OFF the &&
+	               // short-circuits (helper never called) and control falls through to
+	               // the legacy else below — byte-identical. Spread stays with the
+	               // executor's own final send-time check (issue L1-4 note).
+	               else if(InpConfirmedPathGates && ConfirmedPathGatesBlock(pending, gate_block_reason))
+	               {
+	                  Print("[ConfPathGate] confirmed entry blocked — ", gate_block_reason,
+	                        " (", pending.pattern_name, ")");
+	                  ClearPendingSignalLogged(pending, "CONFIRMED_PATH_GATE", gate_block_reason);
 	               }
 	               else
 	               {

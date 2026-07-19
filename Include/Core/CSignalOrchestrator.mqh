@@ -538,6 +538,7 @@ public:
       double best_atr = 0;
       int best_smc_score = 0;
       int candidate_count = 0;
+      int best_plugin_index = -1;   // L3-3: index of the plugin whose signal won ranking (inert dead-store unless InpVolBOCooldownOnFill)
 
       for(int i = 0; i < m_plugin_count; i++)
       {
@@ -962,6 +963,7 @@ public:
             best_adx = current_adx;
             best_atr = current_atr;
             best_smc_score = smc_score;
+            best_plugin_index = i;   // L3-3: remember the winning plugin (read only under InpVolBOCooldownOnFill)
 
             LogPrint(">>> New best candidate: qualityScore=", best_quality_score,
                      " | ", signal.comment);
@@ -974,6 +976,25 @@ public:
       // No candidates passed validation
       if(candidate_count == 0 || !best_signal.valid)
          return result;
+
+      // L3-3 (InpVolBOCooldownOnFill): the winner is now finalized. If the winning
+      // plugin is CVolatilityBreakoutEntry, COMMIT its staged (pending) per-side
+      // cooldown/break stamp here — i.e. only because its candidate WON arbitration —
+      // instead of at emission. A candidate that lost ranking (or never became the
+      // winner) leaves its pending uncommitted, so it no longer suppresses that side
+      // for ~4h nor seeds a false pullback-"Add" anchor on a trade never opened.
+      // dynamic_cast mirrors the existing CPositionCoordinator downcast idiom;
+      // CVolatilityBreakoutEntry is a complete type here (included at
+      // UltimateTrader.mq5:61, before this header at :104). Flag OFF: the plugin
+      // still commits on emission and this block never runs (byte-identical legacy).
+      if(InpVolBOCooldownOnFill && best_plugin_index >= 0 &&
+         best_plugin_index < m_plugin_count && m_entry_plugins[best_plugin_index] != NULL)
+      {
+         CVolatilityBreakoutEntry *vbo_winner =
+            dynamic_cast<CVolatilityBreakoutEntry*>(m_entry_plugins[best_plugin_index]);
+         if(vbo_winner != NULL)
+            vbo_winner.CommitTradedCooldown();
+      }
 
       if(candidate_count > 1)
       {
