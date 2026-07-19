@@ -17,16 +17,16 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 | L7-3 | High | CONFIRMED | 1 | live-restart | offline-close idempotent accounting | ✅ | e5c7b8e | 0 (BI primary) |
 | L7-4 | High | CONFIRMED-DORMANT | 1 | live-file+restart | file TP partials persist | ✅ | e5c7b8e | 0 (BI primary) |
 | L4-1 | High | **ARCHITECTURAL DEFECT (unresolved)** | 2* | live-default | engine-aware evaluator redesign (see candidate-L4-1-redesign/) — raw −43%, global-recal −22.7%/Sharpe 1.93 both REJECTED | 🔬 | — | held |
-| L2-4 | Med | CONFIRMED | 2 | live-default | H4 confirm only on H4-bar change | ☐ | | |
+| L2-4 | Med | CONFIRMED | 2 | live-default | H4 confirm only on H4-bar change | ↻ REDESIGN | first-fix rejected (−$3,627) | defect-open |
 | L2-3 | Med | CONFIRMED | 2 | live-default | range-box reset vs prior box | ☐ | | |
 | L2-5 | Med | CONFIRMED | 2 | live-default | SMC zone close-rule on [1] | ☐ | | |
 | L2-6 | Med | CONFIRMED | 2 | live-default | trend swing closed right-wings | ☐ | | |
 | L3-3 | Med | CONFIRMED | 2 | backtest | vol-BO cooldown on fill not emit | ☐ | | |
-| L3-4 | Med | CONFIRMED | 2 | backtest | equal-tier explicit tie-breaker | ☐ | | |
+| L3-4 | Med | CONFIRMED | 2 | backtest | equal-tier explicit tie-breaker | ↻ REDESIGN | first-fix rejected (−$742) | defect-open |
 | L4-3 | Med | CONFIRMED | 2 | live-default(long) | no-break tolerance in range/ATR units | ☐ | | |
 | L4-4 | Med | CONFIRMED | 2 | live-default | revalidation reruns dynamic gates | ☐ | | |
 | L1-1 | High | CONFIRMED | 2/1 | live-default | daily-halt refresh at OnTick top | ☐ | | |
-| L1-4 | Med | CONFIRMED (benign) | 2 | live-default | enforce confirmed-path gates (−$578) | ☐ | | |
+| L1-4 | Med | CONFIRMED (benign) | 2 | live-default | enforce confirmed-path gates (−$578) | ↻ REDESIGN | first-fix rejected (−$1,881) | defect-open |
 | L2-1 | High | CONFIRMED-DORMANT | 3 | toggle | one paired structure event | ☐ | | |
 | L2-2 | Med | CONFIRMED-DORMANT | 3 | toggle | sweep recency by pool id | ☐ | | |
 | L3-2 | High | CONFIRMED-DORMANT | 3 | toggle | preserve router weight immediate path | ☐ | | |
@@ -49,4 +49,7 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 `CQualityTierRiskStrategy` stays dead (fixes target live `Utils.NormalizeLots`/`CTradeOrchestrator`).
 
 ## Run log
+
+- **Tier-2 individual** (flag-on vs d6549628): BYTE-IDENTICAL (free): L2-3,L2-5,L2-6,L1-1,L3-3. Net-down/risk-up: L4-3 −$511 (PF1.44/Sh3.05/DD12.8), L4-4 −$1,937 (PF1.44/Sh3.04/DD13.3). Net-down: L3-4 −$742, L1-4 −$1,881, L2-4 −$3,627(−10.4%). L4-1 raw −$15,064 (architectural redesign, NOT merged).
+- **COMBINED all-on (10 non-L4-1 correctness fixes)**: primary **c83b61f6 / $29,186.97 / 810 / PF 1.43 / Sharpe 2.95 / EqDD 11.31%** (−16.5% net BUT −26% drawdown, PF up, return/DD 22.9->25.8). GH **ec5b9c33 / $21,985.32 / 752** (−25.5%).
 - **TIER1** (L6-2/L6-3/L1-2 + L7-1..L7-4 combined): primary **d6549628 / \$34,940.18 / 869** = baseline EXACT (byte-identical). GH **b501fecb / \$29,525.85 / 820** (+\$0.06 = L6-3 tick-snap on GH tick!=point; primary binding feed unchanged). Adversarial-reviewed SOUND. Commits 5b056bb + e5c7b8e, tag fix-tier1-liverobustness-34940.
