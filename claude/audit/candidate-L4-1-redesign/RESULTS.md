@@ -12,7 +12,7 @@ effective ladder. Flag-off verified **byte-identical** (Events `5ecfa994`, $32,6
 modulo the 2 new attribution columns).
 
 **The correction MATTERED and vindicated the critique:** v2 −77% → **v2.1 −39.5%** ($19,748.79 / PF 1.37 /
-Sharpe 2.57 / EqDD 10.73% / 727) — a $12.3k swing, proving v2's biases were inflating the damage. But v2.1
+Sharpe 2.57 / EqDD 10.73% / 727; GH $15,505.69 / PF 1.33 / Sharpe 2.47 / 678 = −35.6%) — a $12.3k swing, proving v2's biases were inflating the damage. But v2.1
 still FAILS the pre-registered bar (Sharpe 2.57<3.13, PF 1.37<1.47, net −39.5%).
 
 **Clean attribution (candidate↔exit reconciled, 1,563 joined):** v2.1 now RETAINS the profitable cohorts
