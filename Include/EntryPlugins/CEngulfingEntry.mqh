@@ -232,6 +232,11 @@ public:
                   if(m_context != NULL)
                      signal.regimeAtSignal = m_context.GetCurrentRegime();
 
+                  // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Bull engulf
+                  // in a bull trend = trend continuation (the live case).
+                  signal.setup_subtype = ENGULFING_CONTINUATION;
+                  signal.engine_intent = INTENT_TREND_CONTINUATION;
+
                   Print("CEngulfingEntry: BULLISH ENGULFING | Entry=", entry, " SL=", sl, " TP=", tp);
                   return signal;
                }
@@ -287,6 +292,11 @@ public:
                   signal.source = SIGNAL_SOURCE_PATTERN;
                   if(m_context != NULL)
                      signal.regimeAtSignal = m_context.GetCurrentRegime();
+
+                  // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Reserved
+                  // reversal role for the (disabled) bear engulfing side.
+                  signal.setup_subtype = ENGULFING_REVERSAL;
+                  signal.engine_intent = INTENT_REVERSAL;
 
                   Print("CEngulfingEntry: BEARISH ENGULFING | Entry=", entry, " SL=", sl, " TP=", tp);
                   return signal;

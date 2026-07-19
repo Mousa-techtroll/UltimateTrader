@@ -183,6 +183,9 @@ public:
             signal.comment = "S6: Failed Break Long | Swept " + DoubleToString(level, 2);
             signal.requiresConfirmation = false;  // Immediate — stabilizer path
             signal.source = SIGNAL_SOURCE_PATTERN;
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Failed-break reclaim.
+            signal.setup_subtype = FAILEDBREAK_RECLAIM;
+            signal.engine_intent = INTENT_FAILED_BREAK_REVERSAL;
             return signal;
          }
       }
@@ -238,6 +241,9 @@ public:
             signal.comment = "S6: Failed Break Short | Swept " + DoubleToString(level, 2);
             signal.requiresConfirmation = false;
             signal.source = SIGNAL_SOURCE_PATTERN;
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Failed-break reclaim.
+            signal.setup_subtype = FAILEDBREAK_RECLAIM;
+            signal.engine_intent = INTENT_FAILED_BREAK_REVERSAL;
             return signal;
          }
       }

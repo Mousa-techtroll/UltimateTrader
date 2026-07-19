@@ -248,6 +248,10 @@ public:
                if(m_context != NULL)
                   signal.regimeAtSignal = m_context.GetCurrentRegime();
 
+               // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Sweep+displacement reclaim.
+               signal.setup_subtype = FAILEDBREAK_RECLAIM;
+               signal.engine_intent = INTENT_FAILED_BREAK_REVERSAL;
+
                Print("CDisplacementEntry: BULLISH SWEEP+DISPLACEMENT | Entry=", entry,
                      " SL=", sl, " TP=", tp,
                      " | Body=", body_abs, " ATR=", atr,
@@ -310,6 +314,10 @@ public:
                signal.source = SIGNAL_SOURCE_PATTERN;
                if(m_context != NULL)
                   signal.regimeAtSignal = m_context.GetCurrentRegime();
+
+               // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Sweep+displacement reclaim.
+               signal.setup_subtype = FAILEDBREAK_RECLAIM;
+               signal.engine_intent = INTENT_FAILED_BREAK_REVERSAL;
 
                Print("CDisplacementEntry: BEARISH SWEEP+DISPLACEMENT | Entry=", entry,
                      " SL=", sl, " TP=", tp,

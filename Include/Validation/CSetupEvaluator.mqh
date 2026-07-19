@@ -21,6 +21,11 @@
 // Both overloads + this orphan include are deleted. CConfluenceScorer remains live
 // via UltimateTrader.mq5, the four engines, and CMajorStrategyEngine.
 
+// L4-1 Arm C v2.1: recency window (closed H1 bars) for the REVERSAL_CONFIRMATION
+// evidence family — a BOS/CHoCH older than this does NOT count as fresh reversal
+// confirmation. Mirrors the L3 CConfluenceScorer Phase-2.2 freshness gate (=8).
+#define EAA_V21_BOS_RECENCY_BARS 8
+
 //+------------------------------------------------------------------+
 //| CSetupEvaluator - Evaluates setup quality and calculates risk    |
 //+------------------------------------------------------------------+
@@ -201,152 +206,181 @@ private:
    }
 
    //==================================================================
-   //  L4-1 Arm C v2 — setup-subtype, EVIDENCE-GATED evaluator (used
-   //  ONLY on the InpEAAv2 ON path). Redesigns the REJECTED v1
-   //  (InpEngineAwareEval, -20.4%): v1 was plugin-coarse and gave
-   //  BLANKET counter credit from near-universal always-on signals.
-   //  v2 classifies per EMITTED setup and awards counter credit ONLY
-   //  when backed by an EVIDENCE COUNT >= 2 of DIRECTIONAL signals.
+   //  L4-1 Arm C v2.1 — CONSUMES the emission-stamped subtype/intent
+   //  (Phase A) and fixes v2's biases (used ONLY on the InpEAAv2 ON
+   //  path). The REJECTED v2 (ClassifySubtype(plugin_name), a raw
+   //  evidence-COUNT that mixed context with direction, and bare-BOS)
+   //  is REPLACED. v2.1:
+   //   (1) reads signal.engine_intent + signal.setup_subtype (stamped
+   //       by the EMITTING setup) instead of inferring from plugin_name;
+   //   (2) per-intent routing on the STAMPED intent — this moves an
+   //       H4-aligned pin OUT of the counter gate (PINBAR_TREND_REJECTION
+   //       is stamped INTENT_PULLBACK = ALIGNMENT), a key v2 fix;
+   //   (3) counter reward from DISTINCT DIRECTIONAL evidence FAMILIES
+   //       matching the signal direction (NOT a bit-count) — ATR/vol
+   //       expansion is CONTEXT ONLY (modulates, never qualifies);
+   //   (4) the reversal-confirmation family is a TIMESTAMP-PAIRED,
+   //       recency-gated BOS/CHoCH (a stale structure can't count fresh).
    //  Every method below is unreachable when InpEAAv2 is OFF, so the
    //  legacy (and v1) scoring paths stay byte-identical.
-   //  See claude/audit/candidate-L4-1-redesign/ARMC-V2-IMPL.md.
+   //  See claude/audit/candidate-L4-1-redesign/ARMC-V2.1-IMPL.md.
    //==================================================================
 
-   //--- Setup-subtype classifier (keyed on the canonical plugin_name; the
-   //    v2 taxonomy is single-subtype per plugin per the recon, so direction/
-   //    regime are not needed to disambiguate the listed plugins). Anything
-   //    unlisted -> SUBTYPE_HYBRID, which routes to the byte-identical legacy path.
-   ENUM_SETUP_SUBTYPE ClassifySubtype(const string p)
-   {
-      // ALIGNMENT subtypes (earn from ALIGNED trend confluence)
-      if(p == "MACrossEntry" || p == "EngulfingEntry")   // Engulfing bull-in-practice; alignment reward is correct FOR IT
-         return SUBTYPE_TREND_CONTINUATION;
-      if(p == "PullbackContinuationEngine")
-         return SUBTYPE_PULLBACK;                          // credits ALIGNED + MIXED (the pullback)
-      if(p == "ExpansionEngine" || p == "VolatilityBreakoutEntry" ||
-         p == "SessionEngine" || p == "SessionBreakoutEntry")
-         return SUBTYPE_BREAKOUT;
-      // COUNTER subtypes (earn ONLY from an evidence count >= 2; never penalized for counter)
-      if(p == "PinBarEntry")
-         return SUBTYPE_EXHAUSTION_REVERSAL;
-      if(p == "CrashBreakoutEntry")
-         return SUBTYPE_MEAN_REVERSION;                    // death-cross is a required GATE
-      if(p == "FailedBreakReversal" || p == "DisplacementEntry")
-         return SUBTYPE_FAILED_BREAK_REVERSAL;             // the failed break itself = 1 inherent evidence
-      // File / unknown / anything else -> legacy-equivalent (safe)
-      return SUBTYPE_HYBRID;
-   }
+   //--- v2.1 intent classes, keyed on the STAMPED intent (Phase A). ALIGNMENT =
+   //    {TREND_CONTINUATION, PULLBACK, BREAKOUT} (PINBAR_TREND_REJECTION is stamped
+   //    INTENT_PULLBACK, so an H4-aligned pin lands here, not in the counter gate).
+   //    COUNTER = {EXHAUSTION_REVERSAL, MEAN_REVERSION, FAILED_BREAK_REVERSAL}
+   //    (incl. PINBAR_COUNTER_EXHAUSTION, stamped INTENT_EXHAUSTION_REVERSAL).
+   //    Anything else (INTENT_HYBRID, the v1-only intents, the disabled
+   //    ENGULFING_REVERSAL/INTENT_REVERSAL) is neither -> routes to the byte-
+   //    identical legacy path. Distinct from the v1 helpers IsAlignmentIntent/
+   //    IsCounterIntent (which key on the v1 taxonomy) — those stay untouched.
+   bool IsV21AlignmentIntent(ENUM_ENGINE_INTENT it)
+   { return (it == INTENT_TREND_CONTINUATION || it == INTENT_PULLBACK || it == INTENT_BREAKOUT); }
+   bool IsV21CounterIntent(ENUM_ENGINE_INTENT it)
+   { return (it == INTENT_EXHAUSTION_REVERSAL || it == INTENT_MEAN_REVERSION || it == INTENT_FAILED_BREAK_REVERSAL); }
 
-   bool IsAlignmentSubtype(ENUM_SETUP_SUBTYPE s)
-   { return (s == SUBTYPE_TREND_CONTINUATION || s == SUBTYPE_PULLBACK || s == SUBTYPE_BREAKOUT); }
-   bool IsCounterSubtype(ENUM_SETUP_SUBTYPE s)
-   { return (s == SUBTYPE_EXHAUSTION_REVERSAL || s == SUBTYPE_MEAN_REVERSION || s == SUBTYPE_FAILED_BREAK_REVERSAL); }
-
-   //--- DIRECTIONAL evidence bitmask. This is the core v2 fix: unlike v1 (which
-   //    used the always-on GetSMCConfluenceScore base-50 + H4 ATR), every bit here
-   //    is CONDITIONAL and DIRECTIONAL. Bits:
-   //      1  = directional RSI extreme   (LONG: rsi<oversold; SHORT: rsi>overbought)  [H1]
-   //      2  = directional structural zone (LONG: bull OB||FVG; SHORT: bear OB||FVG)
-   //      4  = H1-ATR extension >= 1.5   (correct H1 pair GetATRH1Current/GetATRAverage)
-   //      8  = directional BOS/CHoCH     (reversal confirmation in the signal direction)
-   //      16 = D1 death-cross            (RECORDED; a GATE for MEAN_REVERSION, NOT counted)
-   //      32 = inherent failed-break     (set for FAILED_BREAK_REVERSAL; counts as 1)
-   //    The COUNTING mask is {1,2,4,8,32}; bit 16 is a gate/telemetry bit only.
-   int ComputeEvidenceBits(ENUM_SETUP_SUBTYPE s, ENUM_SIGNAL_TYPE sig)
+   //--- DIRECTIONAL evidence FAMILIES (the core v2.1 fix). Returns a bit-set over
+   //    ENUM_EVIDENCE_FAMILY. Each DIRECTIONAL family is credited ONLY when it
+   //    matches the SIGNAL direction. ATR/vol expansion is a SEPARATE context bit
+   //    (EVF_ATR_CONTEXT) that NEVER counts toward the family count (see
+   //    CountDirectionalFamilies) — it may only modulate an already-earned reward.
+   //    Pure read; only reached on the InpEAAv2 ON path (or the AUDIT shadow).
+   int ComputeEvidenceFamilies(ENUM_SETUP_SUBTYPE subtype, ENUM_SIGNAL_TYPE sig)
    {
-      int bits = 0;
-      if(s == SUBTYPE_FAILED_BREAK_REVERSAL) bits |= 32;   // inherent evidence (independent of m_context)
-      if(m_context == NULL) return bits;
+      int fam = 0;
+
+      // FAILED_BREAK family — inherent for the reclaim subtype (the setup itself IS
+      // the evidence). Independent of m_context. Stamped subtype FAILEDBREAK_RECLAIM
+      // covers CFailedBreakReversal + CDisplacementEntry.
+      if(subtype == FAILEDBREAK_RECLAIM)
+         fam |= EVF_FAILED_BREAK;
+
+      if(m_context == NULL) return fam;
 
       bool isLong  = (sig == SIGNAL_LONG);
       bool isShort = (sig == SIGNAL_SHORT);
 
-      double rsi = m_context.GetCurrentRSI();              // H1 RSI
+      // STRUCTURAL family — directional order-block / FVG rejection zone.
+      if(isLong  && (m_context.IsInBullishOrderBlock() || m_context.IsInBullishFVG()))  fam |= EVF_STRUCTURAL;
+      if(isShort && (m_context.IsInBearishOrderBlock() || m_context.IsInBearishFVG()))  fam |= EVF_STRUCTURAL;
+
+      // EXHAUSTION family — directional H1 RSI extreme.
+      double rsi = m_context.GetCurrentRSI();
       if((isLong && rsi < m_rsi_oversold) || (isShort && rsi > m_rsi_overbought))
-         bits |= 1;
+         fam |= EVF_EXHAUSTION;
 
-      if(isLong  && (m_context.IsInBullishOrderBlock() || m_context.IsInBullishFVG()))  bits |= 2;
-      if(isShort && (m_context.IsInBearishOrderBlock() || m_context.IsInBearishFVG()))  bits |= 2;
+      // SWEEP family — directional, recency-gated liquidity sweep (lows swept for a
+      // long reversal, highs swept for a short reversal).
+      int sweep = m_context.GetLiquiditySwept();     // +1 bullish (lows), -1 bearish (highs), 0 none
+      if((isLong && sweep > 0) || (isShort && sweep < 0))
+         fam |= EVF_SWEEP;
 
-      double atr_h1  = m_context.GetATRH1Current();        // H1 (1.0-centered vs the H1 average)
+      // REVERSAL_CONFIRMATION family — a TIMESTAMP-PAIRED, direction-matched,
+      // recency-gated BOS/CHoCH. A stale structural event (older than
+      // EAA_V21_BOS_RECENCY_BARS closed H1 bars) does NOT count as fresh reversal
+      // confirmation — this replaces v2's bare GetRecentBOS() enum use (L2-1 align).
+      ENUM_BOS_TYPE bos     = m_context.GetRecentBOS();
+      datetime      bosTime = m_context.GetRecentBOSTime();
+      bool bosFresh = (bosTime > 0) &&
+                      ((TimeCurrent() - bosTime)
+                          <= (datetime)(EAA_V21_BOS_RECENCY_BARS * PeriodSeconds(PERIOD_H1)));
+      if(bosFresh)
+      {
+         if(isLong  && (bos == BOS_BULLISH || bos == CHOCH_BULLISH)) fam |= EVF_REVERSAL_CONFIRMATION;
+         if(isShort && (bos == BOS_BEARISH || bos == CHOCH_BEARISH)) fam |= EVF_REVERSAL_CONFIRMATION;
+      }
+
+      // ATR/vol expansion — CONTEXT ONLY. Recorded so it can MODULATE (+1) an
+      // already-earned counter reward, but it is NEVER a directional family (the
+      // whole v2.1 fix: context can't by itself admit a counter). H1 pair
+      // (1.0-centered) — NOT the H4 GetATRCurrent that biased v1.
+      double atr_h1  = m_context.GetATRH1Current();
       double atr_avg = m_context.GetATRAverage();
-      if(atr_avg > 0 && atr_h1 / atr_avg >= 1.5) bits |= 4;
+      if(atr_avg > 0 && atr_h1 / atr_avg >= 1.5)
+         fam |= EVF_ATR_CONTEXT;
 
-      ENUM_BOS_TYPE bos = m_context.GetRecentBOS();
-      if(isLong  && (bos == BOS_BULLISH || bos == CHOCH_BULLISH)) bits |= 8;
-      if(isShort && (bos == BOS_BEARISH || bos == CHOCH_BEARISH)) bits |= 8;
-
-      if(m_context.GetD1DeathCross()) bits |= 16;          // GATE for MEAN_REVERSION (not counted)
-      return bits;
+      return fam;
    }
 
-   //--- Evidence COUNT over the counting mask {1,2,4,8,32}. Bit 16 (death-cross)
-   //    is deliberately excluded — it is the MEAN_REVERSION gate, not a reward.
-   int EvidenceCount(int bits)
+   //--- Count of DISTINCT DIRECTIONAL families (EXCLUDES EVF_ATR_CONTEXT — the core
+   //    of the v2.1 fix: ATR/vol expansion is context, not a direction-matched family).
+   int CountDirectionalFamilies(int fam)
    {
       int c = 0;
-      if((bits & 1)  != 0) c++;
-      if((bits & 2)  != 0) c++;
-      if((bits & 4)  != 0) c++;
-      if((bits & 8)  != 0) c++;
-      if((bits & 32) != 0) c++;
+      if((fam & EVF_STRUCTURAL)            != 0) c++;
+      if((fam & EVF_EXHAUSTION)            != 0) c++;
+      if((fam & EVF_SWEEP)                 != 0) c++;
+      if((fam & EVF_FAILED_BREAK)          != 0) c++;
+      if((fam & EVF_REVERSAL_CONFIRMATION) != 0) c++;
       return c;
    }
 
-   //--- v2 trend-alignment slot (0..3). REPLACES the legacy Factor-1 subtotal on the
-   //    InpEAAv2 ON path; still competes with CHoCH via the shared MathMax below.
-   //    ALIGNMENT subtypes: IDENTICAL to v1's alignment branch (that part was never the
-   //    problem) — award ONLY when ALIGNED (PULLBACK also MIXED), scaled by context_strength.
-   //    COUNTER subtypes: award ONLY when evidence count >= 2 (2->+2, 3+->+3); < 2 -> 0
-   //    (removes v1's unsupported direction-blind counter admissions). MIXED -> 0 for ALL
-   //    counter subtypes (incl. PinBar's only-losing MIXED cohort). MEAN_REVERSION requires
-   //    the D1 death-cross gate. NEVER subtracts for COUNTER.
-   int V2AlignSlot(ENUM_SETUP_SUBTYPE s, ENUM_CTX_RELATIONSHIP rel, int cs,
-                   int evbits, ENUM_SIGNAL_TYPE sig)
+   //--- v2.1 ALIGNMENT slot (0..3). IDENTICAL to v1's alignment branch (that part was
+   //    never the problem): award ONLY when ALIGNED (PULLBACK also MIXED — the pullback
+   //    thesis), scaled by context_strength. No counter reward, no penalty. Keyed on the
+   //    STAMPED intent, so an H4-aligned pin (stamped INTENT_PULLBACK) is rewarded here.
+   int V21AlignSlot(ENUM_ENGINE_INTENT intent, ENUM_CTX_RELATIONSHIP rel, int cs)
    {
-      if(IsAlignmentSubtype(s))
-      {
-         bool award = (rel == REL_ALIGNED) || (s == SUBTYPE_PULLBACK && rel == REL_MIXED);
-         if(!award) return 0;                       // counter/neutral -> no points (no penalty)
-         if(cs >= 4) return 3;
-         if(cs >= 2) return 2;
-         if(cs >= 1) return 1;
-         return 0;
-      }
-      if(IsCounterSubtype(s))
-      {
-         if(rel == REL_MIXED) return 0;             // MIXED gets 0 for counter subtypes
-         if(s == SUBTYPE_MEAN_REVERSION && (evbits & 16) == 0)
-            return 0;                               // death-cross GATE (no cross -> low-evidence)
-         int evc = EvidenceCount(evbits);
-         if(evc >= 3) return 3;
-         if(evc >= 2) return 2;
-         return 0;                                  // evidence < 2 -> no opposition points
-      }
-      return 0;                                     // HYBRID never reaches here (legacy path)
+      bool award = (rel == REL_ALIGNED) || (intent == INTENT_PULLBACK && rel == REL_MIXED);
+      if(!award) return 0;
+      if(cs >= 4) return 3;
+      if(cs >= 2) return 2;
+      if(cs >= 1) return 1;
+      return 0;
    }
 
-   //--- v2 macro slot (0..3). REPLACES the legacy Factor-3 macro points on the ON path.
-   //    ALIGNMENT subtypes: IDENTICAL to v1's alignment macro branch — signed macro SUPPORT
-   //    only, and only when awarded (ALIGNED, or PULLBACK+MIXED); opposing macro earns 0;
-   //    neutral macro keeps the +1 fallback (aligned only).
-   //    COUNTER subtypes: 0. v1's blanket opposing-context "confirmation" credit (fired
-   //    near-universally) is REMOVED — counter setups earn ONLY through the evidence-gated
-   //    Slot A; there is no macro slot for them.
-   int V2MacroSlot(ENUM_SETUP_SUBTYPE s, ENUM_CTX_RELATIONSHIP rel, int cs,
-                   int macro_score, bool pat_bull, bool pat_bear)
+   //--- v2.1 COUNTER slot (0..3) — the core fix. Opposition credit scales with the
+   //    NUMBER OF DISTINCT DIRECTIONAL FAMILIES matching the signal direction
+   //    (1 -> modest 2, >=2 -> 3), NEVER a bit-count mixing context with direction.
+   //    ATR/vol expansion (EVF_ATR_CONTEXT) MODULATES (+1, capped at 3) ONLY when a
+   //    qualifying family is already present — it can never by itself admit a counter
+   //    (0 families -> 0 regardless of ATR). Gates:
+   //      - PinBar (INTENT_EXHAUSTION_REVERSAL) in a MIXED relationship -> 0 (its loser).
+   //      - MEAN_REVERSION requires the D1 death-cross GATE (no cross -> 0).
+   //    NEVER subtracts for COUNTER.
+   int V21CounterSlot(ENUM_ENGINE_INTENT intent, ENUM_CTX_RELATIONSHIP rel, int fam)
    {
-      if(IsAlignmentSubtype(s))
+      // PinBar MIXED demotable cohort (v2.1: only PinBar, per the design).
+      if(intent == INTENT_EXHAUSTION_REVERSAL && rel == REL_MIXED)
+         return 0;
+      // MEAN_REVERSION death-cross GATE (regime precondition, not a reward).
+      if(intent == INTENT_MEAN_REVERSION &&
+         (m_context == NULL || !m_context.GetD1DeathCross()))
+         return 0;
+
+      int nfam = CountDirectionalFamilies(fam);
+      int pts;
+      if(nfam >= 2)      pts = 3;   // >= 2 distinct directional families -> more
+      else if(nfam == 1) pts = 2;   // exactly 1 directional family -> modest
+      else               pts = 0;   // 0 -> no opposition credit (ATR alone can't admit)
+
+      // ATR/vol expansion is CONTEXT: modulate an already-earned reward only.
+      if(pts > 0 && (fam & EVF_ATR_CONTEXT) != 0)
+         pts = (int)MathMin(3, pts + 1);
+      return pts;
+   }
+
+   //--- v2.1 macro slot (0..3). ALIGNMENT intents: signed macro SUPPORT only, and only
+   //    when awarded (ALIGNED, or PULLBACK+MIXED); opposing macro earns 0; neutral macro
+   //    keeps the +1 fallback (aligned only) — IDENTICAL to v1's alignment macro branch.
+   //    COUNTER intents: 0 — they earn ONLY through the family-gated counter slot above
+   //    (v1/v2's blanket opposing-context macro "confirmation" is REMOVED). Keyed on the
+   //    STAMPED intent.
+   int V21MacroSlot(ENUM_ENGINE_INTENT intent, ENUM_CTX_RELATIONSHIP rel, int cs,
+                    int macro_score, bool pat_bull, bool pat_bear)
+   {
+      if(IsV21AlignmentIntent(intent))
       {
-         bool award = (rel == REL_ALIGNED) || (s == SUBTYPE_PULLBACK && rel == REL_MIXED);
+         bool award = (rel == REL_ALIGNED) || (intent == INTENT_PULLBACK && rel == REL_MIXED);
          if(!award) return 0;
          int macro_support = pat_bull ? macro_score : (pat_bear ? -macro_score : 0);
          if(macro_support >= 3) return 3;
          if(macro_support >= 1) return 1;
-         if(macro_score == 0)   return 1;           // neutral-macro fallback (aligned only)
+         if(macro_score == 0)   return 1;   // neutral-macro fallback (aligned only)
          return 0;
       }
-      return 0;                                     // COUNTER + HYBRID: no macro slot
+      return 0;                             // COUNTER + everything else: no macro slot
    }
 
 #ifdef AUDIT_BUILD
@@ -433,7 +467,10 @@ public:
    ENUM_SETUP_QUALITY EvaluateSetupQuality(ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
                                            ENUM_REGIME_TYPE regime, int macro_score, string pattern,
                                            bool isBearRegime = false, ENUM_SIGNAL_TYPE signal = SIGNAL_NONE,
-                                           string plugin_name = "", string signal_id = "")
+                                           string plugin_name = "", string signal_id = "",
+                                           ENUM_ENGINE_INTENT engine_intent = INTENT_HYBRID,   // L4-1 Arm C v2.1: STAMPED intent (Phase A)
+                                           ENUM_SETUP_SUBTYPE setup_subtype = SUBTYPE_HYBRID,   // L4-1 Arm C v2.1: STAMPED subtype (Phase A)
+                                           ENUM_EAA_STAGE stage = EAA_STAGE_INITIAL)            // L4-1 Arm C v2.1: scoring-stage identity (AUDIT-only)
    {
       int points = 0;
 
@@ -456,23 +493,28 @@ public:
       }
       bool ea_on = (InpEngineAwareEval && ea_intent != INTENT_HYBRID);
 
-      // L4-1 Arm C v2 prelude: setup-subtype + directional-evidence outputs. Computed ONLY
-      // when InpEAAv2 is ON (guarded so the OFF path performs NO extra context reads and stays
-      // byte-identical). HYBRID (unlisted plugin) routes to the legacy branches below, so an
-      // out-of-taxonomy plugin is unaffected even with the flag ON. v2 takes precedence over v1.
-      ENUM_SETUP_SUBTYPE    eav2_subtype = SUBTYPE_HYBRID;
+      // L4-1 Arm C v2.1 prelude: CONSUME the emission-stamped intent/subtype (Phase A) and
+      // compute the directional evidence FAMILIES. Computed ONLY when InpEAAv2 is ON (guarded
+      // so the OFF path performs NO extra context reads and stays byte-identical). An out-of-
+      // taxonomy intent (INTENT_HYBRID, the v1-only intents, the disabled ENGULFING_REVERSAL)
+      // is neither alignment nor counter -> routes to the legacy branches below (unaffected
+      // even with the flag ON). v2.1 takes precedence over v1. Families are needed only for
+      // COUNTER intents (alignment/macro slots ignore them), so the read is gated on that.
+      ENUM_ENGINE_INTENT    eav2_intent  = engine_intent;   // STAMPED (Phase A) — not inferred from plugin_name
+      ENUM_SETUP_SUBTYPE    eav2_subtype = setup_subtype;   // STAMPED (Phase A)
       ENUM_CTX_RELATIONSHIP eav2_rel     = REL_NEUTRAL;
       int                   eav2_cs      = 0;
-      int                   eav2_evbits  = 0;
+      int                   eav2_fam     = 0;
       if(InpEAAv2)
       {
-         eav2_subtype = ClassifySubtype(plugin_name);
-         eav2_rel     = ComputeRelationship(daily, h4, signal);
+         eav2_rel = ComputeRelationship(daily, h4, signal);
          double v2_adx = (m_context != NULL) ? m_context.GetADXValue() : 0.0;
-         eav2_cs      = ComputeContextStrength(daily, h4, macro_score, v2_adx);
-         eav2_evbits  = ComputeEvidenceBits(eav2_subtype, signal);
+         eav2_cs  = ComputeContextStrength(daily, h4, macro_score, v2_adx);
+         if(IsV21CounterIntent(eav2_intent))
+            eav2_fam = ComputeEvidenceFamilies(eav2_subtype, signal);
       }
-      bool eav2_on = (InpEAAv2 && eav2_subtype != SUBTYPE_HYBRID);
+      bool eav2_on = (InpEAAv2 &&
+                      (IsV21AlignmentIntent(eav2_intent) || IsV21CounterIntent(eav2_intent)));
 
       if(signal == SIGNAL_NONE)
       {
@@ -534,11 +576,15 @@ public:
       int trend_alignment = 0;
       if(eav2_on)
       {
-         // L4-1 Arm C v2 (ON path): the setup-subtype/evidence-gated slot REPLACES the whole
-         // legacy Factor-1 trend-alignment subtotal. ALIGNMENT subtypes reuse the v1 alignment
-         // formula; COUNTER subtypes earn ONLY on evidence count >= 2 (no blanket counter credit).
-         // Still competes exclusively with CHoCH via the MathMax below.
-         trend_alignment = V2AlignSlot(eav2_subtype, eav2_rel, eav2_cs, eav2_evbits, signal);
+         // L4-1 Arm C v2.1 (ON path): the per-intent slot REPLACES the whole legacy Factor-1
+         // trend-alignment subtotal, routed on the STAMPED intent. ALIGNMENT intents reuse the
+         // v1 alignment formula; COUNTER intents earn from DISTINCT DIRECTIONAL evidence
+         // FAMILIES matching the signal direction (ATR is context-only). Still competes
+         // exclusively with CHoCH via the MathMax below.
+         if(IsV21CounterIntent(eav2_intent))
+            trend_alignment = V21CounterSlot(eav2_intent, eav2_rel, eav2_fam);
+         else
+            trend_alignment = V21AlignSlot(eav2_intent, eav2_rel, eav2_cs);
       }
       else if(ea_on)
       {
@@ -652,11 +698,11 @@ public:
       // earns nothing while a neutral macro (0) keeps the fallback point. OFF = legacy.
       if(eav2_on)
       {
-         // L4-1 Arm C v2 (ON path): macro slot REPLACES the legacy Factor-3 macro points.
-         // Alignment subtypes earn signed macro support only when ALIGNED; counter subtypes
-         // earn 0 here (they earn ONLY through the evidence-gated Slot A above).
-         points += V2MacroSlot(eav2_subtype, eav2_rel, eav2_cs, macro_score,
-                               pattern_bullish, pattern_bearish);
+         // L4-1 Arm C v2.1 (ON path): macro slot REPLACES the legacy Factor-3 macro points,
+         // routed on the STAMPED intent. Alignment intents earn signed macro support only when
+         // ALIGNED; counter intents earn 0 here (they earn ONLY through the family-gated slot).
+         points += V21MacroSlot(eav2_intent, eav2_rel, eav2_cs, macro_score,
+                                pattern_bullish, pattern_bearish);
       }
       else if(ea_on)
       {
@@ -808,33 +854,50 @@ public:
          points = 10;
 
 #ifdef AUDIT_BUILD
-      // AUDIT_BUILD (L4-1 Arm C v2 attribution): MEASURE-ONLY. One CSV row per scored
-      // candidate carrying the exact linkage id (signal_id) + BOTH scoring policies computed
-      // FLAG-INDEPENDENTLY (legacy_points/tier AND v2_points/tier) + the setup_subtype +
-      // directional-evidence bitmask + relationship — so one AUDIT run joins to the Stats
-      // SignalID and partitions every fill into legacy-retained / legacy-removed / newly-
-      // admitted. The whole block vanishes in production (byte-identical); it reads `points`
-      // and getters but NEVER writes `points` or the returned tier.
+      // AUDIT_BUILD (L4-1 Arm C v2.1 attribution): MEASURE-ONLY. One CSV row per scored
+      // candidate carrying the exact linkage id (signal_id) + the scoring STAGE (INITIAL vs
+      // REVALIDATION — so the two rows sharing one signal_id are separable) + BOTH scoring
+      // policies computed FLAG-INDEPENDENTLY: a clean LEGACY mirror (the TRUE production
+      // scoring, independent of InpEAAv2/InpEngineAwareEval/offsets) AND the v2.1 shadow +
+      // the STAMPED subtype/intent + the satisfied evidence FAMILY bitmask. legacy_tier is
+      // derived at the BASE ladder; v2_tier at the v2.1-EFFECTIVE (offset-adjusted) ladder —
+      // an honest dual-policy A/B. The whole block vanishes in production (byte-identical);
+      // it reads `points` and getters but NEVER writes `points` or the returned tier.
       {
-         ENUM_SETUP_SUBTYPE    aud_subtype = ClassifySubtype(plugin_name);
+         // Consume the STAMPED identity (flag-independent — Phase A always stamps it).
+         ENUM_ENGINE_INTENT    aud_intent  = engine_intent;
+         ENUM_SETUP_SUBTYPE    aud_subtype = setup_subtype;
          ENUM_CTX_RELATIONSHIP aud_rel     = ComputeRelationship(daily, h4, signal);
          double aud_adx = (m_context != NULL) ? m_context.GetADXValue() : 0.0;
          int    aud_cs  = ComputeContextStrength(daily, h4, macro_score, aud_adx);
-         int    aud_ev  = ComputeEvidenceBits(aud_subtype, signal);
+         int    aud_fam = ComputeEvidenceFamilies(aud_subtype, signal);
+         bool   aud_v21_applies = (IsV21AlignmentIntent(aud_intent) || IsV21CounterIntent(aud_intent));
 
-         // Both policies' slot values (flag-independent).
+         // LEGACY mirror slots — the TRUE production Factor-1/Factor-3, computed
+         // INDEPENDENTLY of any experiment flag (a clean production behavior mirror).
          int aud_legacy_align = AuditLegacyAlignSlot(daily, h4, pattern_bullish, pattern_bearish);
          int aud_legacy_macro = AuditLegacyMacroSlot(macro_score, pattern_bullish, pattern_bearish);
-         int aud_v2_align     = V2AlignSlot(aud_subtype, aud_rel, aud_cs, aud_ev, signal);
-         int aud_v2_macro     = V2MacroSlot(aud_subtype, aud_rel, aud_cs, macro_score,
-                                            pattern_bullish, pattern_bearish);
+
+         // v2.1 shadow slots — computed only for an in-taxonomy stamped intent; an out-of-
+         // taxonomy intent means v2.1 IS the legacy path, so its points mirror legacy below.
+         int aud_v21_align = 0;
+         int aud_v21_macro = 0;
+         if(aud_v21_applies)
+         {
+            aud_v21_align = IsV21CounterIntent(aud_intent)
+                            ? V21CounterSlot(aud_intent, aud_rel, aud_fam)
+                            : V21AlignSlot(aud_intent, aud_rel, aud_cs);
+            aud_v21_macro = V21MacroSlot(aud_intent, aud_rel, aud_cs, macro_score,
+                                         pattern_bullish, pattern_bearish);
+         }
 
          // Back out the LIVE slots to recover the shared-factor base (policy-independent).
          // trend_alignment holds the LIVE policy Slot-A (pre-CHoCH); Slot-A competes with
          // CHoCH via the same MathMax the live path used.
          int aud_live_slotA = (int)MathMax(trend_alignment, choch_points);
          int aud_live_slotB;
-         if(eav2_on)    aud_live_slotB = aud_v2_macro;
+         if(eav2_on)    aud_live_slotB = V21MacroSlot(eav2_intent, eav2_rel, eav2_cs, macro_score,
+                                                      pattern_bullish, pattern_bearish);
          else if(ea_on) aud_live_slotB = EngineAwareMacroSlot(ea_intent, ea_rel, ea_cs,
                                                               macro_score, pattern_bullish, pattern_bearish);
          else           aud_live_slotB = aud_legacy_macro;
@@ -842,13 +905,26 @@ public:
 
          int aud_legacy_points = (int)MathMin(10, aud_base +
                                     MathMax(aud_legacy_align, choch_points) + aud_legacy_macro);
-         int aud_v2_points     = (int)MathMin(10, aud_base +
-                                    MathMax(aud_v2_align, choch_points) + aud_v2_macro);
+         int aud_v2_points;
+         if(aud_v21_applies)
+            aud_v2_points = (int)MathMin(10, aud_base +
+                               MathMax(aud_v21_align, choch_points) + aud_v21_macro);
+         else
+            aud_v2_points = aud_legacy_points;   // out-of-taxonomy -> v2.1 == legacy
+
+         // v2.1-EFFECTIVE ladder = base ladder MINUS the per-intent offset (0 when out-of-
+         // taxonomy). legacy_tier uses the BASE ladder (production never applies offsets).
+         int aud_v2_off = 0;
+         if(aud_v21_applies)
+            aud_v2_off = IsV21CounterIntent(aud_intent) ? InpEAAThreshOffsetCounter
+                                                        : InpEAAThreshOffsetAlign;
 
          AuditEngineRelRecord(iTime(_Symbol, PERIOD_H1, 0), pattern, signal, daily, h4, macro_score,
                               aud_adx, regime, points, m_points_aplus, m_points_a, m_points_bplus,
-                              m_points_b, signal_id, aud_subtype, aud_ev,
-                              aud_legacy_points, aud_v2_points);
+                              m_points_b, signal_id, (int)stage, aud_subtype, aud_intent, aud_fam,
+                              aud_legacy_points, aud_v2_points,
+                              m_points_aplus - aud_v2_off, m_points_a - aud_v2_off,
+                              m_points_bplus - aud_v2_off, m_points_b - aud_v2_off);
       }
 #endif
 
@@ -864,9 +940,9 @@ public:
       int t_b     = m_points_b;
       if(eav2_on)
       {
-         // v2 reuses the same two per-intent offsets (default 0 = unchanged global ladder;
-         // no global threshold lowering). Counter subtypes use the counter offset.
-         int t_off = IsCounterSubtype(eav2_subtype) ? InpEAAThreshOffsetCounter : InpEAAThreshOffsetAlign;
+         // v2.1 reuses the same two per-intent offsets (default 0 = unchanged global ladder;
+         // no global threshold lowering). Counter INTENTS use the counter offset.
+         int t_off = IsV21CounterIntent(eav2_intent) ? InpEAAThreshOffsetCounter : InpEAAThreshOffsetAlign;
          t_aplus -= t_off;
          t_a     -= t_off;
          t_bplus -= t_off;

@@ -433,6 +433,11 @@ public:
          if(m_context != NULL)
             signal.regimeAtSignal = m_context.GetCurrentRegime();
 
+         // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Rubber-band
+         // death-cross fade — the only live subtype for this plugin.
+         signal.setup_subtype = CRASH_RUBBERBAND;
+         signal.engine_intent = INTENT_MEAN_REVERSION;
+
          Print("CCrashBreakoutEntry: RUBBER BAND SHORT | Entry=", entry, " SL=", sl, " TP=", tp,
                " | EMA21=", h1_ema21, " ATR=", h1_atr, " ADX=", h1_adx,
                " | Extension=", DoubleToString(((current_price - h1_ema21) / h1_ema21) * 100, 2), "%",

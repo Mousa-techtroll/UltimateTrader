@@ -114,8 +114,11 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
                           ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
                           int macro_score, double adx, ENUM_REGIME_TYPE regime, int points,
                           int p_aplus, int p_a, int p_bplus, int p_b,
-                          string signal_id, ENUM_SETUP_SUBTYPE subtype, int evidence_flags,
-                          int legacy_points, int v2_points)
+                          string signal_id, int stage,
+                          ENUM_SETUP_SUBTYPE subtype, ENUM_ENGINE_INTENT intent,
+                          int evidence_families,
+                          int legacy_points, int v2_points,
+                          int v2_p_aplus, int v2_p_a, int v2_p_bplus, int v2_p_b)
 {
    g_auditEngineRelRows++;
    if(g_auditEngineRelHandle == INVALID_HANDLE)
@@ -126,8 +129,10 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
          FileWrite(g_auditEngineRelHandle,
                    "time","pattern","direction","d1_dir","h4_dir","macro_score","adx",
                    "regime","context_strength","relationship","tier","points",
-                   // L4-1 Arm C v2 attribution columns
-                   "signal_id","setup_subtype","evidence_flags",
+                   // L4-1 Arm C v2.1 attribution columns: stage identity + STAMPED intent +
+                   // satisfied evidence FAMILIES (not the old raw bitmask). legacy_tier is at
+                   // the BASE ladder (true production); v2_tier at the v2.1-EFFECTIVE ladder.
+                   "signal_id","stage","setup_subtype","engine_intent","evidence_families",
                    "legacy_tier","legacy_points","v2_tier","v2_points");
    }
    if(g_auditEngineRelHandle == INVALID_HANDLE)
@@ -135,6 +140,10 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
 
    // direction (from the signal enum only, as required)
    string dir = (sig == SIGNAL_LONG) ? "LONG" : (sig == SIGNAL_SHORT ? "SHORT" : "NONE");
+
+   // scoring-stage identity (INITIAL vs REVALIDATION) — separates the two rows that
+   // share one signal_id when confirmation is on (ENUM_EAA_STAGE ordinals).
+   string stage_str = (stage == 1) ? "REVALIDATION" : "INITIAL";
 
    // tier string — DERIVED here from points + the four thresholds, mirroring the live
    // ladder in EvaluateSetupQuality so that ladder needs no restructuring (byte-identical).
@@ -172,10 +181,12 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
    else
       rel = "NEUTRAL";                                      // no directional signal (SIGNAL_NONE)
 
-   // L4-1 Arm C v2: legacy_tier / v2_tier DERIVED here from the two point totals + the
-   // SAME four thresholds (mirrors the live ladder — no restructuring needed). Both totals
-   // are computed flag-independently in EvaluateSetupQuality, so ONE AUDIT run yields the
-   // retained/removed/newly-admitted partition once joined to the Stats SignalID column.
+   // L4-1 Arm C v2.1: legacy_tier / v2_tier DERIVED here from EACH policy's point total at
+   // ITS ACTUAL EFFECTIVE ladder — an HONEST dual-policy A/B. legacy_tier uses the BASE
+   // ladder (p_*) because true production never applies an experiment offset; v2_tier uses
+   // the v2.1-EFFECTIVE ladder (v2_p_* = base minus the per-intent offset). Both point
+   // totals are computed flag-independently in EvaluateSetupQuality, so ONE AUDIT run yields
+   // the retained/removed/newly-admitted partition once joined to the Stats SignalID column.
    string legacy_tier;
    if(legacy_points >= p_aplus)      legacy_tier = "A_PLUS";
    else if(legacy_points >= p_a)     legacy_tier = "A";
@@ -183,17 +194,18 @@ void AuditEngineRelRecord(datetime t, string pattern, ENUM_SIGNAL_TYPE sig,
    else if(legacy_points >= p_b)     legacy_tier = "B";
    else                              legacy_tier = "NONE";
    string v2_tier;
-   if(v2_points >= p_aplus)      v2_tier = "A_PLUS";
-   else if(v2_points >= p_a)     v2_tier = "A";
-   else if(v2_points >= p_bplus) v2_tier = "B_PLUS";
-   else if(v2_points >= p_b)     v2_tier = "B";
-   else                          v2_tier = "NONE";
+   if(v2_points >= v2_p_aplus)      v2_tier = "A_PLUS";
+   else if(v2_points >= v2_p_a)     v2_tier = "A";
+   else if(v2_points >= v2_p_bplus) v2_tier = "B_PLUS";
+   else if(v2_points >= v2_p_b)     v2_tier = "B";
+   else                             v2_tier = "NONE";
 
    FileWrite(g_auditEngineRelHandle, (string)t, pattern, dir,
              EnumToString(daily), EnumToString(h4), IntegerToString(macro_score),
              DoubleToString(adx, 2), EnumToString(regime),
              IntegerToString(context_strength), rel, tier, IntegerToString(points),
-             signal_id, EnumToString(subtype), IntegerToString(evidence_flags),
+             signal_id, stage_str, EnumToString(subtype), EnumToString(intent),
+             IntegerToString(evidence_families),
              legacy_tier, IntegerToString(legacy_points),
              v2_tier, IntegerToString(v2_points));
    FileFlush(g_auditEngineRelHandle);

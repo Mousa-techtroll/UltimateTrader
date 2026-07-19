@@ -427,6 +427,9 @@ public:
          // [SB-1.1] shadow bear-state stamp — appended at the END. Decision-free.
          AddCsvField(csv_header, "BearState"); AddCsvField(csv_header, "BearScore");
          AddCsvField(csv_header, "BearStateAgeH4");
+         // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent columns (appended
+         // at the row end -> alignment preserved). Join target for Phase-B attribution.
+         AddCsvField(csv_header, "SetupSubtype"); AddCsvField(csv_header, "EngineIntent");
          WriteCsvFields(m_csv_handle, csv_header, false);
          LogPrint("CTradeLogger: CSV file created: ", m_csv_filename);
       }
@@ -739,6 +742,9 @@ public:
       AddCsvField(entry_fields, BearStateToString(pos.bear_state));
       AddCsvField(entry_fields, IntegerToString(pos.bear_score));
       AddCsvField(entry_fields, IntegerToString(pos.bear_state_age_h4));
+      // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent (see header)
+      AddCsvField(entry_fields, EnumToString(pos.setup_subtype));
+      AddCsvField(entry_fields, EnumToString(pos.engine_intent));
       WriteCsvFields(m_csv_handle, entry_fields, true);
 
       LogTradeLifecycleEvent(pos,
@@ -955,6 +961,9 @@ public:
       AddCsvField(exit_fields, BearStateToString(pos.bear_state));
       AddCsvField(exit_fields, IntegerToString(pos.bear_score));
       AddCsvField(exit_fields, IntegerToString(pos.bear_state_age_h4));
+      // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent (see header)
+      AddCsvField(exit_fields, EnumToString(pos.setup_subtype));
+      AddCsvField(exit_fields, EnumToString(pos.engine_intent));
       WriteCsvFields(m_csv_handle, exit_fields, true);
 
       LogTradeLifecycleEvent(pos,

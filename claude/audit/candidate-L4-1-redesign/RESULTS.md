@@ -1,3 +1,34 @@
+# L4-1 — FINAL (v2.1 clean re-test): FIVE approaches FAIL; root cause confirmed on the corrected architecture
+
+## Arm C v2.1 — the owner-mandated corrected implementation (supersedes v2's biased test)
+The v2 measurement was invalidated by the owner: plugin-level subtype inference, a raw evidence-count that let
+direction-neutral ATR-expansion count as reversal evidence, and a bare `GetRecentBOS()` enum. v2.1 fixed ALL of
+it: (a) **emission-stamped subtype+intent propagated end-to-end** (EntrySignal→pending→exec→position→exit; PinBar
+split into `TREND_REJECTION`→PULLBACK vs `COUNTER_EXHAUSTION`→reversal, so H4-aligned pins score as pullbacks not
+counters); (b) **evidence FAMILIES** (structural / exhaustion / sweep / failed-break / reversal-confirmation),
+ATR demoted to context that can never qualify a counter; (c) **timestamp-paired, recency-gated BOS/CHoCH**;
+(d) attribution with scoring-stage identity + legacy tier computed independently of experiment flags at the true
+effective ladder. Flag-off verified **byte-identical** (Events `5ecfa994`, $32,617.90 / 801; Stats identical
+modulo the 2 new attribution columns).
+
+**The correction MATTERED and vindicated the critique:** v2 −77% → **v2.1 −39.5%** ($19,748.79 / PF 1.37 /
+Sharpe 2.57 / EqDD 10.73% / 727) — a $12.3k swing, proving v2's biases were inflating the damage. But v2.1
+still FAILS the pre-registered bar (Sharpe 2.57<3.13, PF 1.37<1.47, net −39.5%).
+
+**Clean attribution (candidate↔exit reconciled, 1,563 joined):** v2.1 now RETAINS the profitable cohorts
+(651 fills / **+$27,452**) — over-removal collapsed from v2's +$12,717 to **+$1,953** (111 fills), and the
+PinBar-counter it drops is correctly net-negative (−$311). The failure is the **NEWLY-ADMITTED cohort: 128
+evidence-backed counter setups legacy rejected**, which are net-losing (v2.1-on sits ~$7.7k below the retained
+$27,452). So rewarding *evidence-supported* opposition ADMITS net-losers — the anti-predictive finding, now
+proven on the corrected setup-level/evidence-family/timestamp-paired implementation, not on v2's biased one.
+
+**Definitive:** the book's counter-trend alpha is NOT evidence-separable (moderate-fade, not textbook exhaustion).
+FIVE measured approaches — raw (−43%), global-recal (−22.7%), engine-aware v1 (−20.4%), evidence-gated v2 (−77%),
+**corrected setup-level v2.1 (−39.5%)** — all fail. L4-1 held as a root-caused architectural limitation; all code
+(v1/v2/v2.1) + the propagation infra + dual-policy attribution kept flag-off (byte-identical). Do-not-relitigate.
+
+---
+## (superseded) four-approach summary
 # L4-1 — FINAL: four approaches FAIL; ROOT CAUSE proven (exhaustion-evidence is anti-predictive)
 
 ## The decisive finding (Arm C v2 attribution, dual-policy AUDIT run)

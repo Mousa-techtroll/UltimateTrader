@@ -818,7 +818,9 @@ public:
             quality = m_evaluator.EvaluateSetupQuality(
                daily_trend, h4_trend, regime, macro_score, signal.comment,
                isBearRegime, sig_type, signal.plugin_name,    // L4-1 Arm C: engine identity for intent
-               signal.signal_id);                             // L4-1 Arm C v2: exact candidate linkage (AUDIT attribution)
+               signal.signal_id,                              // L4-1 Arm C v2: exact candidate linkage (AUDIT attribution)
+               signal.engine_intent, signal.setup_subtype,    // L4-1 Arm C v2.1: consume the emission-stamped intent/subtype
+               EAA_STAGE_INITIAL);                            // L4-1 Arm C v2.1: scoring-stage identity (AUDIT)
 
          if(quality == SETUP_NONE)
          {
@@ -954,6 +956,10 @@ public:
             // Fix 2.1 (Option 2): preserve the router-wired flag across the
             // field-by-field copy so the honored-scorer routing survives ranking.
             best_signal.routed_engine  = signal.routed_engine;
+            // L4-1 Arm C v2.1 Phase A: carry the emission-stamped subtype/intent
+            // through ranking (same hop as signal_id at :933). DATA-ONLY.
+            best_signal.setup_subtype  = signal.setup_subtype;
+            best_signal.engine_intent  = signal.engine_intent;
 
             best_quality_score = signal.qualityScore;
             best_sig_type = sig_type;
@@ -1390,7 +1396,9 @@ private:
       ENUM_SETUP_QUALITY quality = m_evaluator.EvaluateSetupQuality(
          daily, h4, regime, macro_score, comment, isBearRegime, sig_type,
          m_pending_signal.plugin_name,    // L4-1 Arm C: engine identity for intent (confirmation revalidation)
-         m_pending_signal.signal_id);     // L4-1 Arm C v2: exact candidate linkage (AUDIT attribution)
+         m_pending_signal.signal_id,      // L4-1 Arm C v2: exact candidate linkage (AUDIT attribution)
+         m_pending_signal.engine_intent, m_pending_signal.setup_subtype,  // L4-1 Arm C v2.1: emission-stamped intent/subtype
+         EAA_STAGE_REVALIDATION);         // L4-1 Arm C v2.1: scoring-stage identity (AUDIT)
 
       if(quality == SETUP_NONE)
       {
@@ -1499,6 +1507,10 @@ private:
          m_pending_signal.bear_state        = signal.bear_state;
          m_pending_signal.bear_score        = signal.bear_score;
          m_pending_signal.bear_state_age_h4 = signal.bear_state_age_h4;
+         // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent travels through
+         // confirmation (same hop as signal_id at :1468). DATA-ONLY.
+         m_pending_signal.setup_subtype     = signal.setup_subtype;
+         m_pending_signal.engine_intent     = signal.engine_intent;
 
          m_has_pending = true;
 

@@ -10,6 +10,9 @@
 
 
 
+
+
+
 //+------------------------------------------------------------------+
 //| Includes                                                          |
 //+------------------------------------------------------------------+
@@ -2448,6 +2451,9 @@ void OnTick()
                      pos_bp.original_sl = pos_bp.stop_loss;
                      pos_bp.original_tp1 = pos_bp.tp1;
                      pos_bp.signal_id = accepted_sig.signal_id;
+                     // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent (mirrors signal_id). DATA-ONLY.
+                     pos_bp.setup_subtype = accepted_sig.setup_subtype;
+                     pos_bp.engine_intent = accepted_sig.engine_intent;
                      pos_bp.engine_name = accepted_sig.plugin_name != "" ? accepted_sig.plugin_name : accepted_sig.comment;
                      pos_bp.entry_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
                      pos_bp.entry_session = (int)GetCurrentTradingSession();
@@ -2752,6 +2758,9 @@ void OnTick()
 
                   // Engine metadata for confirmed signals (preserved from pending)
                   position.signal_id = pending.signal_id;
+                  // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent (mirrors signal_id). DATA-ONLY.
+                  position.setup_subtype = pending.setup_subtype;
+                  position.engine_intent = pending.engine_intent;
                   position.engine_name = (pending.plugin_name != "") ? pending.plugin_name : pending.pattern_name;
                   position.engine_mode = pending.engine_mode;
                   position.day_type = pending.day_type;
@@ -3214,6 +3223,9 @@ void OnTick()
 
                      // Populate engine metadata from signal
                      position.signal_id = signal.signal_id;
+                     // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent (mirrors signal_id). DATA-ONLY.
+                     position.setup_subtype = signal.setup_subtype;
+                     position.engine_intent = signal.engine_intent;
                      position.engine_name = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
                      position.engine_mode = signal.engine_mode;
                      position.day_type = signal.day_type;
@@ -3504,6 +3516,10 @@ void OnTick()
             filePos.original_tp1 = filePos.tp1;
             filePos.tp3 = fileSignal.takeProfit3;  // CSV TP3 for runner target
             filePos.signal_id = fileSignal.signal_id;
+            // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent (mirrors signal_id).
+            // File signals do not stamp -> HYBRID default carries through. DATA-ONLY.
+            filePos.setup_subtype = fileSignal.setup_subtype;
+            filePos.engine_intent = fileSignal.engine_intent;
             filePos.engine_name = "FileSignal";
             filePos.signal_source = SIGNAL_SOURCE_FILE;
             filePos.best_effort_mode = (InpFileSignalMode == FILE_MODE_BEST_EFFORT);

@@ -938,6 +938,10 @@ public:
          position.bear_state        = signal.bear_state;
          position.bear_score        = signal.bear_score;
          position.bear_state_age_h4 = signal.bear_state_age_h4;
+         // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent onto the position
+         // (same hop as signal_id at :899; written on both Stats-CSV rows). DATA-ONLY.
+         position.setup_subtype     = signal.setup_subtype;
+         position.engine_intent     = signal.engine_intent;
 
          // v3.1 Phase D: Transfer engine telemetry fields
          position.engine_mode = signal.engine_mode;
@@ -1180,6 +1184,10 @@ public:
       exec_signal.bear_state        = pending.bear_state;
       exec_signal.bear_score        = pending.bear_score;
       exec_signal.bear_state_age_h4 = pending.bear_state_age_h4;
+      // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent carries through
+      // confirmation (same hop as signal_id at :1162). DATA-ONLY.
+      exec_signal.setup_subtype     = pending.setup_subtype;
+      exec_signal.engine_intent     = pending.engine_intent;
 
       // Calculate risk based on quality, then re-apply session/regime multipliers
       double base_risk = GetRiskForQuality(pending.quality, pending.pattern_name);

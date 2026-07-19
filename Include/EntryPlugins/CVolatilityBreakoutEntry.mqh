@@ -315,6 +315,9 @@ public:
             signal.qualityScore = 75;
             signal.riskReward = (tp - entry) / (entry - stop);
             signal.comment = is_pullback_add ? "Volatility Breakout Add Long" : "Volatility Breakout Long";
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Donchian/Keltner breakout.
+            signal.setup_subtype = VOLBREAKOUT_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             signal.source = SIGNAL_SOURCE_PATTERN;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
@@ -374,6 +377,9 @@ public:
             signal.qualityScore = 75;
             signal.riskReward = (entry - tp) / (stop - entry);
             signal.comment = is_pullback_add ? "Volatility Breakout Add Short" : "Volatility Breakout Short";
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Donchian/Keltner breakout.
+            signal.setup_subtype = VOLBREAKOUT_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             signal.source = SIGNAL_SOURCE_PATTERN;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();

@@ -206,6 +206,10 @@ public:
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). MA-cross trend.
+            signal.setup_subtype = MACROSS_TREND;
+            signal.engine_intent = INTENT_TREND_CONTINUATION;
+
             Print("CMACrossEntry: BULLISH MA CROSS | Entry=", entry, " SL=", sl, " TP=", tp,
                   " | Fast[2]=", ma_fast[2], " Slow[2]=", ma_slow[2],
                   " Fast[1]=", ma_fast[1], " Slow[1]=", ma_slow[1]);

@@ -806,6 +806,9 @@ private:
             signal.qualityScore = 76;
             signal.riskReward = rr;
             signal.comment = "IC Breakout Long (Consol=" + IntegerToString(m_ic_consolidation_bars) + " bars)";
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Expansion breakout.
+            signal.setup_subtype = EXPANSION_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             signal.source = SIGNAL_SOURCE_PATTERN;
             signal.engine_mode = MODE_INSTITUTIONAL_CANDLE;
             signal.engine_confluence = 70;
@@ -857,6 +860,9 @@ private:
             signal.qualityScore = 76;
             signal.riskReward = rr;
             signal.comment = "IC Breakout Short (Consol=" + IntegerToString(m_ic_consolidation_bars) + " bars)";
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Expansion breakout.
+            signal.setup_subtype = EXPANSION_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             signal.source = SIGNAL_SOURCE_PATTERN;
             signal.engine_mode = MODE_INSTITUTIONAL_CANDLE;
             signal.engine_confluence = 70;
@@ -1013,6 +1019,9 @@ private:
                   signal.riskReward = rr;
                   signal.comment = "Compression BO Long (Squeeze=" + IntegerToString(m_squeeze_bars)
                                    + " bars, ADX=" + DoubleToString(adx, 1) + ")";
+                  // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Expansion breakout.
+                  signal.setup_subtype = EXPANSION_BREAKOUT;
+                  signal.engine_intent = INTENT_BREAKOUT;
                   signal.source = SIGNAL_SOURCE_PATTERN;
                   signal.engine_mode = MODE_COMPRESSION_BO;
                   signal.engine_confluence = confluence;
@@ -1089,6 +1098,9 @@ private:
                   signal.riskReward = rr;
                   signal.comment = "Compression BO Short (Squeeze=" + IntegerToString(m_squeeze_bars)
                                    + " bars, ADX=" + DoubleToString(adx, 1) + ")";
+                  // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Expansion breakout.
+                  signal.setup_subtype = EXPANSION_BREAKOUT;
+                  signal.engine_intent = INTENT_BREAKOUT;
                   signal.source = SIGNAL_SOURCE_PATTERN;
                   signal.engine_mode = MODE_COMPRESSION_BO;
                   signal.engine_confluence = confluence;

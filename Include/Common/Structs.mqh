@@ -230,6 +230,12 @@ struct SPosition
    int                    bear_score;
    int                    bear_state_age_h4;
 
+   // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent snapshotted from the
+   // signal at fill and written on both Stats-CSV rows (runtime-only, NOT persisted
+   // — same class as bear_state/signal_id). DECISION-FREE in Phase A.
+   ENUM_SETUP_SUBTYPE     setup_subtype;
+   ENUM_ENGINE_INTENT     engine_intent;
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -289,6 +295,9 @@ struct SPosition
       bear_state = BEAR_STATE_BULL_TREND;
       bear_score = 0;
       bear_state_age_h4 = 0;
+      // L4-1 Arm C v2.1 Phase A: HYBRID default until stamped from the signal at fill.
+      setup_subtype = SUBTYPE_HYBRID;
+      engine_intent = INTENT_HYBRID;
    }
 };
 
@@ -631,6 +640,12 @@ struct SPendingSignal
    ENUM_BEAR_STATE      bear_state;
    int                  bear_score;
    int                  bear_state_age_h4;
+
+   // L4-1 Arm C v2.1 Phase A: emission-stamped subtype/intent, snapshotted from the
+   // winner at StorePendingSignal and carried onto exec_signal at confirmation
+   // (mirrors signal_id/bear_state). DATA-ONLY — no confirmation gate reads them.
+   ENUM_SETUP_SUBTYPE   setup_subtype;
+   ENUM_ENGINE_INTENT   engine_intent;
 };
 
 //+------------------------------------------------------------------+
@@ -696,6 +711,16 @@ struct EntrySignal
    int                 bear_score;
    int                 bear_state_age_h4;
 
+   // L4-1 Arm C v2.1 Phase A: EMISSION-STAMPED setup subtype + engine intent.
+   // The emitting plugin sets these to the specific role it detected; they thread
+   // signal -> winner -> pending -> exec_signal -> position -> Stats-CSV exactly
+   // like signal_id. DATA-ONLY in Phase A — no trade decision reads them (the
+   // Phase-B evaluator will, gated by InpEAAv2 which stays OFF). Runtime-only
+   // (NOT persisted — matches signal_id/bear_state). Defaults = HYBRID (the
+   // byte-identical legacy fallback for any plugin that does not stamp).
+   ENUM_SETUP_SUBTYPE  setup_subtype;
+   ENUM_ENGINE_INTENT  engine_intent;
+
    void Init()
    {
       valid = false;
@@ -737,6 +762,10 @@ struct EntrySignal
       bear_state = BEAR_STATE_BULL_TREND;
       bear_score = 0;
       bear_state_age_h4 = 0;
+      // L4-1 Arm C v2.1 Phase A: default to the HYBRID (legacy) classification;
+      // stamping plugins overwrite these at emission.
+      setup_subtype = SUBTYPE_HYBRID;
+      engine_intent = INTENT_HYBRID;
    }
 
    // Validate the signal data (from AICoder V1 CEntryStrategy)

@@ -407,6 +407,9 @@ private:
             signal.riskReward = m_rr_target;
             signal.comment = "Asian Breakout London";
             signal.source = SIGNAL_SOURCE_PATTERN;
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Session breakout.
+            signal.setup_subtype = SESSION_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
@@ -448,6 +451,9 @@ private:
             signal.riskReward = m_rr_target;
             signal.comment = "Asian Breakout London";
             signal.source = SIGNAL_SOURCE_PATTERN;
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Session breakout.
+            signal.setup_subtype = SESSION_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
@@ -540,6 +546,9 @@ private:
             signal.riskReward = m_rr_target;
             signal.comment = "London Continuation NY";
             signal.source = SIGNAL_SOURCE_PATTERN;
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Session breakout.
+            signal.setup_subtype = SESSION_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 
@@ -582,6 +591,9 @@ private:
             signal.riskReward = m_rr_target;
             signal.comment = "London Continuation NY";
             signal.source = SIGNAL_SOURCE_PATTERN;
+            // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Session breakout.
+            signal.setup_subtype = SESSION_BREAKOUT;
+            signal.engine_intent = INTENT_BREAKOUT;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
 

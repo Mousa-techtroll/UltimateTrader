@@ -209,6 +209,15 @@ public:
                if(m_context != NULL)
                   signal.regimeAtSignal = m_context.GetCurrentRegime();
 
+               // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). A bullish
+               // pin rejecting IN the H4-trend direction (H4 bullish) = pullback-
+               // continuation; against/neutral = counter-exhaustion. Reads only the
+               // trend_bias local already computed at the gate (no side effect).
+               if(trend_bias == TREND_BULLISH)
+               { signal.setup_subtype = PINBAR_TREND_REJECTION;   signal.engine_intent = INTENT_PULLBACK; }
+               else
+               { signal.setup_subtype = PINBAR_COUNTER_EXHAUSTION; signal.engine_intent = INTENT_EXHAUSTION_REVERSAL; }
+
                Print("CPinBarEntry: BULLISH PIN BAR | Entry=", entry, " SL=", sl, " TP=", tp,
                      " | Wick=", lower_wick, " Body=", body_size);
                return signal;
@@ -273,6 +282,15 @@ public:
                signal.source = SIGNAL_SOURCE_PATTERN;
                if(m_context != NULL)
                   signal.regimeAtSignal = m_context.GetCurrentRegime();
+
+               // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). A bearish
+               // pin rejecting IN the H4-trend direction (H4 bearish) = pullback-
+               // continuation; against/neutral = counter-exhaustion. Reads only the
+               // trend_bias local already computed at the gate (no side effect).
+               if(trend_bias == TREND_BEARISH)
+               { signal.setup_subtype = PINBAR_TREND_REJECTION;   signal.engine_intent = INTENT_PULLBACK; }
+               else
+               { signal.setup_subtype = PINBAR_COUNTER_EXHAUSTION; signal.engine_intent = INTENT_EXHAUSTION_REVERSAL; }
 
                Print("CPinBarEntry: BEARISH PIN BAR | Entry=", entry, " SL=", sl, " TP=", tp,
                      " | Wick=", upper_wick, " Body=", body_size);

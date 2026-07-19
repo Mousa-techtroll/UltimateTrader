@@ -354,7 +354,12 @@ enum ENUM_ENGINE_INTENT
    INTENT_MEAN_REVERSION,  // (3) fade: reward exhaustion, never penalize counter
    INTENT_REVERSAL,        // (4) rejection reversal (bidirectional): rejection quality; MIXED demotable
    INTENT_CRASH,           // (5) crash/death-cross fade: counter sibling of MEAN_REVERSION
-   INTENT_HYBRID           // (6) unclassified: reproduce legacy direction-blind scoring
+   INTENT_HYBRID,          // (6) unclassified: reproduce legacy direction-blind scoring
+   // --- L4-1 Arm C v2.1 Phase A: emission-stamped split intents (APPENDED so the
+   //     ordinals of (0)-(6) are unchanged — additive, DATA-ONLY, inert in Phase A). ---
+   INTENT_TREND_CONTINUATION,    // (7) Engulfing(bull)/MACross — trend continuation (split of INTENT_TREND)
+   INTENT_EXHAUSTION_REVERSAL,   // (8) PinBar counter-exhaustion (split of INTENT_REVERSAL)
+   INTENT_FAILED_BREAK_REVERSAL  // (9) FailedBreakReversal/Displacement reclaim
 };
 
 //+------------------------------------------------------------------+
@@ -393,7 +398,59 @@ enum ENUM_SETUP_SUBTYPE
    SUBTYPE_EXHAUSTION_REVERSAL,   // (3) PinBar — counter, evidence-gated; MIXED demoted
    SUBTYPE_MEAN_REVERSION,        // (4) CrashBreakout — counter, death-cross GATED, evidence-gated
    SUBTYPE_FAILED_BREAK_REVERSAL, // (5) FailedBreakReversal, Displacement — counter; inherent failed-break evidence
-   SUBTYPE_HYBRID                 // (6) unlisted -> legacy direction-blind scoring (unaffected)
+   SUBTYPE_HYBRID,                // (6) unlisted -> legacy direction-blind scoring (unaffected)
+   // --- L4-1 Arm C v2.1 Phase A: EMISSION-STAMPED per-setup subtypes (APPENDED so the
+   //     ordinals of (0)-(6) are unchanged — additive, DATA-ONLY, inert in Phase A). The
+   //     emitting SETUP stamps the specific role it detected; the Phase-B evaluator
+   //     (InpEAAv2, OFF) will CONSUME these instead of inferring from plugin_name. ---
+   PINBAR_TREND_REJECTION,        // (7)  PinBar rejecting IN the H4-trend direction = pullback-continuation
+   PINBAR_COUNTER_EXHAUSTION,     // (8)  PinBar rejecting AGAINST the H4-trend = counter-exhaustion
+   ENGULFING_CONTINUATION,        // (9)  bull engulf in bull trend (the live case)
+   ENGULFING_REVERSAL,            // (10) reserved for the (disabled) bear engulfing side
+   CRASH_RUBBERBAND,              // (11) CrashBreakout rubber-band (its only live subtype)
+   FAILEDBREAK_RECLAIM,           // (12) FailedBreakReversal + Displacement reclaim
+   MACROSS_TREND,                 // (13) MACross trend
+   PBC_PULLBACK,                  // (14) PullbackContinuationEngine pullback
+   EXPANSION_BREAKOUT,            // (15) CExpansionEngine native IC/Compression breakout
+   VOLBREAKOUT_BREAKOUT,          // (16) CVolatilityBreakoutEntry breakout
+   SESSION_BREAKOUT               // (17) CSessionBreakoutEntry breakout
+};
+
+//+------------------------------------------------------------------+
+//| Evidence FAMILIES (L4-1 Arm C v2.1, InpEAAv2)                    |
+//| The v2.1 core fix over v2's raw evidence-count: a counter/        |
+//| reversal setup earns opposition credit ONLY from DISTINCT         |
+//| DIRECTIONAL families that match the SIGNAL direction (structural  |
+//| OB/FVG, RSI exhaustion, liquidity sweep, inherent failed-break,   |
+//| or a timestamp-paired reversal-confirmation BOS/CHoCH). ATR/vol   |
+//| expansion is CONTEXT ONLY (EVF_ATR_CONTEXT): it may MODULATE an   |
+//| already-earned reward (+1) but can NEVER by itself admit a        |
+//| counter. Bit flags so the satisfied set is one int (logged in the |
+//| AUDIT attribution). Consumed ONLY on the InpEAAv2 ON path.        |
+//| See claude/audit/candidate-L4-1-redesign/ARMC-V2.1-IMPL.md.       |
+//+------------------------------------------------------------------+
+enum ENUM_EVIDENCE_FAMILY
+{
+   EVF_NONE                  = 0,   // no family satisfied
+   EVF_STRUCTURAL            = 1,   // directional OB / FVG in the signal direction
+   EVF_EXHAUSTION            = 2,   // directional H1 RSI extreme (long<oversold / short>overbought)
+   EVF_SWEEP                 = 4,   // directional recency-gated liquidity sweep (lows swept=long / highs swept=short)
+   EVF_FAILED_BREAK          = 8,   // inherent failed-break/reclaim geometry (the setup itself)
+   EVF_REVERSAL_CONFIRMATION = 16,  // timestamp-paired, direction-matched, recency-gated BOS/CHoCH
+   EVF_ATR_CONTEXT           = 32   // ATR/vol expansion — CONTEXT ONLY (modulates, never qualifies)
+};
+
+//+------------------------------------------------------------------+
+//| Scoring-stage identity (L4-1 Arm C v2.1 attribution)            |
+//| Distinguishes the two EvaluateSetupQuality call sites that share |
+//| one signal_id so the AUDIT rows are separable (the fill's         |
+//| effective tier is the REVALIDATION row when confirmation is on).  |
+//| Passed as a trailing defaulted param; read ONLY under AUDIT_BUILD.|
+//+------------------------------------------------------------------+
+enum ENUM_EAA_STAGE
+{
+   EAA_STAGE_INITIAL      = 0,   // initial qualification (CSignalOrchestrator ~:819)
+   EAA_STAGE_REVALIDATION = 1    // pending-confirmation revalidation (~:1394)
 };
 
 //+------------------------------------------------------------------+

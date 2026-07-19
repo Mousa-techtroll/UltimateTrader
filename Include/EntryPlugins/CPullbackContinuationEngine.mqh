@@ -938,6 +938,10 @@ private:
       if(m_context != NULL)
          signal.regimeAtSignal = m_context.GetCurrentRegime();
 
+      // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Pullback continuation (re-entry).
+      signal.setup_subtype = PBC_PULLBACK;
+      signal.engine_intent = INTENT_PULLBACK;
+
       m_last_signal_time = TimeCurrent();
 
       // Invalidate the candidate — it's been consumed
@@ -1046,6 +1050,10 @@ private:
       signal.day_type       = m_day_type;
       if(m_context != NULL)
          signal.regimeAtSignal = m_context.GetCurrentRegime();
+
+      // L4-1 Arm C v2.1 Phase A: emission stamp (DATA-ONLY, inert). Pullback continuation.
+      signal.setup_subtype = PBC_PULLBACK;
+      signal.engine_intent = INTENT_PULLBACK;
 
       m_last_signal_time = TimeCurrent();
 

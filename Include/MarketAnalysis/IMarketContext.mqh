@@ -76,6 +76,10 @@ public:
    virtual ENUM_BOS_TYPE        GetRecentBOS()           { return BOS_NONE; }
    // Phase 2.2: most-recent closed-bar BOS/CHoCH timestamp (scorer freshness gate).
    virtual datetime             GetRecentBOSTime()       { return 0; }
+   // L4-1 Arm C v2.1: DIRECTIONAL recent liquidity sweep (+1 bullish/lows-swept,
+   // -1 bearish/highs-swept, 0 none; recency-gated). Surfaces liquidity_swept WITH
+   // direction for the v2.1 evidence-family evaluator (InpEAAv2). Read-only.
+   virtual int                  GetLiquiditySwept()      { return 0; }
 
    //--- Price Action Data
    virtual double               GetSwingHigh()           { return 0; }

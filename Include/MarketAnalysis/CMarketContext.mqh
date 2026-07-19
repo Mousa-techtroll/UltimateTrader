@@ -914,6 +914,17 @@ public:
       return (t_bos > t_choch) ? t_bos : t_choch;
    }
 
+   // L4-1 Arm C v2.1: DIRECTIONAL recent liquidity sweep. +1 = the NEWEST recent
+   // sweep is BUY-SIDE (equal LOWS taken) = bullish-reversal evidence; -1 = SELL-
+   // SIDE (equal HIGHS taken) = bearish-reversal evidence; 0 = none within the
+   // recency window (SMC_SWEEP_RECENCY_BARS, enforced inside CSMCOrderBlocks).
+   // Surfaces the direction the bare SSMCAnalysis.liquidity_swept flag hides.
+   virtual int GetLiquiditySwept() override
+   {
+      if(m_smc_order_blocks == NULL) return 0;
+      return m_smc_order_blocks.GetRecentSweepDirection();
+   }
+
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign) ---
 
    // Phase 2.4 — DE-CORRELATE the L1 LOCATION axis from the SL anchor.

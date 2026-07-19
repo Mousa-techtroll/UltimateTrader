@@ -655,6 +655,37 @@ public:
    datetime GetLastBOSTime() { return m_last_bos_time; }
    datetime GetLastCHoCHTime() { return m_last_choch_time; }
 
+   // L4-1 Arm C v2.1: DIRECTIONAL recent-sweep accessor. The recon flagged that
+   // SSMCAnalysis.liquidity_swept (set from CheckRecentLiquiditySweep) is a bare
+   // bool that hides the sweep DIRECTION, so it can't feed a direction-matched
+   // evidence family. This surfaces the direction of the NEWEST recent sweep:
+   //   +1 = BUY-SIDE sweep (equal LOWS taken, is_high==false) = bullish-reversal
+   //        evidence (supports a LONG counter),
+   //   -1 = SELL-SIDE sweep (equal HIGHS taken, is_high==true) = bearish-reversal
+   //        evidence (supports a SHORT counter),
+   //    0 = no sweep within the recency window.
+   // Same recency window as CheckRecentLiquiditySweep (SMC_SWEEP_RECENCY_BARS).
+   // Pure read — no state mutation.
+   int GetRecentSweepDirection()
+   {
+      datetime recency_window = (datetime)(SMC_SWEEP_RECENCY_BARS * PeriodSeconds(PERIOD_H1));
+      datetime now    = TimeCurrent();
+      datetime newest = 0;
+      int      dir    = 0;
+      for(int i = 0; i < m_liquidity_count; i++)
+      {
+         if(m_liquidity_pools[i].is_swept &&
+            m_liquidity_pools[i].swept_time > 0 &&
+            (now - m_liquidity_pools[i].swept_time) <= recency_window &&
+            m_liquidity_pools[i].swept_time >= newest)
+         {
+            newest = m_liquidity_pools[i].swept_time;
+            dir    = m_liquidity_pools[i].is_high ? -1 : +1;   // highs swept=bearish; lows swept=bullish
+         }
+      }
+      return dir;
+   }
+
    //+------------------------------------------------------------------+
    //| Detect Change of Character (CHoCH)                               |
    //| Bullish CHoCH: lower low followed by higher high                  |
