@@ -2339,6 +2339,68 @@ bool ConfirmedPathGatesBlock(const SPendingSignal &pending, string &reason)
 }
 
 //+------------------------------------------------------------------+
+//| L1-4 REDESIGN (InpConfirmedFillSafety): confirmed-pending fill      |
+//| MANDATORY EXECUTION-SAFETY subset (shock + SL-sanity ONLY).         |
+//|                                                                    |
+//| Shadow-gate attribution of the 377 confirmed fills proved the two |
+//| DISCRETIONARY signal-quality gates block ZERO confirmed fills at   |
+//| FILL time (they are signal-TIME checks): session-quality → 0,      |
+//| regime-thrash → 0. Only the two MANDATORY live-safety controls do  |
+//| real work: shock-EXTREME (blocks 4 fills, −$270 — the intended     |
+//| live-safety cost) and SL-to-spread sanity (blocks 0 on the tester  |
+//| = byte-identical contribution). So this REFINED gate enforces ONLY |
+//| the mandatory-safety subset — NOT the discretionary pair — and so  |
+//| avoids InpConfirmedPathGates' all-4 over-enforcement cascade        |
+//| (−$1,881). It is a live-EXECUTION-SAFETY control, architecturally  |
+//| correct for EVERY entry route.                                     |
+//|                                                                    |
+//| Reuses the SAME primitives the immediate path uses: the executor's |
+//| DetectShock() shock helper, and the identical SL-to-spread         |
+//| predicate incl. the CEG rule (sanity-gate the PATTERN stop, never  |
+//| the CEG-widened effective stop). Read-only: DetectShock mutates no |
+//| state; entry derived exactly as ProcessConfirmedSignal (live       |
+//| ASK/BID). Returns true (with reason) if EITHER mandatory-safety     |
+//| condition would block. Called ONLY under the flag, so flag-OFF is  |
+//| byte-identical legacy. InpConfirmedPathGates (the all-4 variant) is |
+//| left untouched as-is.                                              |
+//+------------------------------------------------------------------+
+bool ConfirmedFillSafetyBlock(const SPendingSignal &pending, string &reason)
+{
+   // MANDATORY 1 — market-shock (EXTREME) block. Live-safety: never fill into an
+   // extreme intra-bar volatility spike. Reuses the immediate path's shock helper
+   // (CEnhancedTradeExecutor::DetectShock). Blocks 4 profitable fills (−$270) —
+   // the intended live-safety cost, NOT a backtest optimization.
+   if(InpEnableShockDetection && g_tradeExecutor != NULL && g_marketContext != NULL)
+   {
+      ShockState fs_shock = g_tradeExecutor.DetectShock(g_marketContext.GetATRCurrent(), InpShockBarRangeThresh);
+      if(fs_shock.is_extreme) { reason = "SHOCK_EXTREME"; return true; }
+   }
+
+   // MANDATORY 2 — SL-to-spread sanity block. Live-safety: never fill an order whose
+   // stop is insanely tight vs the live spread. Predicate is IDENTICAL to the
+   // immediate path (OnTick §3) and to ConfirmedPathGatesBlock Gate 4, incl. the CEG
+   // rule (sanity-gate the PATTERN stop, never the CEG-widened effective stop). Blocks
+   // 0 on the tester → byte-identical contribution. Session-quality + regime-thrash
+   // are DELIBERATELY NOT applied here — they are signal-time discretionary checks
+   // that block ZERO confirmed fills at fill time (see header).
+   if(InpMinSLToSpreadRatio > 0)
+   {
+      double fs_entry  = (pending.signal_type == SIGNAL_LONG)
+                         ? SymbolInfoDouble(_Symbol, SYMBOL_ASK)
+                         : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      double fs_spread = (double)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD) * _Point;
+      double fs_sl     = MathAbs(fs_entry - pending.stop_loss);
+      if(pending.ceg_bound && pending.ceg_s_pat > 0)
+         fs_sl = pending.ceg_s_pat;
+      if(fs_sl > 0 && fs_sl < fs_spread * InpMinSLToSpreadRatio)
+      { reason = "SL_SANITY"; return true; }
+   }
+
+   reason = "";
+   return false;
+}
+
+//+------------------------------------------------------------------+
 //| Expert tick function                                               |
 //+------------------------------------------------------------------+
 void OnTick()
@@ -2588,6 +2650,7 @@ void OnTick()
 	               double price_72h_ago = 0.0;
 	               string news_conf_reason = "";
 	               string gate_block_reason = "";   // L1-4 confirmed-path safety-gate reason (unused when flag OFF)
+	               string fill_safety_reason = ""; // L1-4 REDESIGN confirmed-fill mandatory-safety reason (unused when flag OFF)
 	               // ACTION-7 GUARDS (halt/budget + position cap): the confirmed
 	               // path runs OUTSIDE the immediate path's halt/budget gate
 	               // (section 3 below: !IsTradingHalted() && CanTrade()) and has
@@ -2668,6 +2731,21 @@ void OnTick()
 	                  Print("[ConfPathGate] confirmed entry blocked — ", gate_block_reason,
 	                        " (", pending.pattern_name, ")");
 	                  ClearPendingSignalLogged(pending, "CONFIRMED_PATH_GATE", gate_block_reason);
+	               }
+	               // L1-4 REDESIGN (InpConfirmedFillSafety): enforce ONLY the two
+	               // MANDATORY fill-time EXECUTION-SAFETY conditions on the confirmed-
+	               // pending fill — market-shock (EXTREME) + SL-to-spread sanity — NOT
+	               // the discretionary signal-quality gates (session-quality, regime-
+	               // thrash) which shadow-gate attribution proved block ZERO confirmed
+	               // fills at fill time. Refined replacement for InpConfirmedPathGates'
+	               // all-4 over-enforcement cascade. Flag OFF -> && short-circuits
+	               // (helper never called) -> falls through to the legacy else below
+	               // -> byte-identical.
+	               else if(InpConfirmedFillSafety && ConfirmedFillSafetyBlock(pending, fill_safety_reason))
+	               {
+	                  Print("[ConfFillSafety] confirmed entry blocked — ", fill_safety_reason,
+	                        " (", pending.pattern_name, ")");
+	                  ClearPendingSignalLogged(pending, "CONFIRMED_FILL_SAFETY", fill_safety_reason);
 	               }
 	               else
 	               {

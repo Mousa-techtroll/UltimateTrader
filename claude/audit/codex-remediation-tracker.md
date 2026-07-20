@@ -26,7 +26,7 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 | L4-3 | Med | CONFIRMED | 2 | live-default(long) | no-break tolerance in range/ATR units | ☐ | | |
 | L4-4 | Med | CONFIRMED | 2 | live-default | revalidation reruns dynamic gates | ☐ | | |
 | L1-1 | High | CONFIRMED | 2/1 | live-default | daily-halt refresh at OnTick top | ☐ | | |
-| L1-4 | Med | REDESIGN (diagnostic done) | 2r | live-default | discretionary gates (sessionQ/thrash) block 0; mandatory SL-sanity 0 (byte-ident) + shock 4/-$270 live-safety; InpConfirmedFillSafety building | 🔬 | | |
+| L1-4 | Med | RESOLVED (mandatory-safety built, flag-off) | 2r | live-default | discretionary gates block 0 (excluded); SL-sanity byte-identical; shock −$619/byte-ident-GH live-safety control available (InpConfirmedFillSafety); baseline preserved | ✅arch | flag-off | 0 (baseline) |
 | L2-1 | High | CONFIRMED-DORMANT | 3 | toggle | one paired structure event | ☐ | | |
 | L2-2 | Med | CONFIRMED-DORMANT | 3 | toggle | sweep recency by pool id | ☐ | | |
 | L3-2 | High | CONFIRMED-DORMANT | 3 | toggle | preserve router weight immediate path | ☐ | | |
