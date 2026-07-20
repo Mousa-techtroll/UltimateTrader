@@ -115,7 +115,7 @@ int OnInit()
          "[A][fix] worst-case loss $" + DoubleToString(fix_loss, 2) +
          " <= intended $" + DoubleToString(intended, 2));
    // Legacy documents the ~20x oversize: sizes on the tiny CSV distance.
-   CHECK(leg_rd == 0.05,
+   CHECK(MathAbs(leg_rd - 0.05) < 1e-6,   // tolerance: 3300.00-3299.95 = 0.05000000000018 in IEEE754
          "[A][legacy] risk_distance stuck on tiny CSV $0.05 (the bug)");
    CHECK(leg_loss > intended * 10.0,
          "[A][legacy] worst-case loss $" + DoubleToString(leg_loss, 2) +
