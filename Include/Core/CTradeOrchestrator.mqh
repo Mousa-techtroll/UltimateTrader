@@ -522,7 +522,13 @@ public:
          }
       }
 
-      // Short protection: set InpShortRiskMultiplier=1.0 to disable
+      // Short protection: set InpShortRiskMultiplier=1.0 to disable.
+      // L5-3: this is the SINGLE OWNER of short-risk reduction. CQualityTierRiskStrategy
+      // used to apply a second, independent short multiplier (ApplyShortProtection), but
+      // that owner is now a documented no-op (and g_riskStrategy is NULL / never
+      // constructed anyway), so short protection has exactly one application point here.
+      // Byte-identical at the default InpShortRiskMultiplier=1.0 (this block is guarded on
+      // < 1.0 and never runs).
       if(sig_type == SIGNAL_SHORT && InpShortRiskMultiplier < 1.0 && signal.riskPercent > 0)
       {
          double pre_short = signal.riskPercent;
@@ -621,7 +627,17 @@ public:
             double risk_amount = balance * risk_pct / 100.0;
             double risk_in_ticks = risk_distance / tick_size;
             lot_size = risk_amount / (risk_in_ticks * tick_value);
-            lot_size = NormalizeLots(lot_size, trade_symbol);
+            // L5-1: with InpRejectBelowMinLot ON, a below-broker-min raw lot returns 0
+            // here (-> hard-rejected at the lot<=0 gate below) instead of being forced UP
+            // to min-lot, which would silently exceed the requested risk and understate
+            // portfolio exposure. Default OFF = legacy force-up. On a funded account the
+            // raw lot is always >= min, so this is byte-identical.
+            lot_size = NormalizeLots(lot_size, trade_symbol, InpRejectBelowMinLot);
+            // L5-1: recompute the AUDITED risk% from the ACTUAL normalized lot so the
+            // exposure caps / persisted risk use real money risk, not the requested
+            // percentage. Guarded by the same flag, so prod (flag OFF) is byte-identical.
+            if(InpRejectBelowMinLot && lot_size > 0 && balance > 0)
+               risk_pct = (lot_size * risk_in_ticks * tick_value) / balance * 100.0;
          }
 
          adjusted_risk_pct = risk_pct;
@@ -665,7 +681,24 @@ public:
                   double risk_in_ticks = risk_distance / tick_size;
                   double resized = risk_amount / (risk_in_ticks * tick_value);
                   resized = NormalizeLots(resized, trade_symbol);
-                  if(resized > 0) lot_size = resized;
+                  // L5-2: fail CLOSED. Legacy left the FULL lot in place when the resize
+                  // read yielded no valid lot (resized<=0) while final_risk_pct already
+                  // recorded HALF — executed size then contradicted declared risk. Scale
+                  // the existing lot directly by the counter-trend multiplier as the
+                  // fallback so the executed size always tracks the halved risk. In the
+                  // deterministic tester resized>0 always, so this fallback is never taken
+                  // -> byte-identical.
+                  lot_size = (resized > 0)
+                             ? resized
+                             : NormalizeLots(lot_size * counter_trend_multiplier, trade_symbol);
+               }
+               else
+               {
+                  // L5-2: metadata read failed — fail CLOSED. Scale the existing lot
+                  // directly by the counter-trend multiplier (SL unchanged) rather than
+                  // leaving the full lot through at half declared risk. Never taken in the
+                  // deterministic tester (tick metadata always valid) -> byte-identical.
+                  lot_size = NormalizeLots(lot_size * counter_trend_multiplier, trade_symbol);
                }
             }
          }

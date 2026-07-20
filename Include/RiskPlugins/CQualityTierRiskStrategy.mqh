@@ -117,6 +117,10 @@ private:
 
    //+------------------------------------------------------------------+
    //| Apply short protection multiplier                                 |
+   //| L5-3 DEPRECATED: intentionally NO LONGER CALLED. Short protection  |
+   //| has a single owner (the trade orchestrator, InpShortRiskMultiplier)|
+   //| — see Step 4. Retained only to preserve the class contract; this   |
+   //| class is never constructed, so it is dead either way.              |
    //+------------------------------------------------------------------+
    double ApplyShortProtection(double risk, string action, ENUM_PATTERN_TYPE pattern)
    {
@@ -336,8 +340,15 @@ public:
          risk_log += " | Vol=SKIPPED(RegimeRisk)";
 
       // === Step 4: Short protection ===
+      // L5-3: SINGLE-OWNER contract. Short-risk reduction is owned SOLELY by the trade
+      // orchestrator (CTradeOrchestrator::ExecuteSignal applies InpShortRiskMultiplier).
+      // This plugin used to apply a SECOND independent short reduction here (a duplicate
+      // owner that could stack, e.g. 0.5x here AND 0.5x there = 0.25x). It is now NOT
+      // applied — ApplyShortProtection() is retained but deliberately uncalled. Byte-
+      // identical: this class is never constructed (g_riskStrategy stays NULL), so the
+      // whole method is dead; it is also a no-op at the default InpShortRiskMultiplier=1.0.
       double pre_short = risk_pct;
-      risk_pct = ApplyShortProtection(risk_pct, action, signal.patternType);
+      // (no short reduction applied here — single owner is the orchestrator)
       if(risk_pct != pre_short)
          risk_log += " | Short=" + DoubleToString(risk_pct, 2) + "%";
 

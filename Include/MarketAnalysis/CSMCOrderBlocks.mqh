@@ -18,6 +18,16 @@
 #define SMC_SWEEP_RECENCY_BARS 3
 
 //+------------------------------------------------------------------+
+//| L2-2: bounded liquidity-sweep event ring size. ScanForLiquidity- |
+//| Pools() rebuilds m_liquidity_pools[] every H1 update (is_swept /  |
+//| swept_time reset to false/0), so a sweep that the single newest   |
+//| closed bar does not re-touch is WIPED before its recency window   |
+//| expires. This ring survives the rebuild and preserves each NEW    |
+//| sweep for its full SMC_SWEEP_RECENCY_BARS window.                 |
+//+------------------------------------------------------------------+
+#define SMC_SWEEP_EVENT_MAX 16
+
+//+------------------------------------------------------------------+
 //| SMC Zone Type Enumeration                                        |
 //+------------------------------------------------------------------+
 enum ENUM_SMC_ZONE_TYPE
@@ -61,6 +71,16 @@ struct SLiquidityPool
    bool                 is_swept;       // Has been swept
    datetime             swept_time;     // Phase 1.1: time of the closed bar that swept this pool
    double               strength;       // Pool strength
+};
+
+//+------------------------------------------------------------------+
+//| L2-2: Liquidity-Sweep Event (bounded history, survives H1 rebuild)|
+//+------------------------------------------------------------------+
+struct SLiquiditySweepEvent
+{
+   double               price;          // level that was swept
+   bool                 is_high;        // true = sell-side (equal highs) swept; false = buy-side
+   datetime             swept_time;     // closed-bar time of the sweep edge
 };
 
 //+------------------------------------------------------------------+
@@ -131,6 +151,15 @@ private:
    SSMCZone             m_bearish_fvgs[];
    SLiquidityPool       m_liquidity_pools[];
 
+   // L2-2: bounded sweep-event history (survives the per-H1 pool rebuild). Read ONLY
+   // by GetRecentSweepDirection() — the DIRECTIONAL accessor, consumed solely by the
+   // off-by-default InpEAAv2 sweep evidence family (dormant on prod). Deliberately NOT
+   // read by CheckRecentLiquiditySweep(): that bool feeds the LIVE CLiquidityEngine
+   // confluence gate, so extending it would alter the production trade sequence.
+   SLiquiditySweepEvent m_sweep_events[SMC_SWEEP_EVENT_MAX];
+   int                  m_sweep_event_count;   // valid entries in the ring (0..MAX)
+   int                  m_sweep_event_head;    // next write slot (ring index)
+
    // Zone counts
    int                  m_bullish_ob_count;
    int                  m_bearish_ob_count;
@@ -162,6 +191,9 @@ private:
    int                  m_choch_sl_count;         // Number of valid swing lows stored
    ENUM_BOS_TYPE        m_last_choch;             // Last CHoCH result
    datetime             m_last_choch_time;        // When CHoCH was detected
+   ENUM_BOS_TYPE        m_choch_emitted;          // L2-1: last EMITTED CHoCH state — edge-trigger
+                                                  // dedup so a persistent relationship does not
+                                                  // restamp m_last_choch_time every bar
 
 public:
    //+------------------------------------------------------------------+
@@ -188,6 +220,10 @@ public:
       m_liquidity_count = 0;
       m_swing_count = 0;
 
+      // L2-2: sweep-event ring init
+      m_sweep_event_count = 0;
+      m_sweep_event_head  = 0;
+
       m_last_bos = BOS_NONE;
       m_last_bos_time = 0;
       m_last_bos_level = 0;
@@ -202,6 +238,8 @@ public:
       m_choch_sl_count = 0;
       m_last_choch = BOS_NONE;
       m_last_choch_time = 0;
+      m_choch_emitted = BOS_NONE;   // L2-1: no CHoCH emitted yet
+
       for(int i = 0; i < 5; i++)
       {
          m_choch_swing_highs[i] = 0;
@@ -683,6 +721,20 @@ public:
             dir    = m_liquidity_pools[i].is_high ? -1 : +1;   // highs swept=bearish; lows swept=bullish
          }
       }
+      // L2-2: also consult the rebuild-surviving sweep history. The pool loop above
+      // only sees sweeps still present after this bar's ScanForLiquidityPools rebuild;
+      // the history keeps a sweep alive for its FULL recency window. Take the overall
+      // newest of the two sources (same +1 buy-side / -1 sell-side convention).
+      for(int i = 0; i < m_sweep_event_count; i++)
+      {
+         if(m_sweep_events[i].swept_time > 0 &&
+            (now - m_sweep_events[i].swept_time) <= recency_window &&
+            m_sweep_events[i].swept_time >= newest)
+         {
+            newest = m_sweep_events[i].swept_time;
+            dir    = m_sweep_events[i].is_high ? -1 : +1;
+         }
+      }
       return dir;
    }
 
@@ -725,7 +777,7 @@ public:
          // (The shift happened after the bearish structure)
          result = CHOCH_BULLISH;
          m_last_choch = CHOCH_BULLISH;
-         m_last_choch_time = iTime(_Symbol, PERIOD_H1, 1);   // Phase 1.2: closed-bar time (freshness anchor for 2.2)
+         // L2-1: m_last_choch_time is stamped edge-triggered below (not per-bar here).
          LogPrint("SMC CHoCH: BULLISH CHoCH detected | LL: ", m_choch_swing_lows[1],
                   " < ", m_choch_swing_lows[2],
                   " then HH: ", m_choch_swing_highs[0],
@@ -746,7 +798,7 @@ public:
       {
          result = CHOCH_BEARISH;
          m_last_choch = CHOCH_BEARISH;
-         m_last_choch_time = iTime(_Symbol, PERIOD_H1, 1);   // Phase 1.2: closed-bar time (freshness anchor for 2.2)
+         // L2-1: m_last_choch_time is stamped edge-triggered below (not per-bar here).
          LogPrint("SMC CHoCH: BEARISH CHoCH detected | HH: ", m_choch_swing_highs[1],
                   " > ", m_choch_swing_highs[2],
                   " then LL: ", m_choch_swing_lows[0],
@@ -755,6 +807,22 @@ public:
 
       // If both patterns detected simultaneously, the most recent one wins
       // (already handled by overwrite order above - bearish check is last)
+
+      // L2-1: EDGE-TRIGGERED freshness stamp. m_last_choch keeps its exact latched
+      // VALUE (set above, byte-identical), but m_last_choch_time is refreshed ONLY
+      // when the detected CHoCH state actually CHANGES from the last emitted one — a
+      // persistent swing relationship no longer restamps the timestamp every bar
+      // (that per-bar restamp let a stale structural shift keep looking "fresh").
+      // m_last_choch_time reaches ONLY dormant readers on prod (GetRecentBOSTime ->
+      // off-by-default confluence scorer / InpEAAv2 family; GetAnalysis().choch_time
+      // has no live gate), and m_last_choch's VALUE is unchanged, so BYTE-IDENTICAL
+      // on the production path.
+      if(result != BOS_NONE)
+      {
+         if(result != m_choch_emitted)
+            m_last_choch_time = iTime(_Symbol, PERIOD_H1, 1);   // closed-bar time of the edge
+         m_choch_emitted = result;
+      }
 
       return result;
    }
@@ -1146,6 +1214,8 @@ private:
             {
                m_liquidity_pools[i].is_swept = true;
                m_liquidity_pools[i].swept_time = closed_bar_time;   // Phase 1.1: stamp sweep time
+               // L2-2: mirror the sweep into the rebuild-surviving history (dormant read)
+               RecordSweepEvent(m_liquidity_pools[i].price, true, closed_bar_time);
                LogPrint("SMC: Sell-side liquidity SWEPT at ", m_liquidity_pools[i].price);
             }
 
@@ -1154,6 +1224,8 @@ private:
             {
                m_liquidity_pools[i].is_swept = true;
                m_liquidity_pools[i].swept_time = closed_bar_time;   // Phase 1.1: stamp sweep time
+               // L2-2: mirror the sweep into the rebuild-surviving history (dormant read)
+               RecordSweepEvent(m_liquidity_pools[i].price, false, closed_bar_time);
                LogPrint("SMC: Buy-side liquidity SWEPT at ", m_liquidity_pools[i].price);
             }
          }
@@ -1180,6 +1252,38 @@ private:
             return true;
       }
       return false;
+   }
+
+   //+------------------------------------------------------------------+
+   //| L2-2: record a NEW sweep into the bounded, rebuild-surviving ring |
+   //| (dedup a same-side/same-level sweep already tracked within its    |
+   //| recency window so a re-detected pool keeps its original edge time)|
+   //+------------------------------------------------------------------+
+   void RecordSweepEvent(double price, bool is_high, datetime swept_time)
+   {
+      if(swept_time <= 0) return;
+      datetime recency_window = (datetime)(SMC_SWEEP_RECENCY_BARS * PeriodSeconds(PERIOD_H1));
+      double   tol = 20.0 * SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+
+      // DEDUP: same-side, same-level sweep already tracked AND still within its
+      // recency window → keep the original edge time (do not duplicate / re-stamp).
+      for(int i = 0; i < m_sweep_event_count; i++)
+      {
+         if(m_sweep_events[i].is_high == is_high &&
+            m_sweep_events[i].swept_time > 0 &&
+            MathAbs(m_sweep_events[i].price - price) <= tol &&
+            (swept_time - m_sweep_events[i].swept_time) <= recency_window)
+            return;
+      }
+
+      // Append into the bounded ring (overwrites the oldest slot once full).
+      int slot = m_sweep_event_head;
+      m_sweep_events[slot].price      = price;
+      m_sweep_events[slot].is_high    = is_high;
+      m_sweep_events[slot].swept_time = swept_time;
+      m_sweep_event_head = (m_sweep_event_head + 1) % SMC_SWEEP_EVENT_MAX;
+      if(m_sweep_event_count < SMC_SWEEP_EVENT_MAX)
+         m_sweep_event_count++;
    }
 
    //+------------------------------------------------------------------+

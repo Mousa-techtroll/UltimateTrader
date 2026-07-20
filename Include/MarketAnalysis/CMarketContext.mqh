@@ -903,15 +903,27 @@ public:
       return m_smc_order_blocks.GetLastCHoCH();
    }
 
-   // Phase 2.2: most-recent of the BOS / CHoCH closed-bar timestamps. Both are
-   // stamped iTime(_Symbol,PERIOD_H1,1) at their break sites (Phase 1.2). The
-   // scorer's freshness gate uses the newest structural event of either kind.
+   // L2-1: {direction,time} MUST describe ONE structural event. Previously this
+   // returned max(BOS_time, CHoCH_time) while GetRecentBOS() independently returned
+   // the (BOS-preferred) direction — so a stale BOS direction could be PAIRED with a
+   // fresher CHoCH timestamp, and a signal aligned with the stale direction would
+   // pass the scorer's freshness spine on the wrong event's clock. Now the time is
+   // anchored to the SAME event whose direction GetRecentBOS() reports:
+   //   GetRecentBOS() = m_last_bos when != BOS_NONE, else the swing-CHoCH,
+   //   so the paired time = m_last_bos_time    when m_last_bos != BOS_NONE,
+   //                        else m_last_choch_time.
+   // m_last_bos and m_last_bos_time are stamped together at the break site
+   // (DetectBreakOfStructure), so this is a self-consistent pair. GetRecentBOS() is
+   // left UNTOUCHED — it is a LIVE production read (CSetupEvaluator Factor-1A CHoCH),
+   // so the DIRECTION is frozen and only the TIME is re-anchored to it. This method's
+   // only readers are the off-by-default confluence scorer and the InpEAAv2 reversal-
+   // confirmation family, both dormant on prod => BYTE-IDENTICAL on the prod path.
    virtual datetime GetRecentBOSTime() override
    {
       if(m_smc_order_blocks == NULL) return 0;
-      datetime t_bos   = m_smc_order_blocks.GetLastBOSTime();
-      datetime t_choch = m_smc_order_blocks.GetLastCHoCHTime();
-      return (t_bos > t_choch) ? t_bos : t_choch;
+      if(m_smc_order_blocks.GetLastBOS() != BOS_NONE)
+         return m_smc_order_blocks.GetLastBOSTime();     // pair with the BOS event
+      return m_smc_order_blocks.GetLastCHoCHTime();       // else the swing-CHoCH event
    }
 
    // L4-1 Arm C v2.1: DIRECTIONAL recent liquidity sweep. +1 = the NEWEST recent

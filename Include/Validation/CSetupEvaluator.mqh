@@ -1015,6 +1015,11 @@ public:
 
    //+------------------------------------------------------------------+
    //| Get quality score as integer (for logging)                        |
+   //| L4-2: this bucketed 10/7/5/3 is the LEGACY score. On the unified   |
+   //| tier-first ranking scale (CSignalOrchestrator::ComputeRankKey) a  |
+   //| legacy signal ranks purely on its TIER — the bucket carries no    |
+   //| within-tier resolution — so it no longer out/under-ranks a routed |
+   //| engine's raw 0-10 score across a tier boundary.                    |
    //+------------------------------------------------------------------+
    int GetQualityScore(ENUM_SETUP_QUALITY quality)
    {

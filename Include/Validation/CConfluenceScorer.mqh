@@ -276,6 +276,11 @@ public:
       }
 
       if(points > 10) points = 10;
+      // L4-2: out_score (raw 0-10) is a routed engine's WITHIN-TIER discriminator on
+      // the unified tier-first ranking scale — see CSignalOrchestrator::ComputeRankKey,
+      // which pairs this raw score (via signal.qualityScore) with the tier returned
+      // below so routed engines and legacy bucketed scores no longer compete on
+      // different axes.
       out_score = points;
       out_axes.raw_score = points;
 

@@ -25,7 +25,7 @@ double NormalizePrice(double price, string symbol = NULL)
 //+------------------------------------------------------------------+
 //| Normalize lot size to symbol step                                 |
 //+------------------------------------------------------------------+
-double NormalizeLots(double lots, string symbol = NULL)
+double NormalizeLots(double lots, string symbol = NULL, bool reject_below_min = false)
 {
    if(symbol == NULL) symbol = _Symbol;
 
@@ -39,6 +39,15 @@ double NormalizeLots(double lots, string symbol = NULL)
    if(lot_step <= 0) lot_step = 0.01;
 
    lots = MathFloor(lots / lot_step) * lot_step;
+
+   // L5-1: when reject_below_min is set, a floored volume below the broker minimum is
+   // REJECTED (return 0.0 sentinel) rather than forced UP to min_lot — forcing up silently
+   // exceeds the requested risk and understates exposure. The caller treats 0 as a hard
+   // reject. Default false preserves the legacy force-up for EVERY existing caller (none
+   // pass this arg) -> byte-identical.
+   if(reject_below_min && lots < min_lot)
+      return 0.0;
+
    lots = MathMax(lots, min_lot);
    lots = MathMin(lots, max_lot);
 

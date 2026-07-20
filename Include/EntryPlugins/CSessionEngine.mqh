@@ -581,9 +581,17 @@ private:
    //+------------------------------------------------------------------+
    void UpdateAsianRange(double atr)
    {
-      // Sprint 4E: Use GMT-based date instead of server time for Asian range filtering
+      // Sprint 4E: Use GMT-based date instead of server time for Asian range filtering.
+      // L8-2 (InpSessionRangeDST, default OFF): when armed, derive "today" from the
+      // per-timestamp US-DST broker offset (CTimeOffset) so the range date stays coherent
+      // with the per-bar conversion below across a DST boundary, instead of the frozen
+      // TimeGMT() anchor. OFF = legacy TimeGMT() anchor -> byte-identical. NOTE: range-DST
+      // was A/B REJECTED (-10.4%); this is a live-DST-correctness option only.
       MqlDateTime gmt_date_dt;
-      TimeToStruct(TimeGMT(), gmt_date_dt);
+      datetime now_gmt = InpSessionRangeDST
+         ? (TimeCurrent() - (datetime)(CTimeOffset::BrokerGMTOffset(TimeCurrent()) * 3600))
+         : TimeGMT();
+      TimeToStruct(now_gmt, gmt_date_dt);
       gmt_date_dt.hour = 0; gmt_date_dt.min = 0; gmt_date_dt.sec = 0;
       datetime gmt_today_start = StructToTime(gmt_date_dt);
 
@@ -612,14 +620,19 @@ private:
 
       for(int i = 0; i < bars_to_copy; i++)
       {
+         // L8-2 (InpSessionRangeDST, default OFF): resolve each historical M15 bar's GMT
+         // offset PER-TIMESTAMP via CTimeOffset instead of the frozen init-time
+         // m_gmt_offset, so the Asian-range membership does not shift by one hour across a
+         // DST boundary. OFF = frozen m_gmt_offset (legacy) -> byte-identical.
+         int bar_offset = InpSessionRangeDST ? CTimeOffset::BrokerGMTOffset(time[i]) : m_gmt_offset;
          MqlDateTime bar_dt;
          TimeToStruct(time[i], bar_dt);
-         int bar_gmt_hour = bar_dt.hour - m_gmt_offset;
+         int bar_gmt_hour = bar_dt.hour - bar_offset;
          if(bar_gmt_hour < 0) bar_gmt_hour += 24;
          if(bar_gmt_hour >= 24) bar_gmt_hour -= 24;
 
          // Sprint 4E: Convert bar time to GMT before date comparison
-         datetime bar_gmt_time = time[i] - (datetime)(m_gmt_offset * 3600);
+         datetime bar_gmt_time = time[i] - (datetime)(bar_offset * 3600);
          MqlDateTime bar_gmt_dt;
          TimeToStruct(bar_gmt_time, bar_gmt_dt);
          bar_gmt_dt.hour = 0; bar_gmt_dt.min = 0; bar_gmt_dt.sec = 0;

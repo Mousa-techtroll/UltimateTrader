@@ -289,6 +289,26 @@ void ApplySymbolProfile()
 {
    ENUM_SYMBOL_PROFILE profile = DetectSymbolProfile();
 
+   // L8-3: log the configured input vs the resolved profile, and warn (fail-SOFT) on a
+   // fixed-profile / chart-symbol family mismatch so a non-gold chart running the gold
+   // profile is never silent. Diagnostic only — does NOT alter the resolved profile, so
+   // byte-identical. Default InpSymbolProfile is now AUTO (see Inputs L8-3), and on the
+   // gold prod chart AUTO resolves to XAUUSD identically to the old fixed default.
+   {
+      string sym = _Symbol;
+      bool sym_is_gold = (StringFind(sym, "XAU") >= 0 || StringFind(sym, "GOLD") >= 0);
+      bool sym_is_jpy  = (StringFind(sym, "JPY") >= 0);
+      if(InpSymbolProfile != SYMBOL_PROFILE_AUTO &&
+         ((profile == SYMBOL_PROFILE_XAUUSD && !sym_is_gold) ||
+          ((profile == SYMBOL_PROFILE_USDJPY || profile == SYMBOL_PROFILE_GBPJPY) && !sym_is_jpy)))
+         Print("[SymbolProfile] WARNING: fixed profile ", EnumToString(InpSymbolProfile),
+               " does not match chart symbol ", sym, " — forcing ", EnumToString(profile),
+               " behavior. Set InpSymbolProfile=SYMBOL_PROFILE_AUTO to auto-detect.");
+      else
+         Print("[SymbolProfile] input=", EnumToString(InpSymbolProfile),
+               " resolved=", EnumToString(profile), " symbol=", sym);
+   }
+
    // Start with input defaults (gold-optimized)
    g_profileBearPinBarAsiaOnly  = InpBearPinBarAsiaOnly;
    g_profileBullMACrossBlockNY  = InpBullMACrossBlockNY;
@@ -406,6 +426,49 @@ void RegisterEntryPlugin(CEntryStrategy *plugin, bool enabled)
    }
    else
       Print("[Init] FAILED to initialize entry plugin: ", plugin.GetName());
+}
+
+//+------------------------------------------------------------------+
+//| L3-5: independent shared GMT-hour clock                           |
+//|                                                                    |
+//| MA-Cross / bearish Pin-Bar read the session hour off the OPTIONAL  |
+//| g_sessionEngine and legacy fell back to a hardcoded gmt_hour=13    |
+//| when the engine is null (InpEnableSessionEngine=false), which      |
+//| triggers the default NY blocks and silently starves them all day.  |
+//| This resolves the broker->GMT hour independently via CTimeOffset   |
+//| (the same authoritative US-DST resolver CSessionEngine::GetGMTHour |
+//| uses), so those plugins get a real clock whether or not the engine |
+//| exists. Only reached on the fallback path (engine null); with the  |
+//| SessionEngine ON by default it is never called -> byte-identical.  |
+//+------------------------------------------------------------------+
+int SharedGMTHour(datetime server_time)
+{
+   int offset = CTimeOffset::BrokerGMTOffset(server_time);
+   MqlDateTime dt;
+   TimeToStruct(server_time, dt);
+   int h = dt.hour - offset;
+   if(h < 0)   h += 24;
+   if(h >= 24) h -= 24;
+   return h;
+}
+
+//+------------------------------------------------------------------+
+//| L1-7: shared pre-execution news gateway                           |
+//|                                                                    |
+//| The confirmed/immediate baseline entry paths gate on the news      |
+//| filter inline, but the SLEEVE and FILE entry routes did not, so a  |
+//| file/sleeve order could execute inside a blocked high-impact       |
+//| window while baseline orders were rejected. This one helper is the |
+//| single news-block predicate; the sleeve+file routes call it before |
+//| executing. InpNewsFilterEnable defaults OFF, so this always returns |
+//| false on prod -> byte-identical.                                   |
+//+------------------------------------------------------------------+
+bool NewsEntryBlocked(const datetime bar_time, string &reason)
+{
+   reason = "";
+   if(InpNewsFilterEnable && InpNewsBlockEntries && g_newsGate != NULL)
+      return g_newsGate.IsEntryBlocked(bar_time, reason);
+   return false;
 }
 
 //+------------------------------------------------------------------+
@@ -977,9 +1040,28 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpWeakTrendTPCut",DoubleToString(InpWeakTrendTPCut,6),"double",acc);
    CfgRow(h,"InpWednesdayRiskMult",DoubleToString(InpWednesdayRiskMult,6),"double",acc);
    CfgRow(h,"InpWeekendCloseHour",IntegerToString(InpWeekendCloseHour),"int",acc);
+
+   // L8-5: fold the DETECTED symbol profile and every EFFECTIVE g_profile* override into
+   // the hash so two runs with identical RAW inputs but different resolved profiles
+   // (e.g. AUTO on XAU vs AUTO on USDJPY) produce DISTINCT effective-manifest rows/hashes
+   // — the raw-input rows above alone could collide. Prefixed EFF_ to keep them separate
+   // from the Inp* raw rows. AUDIT-build-only (this whole function is #ifdef AUDIT_BUILD),
+   // so production decisions and the backtest result are untouched -> byte-identical.
+   CfgRow(h,"EFF_DetectedProfile",EnumToString(DetectSymbolProfile()),"ENUM_SYMBOL_PROFILE",acc);
+   CfgRow(h,"EFF_BearPinBarAsiaOnly",(g_profileBearPinBarAsiaOnly?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_BullMACrossBlockNY",(g_profileBullMACrossBlockNY?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_RubberBandAPlusOnly",(g_profileRubberBandAPlusOnly?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_LongExtensionFilter",(g_profileLongExtensionFilter?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_EnableCIScoring",(g_profileEnableCIScoring?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_EnableBearishEngulfing",(g_profileEnableBearishEngulfing?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_EnableS6Short",(g_profileEnableS6Short?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_EnableCrashBreakout",(g_profileEnableCrashBreakout?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_EnableBearishPinBar",(g_profileEnableBearishPinBar?"true":"false"),"bool",acc);
+   CfgRow(h,"EFF_ShortRiskMultiplier",DoubleToString(g_profileShortRiskMultiplier,6),"double",acc);
+
    uint cfghash = AuditFnv1a(acc);
    Print("[EffCfg] ===== EFFECTIVE INPUT MANIFEST (audit, decision-free) =====");
-   Print("[EffCfg] symbol=", _Symbol, " inputs=388 config_hash=", StringFormat("%08X", cfghash));
+   Print("[EffCfg] symbol=", _Symbol, " inputs=388 (+11 effective-profile rows) config_hash=", StringFormat("%08X", cfghash));
    if(h != INVALID_HANDLE)
    {
       FileWrite(h, "__CONFIG_HASH_FNV1A32__", StringFormat("%08X", cfghash), "hash");
@@ -2406,15 +2488,26 @@ bool ConfirmedFillSafetyBlock(const SPendingSignal &pending, string &reason)
 void OnTick()
 {
    // Phase 3.3: Emergency disable (kill switch)
+   // L1-3: two documented semantics. Default (InpEmergencyEntryOnly=false) = legacy FULL
+   // halt: return before orphan-adopt, ManageOpenPositions() and CheckRiskLimits() — i.e.
+   // ALL management ceases. InpEmergencyEntryOnly=true = ENTRY kill switch: block every new
+   // entry route (immediate/confirmed/sleeve/file) but KEEP managing/reconciling open
+   // positions (staged TPs, trailing, exits, orphan-adopt, risk refresh). Both flags default
+   // false, so on prod (InpEmergencyDisable=false) neither branch is taken → byte-identical.
+   bool emergencyEntriesBlocked = false;
    if(InpEmergencyDisable)
    {
       static bool emergency_warned = false;
       if(!emergency_warned)
       {
-         Print("EMERGENCY DISABLE: EA is disabled via kill switch");
+         Print("EMERGENCY DISABLE: ", (InpEmergencyEntryOnly
+               ? "ENTRY kill switch — new entries blocked, open positions still managed"
+               : "EA is disabled via kill switch (full halt)"));
          emergency_warned = true;
       }
-      return;
+      if(!InpEmergencyEntryOnly)
+         return;                     // legacy full halt (default) — byte-identical
+      emergencyEntriesBlocked = true; // entry-only kill: fall through, keep managing
    }
 
    //--- Check for new H1 bar
@@ -2622,7 +2715,10 @@ void OnTick()
          }
       }
 
-      if(!friday_entry_blocked)
+      // L1-3: emergencyEntriesBlocked gates the baseline confirmed + immediate entry
+      // routes (both live inside this friday-block). No-op unless the entry-only kill
+      // switch is armed (default false) -> byte-identical.
+      if(!friday_entry_blocked && !emergencyEntriesBlocked)
       {
       //--- 2. Check pending confirmation signal (handled by CSignalOrchestrator)
       if(InpEnableConfirmation && g_signalOrchestrator.HasPendingSignal())
@@ -3092,6 +3188,29 @@ void OnTick()
 
                   signal.audit_origin = "IMMEDIATE";
                   signal.session_risk_multiplier = 1.0;
+
+                  // L3-2: preserve the routed-engine activation weight on the IMMEDIATE
+                  // path. A routed Expansion signal stamps the router's activation weight
+                  // onto signal.regime_risk_multiplier (CExpansionEngine ~:579); the
+                  // legacy line below reset it to 1.0 here, discarding the router dose
+                  // (the confirmed path preserves it — CTradeOrchestrator ~:1124). Apply
+                  // the routed weight to riskPercent ONCE, then reset the telemetry field
+                  // so the generic regime scaler below can re-stamp its own ratio; the
+                  // routed dose now lives in riskPercent and composes exactly once with
+                  // every downstream multiplier. Gated on the multi-strategy master, which
+                  // is OFF on prod, so no engine ever stamps a non-1.0 weight -> the reset
+                  // is unchanged and this is byte-identical.
+                  if(InpEnableMultiStrategy && signal.riskPercent > 0 &&
+                     signal.regime_risk_multiplier > 0.0 &&
+                     MathAbs(signal.regime_risk_multiplier - 1.0) > 1e-9)
+                  {
+                     double routed_weight = signal.regime_risk_multiplier;
+                     signal.riskPercent *= routed_weight;
+                     Print("[RouterWeight] routed activation weight x",
+                           DoubleToString(routed_weight, 2),
+                           " applied to immediate entry | Risk -> ",
+                           DoubleToString(signal.riskPercent, 2), "%");
+                  }
                   signal.regime_risk_multiplier = 1.0;
 
                   // Sprint 2 + 5B: Session risk adjustment (GMT-aware)
@@ -3358,35 +3477,32 @@ void OnTick()
       }
       } // end if(!friday_entry_blocked) — Sprint 3D + ACTION-5 hour gate
 
-      //=== [SB-1.2 CREV] EXPERIMENTAL SHORT-SLEEVE ENTRY DRIVER (new H1 bar) ===
-      // Spec §12b. Runs AFTER g_stateManager.UpdateMarketState() (bear-state
-      // ledger advanced) and AFTER the baseline entry logic (baseline slot
-      // counts current). Routes EXCLUSIVELY through the SB-0.1 sleeve gateway —
-      // never the baseline entry path. The gateway owns max-1 / slot-reserve /
-      // risk / DD / halts (CREV supplies only the signal + family + dose).
-      // Dead unless BOTH masters ON and the engine exists (identity by
-      // construction). Deliberately OUTSIDE the baseline friday/halt/budget
-      // gates: the sleeve is independent of the baseline daily-trade budget
-      // (gateway header), and its own account-halt backstop still applies.
-      if(InpEnableShortSleeve && InpEnableCREV && g_crevEntry != NULL)
-      {
-         // §9 post-loss cooldown anchor (coordinator stamps CREV losses).
-         g_crevEntry.SetLastLossBar(g_posCoordinator.GetCrevLastLossBar());
+      //=== EXPERIMENTAL SHORT-SLEEVE ENTRY DRIVERS (new H1 bar) ===
+      // Spec §12b. Run AFTER g_stateManager.UpdateMarketState() (bear-state ledger
+      // advanced) and AFTER the baseline entry logic (baseline slot counts current).
+      // Route EXCLUSIVELY through the SB-0.1 sleeve gateway — never the baseline entry
+      // path. The gateway owns max-1 / slot-reserve / risk / DD / halts (each engine
+      // supplies only the signal + family + dose). Dead unless BOTH masters ON and the
+      // engine exists (identity by construction). Deliberately OUTSIDE the baseline
+      // friday/halt/budget gates: the sleeve is independent of the baseline daily-trade
+      // budget (gateway header), and its own account-halt backstop still applies.
+      //
+      // L1-6: drivers are ordered by the owner's designated priority — CONT (the
+      // designated PRIMARY short) is attempted FIRST, then CREV, then TMF — so that
+      // simultaneous same-bar candidates no longer hand the single sleeve slot
+      // (InpSleeveMaxPositions=1 default) to whichever driver merely ran first. When
+      // more slots are free the lower-priority drivers still fill in order.
+      // L1-3: each driver is gated on !emergencyEntriesBlocked (entry-only kill switch).
+      // L1-7: each driver consults the shared news gateway (NewsEntryBlocked) so a
+      // sleeve order cannot fire inside a blocked high-impact window.
+      // All three of these controls are no-ops on prod (sleeve masters OFF, emergency
+      // OFF, news filter OFF) -> byte-identical.
+      string sleeve_news_reason = "";
+      bool sleeve_blocked = emergencyEntriesBlocked ||
+                            NewsEntryBlocked(currentBarTime, sleeve_news_reason);
 
-         EntrySignal crevSig = g_crevEntry.CheckForEntrySignal();   // closed-bar; <=1 signal
-         if(crevSig.valid)
-         {
-            SPosition crevPos = g_tradeOrchestrator.ExecuteSleeveSignal(crevSig, "CREV");
-            if(crevPos.ticket > 0)
-               g_crevEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §9 stamp faded-high + last-entry bar
-         }
-      }
-
-      // [SB-2.1 CONT] Second sleeve driver (spec §12b), alongside the CREV
-      // driver above. Same containment: routes EXCLUSIVELY through the SB-0.1
-      // sleeve gateway (family "CONT") — never the baseline entry path. Dead
-      // unless BOTH masters ON and g_contEntry exists (identity by construction).
-      if(InpEnableShortSleeve && InpEnableCONT && g_contEntry != NULL)
+      // [SB-2.1 CONT] PRIMARY sleeve driver (family "CONT").
+      if(!sleeve_blocked && InpEnableShortSleeve && InpEnableCONT && g_contEntry != NULL)
       {
          // §10 post-loss cooldown anchor (coordinator stamps CONT losses).
          g_contEntry.SetLastLossBar(g_posCoordinator.GetContLastLossBar());
@@ -3400,11 +3516,23 @@ void OnTick()
          }
       }
 
-      // [SB-TMF] Third sleeve driver (spec §11), alongside the CREV/CONT drivers
-      // above. Same containment: routes EXCLUSIVELY through the SB-0.1 sleeve
-      // gateway (family "TMF") — never the baseline entry path (Fork A). Dead
-      // unless BOTH masters ON and g_tmfEntry exists (identity by construction).
-      if(InpEnableShortSleeve && InpEnableTMF && g_tmfEntry != NULL)
+      // [SB-1.2 CREV] Second-priority sleeve driver (family "CREV").
+      if(!sleeve_blocked && InpEnableShortSleeve && InpEnableCREV && g_crevEntry != NULL)
+      {
+         // §9 post-loss cooldown anchor (coordinator stamps CREV losses).
+         g_crevEntry.SetLastLossBar(g_posCoordinator.GetCrevLastLossBar());
+
+         EntrySignal crevSig = g_crevEntry.CheckForEntrySignal();   // closed-bar; <=1 signal
+         if(crevSig.valid)
+         {
+            SPosition crevPos = g_tradeOrchestrator.ExecuteSleeveSignal(crevSig, "CREV");
+            if(crevPos.ticket > 0)
+               g_crevEntry.NotifyEntryFilled(iTime(_Symbol, PERIOD_H1, 1));  // §9 stamp faded-high + last-entry bar
+         }
+      }
+
+      // [SB-TMF] Third-priority sleeve driver (family "TMF", spec §11, Fork A).
+      if(!sleeve_blocked && InpEnableShortSleeve && InpEnableTMF && g_tmfEntry != NULL)
       {
          // §7 post-loss cooldown anchor (coordinator stamps TMF losses).
          g_tmfEntry.SetLastLossBar(g_posCoordinator.GetTmfLastLossBar());
@@ -3539,7 +3667,14 @@ void OnTick()
    // an existing broker fill is not a new entry).
    // [SB-0.1] baseline-only count: the file book is part of the BASELINE book —
    // sleeve positions must not gate it (identical when no sleeve positions).
+   // L1-3: !emergencyEntriesBlocked blocks file entries under the entry-only kill switch.
+   // L1-7: NewsEntryBlocked() routes the file path through the shared news gateway (the
+   // file route previously had no news guard). Both no-ops on prod (emergency + news OFF)
+   // -> byte-identical.
+   string file_news_reason = "";
    if((InpSignalSource == SIGNAL_SOURCE_BOTH || InpSignalSource == SIGNAL_SOURCE_FILE) &&
+      !emergencyEntriesBlocked &&
+      !NewsEntryBlocked(currentBarTime, file_news_reason) &&
       g_fileEntry != NULL &&
       g_posCoordinator.GetBaselinePositionCount() < InpMaxPositions &&
       !g_riskMonitor.IsTradingHalted() &&

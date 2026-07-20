@@ -623,6 +623,15 @@ struct SPendingSignal
    ENUM_ENGINE_MODE     engine_mode;
    ENUM_DAY_TYPE        day_type;
    int                  engine_confluence;
+   // L4-5: major-engine identity, carried through confirmation so it reaches the
+   // position instead of being dropped (routed-engine confirmed trades used to land
+   // as ENGINE_NONE). Snapshotted from the winner at StorePendingSignal, mirroring
+   // engine_mode/engine_confluence above. BYTE-IDENTICAL on the production config:
+   // every signal that reaches the pending path there is a legacy candlestick/trend
+   // signal with major_engine==ENGINE_NONE (the major-engine engines skip
+   // confirmation via RequiresConfirmation()==false, and the routed sleeve engines
+   // are off with multi-strategy), so this always carries ENGINE_NONE on prod.
+   ENUM_MAJOR_ENGINE    major_engine;
 
    // Sprint 5D: multi-bar confirmation window
    int                  pending_bar_count;    // Bars since signal stored as pending

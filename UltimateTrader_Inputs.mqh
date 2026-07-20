@@ -11,7 +11,7 @@
 
 //--- Group 0: SYMBOL PROFILE
 input group "══════ SYMBOL PROFILE ══════"
-input ENUM_SYMBOL_PROFILE InpSymbolProfile = SYMBOL_PROFILE_XAUUSD; // Symbol profile (overrides filters/params for the selected instrument)
+input ENUM_SYMBOL_PROFILE InpSymbolProfile = SYMBOL_PROFILE_AUTO; // L8-3: default AUTO (auto-detect from chart symbol) instead of a fixed XAUUSD that silently forces gold behavior on non-gold charts. BYTE-IDENTICAL on prod: on a gold chart AUTO resolves to XAUUSD, and the canonical .set pins this to 0=XAUUSD anyway. See DESIGN.md (L8-3).
 
 //--- Group 1: SIGNAL SOURCE
 // ── LIVE-ONLY feature (T0 note 2026-07-09): this group drives the Telegram-CSV signal bridge
@@ -524,7 +524,7 @@ input bool   InpDisableBrokerTrailing = false;                 // REVERT: disabl
 // CANDIDATE P2 (QA SL-sync, candidate-slsync/DESIGN.md): on ANY trailing-modify failure, re-read the broker's
 // actual SL into pos.stop_loss (re-sync) instead of only reverting on TRADE_RETCODE_INVALID_STOPS — a
 // non-INVALID_STOPS reject otherwise leaves a phantom advanced SL that blocks later legit is_better trails.
-input bool   InpSLResyncOnFail = false;                        // QA: re-sync internal SL to broker on any modify fail (false=baseline)
+input bool   InpSLResyncOnFail = true;                         // L7-5: re-sync internal SL to broker on ANY modify fail (not just INVALID_STOPS) — prevents a phantom tighter SL after a rejected modify. SOURCE default flipped false->true to match the canonical .set (which already pins true), so BYTE-IDENTICAL on prod; belt-and-suspenders for un-pinned runs. See claude/audit/candidate-tier3-routing/DESIGN.md (L7-5).
 
 //--- Group 40: TP0 EARLY PARTIAL (Phase 2)
 input group "══════ TP0 EARLY PARTIAL ══════"
@@ -809,3 +809,12 @@ input bool   InpEarlyRiskRefresh    = true; // L1-1: refresh/latch the daily-los
 input bool   InpConfirmedPathGates  = false; // L1-4: enforce the immediate path's 4 market-safety BLOCK gates (shock-extreme, session-quality, regime-thrash, SL-to-spread sanity) on the confirmed-pending fill path too (spread is covered by the executor's own final check). OFF = legacy confirmed path skips all 4.
 input bool   InpConfirmedFillSafety = false; // L1-4 REDESIGN: enforce ONLY the two MANDATORY fill-time EXECUTION-SAFETY conditions (market-shock EXTREME + SL-to-spread sanity, incl. the CEG pattern-stop rule) on the confirmed-pending fill path — NOT the discretionary signal-quality gates (session-quality, regime-thrash), which shadow-gate attribution proved block ZERO confirmed fills at fill time. Refined replacement for InpConfirmedPathGates' all-4 over-enforcement cascade (−$1,881). OFF = c051f97b baseline (byte-identical). See claude/audit/candidate-L1-4-redesign/DESIGN.md.
 input bool   InpVolBOCooldownOnFill = true; // L3-3: CVolatilityBreakoutEntry arms its ~4h per-side cooldown + break/pullback-Add anchor only when its candidate WINS arbitration (orchestrator winner hook), not on emission — a lost/rejected candidate no longer suppresses that side nor seeds a false "Add". OFF = legacy commit-on-emission.
+
+input group "══════ CODEX TIER-3 ROUTING / SAFEGUARDS ══════"
+// Three default-OFF correctness hardenings from the codex Tier-3 batch (L1-3 / L5-1 / L8-2).
+// Each guards ONE behavior change; with all three OFF the backtest is byte-identical to the
+// canonical config (c051f97b / $32,617.90 / 801). Flip ON one at a time to measure.
+// See claude/audit/candidate-tier3-routing/DESIGN.md.
+input bool   InpEmergencyEntryOnly  = false; // L1-3: when InpEmergencyDisable is ON, kill only NEW entries but KEEP managing/reconciling open positions (staged TPs, trailing, exits, orphan-adopt, risk refresh). OFF = legacy full halt (return before all management). No-op unless InpEmergencyDisable is also ON (default false) → byte-identical.
+input bool   InpRejectBelowMinLot   = false; // L5-1: reject a below-broker-minimum computed lot (and recompute the actual audited risk% from the normalized lot) instead of forcing the volume UP to min-lot (which silently exceeds requested risk and understates portfolio exposure). OFF = legacy force-up. On a funded account the raw lot is always >= min, so this branch never fires → byte-identical.
+input bool   InpSessionRangeDST     = false; // L8-2: route the CSessionEngine Asian-RANGE date + historical M15 GMT conversion through per-timestamp US-DST (CTimeOffset) instead of the frozen init-time offset. OFF = legacy frozen offset. NOTE: range-DST was A/B REJECTED (−10.4%) — this is a LIVE-DST-correctness option only, default OFF → byte-identical.

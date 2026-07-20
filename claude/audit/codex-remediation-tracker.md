@@ -27,23 +27,23 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 | L4-4 | Med | CONFIRMED | 2 | live-default | revalidation reruns dynamic gates | ☐ | | |
 | L1-1 | High | CONFIRMED | 2/1 | live-default | daily-halt refresh at OnTick top | ☐ | | |
 | L1-4 | Med | RESOLVED (mandatory-safety built, flag-off) | 2r | live-default | discretionary gates block 0 (excluded); SL-sanity byte-identical; shock −$619/byte-ident-GH live-safety control available (InpConfirmedFillSafety); baseline preserved | ✅arch | flag-off | 0 (baseline) |
-| L2-1 | High | CONFIRMED-DORMANT | 3 | toggle | one paired structure event | ☐ | | |
-| L2-2 | Med | CONFIRMED-DORMANT | 3 | toggle | sweep recency by pool id | ☐ | | |
-| L3-2 | High | CONFIRMED-DORMANT | 3 | toggle | preserve router weight immediate path | ☐ | | |
-| L4-2 | Med | CONFIRMED-DORMANT | 3 | toggle | unify routed/legacy score scale | ☐ | | |
-| L4-5 | Low | CONFIRMED-DORMANT | 3 | toggle | carry major_engine to position | ☐ | | |
-| L1-3 | High | CONFIRMED-DORMANT | 3 | toggle | emergency = entry-only kill | ☐ | | |
-| L1-6 | Med | CONFIRMED-DORMANT | 3 | toggle | arbitrate sleeve candidates | ☐ | | |
-| L1-7 | Med | CONFIRMED | 3 | live-file+toggle | news guard covers sleeve/file | ☐ | | |
-| L3-5 | Med | CONFIRMED-DORMANT | 3 | toggle | independent shared session clock | ☐ | | |
-| L5-3 | Low | CONFIRMED-DORMANT | 3 | toggle | single short-protection owner | ☐ | | |
-| L8-3 | Med | CONFIRMED-DORMANT | 3 | off-config | profile AUTO / fail-closed | ☐ | | |
-| L5-1 | High | PARTIAL | 4 | live marginal | reject below-min lot; recompute risk | ☐ | | |
-| L5-2 | Med | PARTIAL | 4 | live near-nil | counter-trend rescale fail-closed | ☐ | | |
-| L1-5 | Med | PARTIAL (non-default) | 4 | toggle(win≥2) | incumbent/challenger arbitration | ☐ | | |
-| L8-2 | Med | INTENDED-SCOPE | 4 | live-DST | Asian-range per-timestamp DST (⚠ vs prior reject) | ☐ | | |
-| L8-5 | Low | CONFIRMED-DORMANT | 4 | audit-build | hash effective profile+overrides | ☐ | | |
-| L7-5 | High | CONFIG-MITIGATED (done) | 4 | source-default | flip source default true (belt) | ☐ | | |
+| L2-1 | High | CONFIRMED-DORMANT | 3 | toggle | one paired structure event | ✅ | tier3/4 | byte-ident (paired BOS/CHoCH event) |
+| L2-2 | Med | CONFIRMED-DORMANT | 3 | toggle | sweep recency by pool id | ✅ | tier3/4 | byte-ident (sweep recency by pool id) |
+| L3-2 | High | CONFIRMED-DORMANT | 3 | toggle | preserve router weight immediate path | ✅ | tier3/4 | byte-ident (router weight immediate) |
+| L4-2 | Med | CONFIRMED-DORMANT | 3 | toggle | unify routed/legacy score scale | ✅ | tier3/4 | byte-ident (unified score scale) |
+| L4-5 | Low | CONFIRMED-DORMANT | 3 | toggle | carry major_engine to position | ✅ | tier3/4 | byte-ident (major_engine to pending) |
+| L1-3 | High | CONFIRMED-DORMANT | 3 | toggle | emergency = entry-only kill | ✅ | tier3/4 | byte-ident (InpEmergencyEntryOnly) |
+| L1-6 | Med | CONFIRMED-DORMANT | 3 | toggle | arbitrate sleeve candidates | ✅ | tier3/4 | byte-ident (CONT-primary sleeve order) |
+| L1-7 | Med | CONFIRMED | 3 | live-file+toggle | news guard covers sleeve/file | ✅ | tier3/4 | byte-ident (shared news gateway) |
+| L3-5 | Med | CONFIRMED-DORMANT | 3 | toggle | independent shared session clock | ✅ | tier3/4 | byte-ident (SharedGMTHour clock) |
+| L5-3 | Low | CONFIRMED-DORMANT | 3 | toggle | single short-protection owner | ✅ | tier3/4 | byte-ident (single short-prot owner) |
+| L8-3 | Med | CONFIRMED-DORMANT | 3 | off-config | profile AUTO / fail-closed | ✅ | tier3/4 | byte-ident (profile AUTO+fail-soft) |
+| L5-1 | High | PARTIAL | 4 | live marginal | reject below-min lot; recompute risk | ✅ | tier3/4 | byte-ident (InpRejectBelowMinLot) |
+| L5-2 | Med | PARTIAL | 4 | live near-nil | counter-trend rescale fail-closed | ✅ | tier3/4 | byte-ident (counter-trend fail-closed) |
+| L1-5 | Med | PARTIAL (non-default) | 4 | toggle(win≥2) | incumbent/challenger arbitration | ✅ | tier3/4 | byte-ident (incumbent/challenger arb) |
+| L8-2 | Med | INTENDED-SCOPE | 4 | live-DST | Asian-range per-timestamp DST (⚠ vs prior reject) | ✅ | tier3/4 | byte-ident (InpSessionRangeDST flag-off; live-DST option) |
+| L8-5 | Low | CONFIRMED-DORMANT | 4 | audit-build | hash effective profile+overrides | ✅ | tier3/4 | byte-ident (effective-profile hash) |
+| L7-5 | High | CONFIG-MITIGATED (done) | 4 | source-default | flip source default true (belt) | ✅ | tier3/4 | byte-ident (source default->true, matches pin) |
 
 **No action (verified INTENDED/BENIGN):** O-1…O-17. O-5 (closed-bar ATR) = this session's Task E. Dead
 `CQualityTierRiskStrategy` stays dead (fixes target live `Utils.NormalizeLots`/`CTradeOrchestrator`).

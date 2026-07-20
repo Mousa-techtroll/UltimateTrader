@@ -75,6 +75,39 @@ private:
                           plugin_name, side, m_signal_sequence);
    }
 
+   // L4-2: ONE comparable ranking scale for candidates from mismatched score
+   // sources. A routed engine carries a raw 0-10 CConfluenceScorer score in
+   // qualityScore; a legacy/pattern signal carries the bucketed 10/7/5/3 from
+   // CSetupEvaluator::GetQualityScore. Comparing those raw values directly made a
+   // raw-9 engine A+ always LOSE to any legacy A+ mapped to 10, and pushed score-7
+   // ties to registration order. This key is TIER-FIRST (the ENUM_SETUP_QUALITY band,
+   // NONE<B<B+<A<A+) plus a within-tier fraction in [0,1) that never crosses a tier
+   // boundary, so a higher tier ALWAYS outranks a lower tier regardless of source,
+   // and within a tier the sources compare on a shared normalized axis.
+   //   - routed engine: within-tier = raw/11  (in [0, 0.909], strictly < 1),
+   //   - legacy/pattern: within-tier = a CONSTANT 0.5 (the tier IS its full
+   //     resolution — all same-tier legacy candidates carry one bucketed score).
+   // BYTE-IDENTICAL on the production (all-legacy, routed engines off) path: legacy
+   // qualityScore is strictly monotonic with tier, so key = tier + 0.5 is a strict
+   // monotonic function of the old qualityScore — every ">" and "==" ranking decision
+   // is unchanged (equal tier <=> equal key <=> the old equal qualityScore).
+   double ComputeRankKey(const EntrySignal &s)
+   {
+      double within01;
+      if(s.routed_engine)
+      {
+         double raw = (double)s.qualityScore;
+         if(raw < 0.0)  raw = 0.0;
+         if(raw > 10.0) raw = 10.0;
+         within01 = raw / 11.0;                 // routed engine: native raw score, normalized <1
+      }
+      else
+      {
+         within01 = 0.5;                         // legacy bucketed: constant within-tier position
+      }
+      return (double)((int)s.setupQuality) + within01;   // tier-major, never crosses a tier
+   }
+
    void AuditCandidate(EntrySignal &signal, ENUM_SIGNAL_TYPE sig_type,
                        ENUM_REGIME_TYPE regime, double atr, double adx, int macro_score,
                        string validation_stage, string decision, string reason,
@@ -529,6 +562,7 @@ public:
       EntrySignal best_signal;
       best_signal.Init();
       int best_quality_score = -1;
+      double best_rank_key = -1.0;   // L4-2: tier-first unified ranking key of the current winner
       ENUM_SIGNAL_TYPE best_sig_type = SIGNAL_NONE;
       ENUM_PATTERN_TYPE best_pat_type = PATTERN_NONE;
       ENUM_SETUP_QUALITY best_quality = SETUP_NONE;
@@ -909,9 +943,14 @@ public:
          // ties silently fall to the earliest-REGISTERED plugin. The fix breaks an
          // equal-score tie deterministically by higher engine confluence, then better
          // R:R (registration order only when those are equal too). OFF = legacy.
-         bool take_candidate = (signal.qualityScore > best_quality_score);
+         // L4-2: rank on the unified TIER-FIRST key (see ComputeRankKey) so a routed
+         // engine's raw 0-10 score and a legacy bucketed 10/7/5/3 no longer compete on
+         // different axes. On the all-legacy prod path the key is a strict monotonic
+         // function of qualityScore, so every take/tie decision is byte-identical.
+         double challenger_key = ComputeRankKey(signal);
+         bool take_candidate = (challenger_key > best_rank_key);
          if(!take_candidate && InpEqualTierTiebreak && best_signal.valid &&
-            signal.qualityScore == best_quality_score)
+            challenger_key == best_rank_key)
          {
             if(signal.engine_confluence != best_signal.engine_confluence)
                take_candidate = (signal.engine_confluence > best_signal.engine_confluence);
@@ -962,6 +1001,7 @@ public:
             best_signal.engine_intent  = signal.engine_intent;
 
             best_quality_score = signal.qualityScore;
+            best_rank_key = challenger_key;   // L4-2: keep the winner's unified key
             best_sig_type = sig_type;
             best_pat_type = pat_type;
             best_quality = quality;
@@ -1454,6 +1494,30 @@ private:
                            ENUM_TREND_DIRECTION daily, ENUM_TREND_DIRECTION h4,
                            int macro)
    {
+      // L1-5: incumbent/challenger arbitration. A challenger must NOT silently
+      // overwrite an UNCONFIRMED incumbent that still owns confirmation-window bars.
+      // Policy: KEEP the incumbent (preserving its pending_bar_count / remaining
+      // window) UNLESS the challenger is a STRICTLY HIGHER quality tier — in which
+      // case the challenger replaces it by falling through to the overwrite below
+      // (which emits the existing OVERWRITTEN shadow-kill row). ENUM_SETUP_QUALITY is
+      // ordered NONE<B<B+<A<A+, so the int compare is a tier compare.
+      //
+      // BYTE-IDENTICAL at the production default InpConfirmationWindowBars==1: on that
+      // setting the incumbent is ALWAYS resolved (confirmed+cleared, window-exhausted+
+      // cleared, or revalidate-fail+self-cleared) in the OnTick pending section BEFORE
+      // CheckForNewSignals()/StorePendingSignal runs that bar, so m_has_pending is
+      // never true here and this branch cannot execute. It engages only for a
+      // multi-bar window (>=2), where the legacy code silently dropped the incumbent.
+      if(m_has_pending && (int)quality <= (int)m_pending_signal.quality)
+      {
+         LogPrint(">>> PENDING incumbent RETAINED (", m_pending_signal.pattern_name,
+                  ", tier ", EnumToString(m_pending_signal.quality),
+                  ", bar ", m_pending_signal.pending_bar_count,
+                  ") — challenger '", signal.comment, "' (tier ", EnumToString(quality),
+                  ") is not a higher tier; challenger dropped");
+         return;
+      }
+
       MqlRates rates[];
       ArrayResize(rates, 2);  // P2-13: Pre-size array before CopyRates
       ArraySetAsSeries(rates, true);
@@ -1494,6 +1558,11 @@ private:
          m_pending_signal.engine_mode    = signal.engine_mode;
          m_pending_signal.day_type       = signal.day_type;
          m_pending_signal.engine_confluence = signal.engine_confluence;
+         // L4-5: carry the major-engine identity through confirmation so it reaches
+         // the position (was dropped -> routed-engine confirmed trades landed as
+         // ENGINE_NONE). ENGINE_NONE-valued on prod (major-engine engines skip
+         // confirmation; sleeves off) -> byte-identical.
+         m_pending_signal.major_engine   = signal.major_engine;
          m_pending_signal.pending_bar_count = 0;  // Sprint 5D: init bar counter
          // CEG stamps + Phase-0 instrumentation travel with the (possibly
          // CEG-widened) stop_loss snapshotted above

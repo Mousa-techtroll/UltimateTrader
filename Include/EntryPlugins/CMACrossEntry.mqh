@@ -172,9 +172,14 @@ public:
       // =============================================================
       if(g_profileBullMACrossBlockNY)
       {
-         // Sprint 5B: GMT-aware NY block
+         // Sprint 5B: GMT-aware NY block.
+         // L3-5: fall back to the independent shared clock (SharedGMTHour, CTimeOffset-
+         // based) when the OPTIONAL SessionEngine is null, instead of the legacy hardcoded
+         // 13 that always trips this NY block and silently starves bullish MA-Cross all
+         // day. SessionEngine is ON by default, so the fallback is never taken on prod
+         // (the g_sessionEngine.GetGMTHour branch runs) -> byte-identical.
          int gmt_hour = (g_sessionEngine != NULL) ?
-            g_sessionEngine.GetGMTHour(TimeCurrent()) : 13;
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : SharedGMTHour(TimeCurrent());
          if(gmt_hour >= 13)  // NY = 13:00+ GMT
             return signal;
       }

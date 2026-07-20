@@ -236,9 +236,12 @@ public:
 
       if(g_profileBearPinBarAsiaOnly)
       {
-         // Sprint 5B: GMT-aware Asia gate (legacy — superseded by NY block)
+         // Sprint 5B: GMT-aware Asia gate (legacy — superseded by NY block).
+         // L3-5: independent shared-clock fallback when the OPTIONAL SessionEngine is null
+         // (see CMACrossEntry). SessionEngine is ON by default so the fallback is never
+         // taken on prod -> byte-identical.
          int gmt_hour = (g_sessionEngine != NULL) ?
-            g_sessionEngine.GetGMTHour(TimeCurrent()) : 0;
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : SharedGMTHour(TimeCurrent());
          if(gmt_hour >= 8 && gmt_hour < 23)  // Not Asia (Asia = 23:00-08:00 GMT)
             return signal;
       }
@@ -246,8 +249,11 @@ public:
       // NY block: with GMT fix, London is positive (+4.4R) but NY is negative (-1.9R)
       if(InpBearPinBarBlockNY)
       {
+         // L3-5: shared-clock fallback replaces the legacy hardcoded 13 that always trips
+         // this NY block and silently starves bearish Pin-Bar all day when SessionEngine
+         // is disabled. Never taken on prod (SessionEngine ON) -> byte-identical.
          int gmt_hour_ny = (g_sessionEngine != NULL) ?
-            g_sessionEngine.GetGMTHour(TimeCurrent()) : 13;
+            g_sessionEngine.GetGMTHour(TimeCurrent()) : SharedGMTHour(TimeCurrent());
          if(gmt_hour_ny >= 13)  // NY = 13:00+ GMT
             return signal;
       }
