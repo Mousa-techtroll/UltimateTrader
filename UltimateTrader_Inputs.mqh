@@ -130,10 +130,21 @@ input group "══════ COHORT RISK DOWNGRADE ══════"
 // (exact IEEE multiply-by-1) or InpDowngradeSubtype=SUBTYPE_HYBRID (no live fill is
 // stamped HYBRID once Phase-A subtypes are set). See
 // claude/audit/candidate-L4-1-redesign/SHADOW-DOWNGRADE.md.
-input bool               InpCohortDowngrade  = false;          // master flag (OFF = byte-identical baseline)
-input ENUM_SETUP_SUBTYPE InpDowngradeSubtype = SUBTYPE_HYBRID; // cohort to downgrade (HYBRID = no-op)
-input int                InpDowngradeTier    = -1;             // -1=any tier; else ENUM_SETUP_QUALITY ordinal to scope
-input double             InpDowngradeMult    = 1.0;            // risk% multiplier for the cohort (e.g. 0.5 = half size)
+// SURFACE-CLEAN (post-campaign): the lever proved NO net-positive isolated cohort change on either
+// feed (RECONCILIATION.md) → held as research, forced off in production (const, not a live knob;
+// byte-identical). Restored as inputs under RESEARCH_CANDIDATES so the archived PinBar-TREND-A ×0.5
+// conservative research profile stays reproducible from a known baseline.
+#ifdef RESEARCH_CANDIDATES
+input bool               InpCohortDowngrade  = false;          // RESEARCH master flag (OFF = byte-identical baseline)
+input ENUM_SETUP_SUBTYPE InpDowngradeSubtype = SUBTYPE_HYBRID; // RESEARCH cohort to downgrade (HYBRID = no-op)
+input int                InpDowngradeTier    = -1;             // RESEARCH -1=any tier; else ENUM_SETUP_QUALITY ordinal to scope
+input double             InpDowngradeMult    = 1.0;            // RESEARCH risk% multiplier for the cohort (e.g. 0.5 = half size)
+#else
+const bool               InpCohortDowngrade  = false;          // production: rejected research lever forced off (not an input)
+const ENUM_SETUP_SUBTYPE InpDowngradeSubtype = SUBTYPE_HYBRID; // production: no-op cohort selector
+const int                InpDowngradeTier    = -1;             // production: no-op tier scope
+const double             InpDowngradeMult    = 1.0;            // production: exact ×1 (no-op)
+#endif
 
 //--- Group 4: CONSECUTIVE LOSS PROTECTION
 input group "══════ CONSECUTIVE LOSS PROTECTION ══════"
@@ -750,7 +761,13 @@ input group "══════ CODEX REMEDIATION (SCORING/ARBITRATION) ══�
 // Four independent, default-OFF correctness fixes (codex L4-1/L4-3/L4-4/L3-4).
 // Each guards ONE behavior change; with all four OFF the backtest is byte-identical
 // legacy (result identity d6549628). See claude/audit/candidate-scoring-L4/DESIGN.md.
-input bool   InpDirectionalAlignment   = false; // L4-1: award trend/macro alignment points ONLY when the signed D1/H4/macro direction supports the signal (long->bullish, short->bearish); opposing/neutral earn none. OFF = legacy direction-blind alignment. (Tier thresholds NOT recalibrated — deferred follow-up.)
+// SURFACE-CLEAN: InpDirectionalAlignment (L4-1 raw global patch, REJECTED −43%) forced off in
+// production (const); restored as input under RESEARCH_CANDIDATES. See RESULTS.md.
+#ifdef RESEARCH_CANDIDATES
+input bool   InpDirectionalAlignment   = false; // RESEARCH L4-1: award trend/macro alignment points ONLY when the signed D1/H4/macro direction supports the signal (long->bullish, short->bearish); opposing/neutral earn none. OFF = legacy direction-blind alignment.
+#else
+const bool   InpDirectionalAlignment   = false; // production: rejected research lever forced off (not an input)
+#endif
 input bool   InpNoBreakTolFix          = true; // L4-3: express the confirmation no-break tolerance as a fraction (10%) of the pattern's OWN range, not of absolute price (legacy +-0.2% ~= $6.80 at gold 3400). OFF = legacy absolute-price tolerance
 input bool   InpFullRevalidation       = true; // L4-4: at confirmation also rerun the dynamic gates (volume/SMC/confidence/quality-tier) and re-derive tier+risk from current context, freezing only signal-time geometry. OFF = legacy TF/MR-only revalidation retaining stale tier/risk
 input bool   InpEqualTierTiebreak      = false; // L3-4: on EQUAL bucketed qualityScore, break arbitration ties by higher engine confluence then better R:R instead of registration order. OFF = legacy first-registered-wins
@@ -761,9 +778,19 @@ input group "══════ L4-1 ARM C — ENGINE-AWARE EVALUATOR ═══�
 // ON = per-engine-intent context policy. The two threshold offsets are the small per-intent config
 // surface (default 0 = unchanged global ladder). Full architecture + byte-identity argument in
 // claude/audit/candidate-L4-1-redesign/ARMC-IMPL.md.
-input bool   InpEngineAwareEval        = false; // L4-1 Arm C MASTER: engine-aware two-output setup evaluator (context_strength + relationship, per-engine-intent policy replacing the global trend/macro alignment points). OFF = verbatim legacy (byte-identical c051f97b). Only affects the NON-engine legacy evaluator path.
-input int    InpEAAThreshOffsetCounter = 0;     // L4-1 Arm C: points SUBTRACTED from the tier thresholds for COUNTER-seeking engines (MEAN_REVERSION/REVERSAL/CRASH) on the ON path — so they aren't judged on the alignment ladder. 0 = unchanged ladder; positive = easier qualification.
-input int    InpEAAThreshOffsetAlign   = 0;     // L4-1 Arm C: points SUBTRACTED from the tier thresholds for ALIGNMENT-seeking engines (TREND/PULLBACK/BREAKOUT) on the ON path. 0 = unchanged ladder; positive = easier qualification.
+// SURFACE-CLEAN: the entire L4-1 Arm C engine-aware family (v1 −20.4%, v2.1 −39.5%) is held as a
+// root-caused architectural limitation (RESULTS.md, do-not-relitigate). Forced off in production
+// (const, byte-identical c051f97b); restored as inputs under RESEARCH_CANDIDATES so a future
+// moderate-fade thesis can reopen from a known baseline.
+#ifdef RESEARCH_CANDIDATES
+input bool   InpEngineAwareEval        = false; // RESEARCH L4-1 Arm C MASTER: engine-aware two-output setup evaluator (context_strength + relationship, per-engine-intent policy replacing the global trend/macro alignment points). OFF = verbatim legacy (byte-identical c051f97b). Only affects the NON-engine legacy evaluator path.
+input int    InpEAAThreshOffsetCounter = 0;     // RESEARCH L4-1 Arm C: points SUBTRACTED from the tier thresholds for COUNTER-seeking engines (MEAN_REVERSION/REVERSAL/CRASH) on the ON path. 0 = unchanged ladder.
+input int    InpEAAThreshOffsetAlign   = 0;     // RESEARCH L4-1 Arm C: points SUBTRACTED from the tier thresholds for ALIGNMENT-seeking engines (TREND/PULLBACK/BREAKOUT) on the ON path. 0 = unchanged ladder.
+#else
+const bool   InpEngineAwareEval        = false; // production: held research lever forced off (not an input)
+const int    InpEAAThreshOffsetCounter = 0;     // production: no-op ladder offset
+const int    InpEAAThreshOffsetAlign   = 0;     // production: no-op ladder offset
+#endif
 // L4-1 Arm C v2 (redesign of the REJECTED v1 InpEngineAwareEval, -20.4%): per-SETUP-SUBTYPE
 // intent (not plugin-coarse) + EVIDENCE-GATED counter credit (counter subtypes earn ONLY when
 // backed by >=2 DIRECTIONAL evidence signals — removes v1's blanket direction-blind counter
@@ -771,7 +798,11 @@ input int    InpEAAThreshOffsetAlign   = 0;     // L4-1 Arm C: points SUBTRACTED
 // other factor stays shared/unchanged. OFF = EXACT legacy (byte-identical c051f97b). v2 takes
 // precedence over v1 when both are set. Reuses the two offsets above (default 0 = unchanged
 // ladder). Full spec: claude/audit/candidate-L4-1-redesign/ARMC-V2-IMPL.md.
-input bool   InpEAAv2                   = false; // L4-1 Arm C v2 MASTER: setup-subtype, evidence-gated engine-aware evaluator. OFF = verbatim legacy (byte-identical c051f97b). Only affects the NON-engine legacy evaluator path; HYBRID (unlisted plugin) routes to legacy.
+#ifdef RESEARCH_CANDIDATES
+input bool   InpEAAv2                   = false; // RESEARCH L4-1 Arm C v2.1 MASTER: setup-subtype, evidence-gated engine-aware evaluator. OFF = verbatim legacy (byte-identical c051f97b). v2 takes precedence over v1 when both set; HYBRID routes to legacy.
+#else
+const bool   InpEAAv2                   = false; // production: held research lever forced off (not an input)
+#endif
 
 input group "══════ CODEX L2 MARKET-DATA CORRECTNESS ══════"
 // Each flag isolates one closed-bar / MTF correctness fix in the MarketAnalysis

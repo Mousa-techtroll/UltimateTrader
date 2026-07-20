@@ -1,5 +1,8 @@
-; current-canonical.set — reconciled production config (388 inputs, v4, post entry-confirmation cleanup)
-; Exactly 388 current inputs, NO retired keys. 26 total retired (Runner-Exit-Mode+Smart-Runner+entry-confirmation)→consts;
+; current-canonical.set — reconciled production config (418 inputs, v5, post codex-remediation surface-clean)
+; Exactly 418 current production inputs (Inputs.mqh + Include/ closure, RESEARCH_CANDIDATES branch OFF),
+; NO stale keys. v5 (2026-07-20): +9 codex adopted correctness flags + 4 live-safety options pinned OFF
+; + 13 previously-unpinned production inputs reconciled; −9 L4-1-family research levers moved to
+; const/RESEARCH_CANDIDATES (no longer a live input surface). 26 earlier retired keys→consts unchanged;
 ; see migration-manifest.json. Prior sets archived immutably in archive/.
 
 InpADXPeriod=14
@@ -403,4 +406,23 @@ InpFullRevalidation=true
 InpH4ConfirmPerBar=false
 InpConfirmedPathGates=false
 InpEqualTierTiebreak=false
-InpDirectionalAlignment=false
+InpConfirmedFillSafety=false
+InpEmergencyEntryOnly=false
+InpRejectBelowMinLot=false
+InpSessionRangeDST=false
+; ── reconciled 2026-07-20 (surface-clean campaign): 13 production inputs previously absent from
+;    this pin. 8 pre-existing (match risk_R90.ini) + 5 L2-4 regime-confirm redesign (source default,
+;    byte-identical). 9 L4-1-family research levers moved to const/RESEARCH_CANDIDATES (removed here).
+InpEnableDailyLossHalt=true
+InpLossLevel1Threshold=2
+InpLossLevel2Threshold=4
+InpCloseAgedOnlyIfLosing=false
+InpEnableWeekendClose=true
+InpWeekendCloseMinute=0
+InpWeekendGMTOffset=0
+InpMacroOppositionThreshold=3
+InpRegimeAdaptiveConfirm=false
+InpRegimeConfirmStrong=2
+InpRegimeConfirmWeak=3
+InpRegimeStrongADX=25.0
+InpRegimeStrongADXSlope=0.0
