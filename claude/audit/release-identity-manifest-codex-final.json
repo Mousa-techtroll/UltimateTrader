@@ -1,0 +1,33 @@
+{
+ "schema": "ultimatetrader-release-identity-v8-codex-final",
+ "baseline": "codex-remediation campaign COMPLETE (force-fix-for-correctness). All 37 confirmed findings merged / held-with-evidence / documented-limitation. 0 open. Supersedes the v7 INTERMEDIATE milestone.",
+ "frozen_utc_date": "2026-07-20",
+ "head_commit": "9991ae3",
+ "binding_baseline_tag": "baseline-codex-seven-32617",
+ "primary": {
+   "net_profit": 32617.90, "positions": 801, "profit_factor": 1.47, "sharpe": 3.13, "eq_dd_pct": 11.32,
+   "events_md5": "5ecfa994005b1ee6d6373ae5bc6741e6",
+   "stats_md5_current": "e13e959f31e84b0cb4acb3b83c6daa59",
+   "stats_md5_note": "current Stats CSV carries 2 DORMANT attribution columns (SetupSubtype/EngineIntent, flag-off L4-1 v2.1 infra); stripping them -> a331942d (behavior-identical to the pre-column c051f97b lineage). Events md5 is the stable behavioral anchor."
+ },
+ "goldhistory": {"net": 24086.34, "positions": 748, "stats_md5_current": "2713e2983afc3a4a0f137544de15d3d4"},
+ "production_binary": {"ex5_md5": "b3fbf3a9331dd279bcb30e47efd674a8", "note": "surface-clean build; 11504 bytes smaller than the pre-clean binary because 9 research levers dropped from the input table (metadata only; every executed decision identical)."},
+ "canonical_set": {"file": "claude/audit/current-canonical.set", "version": "v5", "input_count": 418, "sha256_prefix": "479086a370c5015e77f1b4f7", "note": "0 stale keys / 0 missing vs the production input closure (Inputs.mqh + Include/, RESEARCH_CANDIDATES OFF)."},
+ "supersedes": "release-identity-manifest-32617.json (v7 INTERMEDIATE) and baseline-bounds-hardening-34940 (d6549628 / $34,940.18)",
+ "merged_since_34940": {
+   "tier1_live_robustness": "L6-1 (deal-id binding, +6 defects) + L6-2/L6-3/L1-2/L7-1..L7-4 (byte-identical)",
+   "seven_fix_correctness": "L2-3/L2-5/L2-6/L1-1/L3-3 (byte-identical) + L4-3/L4-4 (risk-improving; PF 1.42->1.47, Sharpe 2.96->3.13, EqDD 15.24->11.32)",
+   "tier3_4_hardening": "L2-1/L2-2/L3-2/L4-2/L4-5/L1-3/L1-6/L1-7/L3-5/L5-3/L8-3 + L5-1/L5-2/L1-5/L8-2/L8-5/L7-5 (byte-identical both feeds)",
+   "input_surface_clean": "9 L4-1-family research levers -> const/RESEARCH_CANDIDATES; .set reconciled to 418 (byte-identical both feeds)"
+ },
+ "live_safety_options_default_off": ["InpConfirmedFillSafety", "InpEmergencyEntryOnly", "InpRejectBelowMinLot", "InpSessionRangeDST"],
+ "held_flag_off_or_const_do_not_relitigate": {
+   "L4-1": "5 rescoring approaches FAIL (raw -43%, global-recal -22.7%, v1 -20.4%, evidence v2 -77%, corrected v2.1 -39.5%); counter-alpha is moderate-fade, NOT evidence-separable. const in prod; input under RESEARCH_CANDIDATES.",
+   "L2-4": "confirmation-duration timeline load-bearing; strength separation real but <1% signal-filter lever deferred. InpH4ConfirmPerBar/InpRegimeAdaptiveConfirm flag-off.",
+   "L3-4": "22/2954 equal-tier collisions all score-identical -> no tiebreak signal; determinism-only. InpEqualTierTiebreak flag-off.",
+   "L1-4": "mandatory fill-safety subset (shock+SL-sanity) built as InpConfirmedFillSafety live-safety control; discretionary gates block 0."
+ },
+ "live_path_harness": "128/128 synthetic assertions PASS (UT_PositionBinding 29 / UT_SLSync 36 / UT_FileRisk 18 / UT_TickGrid 16 / UT_StatePersist 17 / UT_OfflineClose 12).",
+ "reproduction": "Production build (RESEARCH_CANDIDATES undefined) reproduces primary Events 5ecfa994 / $32,617.90 / 801 + GH $24,086.34 / 748 self-contained (risk_R90.ini, no overrides). Every adopted flag reversible; every held lever const/flag-off byte-identical and reopenable under a RESEARCH_CANDIDATES build (compiles 0/0).",
+ "status": "FINAL — ready for freeze. NEXT = forward validation (shadow -> min-risk -> R-tracking), NOT further backtesting."
+}
