@@ -22,11 +22,11 @@ Status legend: ☐ todo · ✍ authoring · 🔬 integrating/measuring · ✅ me
 | L2-5 | Med | CONFIRMED | 2 | live-default | SMC zone close-rule on [1] | ☐ | | |
 | L2-6 | Med | CONFIRMED | 2 | live-default | trend swing closed right-wings | ☐ | | |
 | L3-3 | Med | CONFIRMED | 2 | backtest | vol-BO cooldown on fill not emit | ☐ | | |
-| L3-4 | Med | CONFIRMED | 2 | backtest | equal-tier explicit tie-breaker | ↻ REDESIGN | first-fix rejected (−$742) | defect-open |
+| L3-4 | Med | HELD (real but immaterial) | 2r | live-default | 22/2954 collisions, ALL score-identical -> no tiebreak signal; first-fix -$742; explicit-priority=determinism-only. candidate-L3-4-redesign/ | ⏸ held | flag-off | rejected |
 | L4-3 | Med | CONFIRMED | 2 | live-default(long) | no-break tolerance in range/ATR units | ☐ | | |
 | L4-4 | Med | CONFIRMED | 2 | live-default | revalidation reruns dynamic gates | ☐ | | |
 | L1-1 | High | CONFIRMED | 2/1 | live-default | daily-halt refresh at OnTick top | ☐ | | |
-| L1-4 | Med | CONFIRMED (benign) | 2 | live-default | enforce confirmed-path gates (−$578) | ↻ REDESIGN | first-fix rejected (−$1,881) | defect-open |
+| L1-4 | Med | REDESIGN (diagnostic done) | 2r | live-default | discretionary gates (sessionQ/thrash) block 0; mandatory SL-sanity 0 (byte-ident) + shock 4/-$270 live-safety; InpConfirmedFillSafety building | 🔬 | | |
 | L2-1 | High | CONFIRMED-DORMANT | 3 | toggle | one paired structure event | ☐ | | |
 | L2-2 | Med | CONFIRMED-DORMANT | 3 | toggle | sweep recency by pool id | ☐ | | |
 | L3-2 | High | CONFIRMED-DORMANT | 3 | toggle | preserve router weight immediate path | ☐ | | |
