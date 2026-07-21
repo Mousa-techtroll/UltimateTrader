@@ -168,8 +168,8 @@ public:
    //|                       < maxAttempts-1 — the m_maxRetries cap).    |
    //| NO-RETRY + critical++: NO_MONEY / MARKET_CLOSED / TRADE_DISABLED /|
    //|                        INVALID_VOLUME / INVALID_STOPS /           |
-   //|                        INVALID_PRICE / LIMIT_VOLUME / LIMIT_ORDERS|
-   //|                        / LIMIT_POSITIONS.                         |
+   //|                        INVALID_PRICE / INVALID_FILL / LIMIT_VOLUME|
+   //|                        / LIMIT_ORDERS / LIMIT_POSITIONS.          |
    //| shouldAdjustParams=true: INVALID_STOPS / INVALID_PRICE / REQUOTE  |
    //|   (drives the caller's structural SL re-derivation + re-validate).|
    //+------------------------------------------------------------------+
@@ -271,6 +271,7 @@ public:
          case TRADE_RETCODE_MARKET_CLOSED:   // 10018 — market is closed
          case TRADE_RETCODE_TRADE_DISABLED:  // 10017 — trade is disabled
          case TRADE_RETCODE_INVALID_VOLUME:  // 10014 — invalid volume
+         case TRADE_RETCODE_INVALID_FILL:    // 10030 — filling type is invalid
          case TRADE_RETCODE_LIMIT_VOLUME:    // 10034 — volume limit reached
          case TRADE_RETCODE_LIMIT_ORDERS:    // 10033 — number of pending orders limit reached
          case TRADE_RETCODE_LIMIT_POSITIONS: // 10040 — number of open positions limit reached
