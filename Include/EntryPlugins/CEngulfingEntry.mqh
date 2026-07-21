@@ -27,7 +27,6 @@ private:
 
    // Configuration
    int               m_atr_period;
-   double            m_atr_sl_multiplier;
    double            m_min_sl_points;
    double            m_rr_target;
    double            m_body_engulf_pct;     // Min body engulf ratio (0.8 = 80%)
@@ -43,7 +42,6 @@ public:
    //+------------------------------------------------------------------+
    CEngulfingEntry(IMarketContext *context = NULL,
                    int atr_period = 14,
-                   double atr_sl_mult = 1.5,
                    double min_sl = 100.0,
                    double rr_target = 2.0,
                    double body_engulf_pct = 0.8,
@@ -52,7 +50,6 @@ public:
    {
       m_context = context;
       m_atr_period = atr_period;
-      m_atr_sl_multiplier = atr_sl_mult;
       m_min_sl_points = min_sl;
       m_rr_target = rr_target;
       m_body_engulf_pct = body_engulf_pct;
@@ -147,7 +144,7 @@ public:
          CopyClose(_Symbol, m_timeframe, 0, 4, close) < 4)
          return signal;
 
-      // Get ATR for stop loss calculation
+      // Get ATR for the candle-body significance filter
       double atr_buf[];
       ArraySetAsSeries(atr_buf, true);
       if(CopyBuffer(m_handle_atr, 0, 0, 2, atr_buf) < 2)

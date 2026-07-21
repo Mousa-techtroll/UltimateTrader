@@ -1334,8 +1334,8 @@ int OnInit()
    g_entryPluginCount = 0;
 
    // Trend-Following patterns
-   g_engulfingEntry    = new CEngulfingEntry(NULL, InpATRPeriod, InpATRMultiplierSL, g_scaledMinSLPoints,
-                                             2.0, InpEngulfingBodyRatio, PERIOD_H1, InpEngulfingRegimePolicy); // Arm 1 regime + Arm 2 body-ratio (both default identity)
+   g_engulfingEntry    = new CEngulfingEntry(NULL, InpATRPeriod, g_scaledMinSLPoints,
+                                              2.0, InpEngulfingBodyRatio, PERIOD_H1, InpEngulfingRegimePolicy); // Arm 1 regime + Arm 2 body-ratio (both default identity)
    g_pinBarEntry       = new CPinBarEntry(NULL, InpATRPeriod, g_scaledMinSLPoints);
    g_liqSweepEntry     = new CLiquiditySweepEntry(NULL, g_scaledMinSLPoints);
    g_maCrossEntry      = new CMACrossEntry(NULL, InpMAFastPeriod, InpMASlowPeriod, InpATRPeriod, InpATRMultiplierSL);
