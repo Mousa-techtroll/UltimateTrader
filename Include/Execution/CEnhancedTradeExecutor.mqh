@@ -1835,6 +1835,21 @@ private:
       // from the order ticket -> bind it and rewrite the ticket to the authority.
       if(positionId > 0 && positionId != ticket && PositionSelectByTicket(positionId))
       {
+         // L6-5 (cherry-pick): on a NETTING account our order can REDUCE / partially close
+         // the resolved position instead of adding to it. A DEAL_ENTRY_OUT/OUT_BY fill means
+         // it closed/reduced an existing position — there is NO new entry to bind, and the
+         // exit/reconcile path accounts for the volume change; binding it as a "netting add"
+         // here would fabricate a phantom new-entry record (in the wrong direction). Only
+         // IN/INOUT/unknown is a genuine add. Byte-identical on a HEDGING account (this branch
+         // only fires on a netting merge where positionId != ticket) — the tester is hedging.
+         int entry1 = ResultDealEntry();
+         if(entry1 == DEAL_ENTRY_OUT || entry1 == DEAL_ENTRY_OUT_BY)
+         {
+            Log.Warning("L6-5: order ticket " + IntegerToString(ticket) +
+                        " REDUCED/closed position " + IntegerToString(positionId) +
+                        " (DEAL_ENTRY_OUT) — not a new entry; no record appended.");
+            return 3;   // reduce/close of an existing position: no new open
+         }
          Log.Warning("L6-1: order ticket " + IntegerToString(ticket) +
                      " bound to authoritative position id " + IntegerToString(positionId) +
                      " (netting add / merged position, deal DEAL_POSITION_ID)");
