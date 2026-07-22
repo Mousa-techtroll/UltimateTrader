@@ -2721,9 +2721,15 @@ public:
                         if((m_positions[i].direction == SIGNAL_LONG && be_sl > m_positions[i].stop_loss) ||
                            (m_positions[i].direction == SIGNAL_SHORT && be_sl < m_positions[i].stop_loss))
                         {
-                           m_positions[i].stop_loss = be_sl;
-                           m_positions[i].at_breakeven = true;
-                           tp_trade.PositionModify(m_positions[i].ticket, be_sl, 0);
+                           // L7-1 (cherry-pick, live-only): commit the internal SL/BE state ONLY after the
+                           // broker modify succeeds, so a rejected modify cannot leave a phantom internal SL.
+                           // Byte-identical: this is a file-position path (inert in the backtest) and the tester
+                           // modify always succeeds anyway.
+                           if(tp_trade.PositionModify(m_positions[i].ticket, be_sl, 0))
+                           {
+                              m_positions[i].stop_loss = be_sl;
+                              m_positions[i].at_breakeven = true;
+                           }
                         }
 
                         // L7-4: one idempotent lifecycle event — accrue banked
@@ -2804,8 +2810,9 @@ public:
                            if((m_positions[i].direction == SIGNAL_LONG && trail_sl > m_positions[i].stop_loss) ||
                               (m_positions[i].direction == SIGNAL_SHORT && trail_sl < m_positions[i].stop_loss))
                            {
-                              m_positions[i].stop_loss = trail_sl;
-                              tp2_trade.PositionModify(m_positions[i].ticket, trail_sl, 0);
+                              // L7-1: commit internal SL only on broker success (file path, byte-identical in tester)
+                              if(tp2_trade.PositionModify(m_positions[i].ticket, trail_sl, 0))
+                                 m_positions[i].stop_loss = trail_sl;
                            }
 
                            // L7-4: register the partial + persist immediately.
@@ -2878,10 +2885,11 @@ public:
                                          (m_positions[i].direction == SIGNAL_SHORT && new_sl < m_positions[i].stop_loss);
                         if(is_better)
                         {
-                           m_positions[i].stop_loss = new_sl;
                            CTrade trail_trade;
                            trail_trade.SetExpertMagicNumber(m_magic_number);
-                           trail_trade.PositionModify(m_positions[i].ticket, new_sl, 0);
+                           // L7-1: commit internal SL only on broker success (file path, byte-identical in tester)
+                           if(trail_trade.PositionModify(m_positions[i].ticket, new_sl, 0))
+                              m_positions[i].stop_loss = new_sl;
                         }
                      }
                   }
@@ -2938,10 +2946,11 @@ public:
                                          (m_positions[i].direction == SIGNAL_SHORT && new_sl < m_positions[i].stop_loss);
                         if(is_better)
                         {
-                           m_positions[i].stop_loss = new_sl;
                            CTrade trail_trade;
                            trail_trade.SetExpertMagicNumber(m_magic_number);
-                           trail_trade.PositionModify(m_positions[i].ticket, new_sl, 0);
+                           // L7-1: commit internal SL only on broker success (file path, byte-identical in tester)
+                           if(trail_trade.PositionModify(m_positions[i].ticket, new_sl, 0))
+                              m_positions[i].stop_loss = new_sl;
                         }
                      }
                   }
