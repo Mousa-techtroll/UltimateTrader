@@ -308,6 +308,39 @@ private:
       return CalculateCRC32(buf, len);
    }
 
+   // v8-layout payload CRC (migration): identical algorithm to CalculatePayloadCRC but
+   // serializes records at the v8 struct size, so a v8 file's STORED checksum can be validated
+   // BEFORE the v8->v9 conversion. mode-perf + sleeve trailers are unchanged v7+ formats.
+   uint CalculatePayloadCRCv8(const PersistedPositionV8 &records[], int record_count,
+                              const PersistedModePerformance &mode_perf[], int mode_count,
+                              const PersistedSleeveState &sleeve_state)
+   {
+      uchar buf[]; int len = 0; uchar tmp[];
+      int rec_sz = sizeof(PersistedPositionV8);
+      for(int i = 0; i < record_count; i++)
+      {
+         PersistedPositionV8 rp = records[i];
+         if(!StructToCharArray(rp, tmp)) ArrayResize(tmp, 0);
+         AppendSerialized(buf, len, tmp, rec_sz);
+      }
+      ArrayResize(buf, len + 4);
+      buf[len+0]=(uchar)(mode_count&0xFF);        buf[len+1]=(uchar)((mode_count>>8)&0xFF);
+      buf[len+2]=(uchar)((mode_count>>16)&0xFF);  buf[len+3]=(uchar)((mode_count>>24)&0xFF);
+      len += 4;
+      int mp_sz = sizeof(PersistedModePerformance);
+      for(int i = 0; i < mode_count; i++)
+      {
+         PersistedModePerformance mp = mode_perf[i];
+         if(!StructToCharArray(mp, tmp)) ArrayResize(tmp, 0);
+         AppendSerialized(buf, len, tmp, mp_sz);
+      }
+      PersistedSleeveState ss = sleeve_state;
+      if(!StructToCharArray(ss, tmp)) ArrayResize(tmp, 0);
+      AppendSerialized(buf, len, tmp, sizeof(PersistedSleeveState));
+      if(len <= 0) return 0;
+      return CalculateCRC32(buf, len);
+   }
+
    //+------------------------------------------------------------------+
    //| L7-3: durable processed-closure ledger (sidecar). Loaded before  |
    //| offline-close reconciliation; a ticket is marked (and persisted   |
@@ -2370,18 +2403,21 @@ public:
       // the system falls back to broker-only recovery gracefully.
       ArrayResize(records, header.record_count);
 
+      // v8 migration: read the v8-layout records into a temp array, KEEP them for the v8 CRC
+      // validation below, and convert to v9 ONLY after the stored checksum is verified.
+      PersistedPositionV8 v8_records[];
+      if(migrating) ArrayResize(v8_records, header.record_count);
+
       for(int i = 0; i < header.record_count; i++)
       {
          if(migrating)
          {
-            PersistedPositionV8 v8rec;
-            if(FileReadStruct(handle, v8rec) != sizeof(PersistedPositionV8))
+            if(FileReadStruct(handle, v8_records[i]) != sizeof(PersistedPositionV8))
             {
                LogPrint("ERROR: LoadPositionState - v8 migration short read on record ", i,
                         " of ", header.record_count, " - broker-only fallback");
                FileClose(handle); ArrayResize(records, 0); return false;
             }
-            records[i] = MigrateV8Record(v8rec);
          }
          else if(FileReadStruct(handle, records[i]) != sizeof(PersistedPosition))
          {
@@ -2454,12 +2490,27 @@ public:
       // + sleeve) BEFORE applying anything. A corrupt/truncated payload leaves ALL
       // in-memory state unchanged (engine mode-perf untouched, sleeve ledger
       // untouched, no partial application).
-      // v8 migration skips the whole-payload CRC (the file's CRC covers the v8 record layout,
-      // not the converted v9 records). Migration integrity rests on the header signature +
-      // version + size check + per-record short-read guards above, and downstream broker
-      // reconciliation (a migrated ticket with no live broker position is dropped). A
-      // same-version (v9) file is CRC-validated exactly as before.
-      if(!migrating)
+      // Whole-payload CRC. A v8 file is validated against the v8-LAYOUT payload (its stored
+      // checksum was computed over v8 records) BEFORE conversion; a same-version (v9) file is
+      // validated as before. Either way a mismatch => broker-only fallback, no restore.
+      if(migrating)
+      {
+         uint v8_crc = CalculatePayloadCRCv8(v8_records, header.record_count,
+                                             mode_records, mode_perf_count, sleeve_state);
+         if(v8_crc != header.checksum)
+         {
+            LogPrint("ERROR: LoadPositionState - v8 payload CRC32 mismatch (File=",
+                     header.checksum, " Computed=", v8_crc,
+                     ") - v8 state file corrupt; broker-only fallback");
+            ArrayResize(records, 0);
+            return false;
+         }
+         for(int i = 0; i < header.record_count; i++)   // CRC verified -> convert to v9
+            records[i] = MigrateV8Record(v8_records[i]);
+         LogPrint("LoadPositionState: v8->v9 MIGRATION - CRC verified, converted ",
+                  header.record_count, " record(s)");
+      }
+      else
       {
          uint computed_crc = CalculatePayloadCRC(records, header.record_count,
                                                  mode_records, mode_perf_count,
@@ -2473,9 +2524,6 @@ public:
             return false;
          }
       }
-      else
-         LogPrint("LoadPositionState: v8->v9 MIGRATION of ", header.record_count,
-                  " record(s) (CRC skipped; broker reconciliation validates tickets)");
 
       // L7-1: payload validated — NOW atomically apply the trailers.
       if(mode_perf_count > 0)
