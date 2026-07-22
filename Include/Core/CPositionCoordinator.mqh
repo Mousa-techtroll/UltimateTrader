@@ -1279,6 +1279,10 @@ private:
    {
       pos.partial_close_count++;
       pos.partial_realized_pnl += realized_pnl;
+      // EXIT-MOMENTUM RULE-6: stamp the bar a native partial reduced this position, so the
+      // strategy-exit seam skips a policy CLOSE_PARTIAL this bar (no double reduction). Read
+      // only by the seam (gated off by default) => byte-identical.
+      pos.last_reduce_bar = iTime(_Symbol, PERIOD_H1, 0);
 
       if(m_trade_logger != NULL)
          m_trade_logger.LogPartialCloseEvent(pos, event_type, reason,
@@ -1496,6 +1500,43 @@ public:
          case EXIT_FAMILY_CRASH:              return InpExitPolCrashActive;
          case EXIT_FAMILY_MEAN_REVERSION:     return InpExitPolMeanRevActive;
          default: return false; }
+   }
+   // Immediate-action (CLOSE_ALL/PARTIAL/TIGHTEN) activation gate. Trend immediate closes are
+   // gated by its Invalid/TimeDecay flags; other families by their Active flag. All off by
+   // default => immediate ACT never fires in production => byte-identical.
+   bool ImmediateActActive(ENUM_EXIT_FAMILY fam) const
+   {
+      if(!InpExitPolicyActive) return false;
+      switch(fam){
+         case EXIT_FAMILY_TREND_CONTINUATION: return (InpExitPolTrendInvalid || InpExitPolTrendTimeDecay);
+         case EXIT_FAMILY_BREAKOUT:           return InpExitPolBreakoutActive;
+         case EXIT_FAMILY_REVERSAL:           return InpExitPolReversalActive;
+         case EXIT_FAMILY_CRASH:              return InpExitPolCrashActive;
+         case EXIT_FAMILY_MEAN_REVERSION:     return InpExitPolMeanRevActive;
+         default: return false; }
+   }
+   // Policy CLOSE_PARTIAL executor — mirrors the TP0 partial accounting (broker partial ->
+   // resolve deal -> remaining_lots -> RegisterPartialClose -> persist). Coordinator-owned.
+   void ApplyPolicyPartialClose(int i, double percentage, string reason)
+   {
+      if(percentage <= 0.0 || percentage >= 100.0) return;
+      double close_lots = m_positions[i].remaining_lots * percentage / 100.0;
+      double vstep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
+      double vmin  = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+      if(vstep > 0.0) close_lots = MathFloor(close_lots / vstep) * vstep;
+      if(close_lots < vmin || close_lots >= m_positions[i].remaining_lots) return;
+      CTrade pp_trade;
+      pp_trade.SetExpertMagicNumber(m_magic_number);
+      pp_trade.SetDeviationInPoints(InpSlippage);
+      if(pp_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
+      {
+         ulong d = 0; double prof = 0, px = 0, vol = 0; datetime dt = 0;
+         GetLatestExitDeal(m_positions[i].ticket, d, prof, px, dt, vol);
+         m_positions[i].remaining_lots -= close_lots;
+         RegisterPartialClose(m_positions[i], "POLICY_PARTIAL", "EXITPOL:" + reason,
+                              close_lots, prof, px, dt);
+         SaveOnStateChange();
+      }
    }
    int PrimaryIntentScore(ENUM_EXIT_FAMILY f, const IntentScores &is) const
    {
@@ -3916,6 +3957,32 @@ public:
             m_positions[i].policy_trail_mod = ep_trail;  // consumed at t==-2 in ApplyTrailingPlugins
             if(m_telemetry != NULL)
                m_telemetry.LogProposal(m_positions[i], ep_imm, ep_trail, emv);
+
+            // EXIT-MOMENTUM PLATFORM (spec v2): immediate-action ACT contracts. Gated on
+            // InpExitPolicyActive + the family's immediate flags (all off by default => never
+            // fires in production => byte-identical). A CLOSE continues the per-position loop
+            // (RULE 2: a closed/reduced ticket is not trailed/exit-plugin'd this pass); the
+            // partial also honors RULE 6 (skip if a native ladder partial already reduced this
+            // position this bar). TIGHTEN_SL is funnelled through the single owner at t==-2.
+            if(ImmediateActActive(m_positions[i].exit_family))
+            {
+               if(ep_imm.action == EX_CLOSE_ALL)
+               {
+                  StampExitRequest(m_positions[i], ep_imm.reason);
+                  ClosePosition(m_positions[i].ticket, "EXITPOL:" + ep_imm.reason);
+                  continue;
+               }
+               else if(ep_imm.action == EX_CLOSE_PARTIAL &&
+                       m_positions[i].last_reduce_bar != iTime(_Symbol, PERIOD_H1, 0))  // RULE 6
+               {
+                  ApplyPolicyPartialClose(i, ep_imm.percentage, ep_imm.reason);
+                  continue;
+               }
+               else if(ep_imm.action == EX_TIGHTEN_SL && ep_imm.tighten_sl > 0.0)
+               {
+                  m_positions[i].policy_sl_proposal = ep_imm.tighten_sl;  // consumed at t==-2
+               }
+            }
          }
 
          // Apply trailing stop plugins
@@ -4789,14 +4856,27 @@ private:
       // break-even proposal and feeds it through the SAME ratchet / STOPS_LEVEL
       // clamp / broker-send machinery as every plugin proposal below. With the
       // flag off the loop starts at 0 — byte-identical to the historical path.
-      for(int t = (InpEnableBEMover ? -1 : 0); t < m_trailing_count; t++)
+      // EXIT-MOMENTUM immediate TIGHTEN_SL: when a policy stashed a tighten (InpExitPolicyActive
+      // only => has_policy_sl false by default => loop start unchanged => byte-identical), run an
+      // extra t == -2 pseudo-iteration that synthesizes the tighten and funnels it through the
+      // SAME is_better ratchet + STOPS_LEVEL clamp + single send as every proposal below.
+      bool has_policy_sl = (InpExitPolicyActive && pos.policy_sl_proposal > 0.0);
+      for(int t = (has_policy_sl ? -2 : (InpEnableBEMover ? -1 : 0)); t < m_trailing_count; t++)
       {
          TrailingUpdate update;
          update.Init();
 
-         if(t < 0)
+         if(t == -2)
          {
-            if(!SynthesizeBEMoverUpdate(pos, update))
+            update.shouldUpdate = true;
+            update.ticket       = pos.ticket;
+            update.newStopLoss  = pos.policy_sl_proposal;
+            update.reason       = "EXITPOL_TIGHTEN";
+            pos.policy_sl_proposal = 0.0;   // consume once
+         }
+         else if(t == -1)
+         {
+            if(!InpEnableBEMover || !SynthesizeBEMoverUpdate(pos, update))
                continue;
          }
          else

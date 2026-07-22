@@ -27,5 +27,12 @@ The health-gated widen *is* acting (md5 changed; 231 `TRAIL_SCALE` + 148 `SUPPRE
 - The platform, telemetry, and Contract-B machinery remain in place for future data (e.g. a bear-inclusive feed for crash/reversal, or a genuinely different exit thesis).
 - Other families (breakout/reversal/crash/mean-rev) remain shadow-only by design (thin/un-validatable on bull-era feeds).
 
-## What was delivered (program summary)
-A complete, restart-safe, byte-identical strategy-aware exit-policy + momentum platform (shadow-capable, single-broker-owner, never-fabricate), proven decision-free on both feeds, with a working counterfactual telemetry pipeline — and the first activation candidate rigorously evaluated and **cleanly rejected on evidence**. The disciplined "adopt-nothing unless it demonstrably helps" outcome, with the machinery banked for the future.
+## Scope of this result (do NOT generalize)
+This is **one isolated activation experiment**. It says nothing about the exit engine, the other policies, or the per-signal exit-policy matrix. The only supported inference: **additional health-gated widening is redundant with the already-wide production trail (OPT-1).** It does NOT support "the exit side has nothing left to give."
+
+## Project status (three separate tracks)
+- **PLATFORM_ENGINEERING: PASSED** — compile, persistence v8→v9 migration (UT 13/13), both-feed byte-identity, decision-free shadow mode, proposal telemetry.
+- **SHADOW_SYSTEM: PASSED** — decision-free proven both feeds; telemetry + counterfactual pipeline working.
+- **TREND_TRAIL_WIDEN_V1: TESTED_NOT_ADOPTED** — stays available in shadow for future recalibration / new market data.
+- **PER_SIGNAL_EXIT_POLICY_MATRIX: IN_PROGRESS** — every active emitted setup subtype must resolve to an explicit exit-policy profile keyed by (major_engine + setup_subtype + engine_intent); the 5 families are shared BASE behavior, not the final resolution. Real mean-reversion policy, immediate-action contracts (invalidation/partial/tighten) end-to-end + synthetically verified, and per-signal synthetic validation still to build.
+- **PRODUCTION_ACTIVATION: NONE** — all policies shadow-only by default; activate + validate one at a time; a failed activation remains in shadow.
