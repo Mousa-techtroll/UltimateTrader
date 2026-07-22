@@ -1528,14 +1528,28 @@ public:
       CTrade pp_trade;
       pp_trade.SetExpertMagicNumber(m_magic_number);
       pp_trade.SetDeviationInPoints(InpSlippage);
-      if(pp_trade.PositionClosePartial(m_positions[i].ticket, close_lots))
+      bool sent = pp_trade.PositionClosePartial(m_positions[i].ticket, close_lots);
+      // BROKER-VERIFIED (not the CTrade boolean): reconcile ONLY against a SETTLED exit deal,
+      // by the ACTUAL closed volume from that deal. The boolean can be true on a partial/rejected
+      // fill; trusting it + decrementing the REQUESTED lot corrupts remaining_lots.
+      ulong d = 0; double prof = 0, px = 0, vol = 0; datetime dt = 0;
+      bool settled = GetLatestExitDeal(m_positions[i].ticket, d, prof, px, dt, vol);
+      if(settled && vol > 0.0)
       {
-         ulong d = 0; double prof = 0, px = 0, vol = 0; datetime dt = 0;
-         GetLatestExitDeal(m_positions[i].ticket, d, prof, px, dt, vol);
-         m_positions[i].remaining_lots -= close_lots;
+         m_positions[i].remaining_lots -= vol;
+         if(m_positions[i].remaining_lots < 0.0) m_positions[i].remaining_lots = 0.0;
          RegisterPartialClose(m_positions[i], "POLICY_PARTIAL", "EXITPOL:" + reason,
-                              close_lots, prof, px, dt);
+                              vol, prof, px, dt);
          SaveOnStateChange();
+      }
+      else
+      {
+         // UNKNOWN OUTCOME: no settled deal resolved this send. Do NOT assume the partial
+         // happened — leave remaining_lots untouched so the next tick re-evaluates against the
+         // actual broker state (idempotent). On restart, LoadPositionState->ReconcileWithBroker
+         // reconciles the persisted remaining_lots against the live position volume.
+         LogPrint("POLICY_PARTIAL unresolved (sent=", sent, ", no settled exit deal) ticket=",
+                  m_positions[i].ticket, " — state unchanged, will re-evaluate");
       }
    }
    int PrimaryIntentScore(ENUM_EXIT_FAMILY f, const IntentScores &is) const
@@ -2867,7 +2881,10 @@ public:
       // EXIT-MOMENTUM PLATFORM (spec v2): account-safety layer — broker-authoritative daily-loss
       // response, once before the per-position loop. Gated on InpExitPolicyActive; BLOCK_ONLY
       // (canonical default) => SAFETY_NONE => no position action => byte-identical. NULL when off.
-      if(InpExitPolicyActive && m_accountSafety != NULL)
+      // Account-safety is DECOUPLED from strategy-exit activation: gated on its OWN flag
+      // (InpAccountSafetyActive), so the daily-loss layer can be enabled/validated independently.
+      // Default off => skipped => byte-identical.
+      if(InpAccountSafetyActive && m_accountSafety != NULL)
       {
          SafetyDecision sd = m_accountSafety.Evaluate();
          if(sd.action == SAFETY_FLATTEN_ALL)
@@ -2878,8 +2895,10 @@ public:
          }
          else if(sd.action == SAFETY_REDUCE_PROTECT)
          {
-            LogPrint("ACCOUNT-SAFETY REDUCE_AND_PROTECT: ", sd.reason);
-            ReduceAndProtectAll(sd.reduce_fraction);   // reduce+protect; runners keep managing (no return)
+            // UNAVAILABLE until its full execution + partial-accounting reconciliation contract
+            // exists (an unreconciled partial corrupts partial_realized_pnl / EC / attribution).
+            // No-op (do NOT call the incomplete ReduceAndProtectAll). See directive.
+            LogPrint("ACCOUNT-SAFETY REDUCE_AND_PROTECT requested but UNAVAILABLE (no-op): ", sd.reason);
          }
       }
 

@@ -875,3 +875,8 @@ input bool   InpExitPolCrashActive    = false; // Crash bundle ACTIVE (rubber-ba
 // (entry halt only) and is canonical until demo + micro-live evidence supports a change.
 // Only evaluated when InpExitPolicyActive is ON; BLOCK_ONLY is a no-op → byte-identical.
 input ENUM_DAILY_LOSS_MODE InpDailyLossMode = DLM_BLOCK_ONLY; // Daily-loss mode: block-only / flatten-all / reduce-and-protect
+// Account-safety activation is DECOUPLED from strategy-exit activation (InpExitPolicyActive):
+// the daily-loss safety layer can be enabled/validated independently of the exit policies.
+// Default OFF => the account-safety seam is skipped => byte-identical. REDUCE_AND_PROTECT is
+// currently UNAVAILABLE (no-op) until its full execution+accounting contract exists.
+input bool   InpAccountSafetyActive = false;  // Enable the broker-authoritative daily-loss account-safety layer (decoupled from exit policies)

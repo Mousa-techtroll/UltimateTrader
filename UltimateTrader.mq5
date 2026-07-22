@@ -1358,10 +1358,6 @@ int OnInit()
          g_exitEngine.Register(g_meanRevExit);
       }
 
-      g_accountSafety = new CAccountSafety();
-      if(g_accountSafety != NULL)
-         g_accountSafety.Init(InpDailyLossMode, InpDailyLossLimit);
-
       g_exitTelemetry = new CExitTelemetry();
       if(g_exitTelemetry != NULL)
          g_exitTelemetry.Init(InpExitPolicyShadow, _Symbol);   // lazy sinks; inert unless shadow on
@@ -1369,6 +1365,16 @@ int OnInit()
       Print("[Init] Exit-Momentum platform constructed (shadow=", InpExitPolicyShadow,
             " active=", InpExitPolicyActive, " policies=",
             (g_exitEngine != NULL ? g_exitEngine.PolicyCount() : 0), ")");
+   }
+
+   // Account-safety layer — DECOUPLED from the exit-policy masters (own flag). Constructed only
+   // when InpAccountSafetyActive => NULL + skipped otherwise => byte-identical.
+   if(InpAccountSafetyActive)
+   {
+      g_accountSafety = new CAccountSafety();
+      if(g_accountSafety != NULL)
+         g_accountSafety.Init(InpDailyLossMode, InpDailyLossLimit);
+      Print("[Init] Account-safety layer active (mode=", InpDailyLossMode, ")");
    }
 
    // NEWS FILTER: hybrid event-window engine (live calendar / tester CSV / static fallback).
