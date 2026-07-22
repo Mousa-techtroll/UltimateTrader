@@ -1483,6 +1483,24 @@ public:
                return result;
             }
 
+            // L6-4 (cherry-pick, live-only): a TIMEOUT or CONNECTION-loss send has an
+            // UNKNOWN outcome — the order may have reached the server and filled even
+            // though this client got no confirmation. Blindly resending would DUPLICATE
+            // it. HandleExecutionError already slept the backoff, so any real fill is now
+            // visible: prove no-fill before resending. If a matching fill exists, STOP —
+            // the position coordinator's orphan-adoption picks it up next tick. Gated to
+            // TIMEOUT/CONNECTION + LIVE; these retcodes never occur in the deterministic
+            // Strategy Tester, so this is byte-identical there.
+            if(!MQLInfoInteger(MQL_TESTER) &&
+               (result.retcode == TRADE_RETCODE_TIMEOUT || result.retcode == TRADE_RETCODE_CONNECTION) &&
+               RecentFillMatches(symbol, action, magicNumber))
+            {
+               result.message = "L6-4: ambiguous send (retcode " + IntegerToString((int)result.retcode) +
+                                ") but a matching fill is on the book — NOT resending to avoid a duplicate; reconcile will adopt it.";
+               Log.Warning(result.message);
+               return result;   // do not resend
+            }
+
             // Update parameters for next attempt
             if(!UpdateParametersForRetry(symbol, action, price, stopLoss, takeProfit, result))
             {
@@ -2031,6 +2049,32 @@ private:
    //+------------------------------------------------------------------+
    //| Handle execution error and determine if retry is needed          |
    //+------------------------------------------------------------------+
+   //+------------------------------------------------------------------+
+   //| L6-4 (cherry-pick, LIVE-ONLY): after an ambiguous send outcome     |
+   //| (TIMEOUT / CONNECTION-loss) prove whether the order actually filled|
+   //| before resending. Returns true if a position matching our symbol + |
+   //| magic + direction opened at/after this send exists — i.e. the order|
+   //| DID reach the server and fill despite the missing confirmation, so |
+   //| resending would DUPLICATE it. Read-only broker scan (never binds — |
+   //| a false positive at worst skips a legitimate retry; a false negative|
+   //| is just the legacy resend behavior).                               |
+   //+------------------------------------------------------------------+
+   bool RecentFillMatches(string symbol, string action, int magicNumber)
+   {
+      ENUM_POSITION_TYPE want = (action == "BUY" || action == "buy") ? POSITION_TYPE_BUY : POSITION_TYPE_SELL;
+      for(int i = PositionsTotal() - 1; i >= 0; i--)
+      {
+         ulong tk = PositionGetTicket(i);
+         if(tk == 0) continue;
+         if(PositionGetString(POSITION_SYMBOL) != symbol) continue;
+         if((int)PositionGetInteger(POSITION_MAGIC) != magicNumber) continue;
+         if((datetime)PositionGetInteger(POSITION_TIME) < m_lastSendTime) continue;
+         if((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE) != want) continue;
+         return true;   // our just-sent order is on the book -> it filled; do not resend
+      }
+      return false;
+   }
+
    bool HandleExecutionError(string symbol, string action, double lotSize,
                            double price, double stopLoss, double takeProfit,
                            int attempt, ExecutionResult &result)
