@@ -1414,7 +1414,7 @@ public:
             double ratio   = lotSize / vol_step;
             double rounded = MathRound(ratio);
             double steps   = (MathAbs(ratio - rounded) < 1e-6) ? rounded : MathFloor(ratio);
-            double snapped = NormalizeDouble(steps * vol_step, 2);
+            double snapped = NormalizeDouble(steps * vol_step, EntryVolumeStepDigits(vol_step));   // L6-6: step-grid precision (==2 on 0.01 step)
             if(snapped > 0.0) lotSize = snapped;          // never floor a valid lot to 0
          }
       }

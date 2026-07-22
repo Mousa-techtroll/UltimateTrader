@@ -12,6 +12,21 @@ bool g_enable_logging = true;
 // Conditional logging macro - supports multiple parameters like Print()
 #define LogPrint if(g_enable_logging) Print
 
+// L6-6 (cherry-pick d61277c): the decimal precision for a broker volume STEP, so
+// volume normalization floors on the true step grid instead of a hardcoded 2 dp.
+// On a 0.01-step symbol this returns 2, so every existing NormalizeDouble(...,2)
+// call is byte-identical; it only differs on non-two-decimal steps (e.g. 0.001).
+int EntryVolumeStepDigits(const double step)
+{
+   for(int digits = 0; digits <= 8; digits++)
+   {
+      const double scaled = step * MathPow(10.0, digits);
+      if(MathAbs(scaled - MathRound(scaled)) <= 1e-9)
+         return digits;
+   }
+   return 8;
+}
+
 //+------------------------------------------------------------------+
 //| Normalize price to symbol digits                                  |
 //+------------------------------------------------------------------+
@@ -51,7 +66,7 @@ double NormalizeLots(double lots, string symbol = NULL, bool reject_below_min = 
    lots = MathMax(lots, min_lot);
    lots = MathMin(lots, max_lot);
 
-   return NormalizeDouble(lots, 2);
+   return NormalizeDouble(lots, EntryVolumeStepDigits(lot_step));   // L6-6: step-grid precision (==2 on 0.01 step)
 }
 
 //+------------------------------------------------------------------+
