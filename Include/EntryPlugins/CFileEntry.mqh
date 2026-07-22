@@ -24,6 +24,8 @@ struct FileTradeData
    double   MaxRiskPercent;
    double   EntryPrice;
    double   EntryPriceMax;
+   double   RawEntryPrice;
+   double   RawEntryPriceMax;
    double   StopLoss;
    double   TakeProfit1;
    double   TakeProfit2;
@@ -39,6 +41,8 @@ struct FileTradeData
       MaxRiskPercent = 2.0;
       EntryPrice = 0;
       EntryPriceMax = 0;
+      RawEntryPrice = 0;
+      RawEntryPriceMax = 0;
       StopLoss = 0;
       TakeProfit1 = 0;
       TakeProfit2 = 0;
@@ -141,6 +145,40 @@ private:
       return TimeToString(time, TIME_DATE|TIME_MINUTES) + "|" + action + "|" + DoubleToString(entry, 2);
    }
 
+   string NormalizeSymbolToken(string symbol)
+   {
+      StringTrimLeft(symbol);
+      StringTrimRight(symbol);
+      StringToUpper(symbol);
+      return symbol;
+   }
+
+   bool IsExplicitGoldAlias(const string symbol)
+   {
+      const string normalized = NormalizeSymbolToken(symbol);
+      return normalized == "XAUUSD" ||
+             normalized == "XAUUSD+" ||
+             normalized == "XAUUSD.A" ||
+             normalized == "XAUUSDM" ||
+             normalized == "GOLD";
+   }
+
+   bool ResolveFileSymbolToChart(string &symbol)
+   {
+      const string row_symbol = NormalizeSymbolToken(symbol);
+      const string chart_symbol = NormalizeSymbolToken(_Symbol);
+      if(row_symbol == "" || chart_symbol == "")
+         return false;
+      if(row_symbol == chart_symbol ||
+         (IsExplicitGoldAlias(row_symbol) &&
+          IsExplicitGoldAlias(chart_symbol)))
+      {
+         symbol = _Symbol;
+         return true;
+      }
+      return false;
+   }
+
    bool IsAlreadyExecuted(string key)
    {
       for(int i = 0; i < m_executedCount; i++)
@@ -165,34 +203,90 @@ private:
               StringFind(path, "/") == 0);
    }
 
-   //+------------------------------------------------------------------+
-   //| Extract numeric price value from "label@1234.56" format           |
-   //+------------------------------------------------------------------+
-   double ExtractPriceValue(string raw)
+   bool IsAllowedPriceLabel(string label, const string field)
    {
-      if(raw == "" || raw == "EPMax@")
-         return 0.0;
+      StringTrimLeft(label);
+      StringTrimRight(label);
+      StringToUpper(label);
+      if(field == "ENTRY")
+         return label == "ENTRY" || label == "EP";
+      if(field == "ENTRYMAX")
+         return label == "ENTRYMAX" || label == "EPMAX";
+      if(field == "SL")
+         return label == "SL" || label == "STOPLOSS";
+      if(field == "TP1")
+         return label == "TP1" || label == "TAKEPROFIT1";
+      if(field == "TP2")
+         return label == "TP2" || label == "TAKEPROFIT2";
+      if(field == "TP3")
+         return label == "TP3" || label == "TAKEPROFIT3";
+      return false;
+   }
 
-      // Try direct conversion first
-      double directPrice = StringToDouble(raw);
-      if(directPrice > 0)
-         return directPrice;
+   bool TryExtractPositiveNumber(string raw,
+                                 const string field,
+                                 double &value)
+   {
+      value = 0.0;
+      StringTrimLeft(raw);
+      StringTrimRight(raw);
+      if(raw == "")
+         return false;
 
-      // Look for @ separator
-      int atPos = StringFind(raw, "@");
-      if(atPos < 0) atPos = StringFind(raw, ":");
-      if(atPos < 0) atPos = StringFind(raw, "=");
+      int separator = StringFind(raw, "@");
+      const int colon = StringFind(raw, ":");
+      const int equals = StringFind(raw, "=");
+      if(separator < 0 || (colon >= 0 && colon < separator))
+         separator = colon;
+      if(separator < 0 || (equals >= 0 && equals < separator))
+         separator = equals;
 
-      string priceStr = "";
-      if(atPos >= 0)
-         priceStr = StringSubstr(raw, atPos + 1);
-      else
-         priceStr = raw;
+      string number = (separator >= 0)
+                      ? StringSubstr(raw, separator + 1)
+                      : raw;
+      if(separator >= 0)
+      {
+         const string label = StringSubstr(raw, 0, separator);
+         if(!IsAllowedPriceLabel(label, field))
+            return false;
+      }
+      StringTrimLeft(number);
+      StringTrimRight(number);
+      if(number == "")
+         return false;
 
-      StringTrimLeft(priceStr);
-      StringTrimRight(priceStr);
+      bool digit_seen = false;
+      bool dot_seen = false;
+      for(int i = 0; i < StringLen(number); i++)
+      {
+         const ushort ch = (ushort)StringGetCharacter(number, i);
+         if(ch >= 48 && ch <= 57)
+         {
+            digit_seen = true;
+            continue;
+         }
+         if(ch == 46 && !dot_seen)
+         {
+            dot_seen = true;
+            continue;
+         }
+         if(ch == 43 && i == 0)
+            continue;
+         return false;
+      }
+      if(!digit_seen)
+         return false;
+      value = StringToDouble(number);
+      return MathIsValidNumber(value) && value > 0.0;
+   }
 
-      return StringToDouble(priceStr);
+   bool TryExtractPlainPositiveNumber(string raw, double &value)
+   {
+      if(StringFind(raw, "@") >= 0 ||
+         StringFind(raw, ":") >= 0 ||
+         StringFind(raw, "=") >= 0)
+         return false;
+      return TryExtractPositiveNumber(raw, "", value);
    }
 
    //+------------------------------------------------------------------+
@@ -300,63 +394,40 @@ private:
       if(trade.Symbol == "") return false;
       if(trade.Action != "BUY" && trade.Action != "SELL") return false;
 
-      // Symbol handling: normalize aliases then validate
-      if(trade.Symbol == "")
-         trade.Symbol = _Symbol;
-
-      // Normalize symbol aliases (CSV providers use different names)
-      string sym = trade.Symbol;
-      StringToUpper(sym);
-      StringTrimLeft(sym); StringTrimRight(sym);
-
-      if(sym == "XAUUSD" || sym == "GOLD" || sym == "XAUUSD+")
-         trade.Symbol = "XAUUSD+";
-      else if(sym == "US30" || sym == "US30+" || sym == "DJ30+")
-         trade.Symbol = "DJ30";
-      else if(sym == "US500" || sym == "US500+")
-         trade.Symbol = "SP500";
-      else if(sym == "USA100" || sym == "USA100+" || sym == "NAS100+" || sym == "USATECH" || sym == "USATECH+")
-         trade.Symbol = "NAS100";
-      else if(sym == "BTCUSD+" || sym == "BTCUSD")
-         trade.Symbol = "BTCUSD";
-      // else: keep original symbol as-is
-
-      // Try to select the symbol in Market Watch (required for trading)
-      if(!SymbolSelect(trade.Symbol, true))
+      // File execution is intentionally single-symbol.  SymbolSelect() proves
+      // availability, not authorization; resolve only an exact chart symbol or
+      // an explicitly listed XAU alias to the current chart instrument.
+      if(!ResolveFileSymbolToChart(trade.Symbol))
       {
-         // Try with/without "+" suffix
-         string alt = trade.Symbol;
-         if(StringFind(alt, "+") >= 0)
-            StringReplace(alt, "+", "");
-         else
-            alt = alt + "+";
-
-         if(SymbolSelect(alt, true))
-            trade.Symbol = alt;
-         else
-         {
-            Print("[CFileEntry] Symbol not available: ", trade.Symbol, " (also tried ", alt, ")");
-            return false;
-         }
+         Print("[CFileEntry] REJECT unsupported/foreign symbol: ", trade.Symbol,
+               " (chart=", _Symbol, ")");
+         return false;
       }
+      if(trade.EntryPrice <= 0.0 || trade.EntryPriceMax <= 0.0)
+         return false;
+      // Preserve the provider's first endpoint as the strategy/ATR anchor;
+      // ordered bounds are admission data, not a signal-definition rewrite.
+      const double geometry_entry = trade.RawEntryPrice;
 
       // Price sanity: reject typos (>3x or <0.3x current price)
-      if(trade.EntryPrice > 0)
+      if(trade.EntryPrice > 0 && trade.EntryPriceMax > 0)
       {
          double bid = SymbolInfoDouble(trade.Symbol, SYMBOL_BID);
          if(bid > 0)
          {
-            double ratio = trade.EntryPrice / bid;
-            if(ratio > 3.0 || ratio < 0.3)
+            double ratio_min = trade.EntryPrice / bid;
+            double ratio_max = trade.EntryPriceMax / bid;
+            if(ratio_min > 3.0 || ratio_min < 0.3 ||
+               ratio_max > 3.0 || ratio_max < 0.3)
             {
-               Print("[CFileEntry] REJECT price sanity: Entry=", DoubleToString(trade.EntryPrice, 2),
-                     " vs bid=", DoubleToString(bid, 2), " (ratio=", DoubleToString(ratio, 2), ")");
+               Print("[CFileEntry] REJECT price sanity: range=",
+                     DoubleToString(trade.EntryPrice, 2), "..",
+                     DoubleToString(trade.EntryPriceMax, 2),
+                     " vs bid=", DoubleToString(bid, 2));
                return false;
             }
          }
       }
-
-      if(trade.EntryPrice <= 0) return false;
 
       // Only calculate ATR levels if needed (OPPORTUNISTIC or BEST_EFFORT mode)
       double atr = 0;
@@ -365,7 +436,8 @@ private:
       {
          atr = GetCurrentATR(trade.Symbol);
          if(atr > 0)
-            CalcATRLevels(trade.Symbol, trade.Action, trade.EntryPrice, atr, calc_sl, calc_tp1, calc_tp2);
+            CalcATRLevels(trade.Symbol, trade.Action, geometry_entry, atr,
+                          calc_sl, calc_tp1, calc_tp2);
       }
 
       // ========================================================
@@ -392,7 +464,7 @@ private:
       else if(InpFileSignalMode == FILE_MODE_OPPORTUNISTIC)
       {
          // SL: use CSV if valid, otherwise auto-fill
-         if(!IsSLValid(trade.Action, trade.EntryPrice, trade.StopLoss))
+         if(!IsSLValid(trade.Action, geometry_entry, trade.StopLoss))
          {
             if(atr > 0)
             {
@@ -405,7 +477,7 @@ private:
          }
 
          // TP1: use CSV if valid, otherwise auto-fill
-         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit1))
+         if(!IsTPValid(trade.Action, geometry_entry, trade.TakeProfit1))
          {
             if(atr > 0)
             {
@@ -416,7 +488,7 @@ private:
          }
 
          // TP2: use CSV if valid, otherwise auto-fill
-         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit2))
+         if(!IsTPValid(trade.Action, geometry_entry, trade.TakeProfit2))
          {
             if(atr > 0)
                trade.TakeProfit2 = calc_tp2;
@@ -427,17 +499,17 @@ private:
       // ========================================================
       else // FILE_MODE_STRICT
       {
-         if(!IsSLValid(trade.Action, trade.EntryPrice, trade.StopLoss))
+         if(!IsSLValid(trade.Action, geometry_entry, trade.StopLoss))
          {
             Print("[CFileEntry] STRICT reject: invalid SL=", DoubleToString(trade.StopLoss, 2),
-                  " for ", trade.Action, " @ ", DoubleToString(trade.EntryPrice, 2));
+                   " for ", trade.Action, " @ ", DoubleToString(geometry_entry, 2));
             return false;
          }
 
          // Clear bad TPs (let EA calc defaults) but don't reject
-         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit1))
+         if(!IsTPValid(trade.Action, geometry_entry, trade.TakeProfit1))
             trade.TakeProfit1 = 0;
-         if(!IsTPValid(trade.Action, trade.EntryPrice, trade.TakeProfit2))
+         if(!IsTPValid(trade.Action, geometry_entry, trade.TakeProfit2))
             trade.TakeProfit2 = 0;
       }
 
@@ -453,71 +525,93 @@ private:
    //+------------------------------------------------------------------+
    bool ParseTradeLine(string line, FileTradeData &trade)
    {
+      StringTrimLeft(line);
+      StringTrimRight(line);
       if(line == "")
          return false;
 
       trade.Init();
-      trade.Time = TimeCurrent();
-      trade.Symbol = "XAUUSD";
-      trade.Action = "BUY";
-      trade.MaxRiskPercent = 2.0;
-      trade.MagicNumber = m_magicCounter++;
 
       // Split CSV
       string parts[];
       int partCount = StringSplit(line, ',', parts);
-      if(partCount == 0)
+      // Time, symbol, action, risk and BOTH range endpoints are mandatory.
+      if(partCount < 6)
          return false;
+      for(int i = 0; i < partCount; i++)
+      {
+         StringTrimLeft(parts[i]);
+         StringTrimRight(parts[i]);
+      }
 
       // Parse fields — CSV time is GMT, auto-convert to server time
-      if(partCount >= 1 && parts[0] != "")
+      if(parts[0] == "")
+         return false;
+      datetime parsedTime = StringToTime(parts[0]);
+      if(parsedTime == 0)
+         parsedTime = StringToTime(parts[0] + " 00:00");
+      if(parsedTime == 0)
+         return false;
       {
-         datetime parsedTime = StringToTime(parts[0]);
-         if(parsedTime == 0)
-            parsedTime = StringToTime(parts[0] + " 00:00");
-         if(parsedTime != 0)
-         {
-            int offset = GetEETOffset(parsedTime);
-            trade.Time = parsedTime + offset * 3600;
-         }
+         int offset = GetEETOffset(parsedTime);
+         trade.Time = parsedTime + offset * 3600;
       }
 
-      if(partCount >= 2 && parts[1] != "")
-         trade.Symbol = parts[1];
+      if(parts[1] == "")
+         return false;
+      trade.Symbol = parts[1];
 
-      if(partCount >= 3 && parts[2] != "")
-      {
-         string action = parts[2];
-         StringToUpper(action);
-         trade.Action = action;
-         if(trade.Action != "BUY" && trade.Action != "SELL")
-            trade.Action = "BUY";
-      }
+      if(parts[2] == "")
+         return false;
+      trade.Action = parts[2];
+      StringToUpper(trade.Action);
+      if(trade.Action != "BUY" && trade.Action != "SELL")
+         return false;
 
-      if(partCount >= 4 && parts[3] != "")
-      {
-         double riskPct = StringToDouble(parts[3]);
-         if(riskPct > 0 && riskPct <= 100)
-            trade.MaxRiskPercent = riskPct;
-      }
+      double riskPct = 0.0;
+      if(!TryExtractPlainPositiveNumber(parts[3], riskPct) ||
+         riskPct > 100.0)
+         return false;
+      trade.MaxRiskPercent = riskPct;
 
-      if(partCount >= 5 && parts[4] != "")
-         trade.EntryPrice = ExtractPriceValue(parts[4]);
+      double endpoint_one = 0.0;
+      double endpoint_two = 0.0;
+      if(!TryExtractPositiveNumber(parts[4], "ENTRY", endpoint_one) ||
+         !TryExtractPositiveNumber(parts[5], "ENTRYMAX", endpoint_two))
+         return false;
+      trade.RawEntryPrice = endpoint_one;
+      trade.RawEntryPriceMax = endpoint_two;
+      trade.EntryPrice = MathMin(endpoint_one, endpoint_two);
+      trade.EntryPriceMax = MathMax(endpoint_one, endpoint_two);
 
-      if(partCount >= 6 && parts[5] != "")
-         trade.EntryPriceMax = ExtractPriceValue(parts[5]);
-
+      double parsed_value = 0.0;
       if(partCount >= 7 && parts[6] != "")
-         trade.StopLoss = ExtractPriceValue(parts[6]);
+      {
+         if(!TryExtractPositiveNumber(parts[6], "SL", parsed_value))
+            return false;
+         trade.StopLoss = parsed_value;
+      }
 
       if(partCount >= 8 && parts[7] != "")
-         trade.TakeProfit1 = ExtractPriceValue(parts[7]);
+      {
+         if(!TryExtractPositiveNumber(parts[7], "TP1", parsed_value))
+            return false;
+         trade.TakeProfit1 = parsed_value;
+      }
 
       if(partCount >= 9 && parts[8] != "")
-         trade.TakeProfit2 = ExtractPriceValue(parts[8]);
+      {
+         if(!TryExtractPositiveNumber(parts[8], "TP2", parsed_value))
+            return false;
+         trade.TakeProfit2 = parsed_value;
+      }
 
       if(partCount >= 10 && parts[9] != "")
-         trade.TakeProfit3 = ExtractPriceValue(parts[9]);
+      {
+         if(!TryExtractPositiveNumber(parts[9], "TP3", parsed_value))
+            return false;
+         trade.TakeProfit3 = parsed_value;
+      }
 
       if(!ValidateTrade(trade))
       {
@@ -525,6 +619,7 @@ private:
          return false;
       }
 
+      trade.MagicNumber = m_magicCounter++;
       return true;
    }
 
@@ -582,7 +677,8 @@ private:
          if(ParseTradeLine(line, trade))
          {
             // Mark already-executed trades using persistent key set
-            string key = BuildSignalKey(trade.Time, trade.Action, trade.EntryPrice);
+            string key = BuildSignalKey(trade.Time, trade.Action,
+                                        trade.RawEntryPrice);
             if(IsAlreadyExecuted(key))
                trade.Executed = true;
 
@@ -842,6 +938,8 @@ public:
             signal.action = m_trades[i].Action;
             signal.entryPrice = m_trades[i].EntryPrice;
             signal.entryPriceMax = m_trades[i].EntryPriceMax;
+            signal.entryPriceRaw = m_trades[i].RawEntryPrice;
+            signal.entryPriceMaxRaw = m_trades[i].RawEntryPriceMax;
             signal.stopLoss = m_trades[i].StopLoss;
             signal.takeProfit1 = m_trades[i].TakeProfit1;
             signal.takeProfit2 = m_trades[i].TakeProfit2;
@@ -870,7 +968,9 @@ public:
             // later in-window tick can RETRY the signal (the ExecuteSignal
             // slippage gate self-rejects retries that drifted too far from entry).
             m_trades[i].Executed = true;
-            string exec_key = BuildSignalKey(m_trades[i].Time, m_trades[i].Action, m_trades[i].EntryPrice);
+            string exec_key = BuildSignalKey(m_trades[i].Time,
+                                             m_trades[i].Action,
+                                             m_trades[i].RawEntryPrice);
             m_pendingTradeIdx = i;
             m_pendingTradeKey = exec_key;
 
@@ -913,22 +1013,21 @@ public:
 
       double price = (signal.action == "BUY") ? currentAsk : currentBid;
 
-      // Entry range validation with 0.75 error margin
-      if(signal.entryPrice > 0)
+      // The provider range is authoritative.  Both endpoints are inclusive;
+      // reversed rows were normalized during parsing.
+      if(signal.entryPrice <= 0.0 || signal.entryPriceMax <= 0.0)
       {
-         double errorMargin = 0.75;
-
-         if(signal.action == "BUY" && price > signal.entryPrice + errorMargin)
-         {
-            m_lastError = "BUY price too high vs target";
-            return false;
-         }
-
-         if(signal.action == "SELL" && price < signal.entryPrice - errorMargin)
-         {
-            m_lastError = "SELL price too low vs target";
-            return false;
-         }
+         m_lastError = "Invalid or missing entry interval";
+         return false;
+      }
+      const double entry_low = MathMin(signal.entryPrice,
+                                       signal.entryPriceMax);
+      const double entry_high = MathMax(signal.entryPrice,
+                                        signal.entryPriceMax);
+      if(price < entry_low || price > entry_high)
+      {
+         m_lastError = "Executable quote outside file entry interval";
+         return false;
       }
 
       return true;

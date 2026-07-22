@@ -668,6 +668,8 @@ struct EntrySignal
    string            action;          // "BUY" or "SELL"
    double            entryPrice;
    double            entryPriceMax;
+   double            entryPriceRaw;     // provider endpoint 1 before interval ordering
+   double            entryPriceMaxRaw;  // provider endpoint 2 before interval ordering
    double            stopLoss;
    double            takeProfit1;
    double            takeProfit2;
@@ -737,6 +739,8 @@ struct EntrySignal
       action = "";
       entryPrice = 0;
       entryPriceMax = 0;
+      entryPriceRaw = 0;
+      entryPriceMaxRaw = 0;
       stopLoss = 0;
       takeProfit1 = 0;
       takeProfit2 = 0;
@@ -816,12 +820,8 @@ struct EntrySignal
       if(riskPercent < 0)
          return false;
 
-      // Range entry validation
-      if(entryPriceMax > 0)
-      {
-         if(MathAbs(entryPriceMax - entryPrice) < 0.00001)
-            return false;
-      }
+      // Equal endpoints are a valid one-price inclusive interval. Reversed
+      // endpoints are normalized by the file-admission owner.
 
       return true;
    }

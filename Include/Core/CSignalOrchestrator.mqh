@@ -965,6 +965,8 @@ public:
             best_signal.action         = signal.action;
             best_signal.entryPrice     = signal.entryPrice;
             best_signal.entryPriceMax  = signal.entryPriceMax;
+            best_signal.entryPriceRaw  = signal.entryPriceRaw;
+            best_signal.entryPriceMaxRaw = signal.entryPriceMaxRaw;
             best_signal.stopLoss       = signal.stopLoss;
             best_signal.takeProfit1    = signal.takeProfit1;
             best_signal.takeProfit2    = signal.takeProfit2;
