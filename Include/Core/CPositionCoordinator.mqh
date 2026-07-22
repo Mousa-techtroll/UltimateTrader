@@ -48,7 +48,7 @@
 //| Constants for state persistence                                   |
 //+------------------------------------------------------------------+
 #define STATE_FILE_SIGNATURE  0x554C5452   // "ULTR"
-#define STATE_FILE_VERSION    8             // v8 (L7-2/L7-1): PersistedPosition adds adaptive exit_* geometry + partial accounting (tp1/tp2 lots/profit/time, partial_close_count, partial_realized_pnl); whole-payload CRC now covers mode-perf + sleeve trailer (v7 added is_sleeve+family; v6 added CEG stamps)
+#define STATE_FILE_VERSION    9             // v9 (exit-momentum): + exit_family/exit_intent/exit_bundle_id[16] + promoted v9_setup_subtype/v9_engine_intent + mom_at_entry (frozen-at-fill momentum). v8 files are MIGRATED (v8-prefix read + v9 defaults), NOT exact-match-rejected — see LoadPositionState. // v8 (L7-2/L7-1): PersistedPosition adds adaptive exit_* geometry + partial accounting; whole-payload CRC covers mode-perf + sleeve trailer (v7 is_sleeve+family; v6 CEG stamps)
 #define STATE_FILE_NAME       "UltimateTrader_State.bin"
 // L7-3: durable processed-closure ledger. A ticket that closed while offline is
 // accounted exactly once; its ticket is appended here (persisted immediately)
@@ -572,6 +572,62 @@ private:
       pp.partial_close_count  = pos.partial_close_count;
       pp.partial_realized_pnl = pos.partial_realized_pnl;
 
+      // v9 (exit-momentum): bundle identity + promoted subtype/intent + frozen momentum.
+      // ZeroMemory(pp) above zero-fills exit_bundle_id[16] (null terminator for round-trip).
+      pp.exit_family = (int)pos.exit_family;
+      pp.exit_intent = (int)pos.exit_intent;
+      int bid_len = MathMin(StringLen(pos.exit_bundle_id), 15);
+      for(int bc = 0; bc < bid_len; bc++)
+         pp.exit_bundle_id[bc] = (char)StringGetCharacter(pos.exit_bundle_id, bc);
+      pp.v9_setup_subtype = (int)pos.setup_subtype;
+      pp.v9_engine_intent = (int)pos.engine_intent;
+      pp.mom_at_entry     = pos.mom_at_entry;
+
+      return pp;
+   }
+
+   // v8->v9 MIGRATION: copy a v8 record into a v9 PersistedPosition, defaulting the v9-new
+   // fields to LEGACY (mom_at_entry.valid=false => NO strategy-exit policy acts on it;
+   // exit_bundle_id="LEGACY"). All v8 exit geometry is copied verbatim => the restored
+   // position keeps its OWN frozen targets/BE/chandelier (legacy exit behavior preserved).
+   PersistedPosition MigrateV8Record(const PersistedPositionV8 &v8)
+   {
+      PersistedPosition pp;
+      ZeroMemory(pp);
+      pp.ticket=v8.ticket; pp.magic_number=v8.magic_number; pp.entry_price=v8.entry_price;
+      pp.stop_loss=v8.stop_loss; pp.tp1=v8.tp1; pp.tp2=v8.tp2; pp.stage=v8.stage;
+      pp.original_lots=v8.original_lots; pp.remaining_lots=v8.remaining_lots;
+      pp.pattern_type=v8.pattern_type; pp.setup_quality=v8.setup_quality;
+      pp.signal_source=v8.signal_source; pp.at_breakeven=v8.at_breakeven;
+      pp.initial_risk_pct=v8.initial_risk_pct; pp.open_time=v8.open_time;
+      pp.trailing_mode=v8.trailing_mode; pp.entry_regime=v8.entry_regime;
+      pp.mae=v8.mae; pp.mfe=v8.mfe; pp.direction=v8.direction;
+      pp.tp1_closed=v8.tp1_closed; pp.tp2_closed=v8.tp2_closed;
+      pp.reached_050r=v8.reached_050r; pp.reached_100r=v8.reached_100r;
+      pp.peak_r_before_be=v8.peak_r_before_be; pp.be_before_tp1=v8.be_before_tp1;
+      pp.tp0_closed=v8.tp0_closed; pp.tp0_lots=v8.tp0_lots; pp.tp0_profit=v8.tp0_profit;
+      pp.runner_exit_mode=v8.runner_exit_mode; pp.runner_promoted_in_trade=v8.runner_promoted_in_trade;
+      pp.runner_promotion_time=v8.runner_promotion_time; pp.trail_send_policy=v8.trail_send_policy;
+      pp.last_broker_trailing_time=v8.last_broker_trailing_time;
+      pp.original_sl=v8.original_sl; pp.original_tp1=v8.original_tp1; pp.tp3=v8.tp3;
+      pp.entry_risk_amount=v8.entry_risk_amount;
+      pp.ceg_s_pat=v8.ceg_s_pat; pp.ceg_s_eff=v8.ceg_s_eff; pp.ceg_r48=v8.ceg_r48;
+      pp.ceg_bound=v8.ceg_bound; pp.regime_age_h4=v8.regime_age_h4; pp.run48=v8.run48;
+      pp.is_sleeve=v8.is_sleeve;
+      for(int i=0;i<16;i++) pp.sleeve_family[i]=v8.sleeve_family[i];
+      pp.exit_regime_class=v8.exit_regime_class; pp.exit_be_trigger=v8.exit_be_trigger;
+      pp.exit_chandelier_mult=v8.exit_chandelier_mult;
+      pp.exit_tp0_distance=v8.exit_tp0_distance; pp.exit_tp0_volume=v8.exit_tp0_volume;
+      pp.exit_tp1_distance=v8.exit_tp1_distance; pp.exit_tp1_volume=v8.exit_tp1_volume;
+      pp.exit_tp2_distance=v8.exit_tp2_distance; pp.exit_tp2_volume=v8.exit_tp2_volume;
+      pp.tp1_lots=v8.tp1_lots; pp.tp1_profit=v8.tp1_profit; pp.tp1_time=v8.tp1_time;
+      pp.tp2_lots=v8.tp2_lots; pp.tp2_profit=v8.tp2_profit; pp.tp2_time=v8.tp2_time;
+      pp.partial_close_count=v8.partial_close_count; pp.partial_realized_pnl=v8.partial_realized_pnl;
+      // v9-new: LEGACY defaults.
+      pp.exit_family=(int)EXIT_FAMILY_NONE; pp.exit_intent=(int)EI_NONE;
+      string legacy="LEGACY"; for(int i=0;i<6;i++) pp.exit_bundle_id[i]=(char)StringGetCharacter(legacy,i);
+      pp.v9_setup_subtype=(int)SUBTYPE_HYBRID; pp.v9_engine_intent=(int)INTENT_HYBRID;
+      pp.mom_at_entry.Init();   // valid=false => no strategy-exit acts on a migrated position
       return pp;
    }
 
@@ -673,6 +729,16 @@ private:
       // fail-closed — baseline can only trade less, never more).
       pos.is_sleeve      = pp.is_sleeve;
       pos.sleeve_family  = CharArrayToString(pp.sleeve_family);
+
+      // v9 (exit-momentum): restore bundle identity + promoted subtype/intent + frozen
+      // momentum. A v8-migrated record carries mom_at_entry.valid=false (=> no strategy-exit
+      // acts on it) + exit_bundle_id="LEGACY" (set in MigrateV8Record).
+      pos.exit_family    = (ENUM_EXIT_FAMILY)pp.exit_family;
+      pos.exit_intent    = (ENUM_EXIT_INTENT)pp.exit_intent;
+      pos.exit_bundle_id = CharArrayToString(pp.exit_bundle_id);
+      pos.setup_subtype  = (ENUM_SETUP_SUBTYPE)pp.v9_setup_subtype;
+      pos.engine_intent  = (ENUM_ENGINE_INTENT)pp.v9_engine_intent;
+      pos.mom_at_entry   = pp.mom_at_entry;
 
       // Derive stage_label from stage enum
       switch(pos.stage)
@@ -1408,6 +1474,48 @@ public:
             m_positions[i].stop_loss = be;
       }
    }
+
+   // EXIT-MOMENTUM PLATFORM (spec v2): stamp the frozen-at-fill momentum + exit family/intent
+   // onto a new position. Only called when the snapshotter exists (masters on).
+   string ExitFamilyTag(ENUM_EXIT_FAMILY f) const
+   {
+      switch(f){ case EXIT_FAMILY_TREND_CONTINUATION: return "TRENDCONT_v1";
+                 case EXIT_FAMILY_BREAKOUT: return "BREAKOUT_v1";
+                 case EXIT_FAMILY_MEAN_REVERSION: return "MEANREV_stub";
+                 case EXIT_FAMILY_REVERSAL: return "REVERSAL_v1";
+                 case EXIT_FAMILY_CRASH: return "CRASH_v1"; default: return "NONE"; }
+   }
+   int PrimaryIntentScore(ENUM_EXIT_FAMILY f, const IntentScores &is) const
+   {
+      switch(f){
+         case EXIT_FAMILY_TREND_CONTINUATION: return is.trend_continuation.available ? is.trend_continuation.score : 0;
+         case EXIT_FAMILY_BREAKOUT:           return is.breakout.available ? is.breakout.score : 0;
+         case EXIT_FAMILY_MEAN_REVERSION:     return is.mean_reversion.available ? is.mean_reversion.score : 0;
+         case EXIT_FAMILY_REVERSAL:           return is.exhaustion_reversal.available ? is.exhaustion_reversal.score : 0;
+         case EXIT_FAMILY_CRASH:              return is.crash.available ? is.crash.score : 0;
+         default: return 0; }
+   }
+   void StampExitEntry(SPosition &pos)
+   {
+      ENUM_EXIT_FAMILY fam; ENUM_EXIT_INTENT intent;
+      CExitPolicyEngine::ResolveExit(pos, fam, intent);
+      pos.exit_family    = fam;
+      pos.exit_intent    = intent;
+      pos.exit_bundle_id = ExitFamilyTag(fam);
+      MomentumSnapshot s; m_snapshotter.GetSnapshot(s);
+      IntentScores is;    m_snapshotter.GetIntentScores(pos, is);
+      pos.mom_at_entry.valid = s.ready;
+      if(s.ready)
+      {
+         pos.mom_at_entry.entry_trend            = s.trend.available            ? s.trend.value            : 0.0;
+         pos.mom_at_entry.entry_impulse          = s.impulse.available          ? s.impulse.value          : 0.0;
+         pos.mom_at_entry.entry_overextension    = s.overextension.available    ? s.overextension.value    : 0.0;
+         pos.mom_at_entry.entry_exhaustion       = s.exhaustion.available       ? s.exhaustion.value       : 0.0;
+         pos.mom_at_entry.entry_reversal_confirm = s.reversal_confirm.available ? s.reversal_confirm.value : 0.0;
+         pos.mom_at_entry.entry_bear_state       = s.bear_state_score.available ? s.bear_state_score.value : 0.0;
+         pos.mom_at_entry.entry_intent_score     = PrimaryIntentScore(fam, is);
+      }
+   }
    // Assemble the read-only market view a policy sees (policies never fetch market data).
    void BuildExitMarketView(const SPosition &pos, ExitMarketView &v) const
    {
@@ -1884,6 +1992,13 @@ public:
 
       InitializeRunnerExitMode(position);
 
+      // EXIT-MOMENTUM PLATFORM (spec v2): stamp momentum-at-fill + resolve the exit family/
+      // intent so strategy-exit ownership + change-since-entry are deterministic from entry.
+      // Gated: NULL snapshotter (masters off) => no stamp => mom_at_entry.valid stays false =>
+      // no strategy-exit acts on it => byte-identical.
+      if(m_snapshotter != NULL && m_exitEngine != NULL)
+         StampExitEntry(position);
+
       ArrayResize(m_positions, m_position_count + 1);
       m_positions[m_position_count] = position;
       m_position_count++;
@@ -2132,12 +2247,14 @@ public:
       // caller falls back to broker-only position recovery rather than restoring garbage.
       // This is the deterministic v4-vs-v5 discriminator; the size check + per-record
       // FileReadStruct short-read guard + CRC32 below are defense-in-depth backstops.
-      if(header.version != STATE_FILE_VERSION)
+      // v9: accept the current version OR v8 (MIGRATED below — v8-prefix read + v9 legacy
+      // defaults). Any other version is rejected gracefully (broker-only recovery).
+      bool migrating = (header.version == 8);
+      if(header.version != STATE_FILE_VERSION && !migrating)
       {
          LogPrint("ERROR: LoadPositionState - incompatible state file version: ",
-                  header.version, " (this build writes/reads v", STATE_FILE_VERSION,
-                  "; older files have a different PersistedPosition layout) - "
-                  "falling back to broker-only recovery");
+                  header.version, " (this build writes v", STATE_FILE_VERSION,
+                  ", migrates v8; older layouts differ) - falling back to broker-only recovery");
          FileClose(handle);
          ArrayResize(records, 0);
          return false;
@@ -2163,8 +2280,9 @@ public:
       // rather than restoring corrupt state. (The per-record FileReadStruct short-read
       // guard and the CRC32 check below are the defense-in-depth backstops.)
       ulong actual_file_size = FileSize(handle);
+      ulong rec_size = migrating ? (ulong)sizeof(PersistedPositionV8) : (ulong)sizeof(PersistedPosition);
       ulong min_v5_size = (ulong)sizeof(StateFileHeader) +
-                          (ulong)header.record_count * (ulong)sizeof(PersistedPosition);
+                          (ulong)header.record_count * rec_size;
       if(actual_file_size < min_v5_size)
       {
          LogPrint("ERROR: LoadPositionState - file too small for v5 layout (size=",
@@ -2187,7 +2305,18 @@ public:
 
       for(int i = 0; i < header.record_count; i++)
       {
-         if(FileReadStruct(handle, records[i]) != sizeof(PersistedPosition))
+         if(migrating)
+         {
+            PersistedPositionV8 v8rec;
+            if(FileReadStruct(handle, v8rec) != sizeof(PersistedPositionV8))
+            {
+               LogPrint("ERROR: LoadPositionState - v8 migration short read on record ", i,
+                        " of ", header.record_count, " - broker-only fallback");
+               FileClose(handle); ArrayResize(records, 0); return false;
+            }
+            records[i] = MigrateV8Record(v8rec);
+         }
+         else if(FileReadStruct(handle, records[i]) != sizeof(PersistedPosition))
          {
             LogPrint("ERROR: LoadPositionState - failed to read record ", i,
                      " of ", header.record_count,
@@ -2258,17 +2387,28 @@ public:
       // + sleeve) BEFORE applying anything. A corrupt/truncated payload leaves ALL
       // in-memory state unchanged (engine mode-perf untouched, sleeve ledger
       // untouched, no partial application).
-      uint computed_crc = CalculatePayloadCRC(records, header.record_count,
-                                              mode_records, mode_perf_count,
-                                              sleeve_state);
-      if(computed_crc != header.checksum)
+      // v8 migration skips the whole-payload CRC (the file's CRC covers the v8 record layout,
+      // not the converted v9 records). Migration integrity rests on the header signature +
+      // version + size check + per-record short-read guards above, and downstream broker
+      // reconciliation (a migrated ticket with no live broker position is dropped). A
+      // same-version (v9) file is CRC-validated exactly as before.
+      if(!migrating)
       {
-         LogPrint("ERROR: LoadPositionState - payload CRC32 mismatch! File=",
-                  header.checksum, " Computed=", computed_crc,
-                  " - state file may be corrupted (in-memory state unchanged)");
-         ArrayResize(records, 0);
-         return false;
+         uint computed_crc = CalculatePayloadCRC(records, header.record_count,
+                                                 mode_records, mode_perf_count,
+                                                 sleeve_state);
+         if(computed_crc != header.checksum)
+         {
+            LogPrint("ERROR: LoadPositionState - payload CRC32 mismatch! File=",
+                     header.checksum, " Computed=", computed_crc,
+                     " - state file may be corrupted (in-memory state unchanged)");
+            ArrayResize(records, 0);
+            return false;
+         }
       }
+      else
+         LogPrint("LoadPositionState: v8->v9 MIGRATION of ", header.record_count,
+                  " record(s) (CRC skipped; broker reconciliation validates tickets)");
 
       // L7-1: payload validated — NOW atomically apply the trailers.
       if(mode_perf_count > 0)

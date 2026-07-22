@@ -448,6 +448,35 @@ struct StateFileHeader
 //+------------------------------------------------------------------+
 //| Persisted Position (serializable subset for state file)          |
 //+------------------------------------------------------------------+
+// FROZEN v8 layout (exit-momentum v9 migration). EXACT copy of the v8 PersistedPosition
+// field order/types — used ONLY to read a v8 state file's records during the v8->v9
+// migration in LoadPositionState (converted field-by-field to the v9 struct). Do NOT edit.
+struct PersistedPositionV8
+{
+   ulong    ticket;            int      magic_number;      double   entry_price;
+   double   stop_loss;         double   tp1;               double   tp2;
+   int      stage;             double   original_lots;     double   remaining_lots;
+   int      pattern_type;      int      setup_quality;     int      signal_source;
+   bool     at_breakeven;      double   initial_risk_pct;  datetime open_time;
+   int      trailing_mode;     int      entry_regime;      double   mae;
+   double   mfe;               int      direction;         bool     tp1_closed;
+   bool     tp2_closed;        bool     reached_050r;      bool     reached_100r;
+   double   peak_r_before_be;  bool     be_before_tp1;     bool     tp0_closed;
+   double   tp0_lots;          double   tp0_profit;        int      runner_exit_mode;
+   bool     runner_promoted_in_trade;    datetime runner_promotion_time;
+   int      trail_send_policy;            datetime last_broker_trailing_time;
+   double   original_sl;       double   original_tp1;      double   tp3;
+   double   entry_risk_amount; double   ceg_s_pat;         double   ceg_s_eff;
+   double   ceg_r48;           bool     ceg_bound;         int      regime_age_h4;
+   double   run48;             bool     is_sleeve;         char     sleeve_family[16];
+   int      exit_regime_class; double   exit_be_trigger;   double   exit_chandelier_mult;
+   double   exit_tp0_distance; double   exit_tp0_volume;   double   exit_tp1_distance;
+   double   exit_tp1_volume;   double   exit_tp2_distance; double   exit_tp2_volume;
+   double   tp1_lots;          double   tp1_profit;        datetime tp1_time;
+   double   tp2_lots;          double   tp2_profit;        datetime tp2_time;
+   int      partial_close_count;         double partial_realized_pnl;
+};
+
 struct PersistedPosition
 {
    ulong    ticket;
@@ -553,6 +582,19 @@ struct PersistedPosition
    datetime tp2_time;             // time TP2 partial executed
    int      partial_close_count;  // total number of partial close executions
    double   partial_realized_pnl; // total realized PnL from partial closes
+
+   // EXIT-MOMENTUM PLATFORM (state file version 9): exit-policy bundle identity + the
+   // momentum snapshot frozen at fill + the promoted setup_subtype/engine_intent (were
+   // runtime-only) so strategy-exit ownership + change-since-entry survive restart. v8
+   // files are MIGRATED (v8 prefix read + these defaulted: mom_at_entry.valid=false =>
+   // no strategy-exit acts, exit_bundle_id="LEGACY") — see LoadPositionState. mom_at_entry
+   // has no strings; exit_bundle_id is a fixed ASCII buffer (sleeve_family precedent).
+   int             exit_family;        // ENUM_EXIT_FAMILY
+   int             exit_intent;        // ENUM_EXIT_INTENT
+   char            exit_bundle_id[16];
+   int             v9_setup_subtype;   // ENUM_SETUP_SUBTYPE (promoted from runtime-only)
+   int             v9_engine_intent;   // ENUM_ENGINE_INTENT (promoted)
+   MomentumAtEntry mom_at_entry;       // frozen-at-fill momentum (valid=false => legacy exit)
 };
 
 //+------------------------------------------------------------------+
