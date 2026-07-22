@@ -43,6 +43,16 @@
 // Market Analysis (Stack17 components wrapped in CMarketContext)
 #include "Include/MarketAnalysis/IMarketContext.mqh"
 #include "Include/MarketAnalysis/CMarketContext.mqh"
+// EXIT-MOMENTUM PLATFORM (spec v2). The snapshotter forward-declares CMarketContext and
+// calls its getters inline, so it MUST be included AFTER CMarketContext.mqh (above).
+#include "Include/MarketAnalysis/CMomentumSnapshotter.mqh"
+#include "Include/ExitPolicies/CExitPolicyEngine.mqh"
+#include "Include/ExitPolicies/CTrendContExitPolicy.mqh"
+#include "Include/ExitPolicies/CBreakoutExitPolicy.mqh"
+#include "Include/ExitPolicies/CReversalExitPolicy.mqh"
+#include "Include/ExitPolicies/CCrashExitPolicy.mqh"
+#include "Include/ExitPolicies/CMeanRevExitPolicy.mqh"
+#include "Include/ExitPolicies/CAccountSafety.mqh"
 #include "Include/MarketAnalysis/CNewsGate.mqh"   // News filter engine (hybrid live-calendar / tester-CSV)
 
 // Plugin System
@@ -136,6 +146,17 @@ datetime  g_lastBarTime      = 0;
 
 // Market Analysis
 CMarketContext         *g_marketContext      = NULL;
+// EXIT-MOMENTUM PLATFORM (spec v2) — all NULL until a master gate constructs them (default off
+// => zero objects, zero indicator handles, zero per-bar compute => byte-identical baseline).
+CMomentumSnapshotter   *g_momSnapshotter     = NULL;
+CExitPolicyEngine      *g_exitEngine         = NULL;
+CTrendContExitPolicy   *g_trendExit          = NULL;
+CBreakoutExitPolicy    *g_brkExit            = NULL;
+CReversalExitPolicy    *g_revExit            = NULL;
+CCrashExitPolicy       *g_crashExit          = NULL;
+CMeanRevExitPolicy     *g_meanRevExit        = NULL;
+CAccountSafety         *g_accountSafety      = NULL;
+datetime                g_lastMomH1Bar       = 0;
 CMarketStateManager    *g_stateManager      = NULL;
 
 // Validation
@@ -1311,6 +1332,39 @@ int OnInit()
 
    Print("[Init] Market Analysis: OK (Regime + Trend + Macro + SMC + Crash + VolRegime)");
 
+   // EXIT-MOMENTUM PLATFORM (spec v2): construct the snapshotter + policy engine + 5 bundles
+   // + account-safety ONLY when a master gate is on. Default (both off) => NULL objects,
+   // no indicator handles, no drive => byte-identical to the main baseline.
+   if(InpExitPolicyShadow || InpExitPolicyActive)
+   {
+      g_momSnapshotter = new CMomentumSnapshotter();
+      if(g_momSnapshotter == NULL || !g_momSnapshotter.Init(g_marketContext))
+         Print("[Init] WARN: momentum snapshotter init failed; exit-policy features stay unavailable");
+
+      g_exitEngine  = new CExitPolicyEngine();
+      g_trendExit   = new CTrendContExitPolicy();
+      g_brkExit     = new CBreakoutExitPolicy();
+      g_revExit     = new CReversalExitPolicy();
+      g_crashExit   = new CCrashExitPolicy();
+      g_meanRevExit = new CMeanRevExitPolicy();
+      if(g_exitEngine != NULL)
+      {
+         g_exitEngine.Register(g_trendExit);
+         g_exitEngine.Register(g_brkExit);
+         g_exitEngine.Register(g_revExit);
+         g_exitEngine.Register(g_crashExit);
+         g_exitEngine.Register(g_meanRevExit);
+      }
+
+      g_accountSafety = new CAccountSafety();
+      if(g_accountSafety != NULL)
+         g_accountSafety.Init(InpDailyLossMode, InpDailyLossLimit);
+
+      Print("[Init] Exit-Momentum platform constructed (shadow=", InpExitPolicyShadow,
+            " active=", InpExitPolicyActive, " policies=",
+            (g_exitEngine != NULL ? g_exitEngine.PolicyCount() : 0), ")");
+   }
+
    // NEWS FILTER: hybrid event-window engine (live calendar / tester CSV / static fallback).
    // Initialize() never fails hard — worst case it degrades to the static blackout schedule.
    g_newsGate = new CNewsGate();
@@ -2425,6 +2479,15 @@ void OnDeinit(const int reason)
    //--- Layer 1: Market Analysis
    if(g_stateManager != NULL)  { delete g_stateManager; g_stateManager = NULL; }
    if(g_marketContext != NULL)  { g_marketContext.Deinit(); delete g_marketContext; g_marketContext = NULL; }
+   // EXIT-MOMENTUM PLATFORM cleanup (NULL-safe; only constructed when a master gate was on).
+   if(g_momSnapshotter != NULL) { delete g_momSnapshotter; g_momSnapshotter = NULL; }
+   if(g_exitEngine != NULL)     { delete g_exitEngine;     g_exitEngine     = NULL; }
+   if(g_trendExit != NULL)      { delete g_trendExit;      g_trendExit      = NULL; }
+   if(g_brkExit != NULL)        { delete g_brkExit;        g_brkExit        = NULL; }
+   if(g_revExit != NULL)        { delete g_revExit;        g_revExit        = NULL; }
+   if(g_crashExit != NULL)      { delete g_crashExit;      g_crashExit      = NULL; }
+   if(g_meanRevExit != NULL)    { delete g_meanRevExit;    g_meanRevExit    = NULL; }
+   if(g_accountSafety != NULL)  { delete g_accountSafety;  g_accountSafety  = NULL; }
 
    EventKillTimer();
    Comment("");
@@ -2694,6 +2757,19 @@ void OnTick()
 
       //--- 1. Update market state (all Stack17 analysis components)
       g_stateManager.UpdateMarketState();
+
+      // EXIT-MOMENTUM PLATFORM (spec v2): refresh the closed-bar momentum snapshot ONCE per new
+      // H1 bar, immediately after market state (incl. CBearStateModel) is updated. NULL when the
+      // masters are off => skipped entirely (zero compute, byte-identical).
+      if(g_momSnapshotter != NULL)
+      {
+         datetime cur_h1_mom = iTime(_Symbol, PERIOD_H1, 0);
+         if(cur_h1_mom != g_lastMomH1Bar)
+         {
+            g_lastMomH1Bar = cur_h1_mom;
+            g_momSnapshotter.Update(iTime(_Symbol, PERIOD_H1, 1)); // reflect the just-closed bar
+         }
+      }
 
       // CANDIDATE (QA#1): advance the regime/chandelier hysteresis ONCE PER BAR here, book-independent
       // (beside the market-state snapshot) — not inside the per-position trailing loop. No-op unless the flag.
