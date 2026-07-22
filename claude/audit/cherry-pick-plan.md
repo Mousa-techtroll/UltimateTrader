@@ -127,3 +127,14 @@ control in the same session — real-tick data can drift again). GoldHistory rem
 Both verified BYTE-IDENTICAL both feeds (primary a289b95a/$33,318.24/801, GH 2713e298/$24,086.34/748).
 Remaining Tier-2: L6-1, L6-4, L7-1, L7-3 (atomic save), L7-6, L7-4, and the two must-verify-first items
 L6-5 (tester account mode) + L6-3 (tester SL/TP tick-alignment).
+
+### Tier-2 batch 2 (2026-07-22)
+| commit | item | mechanism |
+|---|---|---|
+| — | **L6-1** | ALREADY in baseline (ambiguous-fill latch `m_bindingBlockedSymbol`, executor :1458-1468 via InpSafePositionBinding). Nothing to port. |
+| c934a44 | **L6-4** | RecentFillMatches() read-only broker scan before resending on TIMEOUT/CONNECTION; if our order already filled, don't resend (coordinator adopts it). Gated to those retcodes + !MQL_TESTER. |
+| 53ad285 | **L7-1** | 4 file-position BE/trail sites: commit internal SL/BE only inside if(PositionModify(...)). Main trailing path already covered by InpSLResyncOnFail. Byte-identical (file path inert in tester; tester modifies always succeed). |
+
+Both verified BYTE-IDENTICAL both feeds (a289b95a/$33,318.24/801, 2713e298/$24,086.34/748).
+Remaining Tier-2: **L7-3** (atomic SavePositionState rewrite — highest value, biggest rework), L7-6, L7-4,
+and must-verify-first L6-5 (tester account mode) + L6-3 (tester SL/TP tick-alignment).
