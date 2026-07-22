@@ -933,6 +933,7 @@ public:
                                                         : exec_result.resultTicket;
          position.direction = sig_type;
          position.pattern_type = signal.patternType;
+         position.major_engine = signal.major_engine;   // L4-3 (cherry-pick d61277c): propagate producing engine to executed position (attribution only; no decision reads it -> byte-identical)
          // Fix 4.7: seed lot_size from the ACTUAL filled volume, not the requested
          // lot. Downstream (EA + AddPosition) seeds original_lots/remaining_lots from
          // position.lot_size, so a partial fill must propagate here or R-milestones
