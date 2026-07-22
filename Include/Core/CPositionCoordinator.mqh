@@ -1485,6 +1485,18 @@ public:
                  case EXIT_FAMILY_REVERSAL: return "REVERSAL_v1";
                  case EXIT_FAMILY_CRASH: return "CRASH_v1"; default: return "NONE"; }
    }
+   // Contract-B trail-modulation activation gate: is this family's Trailing sub-policy ACTIVE?
+   // (InpExitPolicyActive is checked separately at the consumption site.) All default false.
+   bool TrailModActive(ENUM_EXIT_FAMILY fam) const
+   {
+      switch(fam){
+         case EXIT_FAMILY_TREND_CONTINUATION: return InpExitPolTrendTrailing;
+         case EXIT_FAMILY_BREAKOUT:           return InpExitPolBreakoutActive;
+         case EXIT_FAMILY_REVERSAL:           return InpExitPolReversalActive;
+         case EXIT_FAMILY_CRASH:              return InpExitPolCrashActive;
+         case EXIT_FAMILY_MEAN_REVERSION:     return InpExitPolMeanRevActive;
+         default: return false; }
+   }
    int PrimaryIntentScore(ENUM_EXIT_FAMILY f, const IntentScores &is) const
    {
       switch(f){
@@ -4700,6 +4712,24 @@ private:
       pos.last_live_chandelier_mult = live_chand_mult;
       pos.last_effective_chandelier_mult = effective_chand_mult;
 
+      // EXIT-MOMENTUM PLATFORM (spec v2): Contract-B future-trail modulation. Consumes the
+      // bundle's trail proposal that the seam stashed on this position. WIDEN (EX_TRAIL_SCALE,
+      // factor>1) scales the effective chandelier mult => wider stop, further from price =>
+      // the trail advances more slowly / holds. SUPPRESS/DELAY withholds the tighten this bar.
+      // Contract B NEVER moves the existing SL backward: the is_better ratchet + STOPS_LEVEL
+      // clamp in the send loop below still gate every modify. Gated on InpExitPolicyActive +
+      // the family's Trailing flag (both default off => no effect => byte-identical). Not for
+      // sleeves. pos.policy_trail_mod is refreshed per bar by the seam (NOOP when abstaining).
+      bool tb_suppress = false;
+      if(InpExitPolicyActive && !pos.is_sleeve && TrailModActive(pos.exit_family))
+      {
+         ENUM_EXIT_ACTION tb = pos.policy_trail_mod.action;
+         if(tb == EX_TRAIL_SCALE && pos.policy_trail_mod.factor > 0.0)
+            effective_chand_mult *= pos.policy_trail_mod.factor;   // widen (factor > 1)
+         else if(tb == EX_TRAIL_SUPPRESS || tb == EX_TRAIL_DELAY)
+            tb_suppress = true;                                    // withhold the ratchet this bar
+      }
+
       // OPT-1 (2026-06-27, Model=4 real ticks, full 2019-2026H1): a 1.2x-wider regime trail
       // (Group-44 InpRegExit*Chand x1.2) measured Net +51% ($13,267->$20,069), PF 1.24->1.29,
       // avg-R 0.131->0.169, FIT +29.6% & CONFIRM +42% OOS -- NOT the old -$1,127 (that was a
@@ -4749,6 +4779,11 @@ private:
          if(!pos.crash_trail_unlocked)
             return;   // pre-thesis: suppress the trail ratchet this tick
       }
+
+      // EXIT-MOMENTUM PLATFORM (spec v2): Contract-B SUPPRESS/DELAY — withhold the trail
+      // ratchet this bar (the existing SL is never touched, so it cannot move backward).
+      if(tb_suppress)
+         return;
 
       // FIX-2 (InpEnableBEMover): iteration t == -1 synthesizes the ACTIVE
       // break-even proposal and feeds it through the SAME ratchet / STOPS_LEVEL
