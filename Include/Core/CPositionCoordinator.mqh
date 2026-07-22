@@ -3626,7 +3626,26 @@ private:
       double exit_volume = m_positions[index].remaining_lots;
       ulong deal_ticket = 0;
 
-      GetLatestExitDeal(m_positions[index].ticket, deal_ticket, profit, exit_price, exit_time, exit_volume);
+      bool exit_deal_settled = GetLatestExitDeal(m_positions[index].ticket, deal_ticket, profit, exit_price, exit_time, exit_volume);
+      // L7-2 (cherry-pick, live-only): if the exit deal has not settled in broker history
+      // yet (async lag on a real account), do NOT finalize this closure with a fabricated
+      // $0 PnL and drop the record — that silently omits a real loss from PnL, the daily-loss
+      // halt, the consecutive-loss scaler and EC risk feedback. Retain the record and retry
+      // on the next tick; quarantine (finalize with best resolved data) after a bounded number
+      // of attempts. Gated to LIVE: in the Strategy Tester deal history is synchronous, so
+      // GetLatestExitDeal always settles on this tick and this branch never runs -> byte-identical.
+      if(!exit_deal_settled && !MQLInfoInteger(MQL_TESTER))
+      {
+         if(m_positions[index].exit_deal_retries < 50)
+         {
+            m_positions[index].exit_deal_retries++;
+            Print("[L7-2] exit deal not yet settled for ticket ", m_positions[index].ticket,
+                  " (retry ", m_positions[index].exit_deal_retries, "/50) — retaining record");
+            return;   // keep the record; the reconcile loop re-enters HandleClosedPosition next tick, before RemovePosition
+         }
+         Print("[L7-2] WARN: exit deal never settled for ticket ", m_positions[index].ticket,
+               " after 50 retries — finalizing with best resolved data (quarantine)");
+      }
       if(exit_price <= 0.0)
          exit_price = GetCurrentMarketPrice(m_positions[index]);
 

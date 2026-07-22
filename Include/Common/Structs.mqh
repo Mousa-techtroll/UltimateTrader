@@ -118,6 +118,7 @@ struct SPosition
    double               entry_spread;       // Spread at entry
    double               entry_slippage;     // Slippage at entry
    int                  entry_session;      // Session tag (ENUM_TRADING_SESSION)
+   int                  exit_deal_retries;  // L7-2: live-only exit-deal settlement retry counter (stays 0 in the tester; not persisted)
    bool                 confirmation_used;  // Confirmation candle was used
    datetime             bar_time_at_entry;  // Bar time for session tagging
    double               requested_entry_price; // Requested entry price before execution
@@ -247,7 +248,7 @@ struct SPosition
       stage = STAGE_INITIAL; original_lots = 0; remaining_lots = 0;
       trailing_mode = 0; entry_regime = 0; stage_label = "";
       mae = 0; mfe = 0; entry_spread = 0; entry_slippage = 0;
-      entry_session = 0; confirmation_used = false; bar_time_at_entry = 0;
+      entry_session = 0; exit_deal_retries = 0; confirmation_used = false; bar_time_at_entry = 0;
       requested_entry_price = 0; executed_entry_price = 0;
       entry_balance = 0; entry_equity = 0; entry_risk_amount = 0;
       engine_name = ""; engine_mode = MODE_NONE; day_type = DAY_TREND;
