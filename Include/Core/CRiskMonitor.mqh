@@ -86,6 +86,8 @@ public:
 
       LogPrint("CRiskMonitor: Initialized | Max trades/day: ", m_max_trades_per_day,
                " | Daily loss halt: ", DoubleToString(m_daily_loss_halt_pct, 2), "%");
+
+      RestoreDailyStateIfSameDay();   // L5-3: after a same-server-day restart, recover the day's trade count / equity baseline / loss-halt (live-only; no-op in tester -> byte-identical)
    }
 
    //+------------------------------------------------------------------+
@@ -124,6 +126,7 @@ public:
       m_trades_today++;
       m_last_trade_date = TimeCurrent();
       LogPrint("CRiskMonitor: Trade count today: ", m_trades_today, "/", m_max_trades_per_day);
+      PersistDailyState();   // L5-3: persist the incremented daily count (live-only)
    }
 
    //+------------------------------------------------------------------+
@@ -173,6 +176,7 @@ public:
       if(m_daily_loss_halt_pct > 0 && daily_pnl <= -m_daily_loss_halt_pct)
       {
          m_loss_halted = true;  // Phase 4.4: set the DAILY-LOSS backstop (resets only on a new day)
+         PersistDailyState();   // L5-3: persist the latched halt so a restart cannot clear it same-day (live-only)
 
          LogPrint("========================================");
          LogPrint("DAILY LOSS LIMIT HIT: ", FormatPercent(daily_pnl));
@@ -261,6 +265,46 @@ private:
 
          LogPrint("CRiskMonitor: New day reset | Start equity: $",
                   DoubleToString(m_daily_start_balance, 2));
+         PersistDailyState();   // L5-3: persist the fresh new-day baseline (live-only)
       }
+   }
+
+   //+------------------------------------------------------------------+
+   //| L5-3 (cherry-pick, LIVE-ONLY): persist/restore the daily backstop |
+   //| so a same-server-day terminal/host RESTART cannot re-baseline     |
+   //| equity, zero the trade count, or clear the daily-loss halt — which |
+   //| would let a routine restart bypass the hard backstop. Backed by    |
+   //| the terminal's persistent GlobalVariables, keyed by symbol. Gated  |
+   //| to LIVE: in the Strategy Tester these are no-ops so the in-memory  |
+   //| Init/CheckDayReset path is unchanged -> byte-identical.            |
+   //+------------------------------------------------------------------+
+   string DailyStateKey(const string field) const { return "UT_RM_" + _Symbol + "_" + field; }
+
+   void PersistDailyState()
+   {
+      if(MQLInfoInteger(MQL_TESTER)) return;
+      GlobalVariableSet(DailyStateKey("day"),      (double)m_last_day_reset);
+      GlobalVariableSet(DailyStateKey("trades"),   (double)m_trades_today);
+      GlobalVariableSet(DailyStateKey("baseline"), m_daily_start_balance);
+      GlobalVariableSet(DailyStateKey("halt"),     m_loss_halted ? 1.0 : 0.0);
+   }
+
+   void RestoreDailyStateIfSameDay()
+   {
+      if(MQLInfoInteger(MQL_TESTER)) return;
+      if(!GlobalVariableCheck(DailyStateKey("day"))) return;   // nothing persisted yet
+      const datetime persisted_day = (datetime)GlobalVariableGet(DailyStateKey("day"));
+      MqlDateTime pd, now_st;
+      TimeToStruct(persisted_day, pd);
+      TimeToStruct(TimeCurrent(), now_st);
+      if(pd.day != now_st.day || pd.mon != now_st.mon || pd.year != now_st.year)
+         return;   // persisted state is from a prior day -> the fresh Init/new-day reset correctly stands
+      m_last_day_reset      = persisted_day;
+      m_trades_today        = (int)GlobalVariableGet(DailyStateKey("trades"));
+      m_daily_start_balance = GlobalVariableGet(DailyStateKey("baseline"));
+      m_loss_halted         = (GlobalVariableGet(DailyStateKey("halt")) > 0.5);
+      Print("[L5-3] Restored same-day risk state after restart | trades=", m_trades_today,
+            " | day-baseline=$", DoubleToString(m_daily_start_balance, 2),
+            " | loss_halted=", m_loss_halted);
    }
 };
