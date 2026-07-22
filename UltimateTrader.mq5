@@ -413,19 +413,50 @@ double g_session_quality_factor = 1.0;
 //+------------------------------------------------------------------+
 //| Helper: Register entry plugin                                     |
 //+------------------------------------------------------------------+
+void AppendEntryPlugin(CEntryStrategy *plugin)
+{
+   ArrayResize(g_entryPlugins, g_entryPluginCount + 1);
+   g_entryPlugins[g_entryPluginCount] = plugin;
+   g_entryPluginCount++;
+   Print("[Init] Registered entry plugin: ", plugin.GetName());
+}
+
 void RegisterEntryPlugin(CEntryStrategy *plugin, bool enabled)
 {
    if(plugin == NULL || !enabled) return;
    plugin.SetContext(g_marketContext);
    if(plugin.Initialize())
-   {
-      ArrayResize(g_entryPlugins, g_entryPluginCount + 1);
-      g_entryPlugins[g_entryPluginCount] = plugin;
-      g_entryPluginCount++;
-      Print("[Init] Registered entry plugin: ", plugin.GetName());
-   }
+      AppendEntryPlugin(plugin);
    else
       Print("[Init] FAILED to initialize entry plugin: ", plugin.GetName());
+}
+
+//+------------------------------------------------------------------+
+//| L1-5: Initialize one optional trailing implementation             |
+//|                                                                  |
+//| The caller decides which implementations are required. A failed  |
+//| optional implementation stays disabled; only READY implementations|
+//| are later published to dispatch.                                  |
+//+------------------------------------------------------------------+
+bool PrepareTrailingPlugin(CTrailingStrategy *plugin,
+                           const string role)
+{
+   if(plugin == NULL)
+   {
+      Print("[Init] Trailing component allocation failed: ", role);
+      return false;
+   }
+
+   plugin.SetEnabled(false);
+   if(!plugin.Initialize() || !plugin.IsInitialized())
+   {
+      plugin.SetEnabled(false);
+      Print("[Init] Trailing component NOT READY: ", role,
+            " | ", plugin.GetLastError());
+      return false;
+   }
+
+   return true;
 }
 
 //+------------------------------------------------------------------+
@@ -1358,25 +1389,54 @@ int OnInit()
 
    // S3/S6 Option B-lite: when enabled, S3/S6 replace RangeBox + FalseBreakout
    // BB Mean Reversion stays for comparison
-   if(InpEnableS3S6)
+   if(InpEnableS3S6 && register_patterns)
    {
-      // Initialize shared range box detector
+      // L1-5: S3/S6 is one calibrated bundle. A missing shared detector
+      // must not silently remove S3 or degrade S6 to PDH/PDL-only logic.
       g_rangeBoxDetector = new CRangeBoxDetector();
-      if(g_rangeBoxDetector != NULL) g_rangeBoxDetector.Init();
+      if(g_rangeBoxDetector == NULL || !g_rangeBoxDetector.Init())
+      {
+         Print("[Init] CRITICAL: active S3/S6 range detector is not ready");
+         return(INIT_FAILED);
+      }
 
       // S6: Failed-Breakout Reversal
       g_failedBreakRev = new CFailedBreakReversal(g_rangeBoxDetector);
-      RegisterEntryPlugin(g_failedBreakRev, register_patterns);
-
       // S3: Range Edge Fade
       g_rangeEdgeFade = new CRangeEdgeFade(g_rangeBoxDetector);
+      if(g_failedBreakRev == NULL || g_rangeEdgeFade == NULL)
+      {
+         Print("[Init] CRITICAL: active S3/S6 plugin allocation failed");
+         return(INIT_FAILED);
+      }
       g_rangeEdgeFade.SetRSIPeriod(InpRSIPeriod);
-      RegisterEntryPlugin(g_rangeEdgeFade, register_patterns);
+
+      // Stage both dependants before publishing either one. Partial S3/S6
+      // registration would be an unapproved change to the engine mix.
+      g_failedBreakRev.SetContext(g_marketContext);
+      g_rangeEdgeFade.SetContext(g_marketContext);
+      const bool s6_ready = g_failedBreakRev.Initialize();
+      const bool s3_ready = g_rangeEdgeFade.Initialize();
+      if(!s6_ready || !s3_ready)
+      {
+         Print("[Init] CRITICAL: active S3/S6 bundle initialization failed",
+               " | S6=", (s6_ready ? "READY" : "FAILED"),
+               " S3=", (s3_ready ? "READY" : "FAILED"));
+         return(INIT_FAILED);
+      }
+      AppendEntryPlugin(g_failedBreakRev);
+      AppendEntryPlugin(g_rangeEdgeFade);
 
       // Disable replaced plugins
       RegisterEntryPlugin(g_rangeBoxEntry, false);
       RegisterEntryPlugin(g_fbfEntry,      false);
       Print("[Init] S3/S6 ACTIVE — RangeBox + FalseBreakout replaced");
+   }
+   else if(InpEnableS3S6)
+   {
+      // File-only mode has no pattern consumer, so the S3/S6 dependency is
+      // not requested and must not become an artificial startup dependency.
+      Print("[Init] S3/S6 NOT REQUESTED — pattern signal route is inactive");
    }
    else
    {
@@ -1654,26 +1714,111 @@ int OnInit()
    g_hybridTrailing     = new CHybridTrailing();
    g_newsTightenTrailing = new CNewsTightenTrailing(g_newsGate, InpATRPeriod);
 
-   // Initialize all trailing plugins
-   g_atrTrailing.Initialize();
-   g_chandelierTrailing.Initialize();
-   g_swingTrailing.Initialize();
-   g_sarTrailing.Initialize();
-   g_steppedTrailing.Initialize();
-   g_hybridTrailing.Initialize();
-   g_newsTightenTrailing.Initialize();
+   // Initialize all inventory members so the successful canonical registry
+   // order remains unchanged. Only READY implementations enter dispatch.
+   const bool atr_trail_ready =
+      PrepareTrailingPlugin(g_atrTrailing, "ATR");
+   const bool chandelier_trail_ready =
+      PrepareTrailingPlugin(g_chandelierTrailing, "CHANDELIER");
+   const bool swing_trail_ready =
+      PrepareTrailingPlugin(g_swingTrailing, "SWING");
+   const bool sar_trail_ready =
+      PrepareTrailingPlugin(g_sarTrailing, "PARABOLIC");
+   const bool stepped_trail_ready =
+      PrepareTrailingPlugin(g_steppedTrailing, "STEPPED");
+   const bool hybrid_trail_ready =
+      PrepareTrailingPlugin(g_hybridTrailing, "HYBRID");
+   const bool news_tighten_ready =
+      PrepareTrailingPlugin(g_newsTightenTrailing, "NEWS_TIGHTEN");
 
-   // Register based on selected strategy
-   ArrayResize(g_trailingPlugins, 7);
-   g_trailingPlugins[0] = g_atrTrailing;
-   g_trailingPlugins[1] = g_swingTrailing;
-   g_trailingPlugins[2] = g_sarTrailing;
-   g_trailingPlugins[3] = g_chandelierTrailing;
-   g_trailingPlugins[4] = g_steppedTrailing;
-   g_trailingPlugins[5] = g_hybridTrailing;
-   g_trailingPlugins[6] = g_newsTightenTrailing;
-   g_trailingPluginCount = 7;
-   Print("[Init] Trailing Plugins: 7 registered (ATR + Swing + SAR + Chandelier + Stepped + Hybrid + NewsTighten)");
+   // Preserve the historical successful-path order used by the coordinator
+   // while omitting every implementation that failed readiness.
+   ArrayResize(g_trailingPlugins, 0);
+   g_trailingPluginCount = 0;
+   if(atr_trail_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_atrTrailing;
+   }
+   if(swing_trail_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_swingTrailing;
+   }
+   if(sar_trail_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_sarTrailing;
+   }
+   if(chandelier_trail_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_chandelierTrailing;
+   }
+   if(stepped_trail_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_steppedTrailing;
+   }
+   if(hybrid_trail_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_hybridTrailing;
+   }
+   if(news_tighten_ready)
+   {
+      ArrayResize(g_trailingPlugins, g_trailingPluginCount + 1);
+      g_trailingPlugins[g_trailingPluginCount++] = g_newsTightenTrailing;
+   }
+
+   bool selected_trail_ready = false;
+   switch(InpTrailStrategy)
+   {
+      case TRAIL_NONE:        selected_trail_ready = true; break;
+      case TRAIL_ATR:         selected_trail_ready = atr_trail_ready; break;
+      case TRAIL_SWING:       selected_trail_ready = swing_trail_ready; break;
+      case TRAIL_PARABOLIC:   selected_trail_ready = sar_trail_ready; break;
+      case TRAIL_CHANDELIER:  selected_trail_ready = chandelier_trail_ready; break;
+      case TRAIL_STEPPED:     selected_trail_ready = stepped_trail_ready; break;
+      case TRAIL_HYBRID:      selected_trail_ready = hybrid_trail_ready; break;
+      case TRAIL_SMART:
+         Print("[Init] INVALID CONFIG: TRAIL_SMART is not implemented");
+         return(INIT_PARAMETERS_INCORRECT);
+      default:
+         Print("[Init] INVALID CONFIG: unknown trailing strategy value");
+         return(INIT_PARAMETERS_INCORRECT);
+   }
+   if(!selected_trail_ready)
+   {
+      Print("[Init] CRITICAL: selected trailing strategy is not ready: ",
+            EnumToString(InpTrailStrategy));
+      return(INIT_FAILED);
+   }
+
+   const bool ceg_chandelier_required =
+      InpEnableCEG && InpCEGTrailFloor > 0.0;
+   if(ceg_chandelier_required &&
+      InpTrailStrategy != TRAIL_CHANDELIER)
+   {
+      Print("[Init] INVALID CONFIG: CEG trail floor requires TRAIL_CHANDELIER");
+      return(INIT_PARAMETERS_INCORRECT);
+   }
+   if(ceg_chandelier_required && !chandelier_trail_ready)
+   {
+      Print("[Init] CRITICAL: CEG trail floor requires a ready Chandelier component");
+      return(INIT_FAILED);
+   }
+
+   const bool news_tighten_required =
+      InpNewsFilterEnable && InpNewsTightenEnable && !InpNewsFlattenEnable;
+   if(news_tighten_required && !news_tighten_ready)
+   {
+      Print("[Init] CRITICAL: configured NewsTighten trailing is not ready");
+      return(INIT_FAILED);
+   }
+
+   Print("[Init] Trailing Plugins: ", g_trailingPluginCount,
+         " READY implementations registered");
 
    // Sprint 1B: Wire InpTrailStrategy — disable all except selected plugin.
    // Previously all 6 ran simultaneously and ATR (tightest) always won,
