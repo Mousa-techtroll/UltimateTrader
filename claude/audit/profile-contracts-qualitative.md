@@ -1,99 +1,113 @@
-# Qualitative Profile Contracts (FREEZE-BEFORE-TUNING)
+# Qualitative Profile Contracts v2 (trader-review revised — FREEZE-BEFORE-TUNING)
 
-**Rule:** the 5 families are reusable ALGORITHMS; each signal profile defines its OWN six behaviors. This document is QUALITATIVE only — NO numbers. It must be **trader-reviewed and frozen** before any numerical tuning begins. Numbers come later, calibrated one profile at a time from shadow telemetry.
+**Rule:** the 5 families are reusable ALGORITHMS; each signal profile defines its OWN six behaviors, and the profiles must be GENUINELY DIFFERENT, not renamed. QUALITATIVE only — no numbers until frozen. Numbers calibrated later, one profile at a time, from shadow telemetry.
 
-**The six behaviors per profile:**
-1. **Thesis invalidation** — what event means "this trade's reason is dead, close it."
-2. **Normal pullback allowance** — how much adverse wander is *expected/tolerated* before worry.
-3. **No-progress horizon** — how long the trade may go nowhere before time-decay cuts it.
-4. **Partial-profit behavior** — when/how to bank (scale-out cadence, target logic).
-5. **Trailing behavior** — how the runner's stop follows (wide vs tight, structure vs ATR).
-6. **Momentum-deterioration response** — what to do as the driving momentum fades.
+**v2 = trading review R1–R7 applied:** trend family spread across multiple axes (not just invalidation); killed patterns removed (no mechanical BE-fast, no give-back cut); §D consolidated; all no-progress cuts constrained to the SAFE tail; missing profiles contracted.
 
----
+## UNIVERSAL SAFE-CUT RULE (do-not-relitigate — binds every profile)
+Every no-progress / momentum "cut" must be conditioned on **never-reached-meaningful-MFE** (the ~52% weak-entry tail whose trades never worked — the crash bundle's `mfe < 0.5R` gate is the template). It must **NOT** fire as a give-back-from-a-≈1R-peak cut — that cohort (~89 trades) is measured-inseparable from 229 winners at the 1R zone and every cut there was killed. "Loosening paid, cutting didn't" (OPT-1 +51%, §D +9.9%). Late-fade of a working trade → TIGHTEN, never CUT.
 
-## TREND family profiles (base algorithm: TREND_CONTINUATION)
-
-### TREND_PINBAR_PB — in-trend PinBar pullback rejection
-1. **Invalidation:** the trend structure breaks against the position (directional CHoCH), OR the PinBar's rejection extreme is violated (the pullback low/high the bar rejected from is broken → the rejection failed).
-2. **Pullback allowance:** GENEROUS. This IS a pullback trade — deep retracement is normal as long as the higher-timeframe trend structure holds. Do not react to routine give-back.
-3. **No-progress horizon:** MEDIUM. A pullback-continuation should resume within a modest window; prolonged non-resumption means the "pullback" was actually a reversal.
-4. **Partial-profit:** standard trend ladder — let the resumed leg run; bank in stages toward the prior swing extreme.
-5. **Trailing:** WIDE (trend runner) — loosen while trend-health is high; only tighten once the resumed move clearly stalls.
-6. **Momentum-deterioration:** if the pullback deepens WITHOUT resumption (health decays, no new extreme), cut; if it resumes then fades late, tighten rather than cut.
-
-### TREND_ENGULF — bull engulfing continuation
-1. **Invalidation:** the engulfing candle's origin (its low for a long) is violated, OR trend flips against.
-2. **Pullback allowance:** MODERATE. Engulfing implies committed momentum — a shallow retest is fine, but a close beyond the engulf origin invalidates (tighter than PINBAR_PB).
-3. **No-progress horizon:** MEDIUM. Engulfing continuations should extend fairly promptly.
-4. **Partial-profit:** standard trend ladder.
-5. **Trailing:** WIDE while momentum persists; the engulf implies a directional impulse worth riding.
-6. **Momentum-deterioration:** tighten as the post-engulf impulse decays; cut on structure break.
-
-### TREND_PBC — PullbackContinuation engine
-1. **Invalidation:** the engine's pullback structure is broken (the swing that defined the pullback fails), OR trend flip.
-2. **Pullback allowance:** GENEROUS (like PINBAR_PB) — it is explicitly a pullback setup.
-3. **No-progress horizon:** MEDIUM.
-4. **Partial-profit:** standard trend ladder.
-5. **Trailing:** WIDE (trend runner).
-6. **Momentum-deterioration:** cut only when the pullback fails to resume; otherwise tighten.
-
-### TREND_MACROSS — MA-cross trend
-1. **Invalidation:** the MA relationship re-crosses against the position (the momentum signal reversed), OR trend flip.
-2. **Pullback allowance:** MODERATE. MA-cross is a momentum signal; a re-cross is the natural invalidation, so allow normal wander but treat a re-cross as decisive.
-3. **No-progress horizon:** MEDIUM-LONG. Trend-following signals need room to develop.
-4. **Partial-profit:** standard trend ladder.
-5. **Trailing:** WIDE (trend runner).
-6. **Momentum-deterioration:** tighten as the trend-strength (ADX-like) fades; the MA re-cross is the hard cut.
+**The six behaviors:** (1) thesis invalidation, (2) normal pullback allowance, (3) no-progress horizon, (4) partial-profit, (5) trailing, (6) momentum-deterioration response.
 
 ---
 
-## BREAKOUT family profiles (base: BREAKOUT)
+## TREND family (base: TREND_CONTINUATION) — deliberately a GRADIENT, not four clones
 
-### BO_EXPANSION — institutional-candle / compression breakout
-1. **Invalidation:** a close back INSIDE the broken level (the breakout failed), OR impulse collapse right after entry.
-2. **Pullback allowance:** TIGHT. Breakouts should hold beyond the level; a brief retest is tolerable but re-entry INTO the range invalidates.
-3. **No-progress horizon:** SHORT. Breakouts either follow through quickly or revert — a non-expanding breakout within a few bars is likely false.
-4. **Partial-profit:** FASTER first partial than a trend runner (breakouts mean-revert), then let a small runner extend.
-5. **Trailing:** tighten as the expansion decelerates; do not give a breakout runner trend-width slack.
-6. **Momentum-deterioration:** tighten hard on deceleration; the edge is the initial expansion, not a long trend.
+### TREND_MACROSS — trend-rider (the widest/longest end)
+1. **Invalidation:** a **CLOSED-BAR re-cross of the ENTRY MA pair** against the position (mechanical, closed-bar only — never an intrabar/fast-MA wiggle, to avoid clipping a deep-pullback winner). [R5]
+2. **Pullback allowance:** MODERATE; a re-cross is the decisive event, so tolerate normal wander below it.
+3. **No-progress horizon:** LONGEST of the family — trend-following needs room.
+4. **Partial-profit:** standard ladder, latest scale-out (ride the trend).
+5. **Trailing:** WIDEST trail of all profiles (ATR/chandelier), latest tighten.
+6. **Momentum-deterioration:** the closed-bar re-cross is the only cut; otherwise TIGHTEN as trend-strength fades (never cut a working trade). [R4]
+
+### TREND_ENGULF — single-impulse continuation (shorter/tighter than MACROSS) [R2]
+1. **Invalidation:** the engulfing candle's ORIGIN (its low for a long) is violated on a closed bar.
+2. **Pullback allowance:** MODERATE — a shallow retest is fine; a close beyond the engulf origin invalidates.
+3. **No-progress horizon:** SHORT-MEDIUM — an engulf is a single impulse, so follow-through is expected promptly (shorter than MACROSS).
+4. **Partial-profit:** standard ladder but bank the FIRST partial slightly sooner (impulse, not a sustained trend).
+5. **Trailing:** WIDE while the post-engulf impulse persists, but **tighten sooner** once the impulse decays (narrower than MACROSS).
+6. **Momentum-deterioration:** tighten as the impulse fades; cut only on the origin break OR the SAFE tail (never-reached-MFE). [R4]
+
+### TREND_PINBAR_PB — in-trend PinBar pullback rejection [R1]
+1. **Invalidation:** the PinBar's **rejection-WICK extreme** (the price the bar rejected from) is violated on a closed bar — a precise, distinct anchor from PBC's swing.
+2. **Pullback allowance:** GENEROUS — this IS a pullback trade; do not react to routine give-back.
+3. **No-progress horizon:** MEDIUM — resumes off a SINGLE rejection bar, so a shorter window than PBC.
+4. **Partial-profit:** standard ladder.
+5. **Trailing:** WIDE (loosen while trend-health high).
+6. **Momentum-deterioration:** cut ONLY if the trade never reached meaningful MFE and health collapses (SAFE tail); a deep-but-once-worked pullback → tighten, not cut. [R4]
+
+### TREND_PBC — PullbackContinuation engine (distinct from PINBAR_PB) [R1]
+1. **Invalidation:** the ENGINE's defined **pullback swing-low** is violated (different price + confirmation than the PinBar wick).
+2. **Pullback allowance:** GENEROUS, but BASES over MULTIPLE bars (a slower structure than a single rejection bar).
+3. **No-progress horizon:** LONGER than PINBAR_PB (multi-bar basing needs more time).
+4. **Partial-profit:** bank the FIRST partial EARLIER than the other trend profiles — PBC is the blocked-SETUP_A, weaker-tier engine, so de-risk sooner.
+5. **Trailing:** STRUCTURE-based (swing) rather than pure chandelier — it tracks the engine's pullback structure.
+6. **Momentum-deterioration:** SAFE-tail cut only; else tighten. [R4]
 
 ---
 
-## REVERSAL family profiles (base: REVERSAL) — low-probability, exit-attribution-closed direction → conservative
+## BREAKOUT family (base: BREAKOUT)
 
-### REV_PINBAR_EXH — PinBar counter-exhaustion
-1. **Invalidation:** the rejected extreme is violated (exhaustion continued), OR no reversal follow-through (the rejection fades without a CHoCH).
-2. **Pullback allowance:** TIGHT. A counter-trend rejection must work quickly; there is little tolerance for adverse wander.
-3. **No-progress horizon:** SHORT. The reversal must confirm (CHoCH) fast; else it is a failed counter.
-4. **Partial-profit:** scale at the first structure target; move to break-even fast (lower probability).
-5. **Trailing:** STRUCTURE-based (swings), tighter than a trend trail.
-6. **Momentum-deterioration:** cut promptly if the reversal stalls — do not hope.
+### BO_EXPANSION — institutional-candle / compression breakout (SOUND, unchanged)
+1. **Invalidation:** a closed-bar CLOSE back INSIDE the broken level, OR impulse collapse right after entry.
+2. **Pullback allowance:** TIGHT — a brief retest is tolerable; re-entry INTO the range invalidates.
+3. **No-progress horizon:** SHORT — non-expanding breakout within a few bars ⇒ likely false.
+4. **Partial-profit:** FASTER first partial than trend, then a small runner.
+5. **Trailing:** tighten on deceleration; no trend-width slack.
+6. **Momentum-deterioration:** tighten hard on deceleration (the edge is the initial expansion).
 
-### REV_FAILEDBREAK — failed-break reclaim
-1. **Invalidation:** the reclaimed level is lost again (the reclaim failed).
-2. **Pullback allowance:** TIGHT. The reclaim must hold; a re-loss of the level is decisive.
-3. **No-progress horizon:** SHORT-MEDIUM. Slightly more room than REV_PINBAR_EXH (a reclaim can base before moving).
+### BO_VOL — volatility-breakout [R7]
+Inherits BO_EXPANSION's shape (close-back-inside invalidation, short horizon, fast first partial, tighten-on-decel) — the only distinction: no institutional-candle origin, so invalidation keys on the volatility-breakout trigger bar's range rather than a compression box. Otherwise identical to BO_EXPANSION.
+
+### BO_SESSION — session-window breakout [R7]
+1. **Invalidation:** price returns INTO the pre-session range (the session breakout failed), OR the session window closes without follow-through.
+2. **Pullback allowance:** TIGHT (breakout) + session-scoped.
+3. **No-progress horizon:** the SESSION — a session breakout that hasn't extended by the window's end is cut (distinct time basis vs bar-count).
+4. **Partial-profit:** fast first partial.
+5. **Trailing:** tighten on decel; tighten harder near session close.
+6. **Momentum-deterioration:** session-close is the hard horizon; else tighten on decel.
+
+---
+
+## REVERSAL family (base: REVERSAL) — low-probability, exit-attribution-closed → conservative
+
+### REV_PINBAR_EXH — PinBar counter-exhaustion [R3]
+1. **Invalidation:** the rejected extreme is violated (exhaustion continued), OR the rejection fades to nothing without a CHoCH.
+2. **Pullback allowance:** TIGHT.
+3. **No-progress horizon:** SHORT — must confirm (CHoCH) fast.
+4. **Partial-profit:** scale at the first structure target.
+5. **Trailing:** **STRUCTURE-conditioned tighten** — tighten to the swing/CHoCH level once the first reversal target confirms. **NO mechanical break-even move** (the killed BE-fast pattern is removed). [R3]
+6. **Momentum-deterioration:** cut only on invalidation OR the SAFE never-reached-MFE tail — must be proven on shadow to target the no-follow-through cohort, not the reversals that run. [R4]
+
+### REV_FAILEDBREAK — failed-break reclaim (SOUND, unchanged)
+1. **Invalidation:** the reclaimed level is lost again on a closed bar.
+2. **Pullback allowance:** TIGHT — the reclaim must hold.
+3. **No-progress horizon:** SHORT-MEDIUM (a reclaim can base before moving).
 4. **Partial-profit:** scale at structure.
-5. **Trailing:** structure-based.
-6. **Momentum-deterioration:** cut on a re-loss of the reclaimed level; tighten as the counter-move fades.
+5. **Trailing:** conservative structure trail.
+6. **Momentum-deterioration:** cut on a re-loss of the reclaimed level; SAFE-tail otherwise.
 
 ---
 
-## CRASH family profiles (base: CRASH)
+## CRASH family (base: CRASH)
 
-### CRASH_RBFADE — crash rubber-band fade (CrashBreakout's real thesis)
-1. **Invalidation:** the bear regime flips (bear-state score collapses), OR the up-stretch being faded simply continues (the fade failed — but see §D handling below).
-2. **Pullback allowance:** the position is a SHORT fade of an up-stretch, so early adverse (continued up) wander is INHERENT. **Preserve the adopted §D suppressor:** do NOT tighten the stop while the fade is still developing and bear-score stays elevated (the at-market-clamp pathology §D cured).
-3. **No-progress horizon:** MEDIUM. The rubber-band snap should revert within a window; if it stalls with no new low, cut.
-4. **Partial-profit:** bank a partial INTO the reversion climax (the mean/target), rather than trailing a long runner.
-5. **Trailing:** PRESERVE §D — suppress premature tightening while bear-score is high; resume normal trailing once the thesis bar (close below EMA21) prints.
-6. **Momentum-deterioration:** as bear-score fades / the down-momentum stalls, tighten or exit — the fade's edge is the bear-regime rubber-band, not a sustained trend.
+### CRASH_RBFADE — crash rubber-band fade [R6]
+1. **Invalidation:** the bear regime flips (bear-state score collapses) — a distinct regime event, not a price stop.
+2. **Pullback allowance:** the SHORT fades an up-stretch, so early adverse (continued up) wander is INHERENT and tolerated. (No §D wording here — §D is a trailing suppressor, stated once under #5.) [R6]
+3. **No-progress horizon:** MEDIUM — the snap should revert; a stall with `mfe < ~0.5R` (SAFE tail) is cut.
+4. **Partial-profit:** bank a partial INTO the reversion climax (target trade, not a runner).
+5. **Trailing:** **DEFERS to the coordinator-owned §D suppressor** — RBFADE adds NO second suppressor. §D withholds the trail ratchet until a CLOSED H1 bar closes below EMA21(H1) (the LIVE release key). Bear-state score is a SHADOW PROXY only, never the live release. [R6]
+6. **Momentum-deterioration:** as the down-momentum stalls (SAFE tail) or bear-score fades, tighten/exit.
+
+### CRASH_CONTINUATION / CRASH_RECOVERY [R7]
+Contracts DEFERRED — no live setup currently emits these subtypes (CrashBreakout resolves to RBFADE). They inherit the CRASH family base unchanged until a live emitter exists; their contracts will be written when a genuine crash-continuation or recovery signal is added. Explicitly NOT frozen.
+
+## MR_RANGE — mean-reversion (base: MEAN_REVERSION) [R7]
+Inherits the MEANREV_v1 bundle behavior as-is (range-break/premise-death invalidation, dwell time-decay with SAFE-tail gate, bank at the mean/opposite edge, minimal Contract-B tighten-future). Shadow-only, un-validatable on the current bull feeds (~0 live fills). Contract = the family base; no per-profile override until it becomes live-material.
 
 ---
 
-## Freeze checklist
-- [ ] Trader review of every profile's six behaviors (differentiation is real, not cosmetic).
-- [ ] Cross-check each invalidation against the do-not-relitigate exit-attribution finding (losses are weak ENTRIES; invalidation must target the give-back cohort, not clip winners).
-- [ ] Confirm CRASH_RBFADE §D preservation is explicit and non-double-applied.
-- [ ] FREEZE — then, and only then, begin per-profile numerical calibration from shadow telemetry, one profile at a time.
+## Freeze status
+- v2 applies R1 (PINBAR_PB≠PBC), R2 (trend gradient on invalidation+horizon+trail+partial), R3 (REV no BE-fast), R4 (universal SAFE-tail cut rule), R5 (MACROSS closed-bar entry-MA re-cross), R6 (§D once, live release = close<EMA21, bear = shadow proxy), R7 (BO_VOL/BO_SESSION/MR_RANGE contracted; CRASH_CONT/RECOVERY deferred with rationale).
+- **READY FOR FREEZE pending a confirming trader pass.** Then, and only then, begin per-profile numerical calibration from shadow telemetry, one profile at a time.
