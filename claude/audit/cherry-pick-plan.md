@@ -117,3 +117,13 @@ reproducing the exact `a289b95a` that the cherry-pick build produced.
 primary `$33,318.24 / 801 / Events a289b95a`; GoldHistory `$24,086.34 / 748 / Stats 2713e298`. When checking a
 future change for byte-identity on primary, compare Events md5 to `a289b95a` (or re-run the pure baseline as the
 control in the same session — real-tick data can drift again). GoldHistory remains the stable cross-check.
+
+## TIER 2 — IN PROGRESS (branch `fix/cherry-pick-tier1`, all `!MQL_TESTER`-gated, byte-identical)
+| commit | item | mechanism (durable machinery stripped) |
+|---|---|---|
+| 5826529 | **L7-2** | HandleClosedPosition captures GetLatestExitDeal() return; on unsettled deal, retain record + retry (defer RemovePosition), quarantine after 50; new SPosition.exit_deal_retries. No journal/CSV-evidence gating. |
+| 5799acf | **L5-3** | CRiskMonitor persists {day, trades, equity-baseline, loss-halt} to terminal GlobalVariables on change; restores on Init if same server-day. No FILE_COMMON lock. |
+
+Both verified BYTE-IDENTICAL both feeds (primary a289b95a/$33,318.24/801, GH 2713e298/$24,086.34/748).
+Remaining Tier-2: L6-1, L6-4, L7-1, L7-3 (atomic save), L7-6, L7-4, and the two must-verify-first items
+L6-5 (tester account mode) + L6-3 (tester SL/TP tick-alignment).
