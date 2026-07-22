@@ -2080,6 +2080,11 @@ int OnInit()
    for(int e = 0; e < g_exitPluginCount; e++)
       g_posCoordinator.RegisterExitPlugin(g_exitPlugins[e]);
 
+   // EXIT-MOMENTUM PLATFORM (spec v2): inject the policy engine + snapshotter into the
+   // coordinator's strategy-exit seam. Both NULL when the masters are off => seam skipped.
+   g_posCoordinator.SetExitEngine(g_exitEngine);
+   g_posCoordinator.SetSnapshotter(g_momSnapshotter);
+
    // CRiskMonitor: new constructor (max_trades, daily_loss, alerts, push, email, max_consec_errors)
    g_riskMonitor = new CRiskMonitor(
       InpMaxTradesPerDay, InpDailyLossLimit,

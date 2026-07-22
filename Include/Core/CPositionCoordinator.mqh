@@ -36,6 +36,11 @@
 // PBC multi-cycle callbacks
 #include "../EntryPlugins/CPullbackContinuationEngine.mqh"
 #include "../TrailingPlugins/CChandelierTrailing.mqh"
+// EXIT-MOMENTUM PLATFORM (spec v2): the coordinator holds the exit-policy engine + momentum
+// snapshotter (pointers, injected via setters) and consumes their proposals at the seam.
+// Guard-protected + already included by the .mq5 before this file (CMarketContext-order safe).
+#include "../ExitPolicies/CExitPolicyEngine.mqh"
+#include "../MarketAnalysis/CMomentumSnapshotter.mqh"
 
 //+------------------------------------------------------------------+
 //| Constants for state persistence                                   |
@@ -73,6 +78,9 @@ private:
    IMarketContext*         m_context;
    CEnhancedTradeExecutor* m_executor;
    CTradeLogger*          m_trade_logger;
+   // EXIT-MOMENTUM PLATFORM (spec v2) — injected pointers (NULL unless a master gate is on).
+   CExitPolicyEngine*     m_exitEngine;
+   CMomentumSnapshotter*  m_snapshotter;
 
    // Plugin arrays for trailing and exit strategies
    CTrailingStrategy*     m_trailing_plugins[];
@@ -1313,6 +1321,8 @@ public:
       m_quality_risk_strategy = NULL;
       m_regime_scaler = NULL;
       m_pbc_engine = NULL;
+      m_exitEngine = NULL;
+      m_snapshotter = NULL;
       m_smoothed_chand_mult = 0;
       m_regime_hold_bars = 0;
       m_last_regime_class = -1;
@@ -1358,6 +1368,30 @@ public:
    //+------------------------------------------------------------------+
    void SetRegimeScaler(CRegimeRiskScaler *scaler) { m_regime_scaler = scaler; }
    void SetPBCEngine(CPullbackContinuationEngine *pbc) { m_pbc_engine = pbc; }
+   // EXIT-MOMENTUM PLATFORM (spec v2): inject the exit-policy engine + momentum snapshotter.
+   void SetExitEngine(CExitPolicyEngine *eng) { m_exitEngine = eng; }
+   void SetSnapshotter(CMomentumSnapshotter *snap) { m_snapshotter = snap; }
+   // Assemble the read-only market view a policy sees (policies never fetch market data).
+   void BuildExitMarketView(const SPosition &pos, ExitMarketView &v) const
+   {
+      v.Init();
+      v.bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+      v.ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      v.atr_current = (m_context != NULL) ? m_context.GetATRCurrent() : 0.0;
+      v.atr_h1 = v.atr_current;
+      v.regime = (m_context != NULL) ? (int)m_context.GetCurrentRegime() : 0;
+      v.bars_since_entry = pos.bars_since_entry;
+      v.now = TimeCurrent();
+      double risk_dist = MathAbs(pos.entry_price - pos.original_sl);
+      if(risk_dist > 0.0)
+      {
+         double px = (pos.direction == SIGNAL_LONG) ? v.bid : v.ask;
+         v.current_r = (pos.direction == SIGNAL_LONG) ? (px - pos.entry_price) / risk_dist
+                                                       : (pos.entry_price - px) / risk_dist;
+         v.mfe_r = pos.mfe / risk_dist;   // provisional units — re-calibrated from Wave-5 telemetry
+         v.mae_r = pos.mae / risk_dist;
+      }
+   }
 
    //+------------------------------------------------------------------+
    //| CANDIDATE (QA#1): advance the regime/chandelier hysteresis ONCE  |
@@ -3650,6 +3684,28 @@ public:
          }
 
          MaybePromoteRunnerExitMode(m_positions[i]);
+
+         // EXIT-MOMENTUM PLATFORM (spec v2): strategy-exit immediate seam. Gated on the master
+         // flags; scoped to baseline non-sleeve/non-file positions. Evaluate the position's
+         // bundle and stash the trail modulation for Contract-B consumption inside
+         // ApplyTrailingPlugins (t==-2). Shadow logging = Wave 1c; the immediate CLOSE/TIGHTEN
+         // ACT path is added when an immediate sub-policy is first activated (all immediate
+         // sub-policies are shadow-designated per the owner directive; the near-term active
+         // path is the trend Contract-B trail). NULL engine/snapshotter => skipped entirely
+         // => byte-identical to the baseline.
+         if((InpExitPolicyShadow || InpExitPolicyActive) &&
+            m_exitEngine != NULL && m_snapshotter != NULL &&
+            !m_positions[i].is_sleeve && m_positions[i].signal_source != SIGNAL_SOURCE_FILE)
+         {
+            MomentumSnapshot mom_now;   m_snapshotter.GetSnapshot(mom_now);
+            IntentScores     intent_now; m_snapshotter.GetIntentScores(m_positions[i], intent_now);
+            ExitMarketView   emv;        BuildExitMarketView(m_positions[i], emv);
+            ExitProposal ep_imm, ep_trail;
+            m_exitEngine.Evaluate(m_positions[i], mom_now, m_positions[i].mom_at_entry,
+                                  intent_now, emv, ep_imm, ep_trail);
+            m_positions[i].policy_trail_mod = ep_trail;  // consumed at t==-2 in ApplyTrailingPlugins
+            // (Wave 1c) LogExitPolicyShadow(m_positions[i], ep_imm, ep_trail, mom_now, intent_now);
+         }
 
          // Apply trailing stop plugins
          ApplyTrailingPlugins(m_positions[i]);
