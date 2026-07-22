@@ -53,6 +53,7 @@
 #include "Include/ExitPolicies/CCrashExitPolicy.mqh"
 #include "Include/ExitPolicies/CMeanRevExitPolicy.mqh"
 #include "Include/ExitPolicies/CAccountSafety.mqh"
+#include "Include/ExitPolicies/CExitTelemetry.mqh"
 #include "Include/MarketAnalysis/CNewsGate.mqh"   // News filter engine (hybrid live-calendar / tester-CSV)
 
 // Plugin System
@@ -156,6 +157,7 @@ CReversalExitPolicy    *g_revExit            = NULL;
 CCrashExitPolicy       *g_crashExit          = NULL;
 CMeanRevExitPolicy     *g_meanRevExit        = NULL;
 CAccountSafety         *g_accountSafety      = NULL;
+CExitTelemetry         *g_exitTelemetry      = NULL;
 datetime                g_lastMomH1Bar       = 0;
 CMarketStateManager    *g_stateManager      = NULL;
 
@@ -1360,6 +1362,10 @@ int OnInit()
       if(g_accountSafety != NULL)
          g_accountSafety.Init(InpDailyLossMode, InpDailyLossLimit);
 
+      g_exitTelemetry = new CExitTelemetry();
+      if(g_exitTelemetry != NULL)
+         g_exitTelemetry.Init(InpExitPolicyShadow, _Symbol);   // lazy sinks; inert unless shadow on
+
       Print("[Init] Exit-Momentum platform constructed (shadow=", InpExitPolicyShadow,
             " active=", InpExitPolicyActive, " policies=",
             (g_exitEngine != NULL ? g_exitEngine.PolicyCount() : 0), ")");
@@ -2084,6 +2090,8 @@ int OnInit()
    // coordinator's strategy-exit seam. Both NULL when the masters are off => seam skipped.
    g_posCoordinator.SetExitEngine(g_exitEngine);
    g_posCoordinator.SetSnapshotter(g_momSnapshotter);
+   g_posCoordinator.SetExitTelemetry(g_exitTelemetry);
+   g_posCoordinator.SetAccountSafety(g_accountSafety);
 
    // CRiskMonitor: new constructor (max_trades, daily_loss, alerts, push, email, max_consec_errors)
    g_riskMonitor = new CRiskMonitor(
@@ -2493,6 +2501,7 @@ void OnDeinit(const int reason)
    if(g_crashExit != NULL)      { delete g_crashExit;      g_crashExit      = NULL; }
    if(g_meanRevExit != NULL)    { delete g_meanRevExit;    g_meanRevExit    = NULL; }
    if(g_accountSafety != NULL)  { delete g_accountSafety;  g_accountSafety  = NULL; }
+   if(g_exitTelemetry != NULL)  { g_exitTelemetry.Close(); delete g_exitTelemetry; g_exitTelemetry = NULL; }
 
    EventKillTimer();
    Comment("");
@@ -2773,6 +2782,13 @@ void OnTick()
          {
             g_lastMomH1Bar = cur_h1_mom;
             g_momSnapshotter.Update(iTime(_Symbol, PERIOD_H1, 1)); // reflect the just-closed bar
+            if(g_exitTelemetry != NULL && g_exitTelemetry.IsEnabled())
+            {
+               MomentumSnapshot snap_row; g_momSnapshotter.GetSnapshot(snap_row);
+               SPosition dummy_long; dummy_long.Init(); dummy_long.direction = SIGNAL_LONG;
+               IntentScores is_row; g_momSnapshotter.GetIntentScores(dummy_long, is_row);
+               g_exitTelemetry.LogSnapshot(snap_row, is_row);
+            }
          }
       }
 

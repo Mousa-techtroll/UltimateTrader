@@ -41,6 +41,8 @@
 // Guard-protected + already included by the .mq5 before this file (CMarketContext-order safe).
 #include "../ExitPolicies/CExitPolicyEngine.mqh"
 #include "../MarketAnalysis/CMomentumSnapshotter.mqh"
+#include "../ExitPolicies/CExitTelemetry.mqh"
+#include "../ExitPolicies/CAccountSafety.mqh"
 
 //+------------------------------------------------------------------+
 //| Constants for state persistence                                   |
@@ -81,6 +83,8 @@ private:
    // EXIT-MOMENTUM PLATFORM (spec v2) — injected pointers (NULL unless a master gate is on).
    CExitPolicyEngine*     m_exitEngine;
    CMomentumSnapshotter*  m_snapshotter;
+   CExitTelemetry*        m_telemetry;
+   CAccountSafety*        m_accountSafety;
 
    // Plugin arrays for trailing and exit strategies
    CTrailingStrategy*     m_trailing_plugins[];
@@ -1323,6 +1327,8 @@ public:
       m_pbc_engine = NULL;
       m_exitEngine = NULL;
       m_snapshotter = NULL;
+      m_telemetry = NULL;
+      m_accountSafety = NULL;
       m_smoothed_chand_mult = 0;
       m_regime_hold_bars = 0;
       m_last_regime_class = -1;
@@ -1371,6 +1377,37 @@ public:
    // EXIT-MOMENTUM PLATFORM (spec v2): inject the exit-policy engine + momentum snapshotter.
    void SetExitEngine(CExitPolicyEngine *eng) { m_exitEngine = eng; }
    void SetSnapshotter(CMomentumSnapshotter *snap) { m_snapshotter = snap; }
+   void SetExitTelemetry(CExitTelemetry *tel) { m_telemetry = tel; }
+   void SetAccountSafety(CAccountSafety *as) { m_accountSafety = as; }
+   // REDUCE_AND_PROTECT executor: close reduce_fraction of each open position + move its SL to
+   // break-even-or-better. Activation-phase only (InpExitPolicyActive + DLM_REDUCE_AND_PROTECT);
+   // never reached at the byte-identity gate. Uses the ladder's local-CTrade pattern. NOTE:
+   // partial-accounting reconciliation (RegisterPartialClose) is deferred to REDUCE_AND_PROTECT
+   // activation-hardening (demo/micro-live gated per the directive).
+   void ReduceAndProtectAll(double reduce_fraction)
+   {
+      CTrade rp_trade;
+      rp_trade.SetExpertMagicNumber(m_magic_number);
+      rp_trade.SetDeviationInPoints(InpSlippage);
+      double vstep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
+      double vmin  = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+      for(int i = m_position_count - 1; i >= 0; i--)
+      {
+         if(!PositionSelectByTicket(m_positions[i].ticket)) continue;
+         if(reduce_fraction > 0.0 && reduce_fraction < 1.0)
+         {
+            double cut = m_positions[i].remaining_lots * reduce_fraction;
+            if(vstep > 0.0) cut = MathFloor(cut / vstep) * vstep;
+            if(cut >= vmin && cut < m_positions[i].remaining_lots)
+               rp_trade.PositionClosePartial(m_positions[i].ticket, cut);
+         }
+         double be = m_positions[i].entry_price;
+         bool tighter = (m_positions[i].direction == SIGNAL_LONG)
+                        ? (be > m_positions[i].stop_loss) : (be < m_positions[i].stop_loss);
+         if(tighter && rp_trade.PositionModify(m_positions[i].ticket, be, PositionGetDouble(POSITION_TP)))
+            m_positions[i].stop_loss = be;
+      }
+   }
    // Assemble the read-only market view a policy sees (policies never fetch market data).
    void BuildExitMarketView(const SPosition &pos, ExitMarketView &v) const
    {
@@ -2634,6 +2671,25 @@ public:
          }
       }
 
+      // EXIT-MOMENTUM PLATFORM (spec v2): account-safety layer — broker-authoritative daily-loss
+      // response, once before the per-position loop. Gated on InpExitPolicyActive; BLOCK_ONLY
+      // (canonical default) => SAFETY_NONE => no position action => byte-identical. NULL when off.
+      if(InpExitPolicyActive && m_accountSafety != NULL)
+      {
+         SafetyDecision sd = m_accountSafety.Evaluate();
+         if(sd.action == SAFETY_FLATTEN_ALL)
+         {
+            LogPrint("ACCOUNT-SAFETY FLATTEN_ALL: ", sd.reason);
+            CloseAllPositions("AcctSafety flatten: " + sd.reason);
+            return;
+         }
+         else if(sd.action == SAFETY_REDUCE_PROTECT)
+         {
+            LogPrint("ACCOUNT-SAFETY REDUCE_AND_PROTECT: ", sd.reason);
+            ReduceAndProtectAll(sd.reduce_fraction);   // reduce+protect; runners keep managing (no return)
+         }
+      }
+
       // Update MAE/MFE every tick
       UpdateMAEMFE();
 
@@ -3704,7 +3760,8 @@ public:
             m_exitEngine.Evaluate(m_positions[i], mom_now, m_positions[i].mom_at_entry,
                                   intent_now, emv, ep_imm, ep_trail);
             m_positions[i].policy_trail_mod = ep_trail;  // consumed at t==-2 in ApplyTrailingPlugins
-            // (Wave 1c) LogExitPolicyShadow(m_positions[i], ep_imm, ep_trail, mom_now, intent_now);
+            if(m_telemetry != NULL)
+               m_telemetry.LogProposal(m_positions[i], ep_imm, ep_trail, emv);
          }
 
          // Apply trailing stop plugins
