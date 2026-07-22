@@ -46,6 +46,9 @@ private:
                  default: return "NOOP"; }
    }
    string TS(datetime t) const { return TimeToString(t, TIME_DATE|TIME_SECONDS); }
+   // Sanitize a free-text field: reason strings carry "k=v,k=v" -> commas would shift CSV
+   // columns. Replace with ';' so every row keeps its fixed column count (clean parse).
+   string San(string s) const { StringReplace(s, ",", ";"); return s; }
 
 public:
               CExitTelemetry() { m_enabled=false; m_h_snap=INVALID_HANDLE; m_h_prop=INVALID_HANDLE; m_h_cf=INVALID_HANDLE; m_suffix=""; }
@@ -106,9 +109,9 @@ public:
          imm.policy_id, (pos.direction==SIGNAL_LONG?"LONG":"SHORT"), (string)mkt.bars_since_entry,
          DoubleToString(mkt.current_r,4), DoubleToString(mkt.mfe_r,4), DoubleToString(mkt.mae_r,4),
          ActStr(imm.action), DoubleToString(imm.tighten_sl,5), DoubleToString(imm.percentage,2),
-         imm.reason, DoubleToString(imm.confidence,3),
+         San(imm.reason), DoubleToString(imm.confidence,3),
          ActStr(trail.action), DoubleToString(trail.factor,3), (string)trail.bars,
-         trail.reason, DoubleToString(trail.confidence,3));
+         San(trail.reason), DoubleToString(trail.confidence,3));
       FileFlush(m_h_prop);
    }
 
@@ -127,7 +130,7 @@ public:
       }
       FileWrite(m_h_cf, TS(TimeCurrent()), (string)pos.ticket, FamStr(fam), (string)intent, bundle_id,
          (pos.direction==SIGNAL_LONG?"LONG":"SHORT"), TS(pos.open_time),
-         DoubleToString(pos.entry_price,5), DoubleToString(actual_exit_r,4), actual_reason);
+         DoubleToString(pos.entry_price,5), DoubleToString(actual_exit_r,4), San(actual_reason));
       FileFlush(m_h_cf);
    }
 };
