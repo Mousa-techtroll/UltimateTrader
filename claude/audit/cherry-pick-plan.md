@@ -143,3 +143,19 @@ and must-verify-first L6-5 (tester account mode) + L6-3 (tester SL/TP tick-align
 | commit | item | mechanism |
 |---|---|---|
 | (above) | **L7-3** | SavePositionState: write v8 payload to UltimateTrader_State.tmp -> reopen+verify header/CRC -> FileMove atomic-rename over the live .bin. Content/LoadPositionState unchanged. Extra check beyond identity: post-run state.bin validated (ULTR/v8/CRC OK, no stray temp). |
+
+### Tier-2 batch 4 (2026-07-22) + environment facts
+Tester env (from baseline manifest): **account_margin_mode = RETAIL_HEDGING (2)**, SYMBOL_DIGITS=2,
+TICK_SIZE=0.01, STOPS_LEVEL=20, VOLUME_STEP=0.01, FILLING_MODE=2 (IOC).
+| commit | item | mechanism |
+|---|---|---|
+| (above) | **L6-5** | TryDealBind branch(1): DEAL_ENTRY_OUT/OUT_BY -> return reduce/close code (no phantom entry). Byte-identical: hedging tester never hits this branch for opposite orders. |
+
+**Remaining Tier-2 (deferred — each needs deliberate care, NOT a clean batch):**
+- **L6-3** geometry writeback: byte-identity SUSPECT — STOPS_LEVEL=20 means the broker could adjust a
+  submitted SL/TP vs the request, so the writeback may differ on the tester. Do behind a default-OFF flag.
+- **L7-6** external volume reconcile: comparing broker POSITION_VOLUME vs tracked remaining_lots can fire
+  on the EA's OWN partial closes (transient mismatch), so it is NOT purely byte-neutral in the tester.
+  Needs a guard that only reconciles genuinely-external deltas (or !MQL_TESTER).
+- **L7-4** persist clocks/policy: low value; requires a STATE_FILE_VERSION 8->9 bump + v8 load-path
+  migration. Best done together with any future L7-4-style field additions.
