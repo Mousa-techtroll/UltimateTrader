@@ -360,6 +360,7 @@ struct SPosition
    MomentumAtEntry        mom_at_entry;        // scalars persisted (v9); valid=false ⇒ legacy exit
    double                 policy_sl_proposal;  // EX_TIGHTEN_SL staging, consumed at t==-2; reset/tick
    ExitProposal           policy_trail_mod;    // Contract-B staging, consumed in ApplyTrailingPlugins; reset/tick
+   datetime               last_seam_bar;       // exit-policy seam ran for this H1 bar (per-bar gate)
 
    void Init()
    {
@@ -430,6 +431,7 @@ struct SPosition
       mom_at_entry.Init();
       policy_sl_proposal = 0.0;
       policy_trail_mod.Init();
+      last_seam_bar = 0;
    }
 };
 

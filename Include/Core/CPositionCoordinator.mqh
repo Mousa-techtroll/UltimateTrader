@@ -3891,8 +3891,10 @@ public:
          // => byte-identical to the baseline.
          if((InpExitPolicyShadow || InpExitPolicyActive) &&
             m_exitEngine != NULL && m_snapshotter != NULL &&
-            !m_positions[i].is_sleeve && m_positions[i].signal_source != SIGNAL_SOURCE_FILE)
+            !m_positions[i].is_sleeve && m_positions[i].signal_source != SIGNAL_SOURCE_FILE &&
+            iTime(_Symbol, PERIOD_H1, 0) != m_positions[i].last_seam_bar)  // per-bar (proposals are bar-derived)
          {
+            m_positions[i].last_seam_bar = iTime(_Symbol, PERIOD_H1, 0);
             MomentumSnapshot mom_now;   m_snapshotter.GetSnapshot(mom_now);
             IntentScores     intent_now; m_snapshotter.GetIntentScores(m_positions[i], intent_now);
             ExitMarketView   emv;        BuildExitMarketView(m_positions[i], emv);
@@ -3951,6 +3953,23 @@ private:
       }
       if(exit_price <= 0.0)
          exit_price = GetCurrentMarketPrice(m_positions[index]);
+
+      // EXIT-MOMENTUM PLATFORM (spec v2): counterfactual close log (shadow). Records the
+      // ACTUAL exit R for the attribution harness; the would-be exit under each candidate
+      // policy is reconstructed offline from the proposal tape. Gated: NULL telemetry / shadow
+      // off => no-op => byte-identical.
+      if(m_telemetry != NULL && m_telemetry.IsEnabled() && exit_price > 0.0)
+      {
+         double rd_cf = MathAbs(m_positions[index].entry_price - m_positions[index].original_sl);
+         double actual_r = 0.0;
+         if(rd_cf > 0.0)
+            actual_r = (m_positions[index].direction == SIGNAL_LONG)
+                       ? (exit_price - m_positions[index].entry_price) / rd_cf
+                       : (m_positions[index].entry_price - exit_price) / rd_cf;
+         m_telemetry.LogClose(m_positions[index], actual_r, m_positions[index].stage_label,
+                              m_positions[index].exit_family, m_positions[index].exit_intent,
+                              m_positions[index].exit_bundle_id);
+      }
 
       // Sprint 0E: Classify exit type — check if closed at TP1 level
       double tp1_tolerance = 0.50;  // $0.50 tolerance for gold
