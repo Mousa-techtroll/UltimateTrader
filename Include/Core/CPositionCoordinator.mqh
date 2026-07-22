@@ -1940,12 +1940,21 @@ public:
       header.checksum     = checksum;
       header.saved_at     = TimeCurrent();
 
-      // Open file for writing
-      int handle = FileOpen(STATE_FILE_NAME, FILE_WRITE | FILE_BIN | FILE_COMMON);
+      // L7-3 (cherry-pick): ATOMIC save. FileOpen(STATE_FILE_NAME, FILE_WRITE) TRUNCATES the
+      // live file on open, so a crash / power loss between the open and the close previously
+      // left the ONE state file truncated and unrecoverable (its CRC then fails on restart).
+      // Now the payload is written to a TEMP generation, verified to read back with a valid
+      // header+CRC, and only then does an atomic rename REPLACE the live file — the live file
+      // is never truncated in place and is only ever replaced by a fully-written, verified
+      // generation. Byte-identical to the backtest: the state file is written but never read
+      // back within a single deterministic tester pass (the harness quarantines it per run).
+      const string temp_name = "UltimateTrader_State.tmp";
+
+      int handle = FileOpen(temp_name, FILE_WRITE | FILE_BIN | FILE_COMMON);
       if(handle == INVALID_HANDLE)
       {
-         LogPrint("ERROR: SavePositionState - cannot open file for writing: ",
-                  STATE_FILE_NAME, " (error ", GetLastError(), ")");
+         LogPrint("ERROR: SavePositionState - cannot open temp file for writing: ",
+                  temp_name, " (error ", GetLastError(), ")");
          return false;
       }
 
@@ -1964,7 +1973,39 @@ public:
       // Write the sleeve trailer last (fixed v8 trailer layout).
       FileWriteStruct(handle, sleeve_state);
 
+      FileFlush(handle);
       FileClose(handle);
+
+      // Verify the temp generation reads back with a valid, matching header BEFORE it can
+      // replace the live file — never overwrite good state with a partial/failed write.
+      bool temp_ok = false;
+      int vh = FileOpen(temp_name, FILE_READ | FILE_BIN | FILE_COMMON);
+      if(vh != INVALID_HANDLE)
+      {
+         StateFileHeader vheader;
+         if(FileReadStruct(vh, vheader) > 0 &&
+            vheader.signature    == STATE_FILE_SIGNATURE &&
+            vheader.version      == STATE_FILE_VERSION &&
+            vheader.record_count == m_position_count &&
+            vheader.checksum     == checksum)
+            temp_ok = true;
+         FileClose(vh);
+      }
+      if(!temp_ok)
+      {
+         LogPrint("ERROR: SavePositionState - temp generation verification FAILED; keeping the previous state file intact");
+         FileDelete(temp_name, FILE_COMMON);
+         return false;
+      }
+
+      // Atomically replace the live state file with the verified temp generation.
+      if(!FileMove(temp_name, FILE_COMMON, STATE_FILE_NAME, FILE_COMMON | FILE_REWRITE))
+      {
+         LogPrint("ERROR: SavePositionState - atomic rename failed (error ", GetLastError(),
+                  "); previous state file left intact");
+         FileDelete(temp_name, FILE_COMMON);
+         return false;
+      }
 
       LogPrint("SavePositionState: Saved ", m_position_count,
                " position(s) + ", total_mode_records, " mode perf records | CRC32=", checksum,
