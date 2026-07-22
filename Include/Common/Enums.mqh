@@ -562,4 +562,61 @@ enum ENUM_ENGULFING_REGIME_POLICY
    ENGULF_REQUIRE_D1_H4_ALIGNMENT  // BUY only if D1 != BEAR AND H4 == BULLISH
 };
 
+//+------------------------------------------------------------------+
+//| EXIT-MOMENTUM PLATFORM (exit-momentum-contract-spec.md v2)       |
+//| Strategy-aware exit-policy engine + momentum snapshot. All enums  |
+//| append-only. Inert until InpExitPolicyShadow/Active (default off).|
+//+------------------------------------------------------------------+
+
+// Exit family — coarse strategy grouping that owns a bundle of exit sub-policies.
+enum ENUM_EXIT_FAMILY
+{
+   EXIT_FAMILY_NONE = 0,
+   EXIT_FAMILY_TREND_CONTINUATION = 1,
+   EXIT_FAMILY_BREAKOUT = 2,
+   EXIT_FAMILY_MEAN_REVERSION = 3,
+   EXIT_FAMILY_REVERSAL = 4,
+   EXIT_FAMILY_CRASH = 5
+};
+
+// Exit thesis-intent — the ACTUAL thesis of a position, finer than family, resolved
+// from the emitted setup_subtype/engine_intent (NOT the engine name). Crash is split
+// into three distinct theses per the owner directive.
+enum ENUM_EXIT_INTENT
+{
+   EI_NONE = 0,
+   EI_TREND_CONTINUATION = 1,
+   EI_PULLBACK = 2,
+   EI_BREAKOUT = 3,
+   EI_MEAN_REVERSION = 4,
+   EI_EXHAUSTION_REVERSAL = 5,
+   EI_FAILED_BREAK_REVERSAL = 6,
+   EI_CRASH_CONTINUATION = 7,      // genuine bear down-leg continuation
+   EI_CRASH_RUBBERBAND_FADE = 8,   // fade an up-stretch inside a death-cross (CrashBreakout's real thesis)
+   EI_CRASH_RECOVERY = 9           // recovery/bounce catch
+};
+
+// Exit action class. Immediate actions (1-3) may ONLY tighten/close. Future-trail
+// modulations (4-6) never move the existing broker SL backward — they condition the
+// NEXT trail computation only.
+enum ENUM_EXIT_ACTION
+{
+   EX_NOOP = 0,
+   EX_TIGHTEN_SL = 1,        // immediate: absolute SL, still passes is_better + clamp
+   EX_CLOSE_PARTIAL = 2,     // immediate: close percentage
+   EX_CLOSE_ALL = 3,         // immediate: full close
+   EX_TRAIL_SUPPRESS = 4,    // future-trail: skip tightening this bar
+   EX_TRAIL_DELAY = 5,       // future-trail: withhold tightening for N bars
+   EX_TRAIL_SCALE = 6        // future-trail: multiply the next chandelier/ATR mult (>1 widens)
+};
+
+// Account-safety daily-loss response mode. Broker-authoritative. BLOCK_ONLY is the
+// canonical default (= today's behavior: halt new entries, never flatten).
+enum ENUM_DAILY_LOSS_MODE
+{
+   DLM_BLOCK_ONLY = 0,        // default: entry halt only (CRiskMonitor)
+   DLM_FLATTEN_ALL = 1,       // close all open positions on breach
+   DLM_REDUCE_AND_PROTECT = 2 // partial-reduce exposure + tighten stops, no full flatten
+};
+
 #endif // ULTIMATETRADER_ENUMS_MQH

@@ -849,3 +849,29 @@ input group "══════ CODEX TIER-3 ROUTING / SAFEGUARDS ════�
 input bool   InpEmergencyEntryOnly  = false; // L1-3: when InpEmergencyDisable is ON, kill only NEW entries but KEEP managing/reconciling open positions (staged TPs, trailing, exits, orphan-adopt, risk refresh). OFF = legacy full halt (return before all management). No-op unless InpEmergencyDisable is also ON (default false) → byte-identical.
 input bool   InpRejectBelowMinLot   = false; // L5-1: reject a below-broker-minimum computed lot (and recompute the actual audited risk% from the normalized lot) instead of forcing the volume UP to min-lot (which silently exceeds requested risk and understates portfolio exposure). OFF = legacy force-up. On a funded account the raw lot is always >= min, so this branch never fires → byte-identical.
 input bool   InpSessionRangeDST     = false; // L8-2: route the CSessionEngine Asian-RANGE date + historical M15 GMT conversion through per-timestamp US-DST (CTimeOffset) instead of the frozen init-time offset. OFF = legacy frozen offset. NOTE: range-DST was A/B REJECTED (−10.4%) — this is a LIVE-DST-correctness option only, default OFF → byte-identical.
+
+input group "══════ EXIT-MOMENTUM PLATFORM (spec v2) ══════"
+// Strategy-aware exit-policy engine + momentum snapshot. Two master gates, both DEFAULT
+// OFF in the canonical .set → the shipped build compiles the whole platform DORMANT and
+// reproduces the main baseline byte-for-byte (primary a289b95a/$33,318.24/801,
+// GH 2713e298/$24,086.34/748). Telemetry runs enable Shadow explicitly; activation runs
+// additionally enable Active + exactly ONE per-family/per-sub-policy flag at a time.
+// See claude/audit/exit-momentum-contract-spec.md.
+input bool   InpExitPolicyShadow      = false; // MASTER: compute + log all exit-policy proposals, momentum snapshot & counterfactual exits (decision-free). OFF = no compute, no CSV, byte-identical.
+input bool   InpExitPolicyActive      = false; // MASTER: ACT on proposals (a family/sub-policy also needs its own flag). OFF = shadow-only; nothing reaches the broker.
+// Trend-continuation bundle — the FIRST activation candidate. Trailing = the loosening
+// experiment (health→wider/delayed future trail, never moves an existing SL backward).
+input bool   InpExitPolTrendTrailing  = false; // Trend bundle Trailing sub-policy ACTIVE (Contract-B future-trail modulation only). Needs InpExitPolicyActive. OFF = shadow-only.
+input bool   InpExitPolTrendInvalid   = false; // Trend bundle ThesisInvalidation ACTIVE (immediate close). Shadow-only until independently proven. OFF = shadow-only.
+input bool   InpExitPolTrendTimeDecay = false; // Trend bundle TimeDecay ACTIVE (no-progress cut). Shadow-only until independently proven. OFF = shadow-only.
+// Other four families — built + shadowed now, activated only after sample-sufficiency +
+// cross-feed + walk-forward validation (crash/reversal/mean-rev un-validatable on the
+// bull-era feeds until a bear-inclusive offline run exists).
+input bool   InpExitPolBreakoutActive = false; // Breakout bundle ACTIVE. OFF = shadow-only.
+input bool   InpExitPolMeanRevActive  = false; // Mean-reversion bundle ACTIVE. OFF = shadow-only.
+input bool   InpExitPolReversalActive = false; // Reversal bundle ACTIVE. OFF = shadow-only.
+input bool   InpExitPolCrashActive    = false; // Crash bundle ACTIVE (rubber-band-fade Trailing preserves the adopted §D suppressor). OFF = shadow-only.
+// Account-safety daily-loss response. Broker-authoritative. BLOCK_ONLY = today's behavior
+// (entry halt only) and is canonical until demo + micro-live evidence supports a change.
+// Only evaluated when InpExitPolicyActive is ON; BLOCK_ONLY is a no-op → byte-identical.
+input ENUM_DAILY_LOSS_MODE InpDailyLossMode = DLM_BLOCK_ONLY; // Daily-loss mode: block-only / flatten-all / reduce-and-protect

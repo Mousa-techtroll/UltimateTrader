@@ -17,6 +17,119 @@
 #include "Enums.mqh"
 
 //+------------------------------------------------------------------+
+//| EXIT-MOMENTUM PLATFORM CONTRACTS (exit-momentum-contract-spec v2)|
+//| Frozen shared types. Defined ABOVE SPosition because SPosition   |
+//| carries MomentumAtEntry + ExitProposal as field types. All are   |
+//| runtime-only (never in PersistedPosition except the explicit v9  |
+//| MomentumAtEntry scalars mapped by hand). Inert until the exit-    |
+//| policy master gates are enabled (default off).                   |
+//+------------------------------------------------------------------+
+
+// Availability-aware feature: NEVER fabricate a neutral value. available=false means
+// value is meaningless and a consumer MUST abstain (the anti-FILT-04 law).
+struct MomFeat
+{
+   double value;
+   bool   available;
+   void Init() { value = 0.0; available = false; }
+};
+
+struct IntentScore
+{
+   int  score;       // 0..100 when available
+   bool available;
+   void Init() { score = 0; available = false; }
+};
+
+// Closed-bar momentum snapshot. P1 fields implemented first; P2 fields carry
+// available=false until built. bar_time = iTime(H1,1) of the closed bar reflected.
+struct MomentumSnapshot
+{
+   bool     ready;
+   datetime bar_time;
+   MomFeat  trend;             // P1  signed -1..+1 multi-TF alignment*strength
+   MomFeat  impulse;           // P1  0..1 displacement/expansion magnitude
+   MomFeat  acceleration;      // P1  signed delta of momentum slope (rising)
+   MomFeat  deceleration;      // P1  signed delta toward stall
+   MomFeat  overextension;     // P1  0..1 close-vs-MA / ATR-stretch
+   MomFeat  exhaustion;        // P1  0..1 closed-bar RSI extreme
+   MomFeat  reversal_confirm;  // P1  0..1 CHoCH+sweep confirmation
+   MomFeat  bear_state_score;  // P1  0..100 CBearStateModel.GetScore()
+   MomFeat  ema_relationship;  // P1  signed close-vs-EMA(21/50/200) posture
+   MomFeat  pullback_recovery; // P2
+   MomFeat  breakout;          // P2
+   MomFeat  divergence;        // P2  signed -1..+1
+   void Init()
+   {
+      ready = false; bar_time = 0;
+      trend.Init(); impulse.Init(); acceleration.Init(); deceleration.Init();
+      overextension.Init(); exhaustion.Init(); reversal_confirm.Init();
+      bear_state_score.Init(); ema_relationship.Init();
+      pullback_recovery.Init(); breakout.Init(); divergence.Init();
+   }
+};
+
+// Six 0..100 intent scores, availability-aware; produced by the snapshotter.
+struct IntentScores
+{
+   IntentScore trend_continuation;
+   IntentScore pullback;
+   IntentScore breakout;
+   IntentScore mean_reversion;
+   IntentScore exhaustion_reversal;
+   IntentScore crash;
+   void Init()
+   {
+      trend_continuation.Init(); pullback.Init(); breakout.Init();
+      mean_reversion.Init(); exhaustion_reversal.Init(); crash.Init();
+   }
+};
+
+// Momentum frozen at fill; the persisted scalars are mapped by hand into
+// PersistedPosition (v9). valid=false for pre-v9-migrated / broker-re-adopted
+// positions -> no strategy-exit policy acts on them (legacy behavior).
+struct MomentumAtEntry
+{
+   bool   valid;
+   double entry_trend;
+   double entry_impulse;
+   double entry_overextension;
+   double entry_exhaustion;
+   double entry_reversal_confirm;
+   double entry_bear_state;
+   int    entry_intent_score;
+   void Init()
+   {
+      valid = false;
+      entry_trend = 0; entry_impulse = 0; entry_overextension = 0;
+      entry_exhaustion = 0; entry_reversal_confirm = 0; entry_bear_state = 0;
+      entry_intent_score = 0;
+   }
+};
+
+// The deterministic policy return. action CLASS fixes which seam contract applies
+// (immediate tighten/close vs future-trail modulation). Runtime-only; never persisted.
+struct ExitProposal
+{
+   ENUM_EXIT_ACTION action;
+   ENUM_EXIT_FAMILY family;
+   ENUM_EXIT_INTENT intent;
+   double tighten_sl;    // EX_TIGHTEN_SL absolute price
+   double percentage;    // EX_CLOSE_PARTIAL 1..100
+   int    bars;          // EX_TRAIL_DELAY
+   double factor;        // EX_TRAIL_SCALE next-mult multiplier (>1 widens)
+   string reason;
+   string policy_id;
+   double confidence;    // 0..1 shadow ranking only; never gates action
+   void Init()
+   {
+      action = EX_NOOP; family = EXIT_FAMILY_NONE; intent = EI_NONE;
+      tighten_sl = 0; percentage = 0; bars = 0; factor = 1.0;
+      reason = ""; policy_id = ""; confidence = 0.0;
+   }
+};
+
+//+------------------------------------------------------------------+
 //| Trend Data Structure (from Stack 1.7)                            |
 //+------------------------------------------------------------------+
 struct STrendData
@@ -237,6 +350,17 @@ struct SPosition
    ENUM_SETUP_SUBTYPE     setup_subtype;
    ENUM_ENGINE_INTENT     engine_intent;
 
+   // EXIT-MOMENTUM PLATFORM (spec v2). exit_family/intent/bundle_id + mom_at_entry are
+   // stamped at fill and persisted (v9). policy_sl_proposal/policy_trail_mod are
+   // per-tick staging for the two seam contracts (runtime-only, reset each tick).
+   // All inert until the exit-policy master gates are enabled (default off).
+   ENUM_EXIT_FAMILY       exit_family;
+   ENUM_EXIT_INTENT       exit_intent;
+   string                 exit_bundle_id;      // runtime string; persisted as char[16] (v9)
+   MomentumAtEntry        mom_at_entry;        // scalars persisted (v9); valid=false ⇒ legacy exit
+   double                 policy_sl_proposal;  // EX_TIGHTEN_SL staging, consumed at t==-2; reset/tick
+   ExitProposal           policy_trail_mod;    // Contract-B staging, consumed in ApplyTrailingPlugins; reset/tick
+
    void Init()
    {
       ticket = 0; direction = SIGNAL_NONE; pattern_type = PATTERN_NONE;
@@ -299,6 +423,13 @@ struct SPosition
       // L4-1 Arm C v2.1 Phase A: HYBRID default until stamped from the signal at fill.
       setup_subtype = SUBTYPE_HYBRID;
       engine_intent = INTENT_HYBRID;
+      // EXIT-MOMENTUM PLATFORM (spec v2) — inert defaults (byte-identical until gated on).
+      exit_family = EXIT_FAMILY_NONE;
+      exit_intent = EI_NONE;
+      exit_bundle_id = "";
+      mom_at_entry.Init();
+      policy_sl_proposal = 0.0;
+      policy_trail_mod.Init();
    }
 };
 
