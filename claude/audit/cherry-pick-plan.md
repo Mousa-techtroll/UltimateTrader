@@ -138,3 +138,8 @@ L6-5 (tester account mode) + L6-3 (tester SL/TP tick-alignment).
 Both verified BYTE-IDENTICAL both feeds (a289b95a/$33,318.24/801, 2713e298/$24,086.34/748).
 Remaining Tier-2: **L7-3** (atomic SavePositionState rewrite — highest value, biggest rework), L7-6, L7-4,
 and must-verify-first L6-5 (tester account mode) + L6-3 (tester SL/TP tick-alignment).
+
+### Tier-2 batch 3 (2026-07-22)
+| commit | item | mechanism |
+|---|---|---|
+| (above) | **L7-3** | SavePositionState: write v8 payload to UltimateTrader_State.tmp -> reopen+verify header/CRC -> FileMove atomic-rename over the live .bin. Content/LoadPositionState unchanged. Extra check beyond identity: post-run state.bin validated (ULTR/v8/CRC OK, no stray temp). |
