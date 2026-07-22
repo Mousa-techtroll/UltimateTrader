@@ -523,7 +523,7 @@
             <p style="font-size:.8rem;color:var(--text-3);margin-top:10px">*A naming quirk worth knowing: the setting is labelled "daily 200-EMA," but the line it actually uses is the <b>hourly</b> one.</p>
           </div>
         </div>
-        <div class="rr-why"><span class="wl">Changes downstream →</span><p>This bias is the foundation of the whole book — it's why roughly <b>six in ten</b> trades are buys and the sell side is deliberately thin. It powers the main quality gate (the "buy-bias ladder"), and the hourly 200-EMA drives the counter-trend size-halving dial.</p></div>
+        <div class="rr-why"><span class="wl">Changes downstream →</span><p>This bias is the foundation of the whole book — the book runs roughly <b>half long, half short by count</b>, yet longs carry <b>~80%</b> of the net profit, and the design still holds the sell side to stricter conditions. It powers the main quality gate (the "buy-bias ladder"), and the hourly 200-EMA drives the counter-trend size-halving dial.</p></div>
       </div>
 
       <!-- B. regime -->
@@ -603,7 +603,7 @@
           <div class="rr-tech">
             <div class="rr-lab">Under the hood</div>
             <p>The session clock is the broker's <b>server time minus an auto-detected GMT offset</b> (with a sensible fallback). From that it knows whether it's Asia, London or New York. During the overnight window (roughly <b>GMT 0–7</b>) it builds the <b>Asian high–low range</b> from 15-minute candles — a reference box several time-based strategies key off.</p>
-            <p>Session sets a hard <b>risk multiplier</b>: London ×0.50 (half size), New York ×0.90, Asia ×1.0 — and gates a couple of scouts (bearish pin bars blocked in New York; the crash fade only fires 13:00–17:00 GMT). Plus a weekly clock rule: <b>no new trade is opened on a Friday</b>, to avoid carrying fresh risk over the weekend gap — the price jump when the market reopens Sunday night that can leap right over a stop.</p>
+            <p>Session sets a hard <b>risk multiplier</b>: London ×0.50 (half size), New York ×0.90, Asia ×1.0 — and gates a couple of scouts (bearish pin bars blocked in New York; the crash fade fires at all hours). Plus a weekly clock rule: <b>no new trade is opened on a Friday</b>, to avoid carrying fresh risk over the weekend gap — the price jump when the market reopens Sunday night that can leap right over a stop.</p>
             <ul class="rr-specs">
               <li><span class="k">Clock</span><span class="v">server − GMT offset (auto)</span></li>
               <li><span class="k">Asian range</span><span class="v">M15 highs/lows, GMT 0–7</span></li>
@@ -814,7 +814,7 @@ stack aligned + a close beyond the
         <article class="scout" data-status="live">
           <div class="top"><h4>Crash Breakout <span style="color:var(--text-3);font-size:.7em">(Rubber Band)</span></h4><span class="st live">Active</span></div>
           <p class="sees">A fade of an over-stretched bounce inside a confirmed downtrend.</p>
-          <p class="body">This is the one scout built for falling markets. It only wakes when the daily 50-day average is below the 200-day average — a confirmed "death cross" downtrend. Then, when live price rubber-bands more than two volatility-units above its hourly mean, it shorts the snap-back toward that mean, only in a tight afternoon window and only on top-grade setups.</p>
+          <p class="body">This is the one scout built for falling markets. It only wakes when the daily 50-day average is below the 200-day average — a confirmed "death cross" downtrend. Then, when live price rubber-bands more than two volatility-units above its hourly mean, it shorts the snap-back toward that mean, at any hour and only on top-grade setups.</p>
           <div class="why"><b>Why it's a good idea:</b> in a real downtrend, sharp bounces are exhaustion, and selling them back to the mean is a textbook fade. It's the bot's only participant when gold is falling — valuable as diversification even though its wins are modest.</div>
           <div class="meta">
             <span class="badge short">Short</span>
@@ -825,7 +825,7 @@ stack aligned + a close beyond the
               <div class="rule-tf"><span class="tf">D1 gate</span><span class="tf">H1 indicators</span><span class="tf">live trigger</span></div>
               <code>daily EMA50 &lt; EMA200 (death cross), then
 live price &gt; H1 EMA21 + 2 × ATR,
-ADX ≥ 25, only 13:00–17:00 GMT → sell to the mean.</code>
+ADX ≥ 25, any hour → sell to the mean.</code>
               <span class="src">CCrashBreakoutEntry.mqh · fires only in death-cross eras</span>
             </div>
           </details>

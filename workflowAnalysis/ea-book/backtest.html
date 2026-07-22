@@ -47,33 +47,33 @@
       <header class="chapter-head reveal">
         <div class="crumb">Appendix · Backtest results</div>
         <h1>Backtest Results</h1>
-        <p class="dek">The rest of this book explains <em>how</em> the bot works. This appendix shows <em>how it did</em> — the frozen <b>v1 release</b> baseline, run on 7.5 years of real gold price data, how it compares to simply holding gold, and a detailed year-by-year breakdown of every trade, split by direction and by strategy. Every number here is measured from the trade log, not projected; and a backtest is history, never a promise.</p>
+        <p class="dek">The rest of this book explains <em>how</em> the bot works. This appendix shows <em>how it did</em> — the current production baseline (the frozen Gold v1 release plus later correctness and live-safety hardening), run on 7.5 years of real gold price data, how it compares to simply holding gold, and a detailed year-by-year breakdown of every trade, split by direction and by strategy. Every number here is measured from the trade log, not projected; and a backtest is history, never a promise.</p>
       </header>
 
       <section class="sec reveal" id="s1">
         <h2>The latest full backtest</h2>
-        <p class="lead">This is the current <b>binding baseline</b> — the frozen v1 release configuration of record (<code>release-ultimate-gold-v1-32490</code>), run on real tick-by-tick data across the whole test window.</p>
+        <p class="lead">This is the current <b>binding baseline</b> — git <code>442e6f0</code>, tag <code>main-cherry-pick-liverobustness-33318</code> (the frozen Gold v1 release plus the codex-remediation correctness campaign and 12 live-safety fixes), run on real tick-by-tick data across the whole test window.</p>
 
         <div class="result-hero">
           <div class="rh-top">
-            <div class="rh-net"><span class="k">Net profit</span><span class="v">+$32,490.33</span></div>
-            <div class="rh-sub">$10,000 → <b>$42,490.33</b><br>+324.9% total · 7.5 years<br>real-tick backtest</div>
+            <div class="rh-net"><span class="k">Net profit</span><span class="v">+$33,318.24</span></div>
+            <div class="rh-sub">$10,000 → <b>$43,318.24</b><br>+333.2% total · 7.5 years<br>real-tick backtest</div>
           </div>
           <div class="metricgrid">
-            <div class="metric"><div class="mk">Total return</div><div class="mv win">+324.9%</div><div class="mn">on the $10,000 deposit</div></div>
-            <div class="metric"><div class="mk">Annual growth</div><div class="mv">≈ 21.3%</div><div class="mn">compound annual rate</div></div>
-            <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.41</div><div class="mn">gross profit ÷ gross loss</div></div>
-            <div class="metric"><div class="mk">Sharpe ratio</div><div class="mv">2.87</div><div class="mn">return per unit of risk</div></div>
-            <div class="metric"><div class="mk">Max drawdown</div><div class="mv">14.14%</div><div class="mn">worst dip (−$6,758)</div></div>
-            <div class="metric"><div class="mk">Balance drawdown</div><div class="mv">11.37%</div><div class="mn">closed-trade basis</div></div>
-            <div class="metric"><div class="mk">Positions</div><div class="mv">865</div><div class="mn">1,895 report trades · 2,760 deals</div></div>
+            <div class="metric"><div class="mk">Total return</div><div class="mv win">+333.2%</div><div class="mn">on the $10,000 deposit</div></div>
+            <div class="metric"><div class="mk">Annual growth</div><div class="mv">≈ 21.6%</div><div class="mn">compound annual rate</div></div>
+            <div class="metric"><div class="mk">Profit factor</div><div class="mv">1.47</div><div class="mn">gross profit ÷ gross loss</div></div>
+            <div class="metric"><div class="mk">Sharpe ratio</div><div class="mv">3.16</div><div class="mn">return per unit of risk</div></div>
+            <div class="metric"><div class="mk">Max drawdown</div><div class="mv">11.50%</div><div class="mn">worst dip (−$5,445)</div></div>
+            <div class="metric"><div class="mk">Balance drawdown</div><div class="mv">9.81%</div><div class="mn">closed-trade basis</div></div>
+            <div class="metric"><div class="mk">Positions</div><div class="mv">801</div><div class="mn">1,763 report trades · 2,564 deals</div></div>
             <div class="metric"><div class="mk">Time in market</div><div class="mv">≈ 12%</div><div class="mn">of all calendar hours</div></div>
           </div>
         </div>
 
         <div class="callout">
           <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg></span>
-          <div><p><b>Methodology note.</b> This is the frozen <b>UltimateTrader Gold v1</b> release. It supersedes the earlier DST-corrected $24,829.05 baseline, lifted by three narrowly-targeted, interpretable quality/regime gates (below) — each proven on independent feeds and older regimes before adoption. Every table on this page was regenerated from the release run's own trade log, not hand-patched.</p></div>
+          <div><p><b>Methodology note.</b> This is the current production baseline (git 442e6f0). It builds on the frozen <b>UltimateTrader Gold v1</b> release — which lifted the earlier DST-corrected $24,829.05 baseline via three narrowly-targeted, interpretable quality/regime gates (below), each proven on independent feeds and older regimes before adoption — and adds the codex-remediation correctness campaign plus 12 live-safety fixes (execution/persistence/restart hardening that does not change the strategy). Every table on this page was regenerated from the current run's own trade log, not hand-patched.</p></div>
         </div>
 
         <ul class="setup-list">
@@ -82,16 +82,16 @@
           <li><span class="sk">Period</span><span class="sv">2 Jan 2019 → 27 Jun 2026 &nbsp;(≈ 7.5 years)</span></li>
           <li><span class="sk">Data model</span><span class="sv"><b>Every real tick</b> — the most realistic mode, modelling the spread and the exact price path</span></li>
           <li><span class="sk">Starting balance</span><span class="sv">$10,000</span></li>
-          <li><span class="sk">Configuration</span><span class="sv">The v1 release baseline of record — the settings the "how it works" chapters describe</span></li>
+          <li><span class="sk">Configuration</span><span class="sv">The current production baseline (git 442e6f0) — the strategy settings the "how it works" chapters describe</span></li>
         </ul>
 
         <div class="callout">
           <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v18M5 10l7-7 7 7"/></svg></span>
-          <div><p><b>How this figure was reached.</b> The number climbed through a series of <em>quality and regime</em> fixes rather than profit-chasing tweaks. Starting from the audited <b>$24,829</b> daylight-saving baseline: a <b>crash-strategy freshness gate</b> (fire only on a <em>fresh</em> death-cross) made the short book regime-robust at no cost; an <b>Engulfing death-cross block</b> (don't buy the pattern against a falling market) added <b>+$2,317</b>; a <b>Pullback-Continuation "A-tier" block</b> removed a mis-graded losing cohort for <b>+$2,482</b>; and an <b>Engulfing "A-tier" block</b> — the same mis-grade, in the biggest candle strategy — added <b>+$2,862</b>. Every detailed table below is drawn from this release's trade-by-trade log — <b>865 positions</b>, whose raw per-trade profits sum to <b>$33,033</b> before swap and commission are deducted, i.e. the $32,490.33 headline.</p></div>
+          <div><p><b>How this figure was reached.</b> The number climbed through a series of <em>quality and regime</em> fixes rather than profit-chasing tweaks. Starting from the audited <b>$24,829</b> daylight-saving baseline: a <b>crash-strategy freshness gate</b> (fire only on a <em>fresh</em> death-cross) made the short book regime-robust at no cost; an <b>Engulfing death-cross block</b> (don't buy the pattern against a falling market) added <b>+$2,317</b>; a <b>Pullback-Continuation "A-tier" block</b> removed a mis-graded losing cohort for <b>+$2,482</b>; and an <b>Engulfing "A-tier" block</b> — the same mis-grade, in the biggest candle strategy — added <b>+$2,862</b>. That sequence produced the frozen Gold v1 release (~$32,490). The <em>current</em> baseline then layers on the codex-remediation correctness campaign and 12 live-safety fixes — hardening that leaves the strategy logic unchanged — and the figure shown reflects a later broker tick-data refresh, which together lift the headline to today's <b>$33,318.24</b>. Every detailed table below is drawn from this current run's trade-by-trade log — <b>801 positions</b>, whose raw per-trade profits sum to <b>$33,825</b> before swap and commission are deducted, i.e. the $33,318.24 headline.</p></div>
         </div>
 
         <div class="prose">
-          <p>One sub-window worth noting for the sceptical: the most recent stretch (2023 → mid-2026), kept deliberately "out of sample" during development, contributed roughly <b>+$28,750</b> of the total at a comparable drawdown — the bot's behaviour held up on data it wasn't tuned against.</p>
+          <p>One sub-window worth noting for the sceptical: the most recent stretch (2023 → mid-2026), kept deliberately "out of sample" during development, contributed roughly <b>+$28,400</b> of the total at a comparable drawdown — the bot's behaviour held up on data it wasn't tuned against.</p>
         </div>
       </section>
 
@@ -102,16 +102,16 @@
           <table class="cmp">
             <thead><tr><th>Measure</th><th class="r">The bot</th><th class="r">Buy &amp; hold gold</th><th>What it means</th></tr></thead>
             <tbody>
-              <tr><td>Total return</td><td class="r ea">+324.9%</td><td class="r num">+218.8%</td><td>Final value on the same $10,000</td></tr>
-              <tr><td>Annual growth (CAGR)</td><td class="r ea">≈ 21.3%</td><td class="r num">16.8%</td><td>Compounded per year</td></tr>
-              <tr><td>Worst drawdown</td><td class="r ea">14.1%</td><td class="r num">28.6%</td><td>Deepest peak-to-trough dip — smaller is better</td></tr>
-              <tr><td>Return ÷ drawdown</td><td class="r ea">23.0</td><td class="r num">7.7</td><td>Reward earned per unit of pain</td></tr>
+              <tr><td>Total return</td><td class="r ea">+333.2%</td><td class="r num">+218.8%</td><td>Final value on the same $10,000</td></tr>
+              <tr><td>Annual growth (CAGR)</td><td class="r ea">≈ 21.6%</td><td class="r num">16.8%</td><td>Compounded per year</td></tr>
+              <tr><td>Worst drawdown</td><td class="r ea">11.5%</td><td class="r num">28.6%</td><td>Deepest peak-to-trough dip — smaller is better</td></tr>
+              <tr><td>Return ÷ drawdown</td><td class="r ea">29.0</td><td class="r num">7.7</td><td>Reward earned per unit of pain</td></tr>
               <tr><td>Time invested</td><td class="r ea">≈ 12%</td><td class="r num">100%</td><td>Share of the time capital was actually at risk</td></tr>
             </tbody>
           </table>
         </div>
         <div class="prose" style="margin-top:16px">
-          <p>The bot beat buy-and-hold on raw return — by more than <b>100 percentage points</b> — while taking <b>half the drawdown</b> and leaving capital idle (and free for other uses) roughly <b>88% of the time</b>. On a reward-per-unit-of-risk basis it's about <b>three times</b> as efficient (23.0 vs 7.7). That efficiency — not the headline return — is the real point of the machine: capture most of gold's trend while feeling far calmer to hold.</p>
+          <p>The bot beat buy-and-hold on raw return — by more than <b>100 percentage points</b> — while taking <b>well under half the drawdown</b> and leaving capital idle (and free for other uses) roughly <b>88% of the time</b>. On a reward-per-unit-of-risk basis it's <b>nearly four times</b> as efficient (29.0 vs 7.7). That efficiency — not the headline return — is the real point of the machine: capture most of gold's trend while feeling far calmer to hold.</p>
           <div class="callout warn">
             <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
             <div><p><b>An honest caveat.</b> This window happens to end <em>inside</em> gold's 2026 correction. Measured at gold's January-2026 peak instead, buy-and-hold would look far stronger and the return gap would narrow. Any "bot vs hold" verdict on a strongly trending asset is sensitive to exactly where you stop the clock — so treat the <b>drawdown and exposure</b> numbers, which are stable, as the durable story, not the return margin.</p></div>
@@ -126,21 +126,22 @@
           <table>
             <thead><tr><th>Strategy</th><th>Family</th><th class="r">Trades</th><th class="r">Long</th><th class="r">Short</th><th class="r">Net $</th><th class="r">Profit factor</th><th class="r">Win rate</th></tr></thead>
             <tbody>
-              <tr><td>Pin Bar</td><td>Candle</td><td class="r num">418</td><td class="r num">207</td><td class="r num">211</td><td class="r pos">+11,942.52</td><td class="r num">1.29</td><td class="r num">41.9%</td></tr>
-              <tr><td>Engulfing</td><td>Candle</td><td class="r num">160</td><td class="r num">160</td><td class="r num">0</td><td class="r pos">+10,623.76</td><td class="r num">1.63</td><td class="r num">49.4%</td></tr>
-              <tr><td>MA Cross</td><td>Candle</td><td class="r num">58</td><td class="r num">58</td><td class="r num">0</td><td class="r pos">+3,960.46</td><td class="r num">1.75</td><td class="r num">48.3%</td></tr>
-              <tr><td>Crash / Rubber Band</td><td>Breakout</td><td class="r num">150</td><td class="r num">0</td><td class="r num">150</td><td class="r pos">+1,296.21</td><td class="r num">1.26</td><td class="r num">47.3%</td></tr>
-              <tr><td>Expansion&nbsp;<span style="font-weight:400;color:var(--text-3)">(incl. session breakout)</span></td><td>Engine</td><td class="r num">26</td><td class="r num">12</td><td class="r num">14</td><td class="r pos">+1,817.11</td><td class="r num">1.79</td><td class="r num">50.0%</td></tr>
-              <tr><td>Pullback Cont.</td><td>Engine</td><td class="r num">43</td><td class="r num">20</td><td class="r num">23</td><td class="r pos">+2,875.90</td><td class="r num">2.04</td><td class="r num">53.5%</td></tr>
-              <tr><td>Failed-Break (S6)</td><td>Range</td><td class="r num">10</td><td class="r num">10</td><td class="r num">0</td><td class="r pos">+517.52</td><td class="r num">2.93</td><td class="r num">80.0%</td></tr>
+              <tr><td>Pin Bar</td><td>Candle</td><td class="r num">408</td><td class="r num">197</td><td class="r num">211</td><td class="r pos">+14,154.70</td><td class="r num">1.36</td><td class="r num">43.1%</td></tr>
+              <tr><td>Engulfing</td><td>Candle</td><td class="r num">126</td><td class="r num">126</td><td class="r num">0</td><td class="r pos">+9,922.79</td><td class="r num">1.79</td><td class="r num">50.0%</td></tr>
+              <tr><td>MA Cross</td><td>Candle</td><td class="r num">38</td><td class="r num">38</td><td class="r num">0</td><td class="r pos">+2,335.24</td><td class="r num">1.70</td><td class="r num">47.4%</td></tr>
+              <tr><td>Crash / Rubber Band</td><td>Breakout</td><td class="r num">150</td><td class="r num">0</td><td class="r num">150</td><td class="r pos">+1,360.14</td><td class="r num">1.26</td><td class="r num">47.3%</td></tr>
+              <tr><td>Expansion&nbsp;<span style="font-weight:400;color:var(--text-3)">(incl. session breakout)</span></td><td>Engine</td><td class="r num">30</td><td class="r num">18</td><td class="r num">12</td><td class="r pos">+1,736.34</td><td class="r num">1.97</td><td class="r num">53.3%</td></tr>
+              <tr><td>Pullback Cont.</td><td>Engine</td><td class="r num">39</td><td class="r num">16</td><td class="r num">23</td><td class="r pos">+3,796.10</td><td class="r num">2.47</td><td class="r num">56.4%</td></tr>
+              <tr><td>Failed-Break (S6)</td><td>Range</td><td class="r num">10</td><td class="r num">10</td><td class="r num">0</td><td class="r pos">+519.45</td><td class="r num">2.94</td><td class="r num">80.0%</td></tr>
               <tr><td>Dormant (5 strategies)</td><td>—</td><td class="r num">0</td><td class="r num">0</td><td class="r num">0</td><td class="r num">—</td><td class="r num">—</td><td class="r num">—</td></tr>
-              <tr class="total"><td>Whole book</td><td>—</td><td class="r num">865</td><td class="r num">467</td><td class="r num">398</td><td class="r pos">+33,033.48</td><td class="r num">1.41</td><td class="r num">45.9%</td></tr>
+              <tr class="total"><td>Whole book</td><td>—</td><td class="r num">801</td><td class="r num">405</td><td class="r num">396</td><td class="r pos">+33,824.76</td><td class="r num">1.47</td><td class="r num">46.7%</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="prose" style="color:var(--text-3);font-size:.86rem;margin-top:10px">The <b>+$33,824.76</b> whole-book total is the sum of the raw per-trade results, <em>gross of commission</em>; the headline net after commission and swap is <b>$33,318.24</b> (the ≈$506 gap is dealing costs).</p>
         <div class="prose" style="margin-top:16px">
-          <p>Two facts jump out. First, three candlestick strategies — <b>Pin Bar, Engulfing and MA&nbsp;Cross</b> — produced the bulk of the trades and about <b>80% of the profit</b>; they are, at heart, three shapes of the same idea (buy a strong hourly candle in an uptrend). Second, the v1 quality gates show up here as <b>fewer but cleaner trades</b>: <b>Engulfing</b> fell from 238 to 160 fills (the death-cross and "A-tier" blocks removed net-losing buys) yet <em>grew</em> from +$8,100 to +$10,624 at a much stronger 1.63 factor; and <b>Pullback Continuation</b> shed its mis-graded "A" cohort — 61 fills → 43 — while jumping from a barely-there 1.12 factor to <b>2.04</b>. Five of the loaded strategies never fired at all — exactly the dormancy Chapter 3 describes: on gold's hourly chart their conditions simply never all lined up.</p>
-          <p style="color:var(--text-3);font-size:.92rem"><em>Note on Expansion:</em> the session-breakout logic that Chapter 3's "Session engine" ships switched off is actually run as a composed sub-strategy <em>inside</em> the Expansion engine — roughly half of Expansion's 26 trades are those London/Asian-range breakouts, tagged under the Expansion name. That is why there is no separate "Session" row here.</p>
+          <p>Two facts jump out. First, three candlestick strategies — <b>Pin Bar, Engulfing and MA&nbsp;Cross</b> — produced the bulk of the trades and about <b>80% of the profit</b>; they are, at heart, three shapes of the same idea (buy a strong hourly candle in an uptrend). Second, the v1 quality gates show up here as <b>fewer but cleaner trades</b>: <b>Engulfing</b> fell from 238 to 126 fills (the death-cross and "A-tier" blocks removed net-losing buys) yet <em>grew</em> from +$8,100 to +$9,923 at a much stronger 1.79 factor; and <b>Pullback Continuation</b> shed its mis-graded "A" cohort — 61 fills → 39 — while jumping from a barely-there 1.12 factor to <b>2.47</b>. Five of the loaded strategies never fired at all — exactly the dormancy Chapter 3 describes: on gold's hourly chart their conditions simply never all lined up.</p>
+          <p style="color:var(--text-3);font-size:.92rem"><em>Note on Expansion:</em> the session-breakout logic that Chapter 3's "Session engine" ships switched off is actually run as a composed sub-strategy <em>inside</em> the Expansion engine — roughly half of Expansion's 30 trades are those London/Asian-range breakouts, tagged under the Expansion name. That is why there is no separate "Session" row here.</p>
         </div>
         <div class="prose">
           <h3>The long book and the short book</h3>
@@ -150,13 +151,13 @@
           <table>
             <thead><tr><th>Book</th><th class="r">Trades</th><th class="r">Net $</th><th class="r">Profit factor</th><th class="r">Win rate</th><th class="r">Share of profit</th></tr></thead>
             <tbody>
-              <tr><td>Long (buys)</td><td class="r num">467</td><td class="r pos">+26,950.93</td><td class="r num">1.55</td><td class="r num">48.0%</td><td class="r num">82%</td></tr>
-              <tr><td>Short (sells)</td><td class="r num">398</td><td class="r pos">+6,082.55</td><td class="r num">1.24</td><td class="r num">43.5%</td><td class="r num">18%</td></tr>
+              <tr><td>Long (buys)</td><td class="r num">405</td><td class="r pos">+27,460.08</td><td class="r num">1.70</td><td class="r num">49.4%</td><td class="r num">81%</td></tr>
+              <tr><td>Short (sells)</td><td class="r num">396</td><td class="r pos">+6,364.68</td><td class="r num">1.25</td><td class="r num">43.9%</td><td class="r num">19%</td></tr>
             </tbody>
           </table>
         </div>
         <div class="prose" style="margin-top:16px">
-          <p>The long book does most of the work — over four-fifths of the profit from 467 buys. The 398 shorts contribute a smaller, steadier fifth: careful fades against a market that spent these years mostly rising. That thin short side isn't an oversight; it's the residue of repeated tests showing that shorting gold over this era lost money almost everywhere except a couple of narrow niches — the death-cross "rubber band" (now gated to fire only on a <em>fresh</em> cross) and non-New-York pin bars. The bot shorts where it has an edge and stays out where it doesn't.</p>
+          <p>The long book does most of the work — over four-fifths of the profit from 405 buys. The 396 shorts contribute a smaller, steadier fifth: careful fades against a market that spent these years mostly rising. That thin short side isn't an oversight; it's the residue of repeated tests showing that shorting gold over this era lost money almost everywhere except a couple of narrow niches — the death-cross "rubber band" (now gated to fire only on a <em>fresh</em> cross) and non-New-York pin bars. The bot shorts where it has an edge and stays out where it doesn't.</p>
         </div>
       </section>
 
@@ -165,52 +166,52 @@
         <p class="lead">The same run, broken into each of its eight calendar years — with the exact trade count, long/short split, win rate and profit for every one. The little bar on each card shows that year's share of the total profit.</p>
         <div class="year-grid">
           <div class="year-card">
-            <div class="yc-yr">2019</div><div class="yc-net neg">−$232</div>
-            <div class="yc-share"><i class="neg" style="width:4%"></i></div>
-            <div class="yc-meta"><span><b>86</b> trades</span><span><b>54</b>L / <b>32</b>S</span></div>
-            <div class="yc-note">The one losing year — near flat as it warmed up during a rate-cut rally.</div>
+            <div class="yc-yr">2019</div><div class="yc-net pos">+$282</div>
+            <div class="yc-share"><i style="width:1%"></i></div>
+            <div class="yc-meta"><span><b>80</b> trades</span><span><b>47</b>L / <b>33</b>S</span></div>
+            <div class="yc-note">Near-flat — a slow warm-up during a rate-cut rally that eked out a small profit.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2020</div><div class="yc-net pos">+$1,398</div>
-            <div class="yc-share"><i style="width:8%"></i></div>
-            <div class="yc-meta"><span><b>70</b> trades</span><span><b>51</b>L / <b>19</b>S</span></div>
+            <div class="yc-yr">2020</div><div class="yc-net pos">+$1,293</div>
+            <div class="yc-share"><i style="width:6%"></i></div>
+            <div class="yc-meta"><span><b>69</b> trades</span><span><b>50</b>L / <b>19</b>S</span></div>
             <div class="yc-note">The COVID crash and the huge stimulus-driven gold surge that followed.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2021</div><div class="yc-net pos">+$129</div>
+            <div class="yc-yr">2021</div><div class="yc-net pos">+$130</div>
             <div class="yc-share"><i style="width:1%"></i></div>
-            <div class="yc-meta"><span><b>118</b> trades</span><span><b>32</b>L / <b>86</b>S</span></div>
+            <div class="yc-meta"><span><b>115</b> trades</span><span><b>29</b>L / <b>86</b>S</span></div>
             <div class="yc-note">A choppy, sideways year — mostly shorts, and hard for a trend-follower.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2022</div><div class="yc-net pos">+$2,989</div>
-            <div class="yc-share"><i style="width:16%"></i></div>
-            <div class="yc-meta"><span><b>152</b> trades</span><span><b>36</b>L / <b>116</b>S</span></div>
+            <div class="yc-yr">2022</div><div class="yc-net pos">+$3,707</div>
+            <div class="yc-share"><i style="width:18%"></i></div>
+            <div class="yc-meta"><span><b>146</b> trades</span><span><b>31</b>L / <b>115</b>S</span></div>
             <div class="yc-note">Rate-hike volatility; the busiest year, and its most short-heavy.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2023</div><div class="yc-net pos">+$4,531</div>
-            <div class="yc-share"><i style="width:25%"></i></div>
-            <div class="yc-meta"><span><b>125</b> trades</span><span><b>62</b>L / <b>63</b>S</span></div>
+            <div class="yc-yr">2023</div><div class="yc-net pos">+$4,101</div>
+            <div class="yc-share"><i style="width:20%"></i></div>
+            <div class="yc-meta"><span><b>123</b> trades</span><span><b>58</b>L / <b>65</b>S</span></div>
             <div class="yc-note">A long range that finally resolved into a rally.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2024</div><div class="yc-net pos">+$5,356</div>
-            <div class="yc-share"><i style="width:29%"></i></div>
-            <div class="yc-meta"><span><b>128</b> trades</span><span><b>93</b>L / <b>35</b>S</span></div>
+            <div class="yc-yr">2024</div><div class="yc-net pos">+$4,212</div>
+            <div class="yc-share"><i style="width:21%"></i></div>
+            <div class="yc-meta"><span><b>112</b> trades</span><span><b>78</b>L / <b>34</b>S</span></div>
             <div class="yc-note">Gold's record-breaking run got underway; the book turned long-heavy.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2025</div><div class="yc-net pos">+$18,464</div>
+            <div class="yc-yr">2025</div><div class="yc-net pos">+$20,317</div>
             <div class="yc-share"><i style="width:100%"></i></div>
-            <div class="yc-meta"><span><b>134</b> trades</span><span><b>104</b>L / <b>30</b>S</span></div>
+            <div class="yc-meta"><span><b>111</b> trades</span><span><b>82</b>L / <b>29</b>S</span></div>
             <div class="yc-note">The standout year — gold trended hard, longs dominated, the book feasted.</div>
           </div>
           <div class="year-card">
-            <div class="yc-yr">2026 · H1</div><div class="yc-net pos">+$399</div>
-            <div class="yc-share"><i style="width:2%"></i></div>
-            <div class="yc-meta"><span><b>52</b> trades</span><span><b>35</b>L / <b>17</b>S</span></div>
-            <div class="yc-note">A sharp correction into mid-year; the bot stayed net-positive through it.</div>
+            <div class="yc-yr">2026 · H1</div><div class="yc-net neg">−$218</div>
+            <div class="yc-share"><i class="neg" style="width:1%"></i></div>
+            <div class="yc-meta"><span><b>45</b> trades</span><span><b>30</b>L / <b>15</b>S</span></div>
+            <div class="yc-note">A sharp correction into mid-year; the bot slipped to a small loss defending its highs.</div>
           </div>
         </div>
 
@@ -219,20 +220,21 @@
           <table>
             <thead><tr><th>Year</th><th class="r">Trades</th><th class="r">Long</th><th class="r">Short</th><th class="r">Win rate</th><th class="r">Profit factor</th><th class="r">Net $</th></tr></thead>
             <tbody>
-              <tr><td>2019</td><td class="r num">86</td><td class="r num">54</td><td class="r num">32</td><td class="r num">37.2%</td><td class="r num">0.94</td><td class="r neg">−231.93</td></tr>
-              <tr><td>2020</td><td class="r num">70</td><td class="r num">51</td><td class="r num">19</td><td class="r num">47.1%</td><td class="r num">1.35</td><td class="r pos">+1,397.59</td></tr>
-              <tr><td>2021</td><td class="r num">118</td><td class="r num">32</td><td class="r num">86</td><td class="r num">45.8%</td><td class="r num">1.02</td><td class="r pos">+129.22</td></tr>
-              <tr><td>2022</td><td class="r num">152</td><td class="r num">36</td><td class="r num">116</td><td class="r num">46.1%</td><td class="r num">1.47</td><td class="r pos">+2,988.62</td></tr>
-              <tr><td>2023</td><td class="r num">125</td><td class="r num">62</td><td class="r num">63</td><td class="r num">43.2%</td><td class="r num">1.56</td><td class="r pos">+4,530.82</td></tr>
-              <tr><td>2024</td><td class="r num">128</td><td class="r num">93</td><td class="r num">35</td><td class="r num">50.0%</td><td class="r num">1.44</td><td class="r pos">+5,356.31</td></tr>
-              <tr><td>2025</td><td class="r num">134</td><td class="r num">104</td><td class="r num">30</td><td class="r num">51.5%</td><td class="r num">1.86</td><td class="r pos">+18,464.04</td></tr>
-              <tr><td>2026 H1</td><td class="r num">52</td><td class="r num">35</td><td class="r num">17</td><td class="r num">40.4%</td><td class="r num">1.03</td><td class="r pos">+398.81</td></tr>
-              <tr class="total"><td>Total</td><td class="r num">865</td><td class="r num">467</td><td class="r num">398</td><td class="r num">45.9%</td><td class="r num">1.41</td><td class="r pos">+33,033.48</td></tr>
+              <tr><td>2019</td><td class="r num">80</td><td class="r num">47</td><td class="r num">33</td><td class="r num">40.0%</td><td class="r num">1.09</td><td class="r pos">+282.19</td></tr>
+              <tr><td>2020</td><td class="r num">69</td><td class="r num">50</td><td class="r num">19</td><td class="r num">47.8%</td><td class="r num">1.30</td><td class="r pos">+1,293.17</td></tr>
+              <tr><td>2021</td><td class="r num">115</td><td class="r num">29</td><td class="r num">86</td><td class="r num">47.0%</td><td class="r num">1.02</td><td class="r pos">+129.72</td></tr>
+              <tr><td>2022</td><td class="r num">146</td><td class="r num">31</td><td class="r num">115</td><td class="r num">47.3%</td><td class="r num">1.57</td><td class="r pos">+3,707.10</td></tr>
+              <tr><td>2023</td><td class="r num">123</td><td class="r num">58</td><td class="r num">65</td><td class="r num">42.3%</td><td class="r num">1.49</td><td class="r pos">+4,101.27</td></tr>
+              <tr><td>2024</td><td class="r num">112</td><td class="r num">78</td><td class="r num">34</td><td class="r num">47.3%</td><td class="r num">1.39</td><td class="r pos">+4,211.85</td></tr>
+              <tr><td>2025</td><td class="r num">111</td><td class="r num">82</td><td class="r num">29</td><td class="r num">56.8%</td><td class="r num">2.42</td><td class="r pos">+20,317.42</td></tr>
+              <tr><td>2026 H1</td><td class="r num">45</td><td class="r num">30</td><td class="r num">15</td><td class="r num">40.0%</td><td class="r num">0.98</td><td class="r neg">−217.96</td></tr>
+              <tr class="total"><td>Total</td><td class="r num">801</td><td class="r num">405</td><td class="r num">396</td><td class="r num">46.7%</td><td class="r num">1.47</td><td class="r pos">+33,824.76</td></tr>
             </tbody>
           </table>
         </div>
+        <p class="prose" style="color:var(--text-3);font-size:.86rem;margin-top:10px">Net totals here are <em>gross of commission</em> and sum to <b>+$33,824.76</b>; the headline net after commission and swap is <b>$33,318.24</b>.</p>
         <div class="prose" style="margin-top:14px">
-          <p>Read across and two things stand out. The <b>win rate is never far above 50%</b> — the bot is profitable not by being right most of the time, but by making its winners bigger than its losers (its exit ladder from Chapter 6). And the <b>long/short mix tracks the market</b>: heavily short in the choppy/bearish 2021–2022 (86 and 116 shorts), heavily long as gold ran in 2024–2025 (93 and 104 longs). The machine leans the way the market is leaning.</p>
+          <p>Read across and two things stand out. The <b>win rate is never far above 50%</b> — the bot is profitable not by being right most of the time, but by making its winners bigger than its losers (its exit ladder from Chapter 6). And the <b>long/short mix tracks the market</b>: heavily short in the choppy/bearish 2021–2022 (86 and 115 shorts), heavily long as gold ran in 2024–2025 (78 and 82 longs). The machine leans the way the market is leaning.</p>
         </div>
 
         <div class="prose"><h3>Long vs short, by year</h3>
@@ -245,20 +247,20 @@
               <tr><th class="r">Trades</th><th class="r">Win rate</th><th class="r">Net $</th><th class="r sep">Trades</th><th class="r">Win rate</th><th class="r">Net $</th></tr>
             </thead>
             <tbody>
-              <tr><td>2019</td><td class="r num">54</td><td class="r num">40.7%</td><td class="r pos">+239.09</td><td class="r num sep">32</td><td class="r num">31.2%</td><td class="r neg">−471.02</td></tr>
-              <tr><td>2020</td><td class="r num">51</td><td class="r num">49.0%</td><td class="r pos">+1,319.63</td><td class="r num sep">19</td><td class="r num">42.1%</td><td class="r pos">+77.96</td></tr>
-              <tr><td>2021</td><td class="r num">32</td><td class="r num">40.6%</td><td class="r neg">−277.41</td><td class="r num sep">86</td><td class="r num">47.7%</td><td class="r pos">+406.63</td></tr>
-              <tr><td>2022</td><td class="r num">36</td><td class="r num">52.8%</td><td class="r pos">+1,222.05</td><td class="r num sep">116</td><td class="r num">44.0%</td><td class="r pos">+1,766.57</td></tr>
-              <tr><td>2023</td><td class="r num">62</td><td class="r num">46.8%</td><td class="r pos">+2,287.77</td><td class="r num sep">63</td><td class="r num">39.7%</td><td class="r pos">+2,243.05</td></tr>
-              <tr><td>2024</td><td class="r num">93</td><td class="r num">50.5%</td><td class="r pos">+4,170.35</td><td class="r num sep">35</td><td class="r num">48.6%</td><td class="r pos">+1,185.96</td></tr>
-              <tr><td>2025</td><td class="r num">104</td><td class="r num">51.9%</td><td class="r pos">+17,761.58</td><td class="r num sep">30</td><td class="r num">50.0%</td><td class="r pos">+702.46</td></tr>
-              <tr><td>2026 H1</td><td class="r num">35</td><td class="r num">42.9%</td><td class="r pos">+227.87</td><td class="r num sep">17</td><td class="r num">35.3%</td><td class="r pos">+170.94</td></tr>
-              <tr class="total"><td>Total</td><td class="r num">467</td><td class="r num">48.0%</td><td class="r pos">+26,950.93</td><td class="r num sep">398</td><td class="r num">43.5%</td><td class="r pos">+6,082.55</td></tr>
+              <tr><td>2019</td><td class="r num">47</td><td class="r num">44.7%</td><td class="r pos">+721.50</td><td class="r num sep">33</td><td class="r num">33.3%</td><td class="r neg">−439.31</td></tr>
+              <tr><td>2020</td><td class="r num">50</td><td class="r num">48.0%</td><td class="r pos">+1,206.15</td><td class="r num sep">19</td><td class="r num">47.4%</td><td class="r pos">+87.02</td></tr>
+              <tr><td>2021</td><td class="r num">29</td><td class="r num">41.4%</td><td class="r neg">−285.99</td><td class="r num sep">86</td><td class="r num">48.8%</td><td class="r pos">+415.71</td></tr>
+              <tr><td>2022</td><td class="r num">31</td><td class="r num">64.5%</td><td class="r pos">+2,000.00</td><td class="r num sep">115</td><td class="r num">42.6%</td><td class="r pos">+1,707.10</td></tr>
+              <tr><td>2023</td><td class="r num">58</td><td class="r num">43.1%</td><td class="r pos">+1,233.12</td><td class="r num sep">65</td><td class="r num">41.5%</td><td class="r pos">+2,868.15</td></tr>
+              <tr><td>2024</td><td class="r num">78</td><td class="r num">47.4%</td><td class="r pos">+3,095.42</td><td class="r num sep">34</td><td class="r num">47.1%</td><td class="r pos">+1,116.43</td></tr>
+              <tr><td>2025</td><td class="r num">82</td><td class="r num">58.5%</td><td class="r pos">+19,616.22</td><td class="r num sep">29</td><td class="r num">51.7%</td><td class="r pos">+701.20</td></tr>
+              <tr><td>2026 H1</td><td class="r num">30</td><td class="r num">43.3%</td><td class="r neg">−126.34</td><td class="r num sep">15</td><td class="r num">33.3%</td><td class="r neg">−91.62</td></tr>
+              <tr class="total"><td>Total</td><td class="r num">405</td><td class="r num">49.4%</td><td class="r pos">+27,460.08</td><td class="r num sep">396</td><td class="r num">43.9%</td><td class="r pos">+6,364.68</td></tr>
             </tbody>
           </table>
         </div>
         <div class="prose" style="margin-top:14px">
-          <p>This split reveals why the short book, though small, earns its place: <b>it does its best work precisely when the long book struggles</b>. In the choppy 2021 and the 2023 correction, shorts out-earned longs (+$407 vs −$277 in 2021; +$2,243 vs +$2,288 in 2023 — dead level). It also shows the cost of shorting a runaway market — in the record-run year 2025 the shorts eked out just +$702 while longs made +$17,762. Both books win fewer than half their trades in most years; both are profitable only because their winners outrun their losers. The single worst cell was 2019's shorts, winning barely <b>31.2%</b> — part of why that warm-up year was the only losing one.</p>
+          <p>This split reveals why the short book, though small, earns its place: <b>it does its best work precisely when the long book struggles</b>. In the choppy 2021 and the 2023 correction, shorts out-earned longs (+$416 vs −$286 in 2021; +$2,868 vs +$1,233 in 2023 — shorts well ahead). It also shows the cost of shorting a runaway market — in the record-run year 2025 the shorts eked out just +$701 while longs made +$19,616. Both books win fewer than half their trades in most years; both are profitable only because their winners outrun their losers. The single worst cell was 2019's shorts, winning barely <b>33.3%</b> — part of why that warm-up year barely scraped a profit.</p>
         </div>
 
         <div class="prose"><h3>Each strategy, year by year</h3>
@@ -269,14 +271,14 @@
           <table>
             <thead><tr><th>Strategy</th><th class="r">'19</th><th class="r">'20</th><th class="r">'21</th><th class="r">'22</th><th class="r">'23</th><th class="r">'24</th><th class="r">'25</th><th class="r">'26</th><th class="r">Total</th></tr></thead>
             <tbody>
-              <tr><td>Pin Bar</td><td class="r num">45</td><td class="r num">40</td><td class="r num">46</td><td class="r num">55</td><td class="r num">58</td><td class="r num">74</td><td class="r num">68</td><td class="r num">32</td><td class="r num">418</td></tr>
-              <tr><td>Engulfing</td><td class="r num">24</td><td class="r num">22</td><td class="r num">3</td><td class="r num">12</td><td class="r num">23</td><td class="r num">30</td><td class="r num">40</td><td class="r num">6</td><td class="r num">160</td></tr>
-              <tr><td>MA Cross</td><td class="r num">10</td><td class="r num">3</td><td class="r num">8</td><td class="r num">2</td><td class="r num">11</td><td class="r num">7</td><td class="r num">14</td><td class="r num">3</td><td class="r num">58</td></tr>
+              <tr><td>Pin Bar</td><td class="r num">45</td><td class="r num">40</td><td class="r num">46</td><td class="r num">56</td><td class="r num">57</td><td class="r num">73</td><td class="r num">61</td><td class="r num">30</td><td class="r num">408</td></tr>
+              <tr><td>Engulfing</td><td class="r num">19</td><td class="r num">19</td><td class="r num">3</td><td class="r num">6</td><td class="r num">22</td><td class="r num">21</td><td class="r num">31</td><td class="r num">5</td><td class="r num">126</td></tr>
+              <tr><td>MA Cross</td><td class="r num">6</td><td class="r num">3</td><td class="r num">6</td><td class="r num">1</td><td class="r num">8</td><td class="r num">4</td><td class="r num">9</td><td class="r num">1</td><td class="r num">38</td></tr>
               <tr><td>Crash / Rubber Band</td><td class="r num">0</td><td class="r num">0</td><td class="r num">55</td><td class="r num">70</td><td class="r num">25</td><td class="r num">0</td><td class="r num">0</td><td class="r num">0</td><td class="r num">150</td></tr>
-              <tr><td>Pullback Cont.</td><td class="r num">6</td><td class="r num">3</td><td class="r num">4</td><td class="r num">9</td><td class="r num">4</td><td class="r num">7</td><td class="r num">7</td><td class="r num">3</td><td class="r num">43</td></tr>
-              <tr><td>Expansion</td><td class="r num">1</td><td class="r num">1</td><td class="r num">2</td><td class="r num">2</td><td class="r num">3</td><td class="r num">7</td><td class="r num">4</td><td class="r num">6</td><td class="r num">26</td></tr>
+              <tr><td>Pullback Cont.</td><td class="r num">5</td><td class="r num">3</td><td class="r num">3</td><td class="r num">9</td><td class="r num">4</td><td class="r num">5</td><td class="r num">7</td><td class="r num">3</td><td class="r num">39</td></tr>
+              <tr><td>Expansion</td><td class="r num">5</td><td class="r num">3</td><td class="r num">2</td><td class="r num">2</td><td class="r num">6</td><td class="r num">6</td><td class="r num">2</td><td class="r num">4</td><td class="r num">30</td></tr>
               <tr><td>Failed-Break (S6)</td><td class="r num">0</td><td class="r num">1</td><td class="r num">0</td><td class="r num">2</td><td class="r num">1</td><td class="r num">3</td><td class="r num">1</td><td class="r num">2</td><td class="r num">10</td></tr>
-              <tr class="total"><td>All strategies</td><td class="r num">86</td><td class="r num">70</td><td class="r num">118</td><td class="r num">152</td><td class="r num">125</td><td class="r num">128</td><td class="r num">134</td><td class="r num">52</td><td class="r num">865</td></tr>
+              <tr class="total"><td>All strategies</td><td class="r num">80</td><td class="r num">69</td><td class="r num">115</td><td class="r num">146</td><td class="r num">123</td><td class="r num">112</td><td class="r num">111</td><td class="r num">45</td><td class="r num">801</td></tr>
             </tbody>
           </table>
         </div>
@@ -286,19 +288,19 @@
           <table>
             <thead><tr><th>Strategy</th><th class="r">'19</th><th class="r">'20</th><th class="r">'21</th><th class="r">'22</th><th class="r">'23</th><th class="r">'24</th><th class="r">'25</th><th class="r">'26</th><th class="r">Total</th></tr></thead>
             <tbody>
-              <tr><td>Pin Bar</td><td class="r neg">−43</td><td class="r pos">+247</td><td class="r pos">+303</td><td class="r pos">+1,277</td><td class="r pos">+2,581</td><td class="r pos">+1,956</td><td class="r pos">+9,877</td><td class="r neg">−4,256</td><td class="r pos">+11,943</td></tr>
-              <tr><td>Engulfing</td><td class="r pos">+443</td><td class="r pos">+525</td><td class="r neg">−5</td><td class="r neg">−15</td><td class="r pos">+417</td><td class="r pos">+1,794</td><td class="r pos">+5,401</td><td class="r pos">+2,064</td><td class="r pos">+10,624</td></tr>
-              <tr><td>MA Cross</td><td class="r neg">−141</td><td class="r pos">+289</td><td class="r neg">−134</td><td class="r neg">−186</td><td class="r pos">+1,388</td><td class="r pos">+966</td><td class="r pos">+2,997</td><td class="r neg">−1,219</td><td class="r pos">+3,960</td></tr>
-              <tr><td>Crash / Rubber Band</td><td class="r num">0</td><td class="r num">0</td><td class="r pos">+463</td><td class="r pos">+672</td><td class="r pos">+162</td><td class="r num">0</td><td class="r num">0</td><td class="r num">0</td><td class="r pos">+1,296</td></tr>
-              <tr><td>Pullback Cont.</td><td class="r neg">−483</td><td class="r pos">+301</td><td class="r neg">−504</td><td class="r pos">+1,031</td><td class="r pos">+38</td><td class="r pos">+143</td><td class="r pos">+785</td><td class="r pos">+1,566</td><td class="r pos">+2,876</td></tr>
-              <tr><td>Expansion</td><td class="r neg">−8</td><td class="r pos">+22</td><td class="r pos">+6</td><td class="r pos">+164</td><td class="r neg">−104</td><td class="r pos">+536</td><td class="r neg">−450</td><td class="r pos">+1,650</td><td class="r pos">+1,817</td></tr>
-              <tr><td>Failed-Break (S6)</td><td class="r num">0</td><td class="r pos">+15</td><td class="r num">0</td><td class="r pos">+47</td><td class="r pos">+48</td><td class="r neg">−39</td><td class="r neg">−146</td><td class="r pos">+593</td><td class="r pos">+518</td></tr>
-              <tr class="total"><td>Whole book</td><td class="r neg">−232</td><td class="r pos">+1,398</td><td class="r pos">+129</td><td class="r pos">+2,989</td><td class="r pos">+4,531</td><td class="r pos">+5,356</td><td class="r pos">+18,464</td><td class="r pos">+399</td><td class="r pos">+33,033</td></tr>
+              <tr><td>Pin Bar</td><td class="r pos">+188</td><td class="r pos">+410</td><td class="r pos">+305</td><td class="r pos">+1,162</td><td class="r pos">+2,495</td><td class="r pos">+1,644</td><td class="r pos">+11,728</td><td class="r neg">−3,777</td><td class="r pos">+14,155</td></tr>
+              <tr><td>Engulfing</td><td class="r pos">+315</td><td class="r pos">+289</td><td class="r neg">−146</td><td class="r pos">+519</td><td class="r pos">+265</td><td class="r pos">+1,387</td><td class="r pos">+5,810</td><td class="r pos">+1,484</td><td class="r pos">+9,923</td></tr>
+              <tr><td>MA Cross</td><td class="r pos">+197</td><td class="r pos">+191</td><td class="r neg">−33</td><td class="r neg">−129</td><td class="r pos">+568</td><td class="r pos">+154</td><td class="r pos">+2,023</td><td class="r neg">−636</td><td class="r pos">+2,335</td></tr>
+              <tr><td>Crash / Rubber Band</td><td class="r num">0</td><td class="r num">0</td><td class="r pos">+471</td><td class="r pos">+742</td><td class="r pos">+148</td><td class="r num">0</td><td class="r num">0</td><td class="r num">0</td><td class="r pos">+1,360</td></tr>
+              <tr><td>Pullback Cont.</td><td class="r neg">−461</td><td class="r pos">+302</td><td class="r neg">−468</td><td class="r pos">+1,087</td><td class="r pos">+17</td><td class="r pos">+190</td><td class="r pos">+726</td><td class="r pos">+2,403</td><td class="r pos">+3,796</td></tr>
+              <tr><td>Expansion</td><td class="r pos">+42</td><td class="r pos">+86</td><td class="r pos">+1</td><td class="r pos">+280</td><td class="r pos">+561</td><td class="r pos">+874</td><td class="r pos">+177</td><td class="r neg">−285</td><td class="r pos">+1,736</td></tr>
+              <tr><td>Failed-Break (S6)</td><td class="r num">0</td><td class="r pos">+15</td><td class="r num">0</td><td class="r pos">+47</td><td class="r pos">+48</td><td class="r neg">−37</td><td class="r neg">−146</td><td class="r pos">+592</td><td class="r pos">+519</td></tr>
+              <tr class="total"><td>Whole book</td><td class="r pos">+282</td><td class="r pos">+1,293</td><td class="r pos">+130</td><td class="r pos">+3,707</td><td class="r pos">+4,101</td><td class="r pos">+4,212</td><td class="r pos">+20,317</td><td class="r neg">−218</td><td class="r pos">+33,825</td></tr>
             </tbody>
           </table>
         </div>
         <div class="prose" style="margin-top:14px">
-          <p>The profit matrix is where the character of each strategy shows. <b>Pin Bar</b> and <b>Engulfing</b> carry nearly every year — Pin Bar still takes the 2026 correction on the chin (−$4,256), but Engulfing, with its new death-cross and A-tier gates, has flipped its old red patch: it is now positive in seven of eight years, including the 2021–2023 stretch where it used to bleed. <b>Pullback Continuation</b> — once the clearest underperformer — is transformed by dropping its mis-graded "A" cohort: positive in six of eight years now. And the tiny, high-quality strategies (S6, Expansion) swing between small reds and greens — real but minor contributors. No single strategy is reliable every year; the book works because their good years rarely all fail at once.</p>
+          <p>The profit matrix is where the character of each strategy shows. <b>Pin Bar</b> and <b>Engulfing</b> carry nearly every year — Pin Bar still takes the 2026 correction on the chin (−$3,777), but Engulfing, with its new death-cross and A-tier gates, has flipped its old red patch: it is now positive in seven of eight years, including the 2021–2023 stretch where it used to bleed. <b>Pullback Continuation</b> — once the clearest underperformer — is transformed by dropping its mis-graded "A" cohort: positive in six of eight years now. And the tiny, high-quality strategies (S6, Expansion) swing between small reds and greens — real but minor contributors. No single strategy is reliable every year; the book works because their good years rarely all fail at once.</p>
         </div>
 
         <div class="prose"><h3>And by quality grade</h3>
@@ -308,14 +310,14 @@
           <table>
             <thead><tr><th>Grade</th><th class="r">Trades</th><th class="r">Net $</th><th class="r">Profit factor</th><th class="r">Avg R</th></tr></thead>
             <tbody>
-              <tr><td>A+ &nbsp;top-grade</td><td class="r num">534</td><td class="r pos">+24,640</td><td class="r num">1.45</td><td class="r pos">+0.175</td></tr>
-              <tr><td>A &nbsp;strong</td><td class="r num">221</td><td class="r pos">+5,028</td><td class="r num">1.36</td><td class="r pos">+0.174</td></tr>
-              <tr><td>B+ &nbsp;decent</td><td class="r num">110</td><td class="r pos">+3,365</td><td class="r num">1.64</td><td class="r pos">+0.155</td></tr>
+              <tr><td>A+ &nbsp;top-grade</td><td class="r num">505</td><td class="r pos">+27,106</td><td class="r num">1.57</td><td class="r pos">+0.198</td></tr>
+              <tr><td>A &nbsp;strong</td><td class="r num">200</td><td class="r pos">+3,423</td><td class="r num">1.26</td><td class="r pos">+0.136</td></tr>
+              <tr><td>B+ &nbsp;decent</td><td class="r num">96</td><td class="r pos">+3,296</td><td class="r num">1.78</td><td class="r pos">+0.223</td></tr>
             </tbody>
           </table>
         </div>
         <div class="prose" style="margin-top:14px">
-          <p>The top <b>A+</b> setups earned the lion's share — as intended, since they're allowed the most risk. Note the <b>A</b> grade: on the earlier baseline it was the weak link (barely profitable, a 1.11 factor). The v1 release specifically targets that — the two "A-tier" blocks removed the mis-graded Engulfing and Pullback setups that dragged it down, and the A grade now stands healthy at a <b>1.36</b> factor and a <b>+0.174</b> average R, essentially level with A+. That was the single largest quality repair in this release.</p>
+          <p>The top <b>A+</b> setups earned the lion's share — as intended, since they're allowed the most risk. Note the <b>A</b> grade: on the earlier baseline it was the weak link (barely profitable, a 1.11 factor). The v1 release specifically targets that — the two "A-tier" blocks removed the mis-graded Engulfing and Pullback setups that dragged it down, and the A grade now stands at a <b>1.26</b> factor and a <b>+0.136</b> average R — lifted well clear of break-even, though it still sits a step below A+. That was the single largest quality repair in this release.</p>
         </div>
       </section>
 
@@ -324,10 +326,10 @@
         <p class="lead">What should a non-trader take away from all this? A few honest conclusions.</p>
         <div class="prose">
           <p><b>As a risk-adjusted vehicle, it does its job well.</b> It beat buying gold over 7.5 years — on both total return and compound growth — while suffering half the drawdown and keeping most of the account free most of the time. If the goal is "own gold's upside without gold's stomach-churning dips," the numbers support that.</p>
-          <p><b>It is a trend-follower, and the calendar shows it.</b> One exceptional year — 2025 — was about <b>56% of the entire profit</b>, and 2022–2025 together were roughly <b>95%</b>. In the flat, choppy years (2019 and 2021) it barely moved the needle, and 2019 was a small loss. That's by design: the machine is built to <em>buy strength and protect capital</em>, feasting when gold trends and treading water when it doesn't.</p>
-          <p><b>It wins by payoff, not by accuracy.</b> Its win rate was 45.9% over the whole run and never far above 50% in any year — it makes money because its exit ladder lets winners outrun losers. And it <b>leans with the market</b>: mostly short in the bearish stretches, mostly long as gold ran. It banks profit early on purpose, capturing only a modest slice of every move — the direct trade-off for that shallow drawdown.</p>
+          <p><b>It is a trend-follower, and the calendar shows it.</b> One exceptional year — 2025 — was about <b>60% of the entire profit</b>, and 2022–2025 together were roughly <b>95%</b>. In the flat, choppy years (2019 and 2021) it barely moved the needle, and 2019 barely broke even. That's by design: the machine is built to <em>buy strength and protect capital</em>, feasting when gold trends and treading water when it doesn't.</p>
+          <p><b>It wins by payoff, not by accuracy.</b> Its win rate was 46.7% over the whole run and rarely far above 50% in any year — it makes money because its exit ladder lets winners outrun losers. And it <b>leans with the market</b>: mostly short in the bearish stretches, mostly long as gold ran. It banks profit early on purpose, capturing only a modest slice of every move — the direct trade-off for that shallow drawdown.</p>
           <p><b>It was frozen when the well ran dry.</b> This v1 release is the point where <em>subtractive</em> tuning stopped paying: three interpretable quality gates captured the real, portable edge, and six further audits (candle-strength, tier-risk, the volume filter, exposure caps, the exit ladder, and standalone-entry breadth) each returned a confident "no change." The book was banked there rather than over-fitted further.</p>
-          <p><b>And the additive search came up empty too.</b> After release, a separate line of research asked whether a genuinely <em>new</em> non-trend strategy could be added — intraday liquidity/CRT, abnormal-move exhaustion, active-range reversion and failed-breakout candidates. Run purely as analysis and held to honest, cost-netted, cross-feed, confidence-interval validation, every candidate failed; none was adopted. The v1 configuration on this page is therefore <b>unchanged</b>. The architecture is treated as being at its research frontier on the available data — the next phase is forward (shadow) validation, not further backtest tuning.</p>
+          <p><b>And the additive search came up empty too.</b> After release, a separate line of research asked whether a genuinely <em>new</em> non-trend strategy could be added — intraday liquidity/CRT, abnormal-move exhaustion, active-range reversion and failed-breakout candidates. Run purely as analysis and held to honest, cost-netted, cross-feed, confidence-interval validation, every candidate failed; none was adopted. The <b>strategy logic</b> on this page is therefore unchanged; the current baseline adds only correctness and live-safety hardening (codex remediation + 12 fixes) on top of v1. The architecture is treated as being at its research frontier on the available data — the next phase is forward (shadow) validation, not further backtest tuning.</p>
           <p style="color:var(--text-3);font-size:.92rem;margin-top:6px"><em>A backtest replays the past on historical prices. It cannot capture every real-world friction, and it is not a forecast. Past performance does not guarantee future results; nothing here is financial advice.</em></p>
         </div>
       </section>

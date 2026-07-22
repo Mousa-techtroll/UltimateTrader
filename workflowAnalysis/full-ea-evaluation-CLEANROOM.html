@@ -193,7 +193,7 @@
     <h2>One correlated long-gold book, defended by stops — not by the adaptive logic the code appears to contain.</h2>
     <div class="vrow">
       <div class="lab">Edge</div>
-      <p>The real realized edge is a single regime-conditioned bet: buy gold dips in an uptrend through a handful of near-redundant, tie-biased long triggers (~75% of trades), plus a genuinely diversifying death-cross-gated mean-reversion short that pays only in a sustained gold downtrend and sleeps for years otherwise — a thin, small-positive-expectancy long-continuation factor with dormant short insurance, measured on unrealistic zero-slippage, in-sample-curated fills.</p>
+      <p>The real realized edge is a single regime-conditioned bet: buy gold dips in an uptrend through a handful of near-redundant, tie-biased long triggers (~half the trades by count but ~80% of the net profit), plus a genuinely diversifying death-cross-gated mean-reversion short that pays only in a sustained gold downtrend and sleeps for years otherwise — a thin, small-positive-expectancy long-continuation factor with dormant short insurance, measured on unrealistic zero-slippage, in-sample-curated fills.</p>
     </div>
     <div class="vrow">
       <div class="lab">Risk</div>
@@ -417,7 +417,7 @@
     <div class="top"><span class="fid">PORT-01</span><h3>"11 strategies" overstates breadth roughly two-fold</h3>
       <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
     <div class="body">
-      <p>Six of twelve registered-enabled strategies fire zero trades across seven years. The live book is two regime-keyed clusters — a dominant bullish-continuation long factor (~75% of trades, five near-redundant triggers, internally highly correlated) plus a genuinely diversifying counter-trend short fade (~25%). It reshapes the honest description of the system, not per-trade P&amp;L: the edge rests on a far narrower base than the configuration implies.</p>
+      <p>Six of twelve registered-enabled strategies fire zero trades across seven years. The live book is two regime-keyed clusters — a dominant bullish-continuation long factor (~half the trades by count but ~80% of the net profit, five near-redundant triggers, internally highly correlated) plus a genuinely diversifying counter-trend short fade (~half the trades by count, ~20% of net). It reshapes the honest description of the system, not per-trade P&amp;L: the edge rests on a far narrower base than the configuration implies.</p>
       <dl class="kv"><dt>Category</dt><dd>Cross-strategy portfolio / methodology</dd></dl>
     </div>
   </div>
@@ -437,7 +437,7 @@
       <thead><tr><th>ID</th><th>Finding</th><th>Location</th><th>Sev</th></tr></thead>
       <tbody>
         <tr><td><code>RXT-14</code></td><td>SETUP_B tier unreachable (<code>InpPointsBSetup=7</code> behind the A≥7 check) → B+ is the effective floor</td><td><span class="sub-note">CSetupEvaluator</span></td><td><span class="chip c-med">MED</span></td></tr>
-        <tr><td><code>RISK-03</code></td><td>The 2.0% hard risk cap never binds (max realized 1.21%) — contradicts the in-code comment</td><td><span class="sub-note">CQualityTierRiskStrategy</span></td><td><span class="chip c-med">MED</span></td></tr>
+        <tr><td><code>RISK-03</code></td><td>The 2.0% hard risk cap DOES bind — a TRENDING A+ setup computes ~2.48% and is capped to 2.0% (current run: max realized 2.0% on 10 trades, mean 0.99%). The earlier "never binds / 1.21% max" read was a v15/Model-1 artifact and is refuted</td><td><span class="sub-note">CQualityTierRiskStrategy</span></td><td><span class="chip c-med">MED</span></td></tr>
         <tr><td><code>DET-01</code></td><td>Spread-sample array never trimmed → entire-history median leaks forward into the live entry-block / risk-halve gate</td><td><span class="sub-note">CEnhancedTradeExecutor</span></td><td><span class="chip c-med">MED</span></td></tr>
         <tr><td><code>POS-12</code></td><td>Recovery-path R-denominator rebuild can stack-fire the partial ladder; v4→v5 state bump forces it</td><td><span class="sub-note">CPositionCoordinator</span></td><td><span class="chip c-med">MED</span></td></tr>
         <tr><td><code>ORC-02</code></td><td>Exposure-cap mixes balance-frozen $ risk over an equity denominator (drift)</td><td><span class="sub-note">CTradeOrchestrator / X4-NUM-02</span></td><td><span class="chip c-med">MED</span></td></tr>
@@ -474,12 +474,12 @@
     <table>
       <thead><tr><th>Dimension</th><th>Verdict</th></tr></thead>
       <tbody>
-        <tr><td><strong>Risk / sizing</strong></td><td>Core fixed-fractional lot math is dimensionally correct in both plugin and fallback paths; div-by-zero guarded on every axis. But the <em>adaptive</em> layer is largely inert, the vol ratio is mis-unit'd (CTX-10), the 2% cap never binds, and RSI-blind tiering deflates risk %.</td></tr>
+        <tr><td><strong>Risk / sizing</strong></td><td>Core fixed-fractional lot math is dimensionally correct in both plugin and fallback paths; div-by-zero guarded on every axis. But the <em>adaptive</em> layer is largely inert, the vol ratio is mis-unit'd (CTX-10), the 2% cap binds only on the strongest TRENDING A+ setups, and RSI-blind tiering deflates risk %.</td></tr>
         <tr><td><strong>Exits / trailing</strong></td><td>Trailing is clean (only Chandelier live, closed-bar discipline, double ratchet, STOPS_LEVEL clamp). Exit plugins are a no-op (RXT-02) → operative exits are SL, the TP ladder, the Chandelier trail, and the weekend-native closer only.</td></tr>
         <tr><td><strong>Filter stack</strong></td><td>The "~8 gates" are mostly no-ops on prod. The gates that actually bind: the point-threshold quality tier, the direction-blind ADX/ATR confidence gate, the long-for-longs validator, and the registered plugin set being long-only.</td></tr>
         <tr><td><strong>Look-ahead</strong></td><td>The signal path is new-bar-gated and <code>CMarketContext::Update()</code> self-gates once per H1 bar, so component forming-bar reads are bar-open snapshots, not intrabar repaint. No CRITICAL/HIGH future-data leak in the discrete-entry path; the one repaint-instability (ENG-02) sits on a zero-firing mode.</td></tr>
         <tr><td><strong>Determinism</strong></td><td>Live OnTick is deterministic — no RNG on the live path, all tester branches deterministic. One forward-leak (DET-01, spread median). Adaptive closed-trade state is path-dependent by design.</td></tr>
-        <tr><td><strong>Portfolio / methodology</strong></td><td>Two regime-keyed clusters, not 11 independent edges. Methodology is weak-to-moderate: 98% zero-slippage fills (implausible for gold OTC), in-sample mode curation baked into source defaults, direction-asymmetric confirmation.</td></tr>
+        <tr><td><strong>Portfolio / methodology</strong></td><td>Two regime-keyed clusters, not 11 independent edges. Methodology is weak-to-moderate: 100% zero-slippage fills (implausible for gold OTC), in-sample mode curation baked into source defaults, direction-asymmetric confirmation.</td></tr>
         <tr><td><strong>Dead code</strong></td><td>83 live vs. 25 dead <code>.mqh</code> files; no dead path is wired live. The <code>CXAUUSDEnhancer → CMarketCondition → CATRCalculator</code> chain is dead (executor built with NULL enhancer).</td></tr>
         <tr><td><strong>Numeric / portability</strong></td><td>Sizing is symbol-aware (point-scale + per-symbol profiles), but position-management price math is single-symbol / single-timeframe — effectively gold-H1 only (hardcoded <code>$50</code> levels, <code>_Symbol</code> vs. position-symbol, ~196 literal <code>PERIOD_H1</code>).</td></tr>
       </tbody>
