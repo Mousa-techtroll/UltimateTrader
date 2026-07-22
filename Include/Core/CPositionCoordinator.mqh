@@ -1554,7 +1554,7 @@ public:
       CExitPolicyEngine::ResolveExit(pos, fam, intent);
       pos.exit_family    = fam;
       pos.exit_intent    = intent;
-      pos.exit_bundle_id = ExitFamilyTag(fam);
+      pos.exit_bundle_id = CExitPolicyEngine::ResolveProfileId(pos);  // per-signal profile id (matrix)
       MomentumSnapshot s; m_snapshotter.GetSnapshot(s);
       IntentScores is;    m_snapshotter.GetIntentScores(pos, is);
       pos.mom_at_entry.valid = s.ready;

@@ -114,6 +114,58 @@ public:
    }
 
    //+---------------------------------------------------------------+
+   //| FROZEN per-signal profile resolution — every ACTIVE emitted    |
+   //| setup resolves to an EXPLICIT profile keyed by (major_engine,  |
+   //| setup_subtype, engine_intent). The 5 families are shared BASE  |
+   //| behavior; this id specializes per signal (telemetry/attrib +   |
+   //| future per-profile parameter tuning). Matrix:                  |
+   //| claude/audit/per-signal-exit-policy-matrix.md.                 |
+   //+---------------------------------------------------------------+
+   static string ResolveProfileId(const SPosition &pos)
+   {
+      switch(pos.major_engine)   // (1) router engines
+      {
+         case ENGINE_TREND_CONT:      return "TREND_ENGINE";
+         case ENGINE_REVERSAL_SWEEP:  return "REV_SWEEP_ENG";  
+         case ENGINE_RANGE_REVERSION: return "MR_RANGE_ENGINE";
+         case ENGINE_EXPANSION:       return "BO_EXPANSION";
+         default: break;
+      }
+      switch(pos.setup_subtype)  // (2) emission-stamped subtype = primary per-signal key
+      {
+         case MACROSS_TREND:                 return "TREND_MACROSS";
+         case ENGULFING_CONTINUATION:        return "TREND_ENGULF";
+         case PINBAR_TREND_REJECTION:        return "TREND_PINBAR_PB";
+         case PBC_PULLBACK:                  return "TREND_PBC";
+         case SUBTYPE_TREND_CONTINUATION:    return "TREND_BASE";
+         case SUBTYPE_PULLBACK:              return "TREND_PB_BASE";
+         case EXPANSION_BREAKOUT:            return "BO_EXPANSION";
+         case VOLBREAKOUT_BREAKOUT:          return "BO_VOL";
+         case SESSION_BREAKOUT:              return "BO_SESSION";
+         case SUBTYPE_BREAKOUT:              return "BO_BASE";
+         case SUBTYPE_MEAN_REVERSION:        return "MR_RANGE";
+         case PINBAR_COUNTER_EXHAUSTION:
+         case SUBTYPE_EXHAUSTION_REVERSAL:   return "REV_PINBAR_EXH";
+         case FAILEDBREAK_RECLAIM:
+         case SUBTYPE_FAILED_BREAK_REVERSAL: return "REV_FAILEDBREAK";
+         case ENGULFING_REVERSAL:            return "REV_ENGULF";
+         case CRASH_RUBBERBAND:              return "CRASH_RBFADE";        
+         default: break;
+      }
+      ENUM_EXIT_FAMILY fam; ENUM_EXIT_INTENT intent;   // (3) family-base fallback
+      ResolveExit(pos, fam, intent);
+      switch(fam)
+      {
+         case EXIT_FAMILY_TREND_CONTINUATION: return "TREND_BASE";
+         case EXIT_FAMILY_BREAKOUT:           return "BO_BASE";
+         case EXIT_FAMILY_MEAN_REVERSION:     return "MR_BASE";
+         case EXIT_FAMILY_REVERSAL:           return "REV_BASE";
+         case EXIT_FAMILY_CRASH:              return "CRASH_BASE";
+         default:                             return "NONE";
+      }
+   }
+
+   //+---------------------------------------------------------------+
    //| Dispatch: resolve the position's family, hand it to the        |
    //| matching bundle, return the two proposals. NOOP if no bundle   |
    //| is registered for that family (e.g. mean-rev stub absent).     |
