@@ -394,6 +394,11 @@ public:
       m_st[idx] = subtype;
    }
 
+   // Uniform lab hooks (generic per-ticket handoff): map entry verdict -> Imprint.
+   virtual void OnOpen(long ticket, const SCandidateEntry &v)
+   { Imprint(ticket, v.confidence, (v.action==CAND_RECLASSIFY_SUBTYPE ? v.reclass_subtype : ENGC_SUBTYPE_RUNNER)); }
+   virtual void OnClose(long ticket) { Forget(ticket); }
+
    // Hygiene: the integrator SHOULD call this when the position closes.
    void Forget(long ticket)
    {

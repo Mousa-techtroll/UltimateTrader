@@ -1,26 +1,16 @@
 #property strict
 #property version "1.00"
-#include "Include/Research/candidates/CEngulfCandA.mqh"
-#include "Include/Research/candidates/CEngulfCandB.mqh"
-#include "Include/Research/candidates/CEngulfCandC.mqh"
-#include "Include/Research/candidates/CPbcCandA.mqh"
-#include "Include/Research/candidates/CPbcCandB.mqh"
-#include "Include/Research/candidates/CPbcCandC.mqh"
+#include "Include/Research/CResearchEntryExitLab.mqh"
 int OnInit()
 {
-   CEngulfCandA_Entry ea; CEngulfCandA_Exit xa;
-   CEngulfCandB_Entry eb; CEngulfCandB_Exit xb;
-   CEngulfCandC_Entry ec; CEngulfCandC_Exit xc;
-   CPbcCandA_Entry pa; CPbcCandA_Exit pxa;
-   CPbcCandB_Entry pb; CPbcCandB_Exit pxb;
-   CPbcCandC_Entry pc; CPbcCandC_Exit pxc;
-   SResearchSignalCtx s; SResearchPosCtx p;
-   ICandidateEntry* ent[6] = {&ea,&eb,&ec,&pa,&pb,&pc};
-   ICandidateExit*  ext[6] = {&xa,&xb,&xc,&pxa,&pxb,&pxc};
-   SCandidateEntry cev; CandEntryInit(cev);
-   SResearchExitProposal exv; ExitPropInit(exv);
-   for(int i=0;i<6;i++){ cev=ent[i].EvaluateEntry(s); exv=ext[i].EvaluateExit(p);
-                         Print(ent[i].Id()," / ",ext[i].Id()); }
+   CResearchEntryExitLab lab;
+   if(!lab.Init(RM_ENG_A, RM_ENG_C)) return(INIT_FAILED);      // entry A x exit C (independent)
+   lab.UpdateBar(iTime(_Symbol,PERIOD_H1,1));
+   SCandidateEntry v = lab.EvaluateEntry("EngulfingEntry", 1, 2000.0, 5.0, 0.5,true, 0.3,true, 0.2,true, TimeCurrent());
+   lab.OnPositionOpened(12345, "EngulfingEntry", v, 0.5,true, 1995.0,true);
+   SResearchExitProposal p = lab.EvaluateExit(12345, "EngulfingEntry", 1, 2000.0, 5.0, 3, 0.4, 0.6, 0.6, -0.2, 2002.0, 0.3,true);
+   lab.OnPositionClosed(12345);
+   Print("lab ok action=",v.action," exit=",p.action);
    return(INIT_FAILED);
 }
 void OnTick(){}

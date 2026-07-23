@@ -241,6 +241,10 @@ public:
       ArrayResize(m_subs,    n - 1);
    }
 
+   // Uniform lab hooks (generic per-ticket handoff): map entry verdict -> RegisterSubtype.
+   virtual void OnOpen(long ticket, const SCandidateEntry &v) { RegisterSubtype(ticket, v.reclass_subtype); }
+   virtual void OnClose(long ticket) { Forget(ticket); }
+
    virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx)
    {
       SResearchExitProposal p;

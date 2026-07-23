@@ -78,6 +78,10 @@ class ICandidateExit
 public:
    virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx) = 0;
    virtual string                Id() const = 0;
+   // Uniform per-ticket lifecycle so the lab can hand any exit its entry-side
+   // metadata (confidence/subtype) generically. Stateful exits override; others no-op.
+   virtual void                  OnOpen(long ticket, const SCandidateEntry &entry_verdict) { }
+   virtual void                  OnClose(long ticket) { }
 };
 
 #endif

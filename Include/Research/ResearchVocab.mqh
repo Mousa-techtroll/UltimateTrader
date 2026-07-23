@@ -5,6 +5,22 @@
 #ifndef RESEARCH_VOCAB_MQH
 #define RESEARCH_VOCAB_MQH
 
+// Stable research-model IDs (entry and exit selected INDEPENDENTLY). Never renumber.
+enum ENUM_RESEARCH_MODEL
+{
+   RM_CURRENT = 0,   // no research change on this side (production admission/exit)
+   RM_ENG_A   = 1,   // CEngulfCandA  (structural-room)
+   RM_ENG_B   = 2,   // CEngulfCandB  (momentum-sequence)
+   RM_ENG_C   = 3,   // CEngulfCandC  (confidence/risk-allocation)
+   RM_PBC_A   = 4,   // CPbcCandA     (recovery proxy)
+   RM_PBC_B   = 5,   // CPbcCandB     (real pullback_recovery)
+   RM_PBC_C   = 6    // CPbcCandC     (entry-timing/subtype)
+};
+#define RESEARCH_MODEL_COUNT 7
+// which trade-family a model belongs to (0=Engulfing, 1=PBC, -1=none/current)
+inline int ResearchModelProfile(ENUM_RESEARCH_MODEL m)
+{ if(m>=RM_ENG_A && m<=RM_ENG_C) return 0; if(m>=RM_PBC_A && m<=RM_PBC_C) return 1; return -1; }
+
 // Candidate decision output — RICHER than accept/reject (owner directive).
 enum ENUM_CANDIDATE_ACTION
 {
