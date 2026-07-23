@@ -831,6 +831,7 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpEnableLogging",(InpEnableLogging?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableMACross",(InpEnableMACross?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableMomentum",(InpEnableMomentum?"true":"false"),"bool",acc);
+   CfgRow(h,"InpUseRealRSIScoring",(InpUseRealRSIScoring?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableMultiStrategy",(InpEnableMultiStrategy?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnableNewsFlat",(InpEnableNewsFlat?"true":"false"),"bool",acc);
    CfgRow(h,"InpEnablePinBar",(InpEnablePinBar?"true":"false"),"bool",acc);
@@ -1314,6 +1315,9 @@ int OnInit()
       InpSMCZoneMaxAge, InpSMCUseHTFConfluence,
       InpDealingRangeD1Lookback   // Phase 2.4: HTF D1 dealing-range lookback (ICT IPDA 20-day window)
    );
+
+   // FILT-04: wire the real closed-bar RSI source (default OFF = byte-identical baseline).
+   g_marketContext.SetRealRSISource(InpUseRealRSIScoring, InpRSIPeriod);
 
    if(!g_marketContext.Init())
    {

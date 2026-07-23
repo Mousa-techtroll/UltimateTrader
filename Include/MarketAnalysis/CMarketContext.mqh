@@ -47,6 +47,9 @@ private:
    CSMCOrderBlocks          *m_smc_order_blocks;
    CVolatilityRegimeManager *m_volatility_mgr;
    CMomentumFilter          *m_momentum_filter;
+   int                       m_rsi_handle_cb;    // FILT-04: own closed-bar H1 RSI handle (independent of CMomentumFilter)
+   bool                      m_use_real_rsi;     // FILT-04: gate - use the real closed-bar RSI (default false = byte-identical)
+   int                       m_rsi_cb_period;    // FILT-04: RSI period for the closed-bar handle
 
    //--- Configuration parameters
    int                       m_ma_fast_period;
@@ -209,6 +212,9 @@ public:
       m_smc_order_blocks  = NULL;
       m_volatility_mgr    = NULL;
       m_momentum_filter   = NULL;
+      m_rsi_handle_cb     = INVALID_HANDLE;   // FILT-04
+      m_use_real_rsi      = false;            // FILT-04: default OFF = byte-identical baseline
+      m_rsi_cb_period     = 14;               // FILT-04
 
       m_initialized       = false;
       m_last_h1_bar       = 0;
@@ -441,6 +447,7 @@ public:
       if(m_smc_order_blocks != NULL)  { delete m_smc_order_blocks;  m_smc_order_blocks = NULL; }
       if(m_volatility_mgr != NULL)    { delete m_volatility_mgr;    m_volatility_mgr = NULL; }
       if(m_momentum_filter != NULL)   { delete m_momentum_filter;   m_momentum_filter = NULL; }
+      if(m_rsi_handle_cb != INVALID_HANDLE) { IndicatorRelease(m_rsi_handle_cb); m_rsi_handle_cb = INVALID_HANDLE; }  // FILT-04
 
       if(m_handle_ma200_h1 != INVALID_HANDLE)
       {
@@ -884,11 +891,47 @@ public:
       }
    }
 
+   // FILT-04: prefer a REAL, independent, CLOSED-BAR H1 RSI (shift 1) when enabled, so
+   // scoring never rests on a hardcoded 50. Falls back to the momentum filter (when that
+   // subsystem is live), else returns a neutral sentinel whose use is guarded by
+   // IsRSIAvailable()==false so callers ABSTAIN rather than trust a fabricated value.
    virtual double GetCurrentRSI()
    {
-      if(m_momentum_filter == NULL) return 50;
-      SMomentumAnalysis analysis = m_momentum_filter.GetAnalysis();
-      return analysis.rsi_h1;
+      if(m_use_real_rsi)
+      {
+         if(m_rsi_handle_cb == INVALID_HANDLE)
+            m_rsi_handle_cb = iRSI(_Symbol, PERIOD_H1, m_rsi_cb_period, PRICE_CLOSE);
+         double buf[];
+         if(m_rsi_handle_cb != INVALID_HANDLE && CopyBuffer(m_rsi_handle_cb, 0, 1, 1, buf) == 1)
+            return buf[0];
+      }
+      if(m_momentum_filter != NULL)
+      {
+         SMomentumAnalysis analysis = m_momentum_filter.GetAnalysis();
+         return analysis.rsi_h1;
+      }
+      return 50;   // UNAVAILABLE sentinel - see IsRSIAvailable()
+   }
+
+   // TRUE only when a genuine RSI reading exists (real closed-bar handle ready, or the
+   // momentum filter is live). When FALSE, RSI-dependent scoring must abstain (FILT-04).
+   virtual bool IsRSIAvailable()
+   {
+      if(m_use_real_rsi)
+      {
+         if(m_rsi_handle_cb == INVALID_HANDLE)
+            m_rsi_handle_cb = iRSI(_Symbol, PERIOD_H1, m_rsi_cb_period, PRICE_CLOSE);
+         double buf[];
+         return (m_rsi_handle_cb != INVALID_HANDLE && CopyBuffer(m_rsi_handle_cb, 0, 1, 1, buf) == 1);
+      }
+      return (m_momentum_filter != NULL);
+   }
+
+   // FILT-04 wiring: enable the real closed-bar RSI source and set its period.
+   void SetRealRSISource(bool enable, int period)
+   {
+      m_use_real_rsi = enable;
+      if(period > 1) m_rsi_cb_period = period;
    }
 
    //--- SMC / Structure ---

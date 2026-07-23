@@ -96,6 +96,7 @@ public:
    virtual int                  GetBearScore()           { return 0; }
    virtual int                  GetBearStateAgeH4()      { return 0; }
    virtual double               GetCurrentRSI()          { return 50; }
+   virtual bool                 IsRSIAvailable()         { return false; }
 
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign)
    virtual double               GetDealingRangeHigh()    { return 0; }

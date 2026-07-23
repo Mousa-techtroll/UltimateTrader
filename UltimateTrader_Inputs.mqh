@@ -176,6 +176,7 @@ input bool   InpRRGateSymmetric = false;     // SF-1: RR-gate reward = max |TP-e
 input bool   InpEnableRewardRoom = false;    // Reward-room: reject if nearest H4 swing/PDH/PDL obstacle < min R
 input double InpMinRoomToObstacle = 2.0;     // Min room to structural obstacle (R-multiples)
 input int    InpRSIPeriod = 14;              // RSI period
+input bool   InpUseRealRSIScoring = false;   // FILT-04: feed a REAL closed-bar RSI to entry scoring (default off = frozen baseline)
 
 //--- Group 8: TRAILING STOP
 input group "══════ TRAILING STOP ══════"

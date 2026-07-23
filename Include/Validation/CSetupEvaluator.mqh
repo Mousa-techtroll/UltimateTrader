@@ -265,10 +265,14 @@ private:
       if(isLong  && (m_context.IsInBullishOrderBlock() || m_context.IsInBullishFVG()))  fam |= EVF_STRUCTURAL;
       if(isShort && (m_context.IsInBearishOrderBlock() || m_context.IsInBearishFVG()))  fam |= EVF_STRUCTURAL;
 
-      // EXHAUSTION family — directional H1 RSI extreme.
-      double rsi = m_context.GetCurrentRSI();
-      if((isLong && rsi < m_rsi_oversold) || (isShort && rsi > m_rsi_overbought))
-         fam |= EVF_EXHAUSTION;
+      // EXHAUSTION family — directional H1 RSI extreme. FILT-04: never fabricate — if no
+      // real RSI is available, ABSTAIN (do not credit) rather than trust a hardcoded 50.
+      if(m_context.IsRSIAvailable())
+      {
+         double rsi = m_context.GetCurrentRSI();
+         if((isLong && rsi < m_rsi_oversold) || (isShort && rsi > m_rsi_overbought))
+            fam |= EVF_EXHAUSTION;
+      }
 
       // SWEEP family — directional, recency-gated liquidity sweep (lows swept for a
       // long reversal, highs swept for a short reversal).

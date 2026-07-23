@@ -281,6 +281,7 @@ public:
       if(isBearRegime && signal == SIGNAL_SHORT)
       {
          double current_rsi = (m_context != NULL) ? m_context.GetCurrentRSI() : 50.0;
+         bool   rsi_avail   = (m_context != NULL) && m_context.IsRSIAvailable();   // FILT-04
          double current_adx = (m_context != NULL) ? m_context.GetADXValue() : 25.0;
 
          LogPrint(">>> BEAR REGIME OVERRIDE: Evaluating SHORT pattern...");
@@ -296,8 +297,8 @@ public:
             return false;
          }
 
-         // Safety check: avoid selling the absolute bottom
-         if(current_rsi < 15.0)
+         // Safety check: avoid selling the absolute bottom (only with a REAL RSI — FILT-04)
+         if(rsi_avail && current_rsi < 15.0)
          {
             LogPrint(">>> REJECT: RSI extremely oversold (", DoubleToString(current_rsi, 1),
                      " < 15) - likely reversal imminent");
@@ -335,11 +336,13 @@ public:
                                 ENUM_REGIME_TYPE regime, int macro_score,
                                 ENUM_SIGNAL_TYPE signal, ENUM_PATTERN_TYPE pattern_type)
    {
+      bool   rsi_avail   = (m_context != NULL) && m_context.IsRSIAvailable();   // FILT-04
       double current_rsi = (m_context != NULL) ? m_context.GetCurrentRSI() : 50.0;
       double current_adx = (m_context != NULL) ? m_context.GetADXValue() : 25.0;
 
-      bool is_extreme_overbought = (current_rsi > m_rsi_overbought);
-      bool is_extreme_oversold   = (current_rsi < m_rsi_oversold);
+      // FILT-04: RSI-extreme exceptions fire only with a genuine RSI; otherwise abstain.
+      bool is_extreme_overbought = rsi_avail && (current_rsi > m_rsi_overbought);
+      bool is_extreme_oversold   = rsi_avail && (current_rsi < m_rsi_oversold);
 
       ENUM_TREND_DIRECTION primary_trend = m_use_h4_primary ? h4 : daily;
       string primary_name = m_use_h4_primary ? "H4" : "D1";
