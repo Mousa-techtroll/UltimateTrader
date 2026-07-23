@@ -13,7 +13,10 @@ Every arm is judged vs this; the C arm must reproduce these Stats/Events md5 byt
 
 ## 1. Method — 4-arm factorial per profile
 2×2: entry-change {off,on} × exit-change {off,on} → **C** (control), **E** (entry-only), **X**
-(exit-only), **EX** (combined). Four isolated flags, all default-off, so C == the frozen baseline.
+(exit-only), **EX** (combined). Implemented as **TWO orthogonal flags per profile** — an ENTRY flag
+and an EXIT flag — both default-off (so C == the frozen baseline). C = both off · E = entry-flag on ·
+X = exit-flag on · **EX = BOTH flags on**. EX is the EXACT COMPOSITION of E and X; there is **no
+EX-specific behavior anywhere** — this guarantees I = EX−E−X+C is a clean factorial contrast, not a confound.
 
 **Factorial interaction (DIAGNOSTIC, not the sole gate):**
   I = EX − E − X + C
@@ -22,7 +25,7 @@ reported as evidence; it does NOT by itself decide adoption.
 
 **Adoption rule for the joint (EX) profile — ALL of:**
 1. **EX beats C** on ROBUST risk-adjusted performance — expectancy÷avg-loss, cross-checked by PF &
-   Sharpe — on BOTH feeds AND the locked holdout (not the development period).
+   Sharpe — on BOTH feeds AND the late-sample validation + expanding walk-forward (not the dev period).
 2. **EX outperforms OR complements the isolated arms** — EX ≥ max(E, X) on the robust objective, i.e.
    the combination adds value beyond the better single change (I≥0 supports this; a mildly negative I is
    permissible only if EX still clearly beats C and both single arms and the holdout).
@@ -35,11 +38,14 @@ Report all four arms + all comparisons on every result, including nulls.
 Full period 2019.01.01–2026.06.27, split up front:
 - **Development** 2019.01–2022.12 — the ONLY period thresholds may be selected from.
 - **Confirmation** 2023.01–2024.12 — validate the FROZEN thresholds (no re-tuning).
-- **Locked holdout** 2025.01–2026.06 — touched ONCE, at the end; contains the biggest primary year
-  (2025) → a strong out-of-sample test. Never inspected during calibration.
-- **Walk-forward** — rolling out-of-sample segments across the whole period, as additional robustness.
+- **Late-sample validation** 2025.01–2026.06 — a validation window, NOT a true holdout: prior project
+  work has already INSPECTED 2025, so it is not untouched. Contains the biggest primary year → a useful
+  stress window, but it does NOT count as clean out-of-sample.
+- **Expanding walk-forward** — anchored, expanding out-of-sample segments across the whole period.
+- **GENUINE untouched validation = EXPANDING WALK-FORWARD + FUTURE demo/live data.** No in-sample window
+  (2025 late-sample included) substitutes for forward data the model has never seen.
 - **GoldHistory = FEED-PORTABILITY test on all splits, NOT a substitute for temporal OOS.** A change
-  must survive BOTH the feed swap AND the temporal holdout; either alone is insufficient.
+  must survive BOTH the feed swap AND the temporal validation; either alone is insufficient.
 - **Small-n caveat (binding):** per-engine per-split n is tiny (Engulfing ≈60/30/35; PBC ≈20/10/10).
   Splits are DIRECTIONAL; the holdout is the primary OOS proof; PBC's splits are near-uninformative
   (hence exploratory — it earns a directional read, never a confirmatory claim).
@@ -103,7 +109,7 @@ Three separated blocks + robustness, with DIRECT (target engine) and PORTFOLIO (
 3. Select minimal thresholds from the DEVELOPMENT period only (per contract; no sweep).
 4. Implement 4 isolated flags per profile (C/E/X/EX), default-off; **direct-isolation check + C
    byte-identity gate (reproduce `03ad126b`/`ad3cbd3d`)** before any measurement.
-5. Run {C,E,X,EX} × {primary, GH} × {dev, confirm, holdout, walk-forward}; per profile
+5. Run {C,E,X,EX} × {primary, GH} × {dev, confirm, late-sample, expanding-walk-forward}; per profile
    `claude/research/wave1-<profile>/{DESIGN,RESULTS}.md` with the §6 report + interaction + decision.
 6. Engulfing (confirmatory) is the headline; PBC (exploratory) is a directional companion. Update memory
    + honest-baseline with each adopt/reject + deltas. Wave 2 only after Wave-1 evidence.

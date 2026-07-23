@@ -19,5 +19,11 @@
     "GOLDHISTORY": { "symbol": "XAUUSD_GOLDHISTORY", "model": 1, "net": 24074.29, "pf": 1.39, "sharpe": 2.93,
       "positions": 763, "stats_md5": "ad3cbd3de92da597b1a7c65b2091e913", "events_md5": "e5cdc895a76e4e95306ab8ae1bba07f2" }
   },
+  "reconciliation": {
+    "verified_against": "frozen MT5 reports rebuild_PRIMARY.htm / rebuild_GH.htm",
+    "PRIMARY_sharpe": "3.10 (VERIFIED; pre-activation was 3.16 @ 801 pos, superseded)",
+    "GOLDHISTORY_sharpe": "2.93 (VERIFIED; the stale 2.99 is the pre-activation $24,086.34/748 baseline in memory all-defect-remediation-eval, SUPERSEDED by real-RSI activation)",
+    "authoritative_note": "This manifest's activated e40fa9f values are the campaign's single source of truth; any 3.16/2.99/801/748/$33,318/$24,086 reference is pre-activation and superseded."
+  },
   "note": "Every Wave-1 arm (C/E/X/EX) is judged vs THIS. C must reproduce these Stats/Events md5 byte-for-byte."
 }

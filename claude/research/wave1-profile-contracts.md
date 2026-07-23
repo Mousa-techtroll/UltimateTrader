@@ -1,83 +1,103 @@
-# Wave-1 qualitative profile contracts — FROZEN before threshold selection
+# Wave-1 profile contracts v2 — MECHANICAL, frozen before threshold selection
 
-Rule: QUALITATIVE only (no numbers). These define the thesis + behaviors + non-goals for the two
-Wave-1 profiles. Thresholds are chosen LATER, only from the frozen current-main development-period
-data, never to fit a practitioner's number. One coherent entry thesis + one coherent exit thesis each.
+Threshold VALUES (named UPPER_CASE below) are deferred to the threshold-selection step and chosen
+from DEVELOPMENT-period distributions only (2019.01–2022.12), never P/L-optimized, never from a
+practitioner number. This document freezes the exact mechanics + which distribution sets each value.
+All reads are CLOSED-bar (shift ≥ 1); `mom_at_entry` = the momentum snapshot captured at fill.
 
-Status: **Engulfing = primary CONFIRMATORY profile. PBC = EXPLORATORY** (n≈40/feed, GH expectancy
-collapse 0.265→0.044) → one entry hyp, one exit hyp, minimal parameters only.
+Status: **Engulfing = CONFIRMATORY (conditionally approved).  PBC = EXPLORATORY, still DRAFT** until
+this recovery proxy + no-progress rule are accepted.
 
----
+Each factorial uses **TWO orthogonal flags per profile**: an ENTRY flag (E) and an EXIT flag (X).
+C = both off; E = entry-flag on; X = exit-flag on; EX = BOTH flags on (EX is the exact composition of
+E and X — no EX-specific behavior anywhere).
 
-## TREND_ENGULF (confirmatory)
+═══════════════════════════════════════════════════════════════════════
+## TREND_ENGULF  (confirmatory)
+═══════════════════════════════════════════════════════════════════════
+### Qualitative (7 elements)
+1. Entry thesis: a closed-bar bullish engulf that is genuine momentum DISPLACEMENT with structural ROOM to run.
+2. Normal adverse: shallow retest toward the engulf origin is expected/tolerated.
+3. Invalidation: closed break of the engulf ORIGIN (structure, never one candle).
+4. No-progress: release only the never-worked tail; never the ~1R give-back cohort.
+5. Momentum inputs: `CMomentumSnapshotter` impulse/trend (entry) + deceleration/exhaustion (exit), real-RSI active, availability-gated.
+6. Profit intent: let the momentum-confirmed thrust RUN; no fixed TP; pool-anchored partial only if a real level sits near.
+7. Non-goals: no fixed TP / BE-fast / 1R-tightening / single-candle invalidation / pattern-geometry re-tuning; touches no other engine.
 
-**1. Entry thesis.** A closed-bar bullish engulfing that is a genuine momentum DISPLACEMENT (a
-sustaining thrust), not a one-off candle, occurring in an up-context with structural ROOM to run to
-the next liquidity/swing. The edge is momentum-confirmed continuation, and the entry hypothesis
-separates the sustaining thrust from the fragile one-off by (i) closed-bar momentum confirmation and
-(ii) clearance to the next obstacle.
+### MECHANICAL — signal origin
+`ORIGIN := Low[b_eng]`, where `b_eng` is the closed engulfing bar (the low of the bullish engulfing candle). Frozen at fill on `SPosition`.
 
-**2. Normal adverse behavior.** A shallow retest of the engulf zone / origin FVG is EXPECTED and
-tolerated (displacement typically retraces toward its origin before continuing). Adverse wander that
-stays above the engulfing origin is normal and must not trigger action.
+### MECHANICAL — opposing-level priority (defines the "room" target `L_OPP`, nearest ABOVE entry)
+Priority, highest first; take the NEAREST level of the highest-priority class present within `ROOM_MAX_ATR`×ATR:
+1. Nearest UNSWEPT swing-high above entry (external liquidity) — from the existing swing detector.
+2. Prior-Day High (PDH).
+3. Nearest round-number grid level above (·00 then ·50).
+If none within `ROOM_MAX_ATR`×ATR ⇒ treat room as unbounded (room check passes).
 
-**3. Invalidation.** A CLOSED-bar break below the ENGULFING ORIGIN / order-block swing — a STRUCTURE,
-never a single candle (this respects the documented candle-fragility). When the origin is lost on a
-close, the displacement thesis is dead → exit.
+### MECHANICAL — structural room (entry gate component)
+`ROOM_R := (L_OPP − entry_price) / risk_distance`.  Room passes iff `ROOM_R ≥ ROOM_MIN_R`.
+`ROOM_MIN_R` ← development-period distribution of ROOM_R on engulf WINNERS (set to a low percentile so
+only room-starved setups are rejected; value deferred).
 
-**4. No-progress behavior.** If the thrust never follows through (never reaches meaningful MFE within
-the horizon — the weak-entry cohort), release. It NEVER cuts a trade that reached the ~1R give-back
-zone (that cohort is measured-inseparable from winners). No-progress fires only on the never-worked tail.
+### MECHANICAL — ENTRY flag E (quality gating only; does NOT redefine the engulf pattern)
+Admit the engulf signal iff ALL hold on the closed signal bar:
+  (i) `impulse[1] ≥ IMP_MIN`  AND  (ii) `trend_align[1] ≥ 0`  (closed-bar momentum confirmation), AND
+  (iii) `ROOM_R ≥ ROOM_MIN_R`  (structural room).
+`IMP_MIN` ← dev-period impulse distribution on engulf winners vs losers (separates sustaining thrust from one-off). Flag OFF ⇒ current admission unchanged.
 
-**5. Momentum inputs.** The closed-bar `CMomentumSnapshotter` (real-RSI/FILT-04 active): ENTRY uses
-impulse + trend-alignment to gate the sustaining thrust; EXIT uses deceleration + rising exhaustion to
-release the fragile cohort on momentum decay (momentum-gated, never fixed-R). Availability-gated —
-abstain, never fabricate.
+### MECHANICAL — EXIT flag X (conjunctive: BOTH conditions required)
+Propose `CLOSE_ALL` at a closed bar iff BOTH:
+  (A) STRUCTURAL INVALIDATION: `Close[1] < ORIGIN`  (closed H1 close below the signal origin), AND
+  (B) DETERIORATION-FROM-ENTRY: `impulse[1] − mom_at_entry.impulse ≤ −DECAY_MIN`  (momentum decayed
+      RELATIVE TO ENTRY, not merely low in absolute terms).
+`DECAY_MIN` ← dev-period distribution of `impulse[exit] − impulse[entry]` on engulf trades that ultimately
+failed vs. those that ran (value deferred). Neither condition alone exits (conservative → will not clip a
+valid deep-pullback runner). The runner otherwise rides the existing chandelier unchanged.
 
-**6. Profit-management intent.** LET THE MOMENTUM-CONFIRMED THRUST RUN. No fixed TP. Structure/wide
-trail while momentum sustains; a partial only if a real opposing liquidity pool sits near the trade
-(pool-anchored, not R-anchored), otherwise a full runner — the tail is the edge.
+═══════════════════════════════════════════════════════════════════════
+## TREND_PBC  (exploratory — DRAFT pending approval of the two definitions below)
+═══════════════════════════════════════════════════════════════════════
+### Qualitative (7 elements)
+1. Entry thesis: a pullback in an established trend that RECOVERS with momentum (not a failing dip).
+2. Normal adverse: deep pullback wander is inherent while the parent structure holds.
+3. Invalidation: closed break of the PARENT trend's swing (not the entry bar).
+4. No-progress: cut only the non-continuation (live rule below).
+5. Momentum inputs: recovery proxy (below) + momentum-health for trail.
+6. Profit intent: run to the parent trend's next external swing; no fixed TP.
+7. Non-goals: minimal parameters; not a breakout; a null is informative, not generalizable.
 
-**7. Non-goals.** No fixed TP; no faster cut / break-even-fast; no trail-tightening at the 1R zone; no
-single-candle invalidation; NOT a fade (this is continuation, not counter-trend); NOT a re-tuning of
-the engulfing pattern geometry (entry change is QUALITY GATING only, not pattern redefinition); does
-not touch any other engine.
+### MECHANICAL — recovery feature (NAMED PROXY, since `pullback_recovery` is P2/unimplemented)
+`PBC_RECOVERY_PROXY_V1` (closed-bar, boolean). TRUE iff ALL hold on the closed bar:
+  (i) `pullback_depth ∈ [DEPTH_LO, DEPTH_HI]` where `pullback_depth := (parent_high − pullback_low) /
+      (parent_high − parent_leg_origin)` (retracement fraction of the parent up-leg into a discount), AND
+  (ii) `Close[1] > ema_fast[1]`  (price has closed back above the fast EMA — recovered off the pullback low), AND
+  (iii) `impulse[1] ≥ IMP_MIN_PBC`  (closed-bar impulse has RESUMED).
+`DEPTH_LO/DEPTH_HI` (discount band) + `IMP_MIN_PBC` ← dev-period distribution on PBC winners. Explicitly a
+NAMED PROXY for the unbuilt `pullback_recovery` feature; the real feature may replace it verbatim later.
 
----
+### MECHANICAL — ENTRY flag E
+Admit the PBC signal iff `PBC_RECOVERY_PROXY_V1 == TRUE`. Flag OFF ⇒ current admission unchanged.
 
-## TREND_PBC (exploratory)
+### MECHANICAL — parent-structure (invalidation anchor)
+`PARENT_SWING_LOW := ` the swing low that began the pullback (the pullback's origin / OTE swing-low), from
+the existing swing detector; frozen at fill on `SPosition`.
 
-**1. Entry thesis.** A pullback within an established trend that RECOVERS with momentum — depth into a
-discount/OTE-like zone followed by resuming impulse — i.e. a resolved dip continuing a proven trend,
-not a shallow or failing pullback. The entry hypothesis is a single "pullback/recovery quality" gate.
+### MECHANICAL — EXIT flag X
+Propose `CLOSE_ALL` at a closed bar iff EITHER:
+  (A) PARENT-STRUCTURE INVALIDATION: `Close[1] < PARENT_SWING_LOW`, OR
+  (B) LIVE NO-PROGRESS (replaces retrospective "never reaches 0.5R"): ALL of —
+        `bars_since_entry ≥ H`  (elapsed CLOSED bars), AND
+        `peak_R < 0.5`          (running peak R never reached 0.5R), AND
+        `PBC_RECOVERY_PROXY_V1 == FALSE`  (recovery still absent).
+All three are computable LIVE per bar (`bars_since_entry`, running `peak_R`, the proxy).
+**Horizon `H` selection (NOT P/L-optimized):** `H := ceil( P90( dev-period PBC WINNERS' bars-to-first-0.5R-MFE ) )`
+— the 90th percentile of how long eventual winners took to first reach 0.5R MFE. A trade slower than that,
+with no 0.5R peak and no recovery, is behaving unlike the winners ⇒ cut. Value selected in the
+threshold-selection step from the dev distribution only.
 
-**2. Normal adverse behavior.** Deep pullback wander is INHERENT to the thesis (pullbacks are supposed
-to resolve upward). Generous adverse tolerance is normal WHILE the parent trend structure holds; do
-not react to routine give-back inside the pullback.
-
-**3. Invalidation.** A CLOSED break of the PARENT trend's swing (the pullback's origin / OTE swing-low),
-NOT the entry bar. When the parent structure is lost, the continuation thesis is dead → exit.
-
-**4. No-progress behavior.** If the continuation never resumes (never reaches meaningful MFE after the
-horizon — the dip did not actually continue), release. Only the never-resumes/dead cohort; never a
-give-back winner.
-
-**5. Momentum inputs.** Pullback/recovery quality = pullback depth + resuming impulse (the
-`pullback_recovery` snapshot feature is P2/unimplemented → proxied by impulse-resumption + depth, and
-marked as a proxy). Exit uses momentum-health for the trail decision and no-progress for the stall cut.
-
-**6. Profit-management intent.** Let the continuation run to the parent trend's next external swing. No
-fixed TP; structure/wide trail. (Best-PF-on-primary engine, but GH-fragile — so profit intent is "run
-the tail" while the invalidation/no-progress cull the non-continuations.)
-
-**7. Non-goals.** No fixed TP; no cut at the 1R zone; no entry pattern-geometry re-tuning; NOT a breakout
-(this is pullback continuation); MINIMAL parameters (exploratory — one entry hyp, one exit hyp, nothing
-more); does not touch any other engine. Exploratory status: a negative result is informative, not
-grounds to generalize about the trend family.
-
----
-
-## Freeze
-Both contracts FROZEN as of the frozen control baseline (manifest `IDENTITY-MANIFEST.json`). Threshold
-selection (development period only) may begin ONLY after these are reviewed/accepted. Any threshold
-that would violate a contract's non-goals is out of bounds.
+═══════════════════════════════════════════════════════════════════════
+## Deferred threshold registry (set ONLY from dev-period distributions, later)
+- Engulfing: `ROOM_MIN_R`, `ROOM_MAX_ATR`, `IMP_MIN`, `DECAY_MIN`.
+- PBC: `DEPTH_LO`, `DEPTH_HI`, `IMP_MIN_PBC`, `H`.
+Each cites its source distribution above. None chosen by sweep or by P/L. Any value that would violate a
+non-goal is out of bounds. Contracts FROZEN vs manifest `IDENTITY-MANIFEST.json`.
