@@ -656,116 +656,13 @@ private:
 
       bool isBuy = (action == "BUY" || action == "buy");
 
-      // Fallback: if no stop loss set or invalid, create a default based on market
+      // FILT-04: never fabricate a stop. If the caller provides no valid SL, REJECT
+      // (the caller fails-closed on a 0 return) rather than inventing one from a % of price.
       if(stopLoss <= 0 || MathAbs(entryPrice - stopLoss) < 0.00001)
       {
-         if(m_useAdaptiveParams && m_marketAnalyzer != NULL)
-         {
-            // Get market state for this symbol
-            MarketState market = m_marketAnalyzer.GetMarketState(symbol);
-
-            // Check if we got valid market data
-            if(market.condition == MARKET_CONDITION_UNKNOWN || market.atrValue <= 0)
-            {
-               Log.Warning("Failed to get valid market data for " + symbol +
-                              ", using fallback stop loss");
-
-               // FILT-04 / DEAD-ON-PROD (fabricated-values plan item 13): this whole
-               // m_useAdaptiveParams branch is unreachable on the shipping config —
-               // the live executor is built WITHOUT a CMarketCondition, so
-               // m_useAdaptiveParams is false and control takes the else branch below.
-               // The 0.01/0.005 percentage-of-price stop is a LATENT fabrication: if
-               // the analyzer is ever wired it would size the stop off a magic % of
-               // price. Left as-is (byte-identical); document, do not "fix", until wired.
-               // Simple fallback - fixed percentage of price
-               double stopPercent = 0.01; // 1% by default
-
-               if(StringFind(symbol, "XAU") >= 0 || StringFind(symbol, "GOLD") >= 0)
-                  stopPercent = 0.005; // 0.5% for gold
-
-               if(isBuy)
-                  stopLoss = entryPrice * (1.0 - stopPercent);
-               else
-                  stopLoss = entryPrice * (1.0 + stopPercent);
-            }
-            else
-            {
-               // Use current ATR to set a reasonable stop loss
-               double atrMultiplier = m_marketAnalyzer.GetAdaptiveATRMultiplier(symbol);
-
-               // Convert to points/pips
-               double stopDistance = market.atrValue * atrMultiplier;
-
-               if(isBuy)
-                  stopLoss = entryPrice - stopDistance;
-               else
-                  stopLoss = entryPrice + stopDistance;
-
-               Log.Info("Created adaptive stop loss for " + symbol + " at " +
-                            DoubleToString(stopLoss, 5) + " using ATR: " +
-                            DoubleToString(market.atrValue, 5) + " x " +
-                            DoubleToString(atrMultiplier, 2));
-            }
-         }
-         else
-         {
-            // Simple fallback - fixed percentage of price
-            double stopPercent = 0.01; // 1% by default for most instruments
-
-            // Enhanced gold stop calculation based on recent volatility
-            if(StringFind(symbol, "XAU") >= 0 || StringFind(symbol, "GOLD") >= 0 ||
-               StringFind(symbol, "XAUUSD") >= 0)
-            {
-               // More adaptive gold SL calculation based on current price
-               double currentPrice = isBuy ?
-                  SymbolInfoDouble(symbol, SYMBOL_ASK) :
-                  SymbolInfoDouble(symbol, SYMBOL_BID);
-
-               // If price is available, use it; otherwise fallback to entry price
-               if(currentPrice <= 0)
-                  currentPrice = entryPrice;
-
-               // Calculate recent daily range using current market data
-               double dayHigh = iHigh(symbol, PERIOD_D1, 0); // High of current day
-               double dayLow = iLow(symbol, PERIOD_D1, 0);   // Low of current day
-               double dayRange = 0;
-
-               if(dayHigh > 0 && dayLow > 0 && dayHigh > dayLow)
-                  dayRange = (dayHigh - dayLow) / currentPrice; // as percentage
-
-               if(dayRange > 0)
-               {
-                  // Use actual daily range with a multiplier (aim for ~50% of day range)
-                  stopPercent = dayRange * 0.5;
-                  Log.Info("Using gold daily range for SL: " +
-                               DoubleToString(dayRange * 100, 2) + "% range → " +
-                               DoubleToString(stopPercent * 100, 2) + "% stop");
-               }
-               else
-               {
-                  // Adapt stop based on gold price - higher price means relatively lower % stop
-                  if(currentPrice > 2000)
-                     stopPercent = 0.004; // 0.4% for high gold prices
-                  else if(currentPrice > 1500)
-                     stopPercent = 0.005; // 0.5% for medium gold prices
-                  else
-                     stopPercent = 0.006; // 0.6% for lower gold prices
-
-                  Log.Info("Using price-adaptive gold SL: " +
-                               DoubleToString(stopPercent * 100, 2) + "% at price " +
-                               DoubleToString(currentPrice, 2));
-               }
-            }
-
-            if(isBuy)
-               stopLoss = entryPrice * (1.0 - stopPercent);
-            else
-               stopLoss = entryPrice * (1.0 + stopPercent);
-
-            Log.Warning("Using fallback stop loss for " + symbol + " at " +
-                           DoubleToString(stopLoss, 5) + " (" +
-                           DoubleToString(stopPercent * 100, 2) + "% of price)");
-         }
+         Log.Error("GetSafeSL: no valid stop loss provided for " + symbol +
+                   " (SL=" + DoubleToString(stopLoss, 5) + ") - rejecting; will not fabricate");
+         return 0;
       }
 
       // Ensure SL meets minimum distance requirements
@@ -835,86 +732,10 @@ private:
       if((useTP2 || useTP3) && takeProfit > 0)
          return NormalizePrice(takeProfit, symbol);
 
-      // No valid TP provided, create one based on R:R ratio
-      double riskRewardRatio = 1.5; // Default R:R
-
-      if(m_useAdaptiveParams && m_marketAnalyzer != NULL)
-      {
-         // Get market state with validation
-         MarketState market = m_marketAnalyzer.GetMarketState(symbol);
-
-         if(market.condition != MARKET_CONDITION_UNKNOWN)
-         {
-            // Adjust R:R based on market conditions
-            switch(market.condition)
-            {
-               case MARKET_CONDITION_TRENDING: riskRewardRatio = 2.0; break;
-               case MARKET_CONDITION_RANGING:  riskRewardRatio = 1.3; break;
-               case MARKET_CONDITION_VOLATILE: riskRewardRatio = 1.7; break;
-               case MARKET_CONDITION_BREAKOUT: riskRewardRatio = 2.5; break;
-               case MARKET_CONDITION_QUIET:    riskRewardRatio = 1.5; break;
-               default: riskRewardRatio = 1.5; break;
-            }
-
-            Log.Info("Using adaptive R:R for " + symbol + ": " +
-                         DoubleToString(riskRewardRatio, 1) + " based on " +
-                         EnumToString(market.condition) + " conditions");
-         }
-         else
-         {
-            Log.Warning("Failed to get market condition for " + symbol +
-                           ", using default R:R: " + DoubleToString(riskRewardRatio, 1));
-         }
-      }
-
-      // Calculate based on risk amount
-      double riskAmount = MathAbs(entryPrice - stopLoss);
-      double tpDistance = riskAmount * riskRewardRatio;
-
-      if(isBuy)
-         takeProfit = entryPrice + tpDistance;
-      else
-         takeProfit = entryPrice - tpDistance;
-
-      // Ensure TP meets minimum distance
-      double minStopLevel = SymbolInfoInteger(symbol, SYMBOL_TRADE_STOPS_LEVEL) *
-                           SymbolInfoDouble(symbol, SYMBOL_POINT);
-
-      if(minStopLevel > 0)
-      {
-         // Add 10% margin to the minimum for safety
-         minStopLevel *= 1.1;
-
-         double currentPrice = isBuy ?
-                               SymbolInfoDouble(symbol, SYMBOL_ASK) :
-                               SymbolInfoDouble(symbol, SYMBOL_BID);
-
-         if(currentPrice <= 0)
-         {
-            Log.Error("Invalid market price for " + symbol);
-            return 0;
-         }
-
-         // Adjust TP if too close
-         if(isBuy && takeProfit < currentPrice + minStopLevel)
-         {
-            double oldTP = takeProfit;
-            takeProfit = currentPrice + minStopLevel;
-            Log.Warning("Adjusted BUY take profit to meet minimum distance: " +
-                           DoubleToString(oldTP, 5) + " -> " +
-                           DoubleToString(takeProfit, 5));
-         }
-         else if(!isBuy && takeProfit > currentPrice - minStopLevel)
-         {
-            double oldTP = takeProfit;
-            takeProfit = currentPrice - minStopLevel;
-            Log.Warning("Adjusted SELL take profit to meet minimum distance: " +
-                           DoubleToString(oldTP, 5) + " -> " +
-                           DoubleToString(takeProfit, 5));
-         }
-      }
-
-      return NormalizePrice(takeProfit, symbol);
+      // FILT-04: never fabricate a target. If no valid TP was provided, REJECT (the caller
+      // fails-closed on a 0 return) rather than inventing one from a hardcoded R:R ratio.
+      Log.Error("GetSafeTP: no valid take profit provided for " + symbol + " - rejecting; will not fabricate");
+      return 0;
    }
 
    //+------------------------------------------------------------------+
