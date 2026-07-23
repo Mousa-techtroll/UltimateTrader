@@ -189,7 +189,7 @@
     <span class="pill">Static edge grading · no new backtests</span>
     <span class="pill">19 audit units · 2 agent tracks</span>
     <span class="pill ok">Compile: 0 errors · 16 warnings</span>
-    <span class="pill warn">0 CRITICAL · 7 HIGH</span>
+    <span class="pill warn">0 CRITICAL · 5 HIGH open · 2 resolved</span>
   </div>
 </div></header>
 
@@ -211,13 +211,13 @@
     </div>
     <div class="vrow">
       <div class="lab">Risk</div>
-      <p>The risk machine is net-conservative and intact where it matters — correct fixed-fractional sizing, an EC-v3 graded drawdown reducer, a 3% daily halt, a 5% portfolio cap, and per-position stops — but a broad band of <em>adaptive</em> protection is silently asleep (uninitialized risk plugin, dead exit plugins, an unreachable B tier, RSI frozen at 50, a vol-inflating ATR mismatch that only ever shaves size). The EA under-risks rather than over-risks.</p>
+      <p>The risk machine is net-conservative and intact where it matters — correct fixed-fractional sizing, an EC-v3 graded drawdown reducer, a 3% daily halt, a 5% portfolio cap, and per-position stops — but a broad band of <em>adaptive</em> protection is silently asleep (uninitialized risk plugin, dead exit plugins, an unreachable B tier, RSI frozen at 50, a vol-inflating ATR mismatch that only ever shaves size — CTX-10, since resolved). The EA under-risks rather than over-risks.</p>
     </div>
   </div>
 
   <div class="stats">
     <div class="stat"><div class="n good">0</div><div class="l">CRITICAL defects (wrong-direction / capital-loss / crash)</div></div>
-    <div class="stat"><div class="n high">7</div><div class="l">HIGH findings — but none with realized materiality&nbsp;3</div></div>
+    <div class="stat"><div class="n high">5<span style="font-size:18px;color:var(--muted)"> +2 fixed</span></div><div class="l">HIGH findings open — 2 resolved 2026-07-23 (CTX-10, EXE-01); none with realized materiality&nbsp;3</div></div>
     <div class="stat"><div class="n bronze">1<span style="font-size:18px;color:var(--muted)"> / 12</span></div><div class="l">Strategies clearing the positive-edge gate</div></div>
     <div class="stat"><div class="n">~10</div><div class="l">Advertised subsystems inert or dead on prod</div></div>
     <div class="stat"><div class="n good">16</div><div class="l">Compile warnings — exactly baseline, all cosmetic</div></div>
@@ -492,7 +492,7 @@
     <table>
       <thead><tr><th>Dimension</th><th>Verdict</th></tr></thead>
       <tbody>
-        <tr><td><strong>Risk / sizing</strong></td><td>Core fixed-fractional lot math is dimensionally correct in both plugin and fallback paths; div-by-zero guarded on every axis. But the <em>adaptive</em> layer is largely inert, the vol ratio is mis-unit'd (CTX-10), the 2% cap binds only on the strongest TRENDING A+ setups, and RSI-blind tiering deflates risk %.</td></tr>
+        <tr><td><strong>Risk / sizing</strong></td><td>Core fixed-fractional lot math is dimensionally correct in both plugin and fallback paths; div-by-zero guarded on every axis. But the <em>adaptive</em> layer is largely inert, the vol ratio is mis-unit'd (CTX-10, since resolved), the 2% cap binds only on the strongest TRENDING A+ setups, and RSI-blind tiering deflates risk %.</td></tr>
         <tr><td><strong>Exits / trailing</strong></td><td>Trailing is clean (only Chandelier live, closed-bar discipline, double ratchet, STOPS_LEVEL clamp). Exit plugins are a no-op (RXT-02) → operative exits are SL, the TP ladder, the Chandelier trail, and the weekend-native closer only.</td></tr>
         <tr><td><strong>Filter stack</strong></td><td>The "~8 gates" are mostly no-ops on prod. The gates that actually bind: the point-threshold quality tier, the direction-blind ADX/ATR confidence gate, the long-for-longs validator, and the registered plugin set being long-only.</td></tr>
         <tr><td><strong>Look-ahead</strong></td><td>The signal path is new-bar-gated and <code>CMarketContext::Update()</code> self-gates once per H1 bar, so component forming-bar reads are bar-open snapshots, not intrabar repaint. No CRITICAL/HIGH future-data leak in the discrete-entry path; the one repaint-instability (ENG-02) sits on a zero-firing mode.</td></tr>
@@ -525,10 +525,10 @@
   <p class="eyebrow">Evaluation only — not executed</p>
   <h2>Prioritized recommendations</h2>
   <ol class="recs">
-    <li><h3>Decide the exit-plugin layer (RXT-02)</h3><p>Either initialize the four exit plugins — restoring the structure-aware regime exit, daily-loss position-close, and 72h max-age — or formally delete them and document that exits = SL / TP-ladder / Chandelier / weekend-native.</p><span class="kill"><b>Kill-criterion:</b> a backtest with the regime-aware exit live must not degrade PF vs. current; if it does, the no-op was accidentally beneficial and should be made explicit.</span></li>
-    <li><h3>Fix the ATR vol-ratio units (CTX-10)</h3><p>Make <code>GetATRCurrent</code> and <code>GetATRAverage</code> the same timeframe, then re-confirm the EC-v3 multiplier.</p><span class="kill"><b>Falsifiable:</b> the realized vol-ratio distribution should center near 1.0 in normal regimes (today it reads systematically high).</span></li>
+    <li><h3>Decide the exit-plugin layer (RXT-02) <span class="chip c-dead">Exit engine since built · dormant</span></h3><p>Either initialize the four exit plugins — restoring the structure-aware regime exit, daily-loss position-close, and 72h max-age — or formally delete them and document that exits = SL / TP-ladder / Chandelier / weekend-native.</p><span class="kill"><b>Kill-criterion:</b> a backtest with the regime-aware exit live must not degrade PF vs. current; if it does, the no-op was accidentally beneficial and should be made explicit.</span></li>
+    <li><h3>Fix the ATR vol-ratio units (CTX-10) <span class="chip c-good">Resolved 2026-07-23</span></h3><p>Make <code>GetATRCurrent</code> and <code>GetATRAverage</code> the same timeframe, then re-confirm the EC-v3 multiplier.</p><span class="kill"><b>Falsifiable:</b> the realized vol-ratio distribution should center near 1.0 in normal regimes (today it reads systematically high).</span></li>
     <li><h3>Adjudicate and, if real, fix the Displacement W1/D1 gate (ENG-01/02)</h3><p>A one-line shift (<code>0→1</code>) per read removes the repaint-instability; only then can the Displacement mode be fairly graded in an isolation test.</p></li>
-    <li><h3>Resolve RSI sourcing (FILT-04)</h3><p>Either add an RSI handle independent of the disabled momentum filter, or remove the RSI-dependent tier bonus and validator exceptions so tiers are not silently deflated.</p></li>
+    <li><h3>Resolve RSI sourcing (FILT-04) <span class="chip c-dead">Momentum feature since built · dormant</span></h3><p>Either add an RSI handle independent of the disabled momentum filter, or remove the RSI-dependent tier bonus and validator exceptions so tiers are not silently deflated.</p></li>
     <li><h3>Re-state the EA honestly</h3><p>Bring the advertised strategy count and feature list in line with the operative reality — one long cluster plus one conditional short, and the inert-feature inventory above. The tie-break (PORT-02) should also be re-examined, since it currently favors the lowest-expectancy trigger.</p></li>
     <li><h3>Lower priority</h3><p>EXE-01 netting bind, DET-01 spread-median trim, NUM-03 STOPS_LEVEL check, the exposure-cap denominator (ORC-02), and dead-input / dead-file cleanup.</p></li>
   </ol>
@@ -552,7 +552,7 @@
 
 <footer><div class="col">
   <div><b>UltimateTrader — Clean-Room Evaluation.</b> Independent, source-only · static edge grading · no new backtests.</div>
-  <div>0 CRITICAL · 7 HIGH · 1 / 12 credited edge · compile 0E / 16W.</div>
+  <div>0 CRITICAL · 5 HIGH open (2 resolved 2026-07-23) · 1 / 12 credited edge · compile 0E / 16W.</div>
 </div></footer>
 
 </div>
