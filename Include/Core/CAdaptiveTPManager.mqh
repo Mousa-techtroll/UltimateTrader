@@ -209,7 +209,9 @@ public:
 
       double current_atr = GetCurrentATR();
       double current_adx = GetCurrentADX();
-      double atr_ratio = (m_atr_average > 0) ? current_atr / m_atr_average : 1.0;
+      // FILT-04 class: when ATR is unavailable, abstain to NORMAL vol (ratio 1.0) rather
+      // than let a fabricated 0.0 force the LowVol (tightest-TP) branch.
+      double atr_ratio = (current_atr >= 0.0 && m_atr_average > 0) ? current_atr / m_atr_average : 1.0;
 
       LogPrint("AdaptiveTP Analysis:");
       LogPrint("  ATR: ", DoubleToString(current_atr, 2), " | ATR Avg: ", DoubleToString(m_atr_average, 2),
@@ -382,7 +384,7 @@ public:
    {
       double atr_buffer[];
       ArraySetAsSeries(atr_buffer, true);
-      if(CopyBuffer(m_handle_atr_h1, 0, 0, 1, atr_buffer) <= 0) return 0.0;
+      if(CopyBuffer(m_handle_atr_h1, 0, 0, 1, atr_buffer) <= 0) return -1.0;  // UNAVAILABLE sentinel (never fabricate 0.0 -> forced LowVol)
       return atr_buffer[0];
    }
 
