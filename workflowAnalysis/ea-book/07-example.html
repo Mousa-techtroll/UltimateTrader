@@ -58,7 +58,7 @@
           <div class="step"><div class="sn"></div><div><h4>Stop &amp; reward are set.</h4><p>The stop goes just below the pattern low, about $2,395.50 — a stop <em>distance</em> of roughly $4.50. The laddered targets clear the "reward ≥ 1.3× risk" check.</p><span class="tf">R-geometry</span></div></div>
           <div class="step"><div class="sn"></div><div><h4>Size is worked backwards.</h4><p>It risks about 1% — say $100. With a $4.50 stop, that's roughly $100 ÷ $4.50 ≈ 22 ounces (about 0.22 of a lot), rounded down to the broker's step. <em>(Chapter 5.)</em></p><span class="tf">Pure arithmetic</span></div></div>
           <div class="step"><div class="sn"></div><div><h4>The order goes in.</h4><p>The bot re-checks the live price and spread one final time, then places the buy.</p><span class="tf">Live execution</span></div></div>
-          <div class="step"><div class="sn"></div><div><h4>It manages to the exit.</h4><p>A 15% nibble at +0.7R; the stop slides to break-even at +0.8R; 40% banked at +1.3R, 30% at +1.8R; the runner rides the trailing stop until price taps it — or a housekeeping exit fires first. <em>(Chapter 6.)</em></p><span class="tf">Continuous management</span></div></div>
+          <div class="step"><div class="sn"></div><div><h4>It manages to the exit.</h4><p>A 15% nibble at +0.7R; the chandelier trailing stop climbs up through break-even on its own as the trade advances (there's no separate "jump to break-even"); 40% banked at +1.3R, 30% at +1.8R; the runner rides that trailing stop until price taps it — or the Friday weekend close flattens it first. <em>(Chapter 6.)</em></p><span class="tf">Continuous management</span></div></div>
         </div>
         <div class="callout" style="margin-top:26px">
           <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
@@ -91,8 +91,8 @@
               <tr><td>Take-profit ladder</td><td>R-multiples</td><td>0.7R / 1.3R / 1.8R, not clock time</td></tr>
               <tr><td>Break-even &amp; nibble</td><td>R-multiples</td><td>Flagged "safe" ≈ +0.8R; no active BE jump</td></tr>
               <tr><td>Trailing stop</td><td><span class="tfx">H1</span></td><td>Recent high minus a volatility cushion</td></tr>
-              <tr><td>Regime-aware exit</td><td><span class="tfx">H1</span></td><td>Hourly close through a key average</td></tr>
-              <tr><td>Time / weekend exits</td><td>clock</td><td>Older than ~72 hours; late Friday</td></tr>
+              <tr><td>Range stall-out (S3, S6)</td><td><span class="tfx">M15</span></td><td>Cut a stalled range trade after ~5–8 bars</td></tr>
+              <tr><td>Weekend close</td><td>clock</td><td>Flatten everything late Friday</td></tr>
               <tr><td>Daily-loss halt</td><td>account</td><td>Equity down ~3% on the day</td></tr>
               <tr><td>Friday no-open rule</td><td>clock</td><td>No new trades opened on Fridays</td></tr>
             </tbody>
@@ -123,7 +123,7 @@
             <div class="gterm"><dt>Drawdown</dt><dd>How far the account has fallen from its recent peak. The bot brakes its risk as drawdown grows.</dd></div>
             <div class="gterm"><dt>Liquidity / stop-hunt</dt><dd>Liquidity is how easily you can trade without moving price. A "stop-hunt" is a poke past a level to trigger others' stops before reversing.</dd></div>
             <div class="gterm"><dt>Death cross</dt><dd>When a shorter average (50-day) falls below a longer one (200-day) — a classic confirmed-downtrend signal.</dd></div>
-            <div class="gterm"><dt>Smart-money (SMC)</dt><dd>Reading the chart around where large institutional orders likely sit — order blocks, gaps, sweeps. Used here mainly as a quality check.</dd></div>
+            <div class="gterm"><dt>Smart-money (SMC)</dt><dd>Reading the chart around where large institutional orders likely sit — order blocks, gaps, sweeps. In the shipped build this SMC check is inert — a dead no-op that never rejects a trade (kept for context only).</dd></div>
             <div class="gterm"><dt>Weekend gap</dt><dd>The jump between Friday's close and Sunday's reopen; the bot flattens on Friday to avoid it.</dd></div>
           </dl>
         </div>

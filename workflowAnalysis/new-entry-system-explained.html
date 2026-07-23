@@ -1,5 +1,5 @@
 <title>UltimateTrader — The Multi-Strategy Entry System, Explained</title>
-<meta name="description" content="How the redesigned UltimateTrader entry system works: a regime router driving four major strategy engines over one shared confluence substrate, plus the graveyard re-judgment.">
+<meta name="description" content="A proposed redesign of the UltimateTrader entry system (off-by-default scaffold InpEnableMultiStrategy=false, never constructed — not the live path): a regime router driving four major strategy engines over one shared confluence substrate, plus the graveyard re-judgment.">
 <style>
   :root{
     --ink:#16140f;
@@ -143,7 +143,7 @@
 <header class="hero">
   <span class="kicker"><span class="dot"></span>System Design — Illustrated</span>
   <h1>One substrate, four strategies, a regime that chooses.</h1>
-  <p class="dek">How the redesigned UltimateTrader entry system works: a regime router that activates and weights four distinct major-strategy engines — Trend-Continuation, Reversal, Range, Expansion — all sharing one top-down confluence substrate and one <code>IMarketContext</code>. Built to be read by a trader and a developer alike.</p>
+  <p class="dek">A <strong>proposed</strong> redesign of the UltimateTrader entry system — an off-by-default scaffold, not the live entry path: a regime router that would activate and weight four distinct major-strategy engines — Trend-Continuation, Reversal, Range, Expansion — all sharing one top-down confluence substrate and one <code>IMarketContext</code>. Built to be read by a trader and a developer alike.</p>
   <div class="meta-row">
     <span><b>Instrument</b> XAUUSD+ · 1 pt = 0.01 · $1 = 100 pts</span>
     <span><b>Primary TF</b> H1</span>
@@ -161,6 +161,12 @@
     <a href="#build">Plugin mapping</a>
   </nav>
 </header>
+
+<div class="callout warn" style="margin-top:34px">
+  <span class="tag">Status — proposed design, not the live entry path · updated 2026-07-23</span>
+  <p><strong>This document describes a PROPOSED multi-strategy redesign — not how the EA currently trades.</strong> The four engines below (Trend-Continuation, Reversal/Sweep, Range/Mean-Reversion, Breakout/Expansion), the regime router and the shared scorer exist in the codebase only as an <strong>off-by-default scaffold</strong> (<code>InpEnableMultiStrategy=false</code>) that is <strong>never constructed in production</strong>. As of <strong>2026-07-23</strong> it remains dormant.</p>
+  <p>The <strong>live</strong> entry path is the classic plugin set — <strong>Pin Bar, Crash "Rubber-Band", Engulfing, MA-Cross, Pullback-Continuation, Expansion / IC-Breakout, the Session-breakout composed inside <code>CExpansionEngine</code>, and S6 Failed-Break</strong> — with a fill mix of roughly <strong>PinBar 52% · Crash 20% · Engulfing 14% · MA-Cross 4%</strong> plus small tails. Read everything below as design intent, not current behavior.</p>
+</div>
 
 <!-- ===================== WHY ===================== -->
 <section id="why">
@@ -705,7 +711,7 @@
     <li><strong>Demoted triggers</strong> — <code>CEngulfingEntry</code> / <code>CPinBarEntry</code> become L5 confirmation helpers the engines query; they no longer fire standalone.</li>
     <li><strong>The Factor-4 fix is mandatory and cheap</strong> — in <code>CSetupEvaluator.mqh</code>: rename plugin comments (or the tokens) so <code>"Bullish Liquidity Sweep"→"LiquiditySweep"</code> matches, and add tokens for <code>"Support Bounce"</code> and <code>"False Breakout"</code>. Until this is done, several rescued strategies stay starved no matter how good the concept. Verified at <code>CSetupEvaluator.mqh:196–229</code>.</li>
     <li><strong>Repaint fixes before any re-enable backtest</strong> — shift-0 → shift-1 indicator reads in BB-MR, Range Box, False-Break Fade (RSI is its <em>trigger</em>), and Pullback-Continuation line 747. A backtest on repainting logic is not a valid test of the concept.</li>
-    <li><strong>Scoring lives in the evaluator</strong> — the orthogonal axes are computed in <code>EvaluateSetupQuality</code> (the real gate), not in the plugins (whose <code>qualityScore</code> is overwritten). Keep <code>m_smc_min_confluence</code> (default 60) on <code>engine_confluence</code> as the independent SMC-structure check.</li>
+    <li><strong>Scoring lives in the evaluator</strong> — the orthogonal axes are computed in <code>EvaluateSetupQuality</code> (the real gate), not in the plugins (whose <code>qualityScore</code> is overwritten). Keep <code>m_smc_min_confluence</code> (default 60) on <code>engine_confluence</code> as the independent SMC-structure check <em>(caveat: in the current build this SMC-confluence gate is a dead no-op — score hardcoded, <code>ConfigureSMC</code> never called — so it must be wired live before it can gate anything)</em>.</li>
     <li><strong>Route <code>CFileEntry</code> through the same evaluator</strong> so external signals are tiered, not bypassed.</li>
   </ul>
 
@@ -716,7 +722,7 @@
 </section>
 
 <footer>
-  <p><strong>UltimateTrader — The Multi-Strategy Entry System, Explained.</strong> Companion to <code>entry-system-redesign.html</code>. A regime router driving four major-strategy engines (Trend-Continuation, Reversal/Sweep, Range/Mean-Reversion, Breakout/Expansion) over one shared five-layer confluence substrate and one <code>IMarketContext</code>. Maps onto <code>CEntryStrategy</code> plugins, <code>EntrySignal</code> (<code>engine_mode</code>/<code>qualityScore</code>/<code>engine_confluence</code>/<code>setupQuality</code>), <code>CSetupEvaluator</code>, and <code>ENUM_SETUP_QUALITY</code> tiers. Spot XAUUSD has tick-volume only — no real CVD/delta/footprint/DOM. Educational / analytical, not personalized financial advice; nothing here was compiled or backtested for this document.</p>
+  <p><strong>UltimateTrader — The Multi-Strategy Entry System, Explained.</strong> Companion to <code>entry-system-redesign.html</code>. A regime router driving four major-strategy engines (Trend-Continuation, Reversal/Sweep, Range/Mean-Reversion, Breakout/Expansion) over one shared five-layer confluence substrate and one <code>IMarketContext</code>. Maps onto <code>CEntryStrategy</code> plugins, <code>EntrySignal</code> (<code>engine_mode</code>/<code>qualityScore</code>/<code>engine_confluence</code>/<code>setupQuality</code>), <code>CSetupEvaluator</code>, and <code>ENUM_SETUP_QUALITY</code> tiers. Spot XAUUSD has tick-volume only — no real CVD/delta/footprint/DOM. Educational / analytical, not personalized financial advice; nothing here was compiled or backtested for this document. <strong>Status (2026-07-23):</strong> the multi-strategy scaffold remains off by default (<code>InpEnableMultiStrategy=false</code>) and is never constructed in production — the live entries are the classic plugin set (PinBar ≈52% / Crash ≈20% / Engulfing ≈14% / MA-Cross ≈4% + tails).</p>
 </footer>
 
 </div>

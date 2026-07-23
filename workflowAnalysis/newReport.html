@@ -195,6 +195,13 @@
 
 <!-- ============ EXECUTIVE SUMMARY ============ -->
 <section id="summary"><div class="col">
+  <div class="callout" style="background:#FBFAF6; border:1px solid color-mix(in srgb,var(--bronze) 32%,var(--hair)); color:#39404B; margin:0 0 26px">
+    <p style="margin:0 0 10px; font-family:var(--sans); font-weight:700; letter-spacing:.1em; text-transform:uppercase; font-size:11.5px; color:var(--bronze)">Status update — 2026-07-23</p>
+    <p style="margin:0 0 10px">This is a dated clean-room snapshot; the findings below are preserved exactly as first written. Three things have moved since:</p>
+    <p style="margin:0 0 10px"><strong>Two HIGH findings resolved.</strong> <code>CTX-10</code> (ATR units mismatch) and <code>EXE-01</code> (netting partial-fill ticket-bind desync) were fixed in a later session — their cards below carry a <span class="chip c-good">Resolved 2026-07-23</span> marker. The other HIGH findings still stand.</p>
+    <p style="margin:0 0 10px"><strong>Dead exit code (RXT-02) and frozen-RSI momentum (FILT-04) are now addressed by a built-but-DORMANT exit-momentum platform.</strong> A closed-bar momentum feature reads momentum only on closed bars and <em>never fabricates</em> — every reading starts unavailable and flips to available only on a successful compute, so there is no hardcoded RSI=50 stand-in. A strategy-aware exit engine resolves five policy families into per-signal profiles; the position coordinator stays the sole broker-action owner and policies only ever <em>propose</em> (tighten/close, or modulate a future trail), never trade directly. It runs SHADOW-only — observe-and-log — is byte-identical to production with both master switches off by default, and changes no live trade today. One activation experiment, <code>TREND_TRAIL_WIDEN_V1</code>, was tested and NOT adopted (immaterial versus the wide trail already shipped).</p>
+    <p style="margin:0"><strong>Current backtest baseline (for reference; this snapshot ran none).</strong> Primary <strong>$33,318.24</strong> net · PF <strong>1.47</strong> · 801 positions; GoldHistory cross-feed <strong>$24,086.34</strong> · PF <strong>1.436</strong> · 748 positions.</p>
+  </div>
   <div class="verdict">
     <p class="eyebrow">The two-sentence verdict</p>
     <h2>One correlated long-gold book, defended by stops — not by the adaptive logic the code appears to contain.</h2>
@@ -361,7 +368,7 @@
 
   <div class="finding s-high">
     <div class="top"><span class="fid">RXT-02</span><h3>The entire exit-plugin layer never initializes — <code>CheckExitPlugins</code> is a permanent no-op</h3>
-      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
+      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span><span class="chip c-dead" style="margin-left:6px">Addressed · dormant · 2026-07-23</span></div>
     <div class="body">
       <p>All four live exit plugins — <code>CDailyLossHaltExit</code>, <code>CWeekendCloseExit</code>, <code>CMaxAgeExit</code>, and <code>CRegimeAwareExit</code> (the only structure-aware exit) — are constructed and registered, but <code>Initialize()</code> is never called on any of them. The base constructor leaves <code>m_isInitialized=false</code>, so every <code>CheckForExitSignal</code> early-returns on its guard. Managed exits never fire: no regime/macro-opposition exit, no 72-hour max-age close, no daily-loss <em>position</em> close.</p>
       <p><strong>Why HIGH and not CRITICAL:</strong> three backstops survive — per-position broker stop-losses are intact, weekend gap risk has a coordinator-native closer, and <code>CanTrade()</code> still blocks <em>new</em> entries on a daily loss. It is a capital-protection gap, not an edge-defining one.</p>
@@ -369,12 +376,13 @@
         <dt>Location</dt><dd><code>Include/ExitPlugins/*</code> · base <code>CTradeStrategy.mqh:30</code> · guard <code>CMaxAgeExit.mqh:77</code> · call-site <code>CPositionCoordinator.mqh:3084</code> · backstop <code>:1712–1723</code></dd>
         <dt>Verified</dt><dd>Confirmed by independent cold re-derivation (grep of every <code>Initialize</code> call-site)</dd>
       </dl>
+      <p style="margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--hair); color:#4A515C; font-size:13.5px"><strong>Update 2026-07-23:</strong> A strategy-aware exit engine addressing this missing managed-exit layer has since been BUILT — five policy families resolved into per-signal profiles, with the position coordinator as the sole broker-action owner (policies only propose, never trade). It is DORMANT: shadow-only, byte-identical to production, both master switches off by default, so the production no-op described above is unchanged and no live trade moves today. See the status callout at the top.</p>
     </div>
   </div>
 
   <div class="finding s-high">
     <div class="top"><span class="fid">FILT-04</span><h3>RSI is frozen at 50 — the momentum filter it is sourced from is disabled</h3>
-      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span></div>
+      <span class="chip c-high">HIGH</span><span class="impact"><span class="dot on"></span><span class="dot on"></span><span class="dot"></span><span class="ilab">impact 2</span></span><span class="chip c-dead" style="margin-left:6px">Addressed · dormant · 2026-07-23</span></div>
     <div class="body">
       <p>RSI is sole-sourced from <code>CMomentumFilter</code>, which is off on prod (<code>InpEnableMomentum=false</code>). With no alternate handle, <code>GetCurrentRSI()</code> returns a hardcoded <strong>50</strong> for every signal. This silently kills both the validator's RSI-extreme exceptions and the <code>CSetupEvaluator</code> "+3 quality points for extreme RSI."</p>
       <p>The effect is one-directional and conservative: the validator becomes <em>stricter</em>, and quality tiers (hence risk %) <em>deflate</em>. It changes which trades fire and at what size, but never corrupts direction. Note that the per-tier expectancy seen in the CSV was produced under this RSI-blind scoring.</p>
@@ -382,12 +390,13 @@
         <dt>Touches</dt><dd><code>CMomentumFilter</code> → <code>GetCurrentRSI()</code> → <code>CSignalValidator</code> &amp; <code>CSetupEvaluator</code></dd>
         <dt>Bears on</dt><dd>WT-5 (sizing) and the per-tier expectancy WT-1/WT-2 read off the CSV</dd>
       </dl>
+      <p style="margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--hair); color:#4A515C; font-size:13.5px"><strong>Update 2026-07-23:</strong> The dormant exit-momentum platform adds a closed-bar momentum feature that NEVER fabricates — readings start unavailable and only a successful compute marks them available (no hardcoded-50 stand-in). It is an exit-side, shadow-only feature, so the live entry scoring described above is unchanged today. See the status callout at the top.</p>
     </div>
   </div>
 
   <div class="finding s-high">
     <div class="top"><span class="fid">CTX-10</span><h3>ATR units mismatch in the live risk-multiplier stack (H4 current ÷ H1 average)</h3>
-      <span class="chip c-high">HIGH</span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 1 · under-risk</span></span></div>
+      <span class="chip c-high">HIGH</span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 1 · under-risk</span></span><span class="chip c-good" style="margin-left:6px">Resolved 2026-07-23</span></div>
     <div class="body">
       <p><code>GetATRCurrent()</code> returns an <strong>H4</strong> ATR (from <code>CRegimeClassifier</code>) while <code>GetATRAverage()</code> returns an <strong>H1</strong> ATR (from <code>CVolatilityRegimeManager</code>). That mismatched current/average pair feeds the EC-v3 volatility controller and two other consumers — so the vol ratio reads systematically high.</p>
       <p><strong>Direction matters:</strong> the EC-v3 vol layer only ever <em>reduces</em> size, floored at 0.90. So the mismatch produces a slight, systematic <em>under</em>-risk — it never over-sizes. A real units bug with a conservative consequence.</p>
@@ -395,6 +404,7 @@
         <dt>Location</dt><dd><code>CRegimeClassifier.mqh:106</code> (H4) · <code>CVolatilityRegimeManager:182/390</code> (H1) · consumed at <code>CTradeOrchestrator.mqh:398</code>, <code>CRegimeRiskScaler:181</code>, <code>CDayTypeRouter:53</code></dd>
         <dt>Status</dt><dd>Confirmed active (<code>InpEnableECv2</code> &amp; <code>InpEnableRegimeRisk</code> true)</dd>
       </dl>
+      <p style="margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--hair); color:var(--good); font-size:13.5px"><strong>Update 2026-07-23:</strong> Resolved in a later session — the current/average ATR pair now shares a timeframe. The finding text above is the original snapshot.</p>
     </div>
   </div>
 
@@ -413,10 +423,11 @@
 
   <div class="finding s-high">
     <div class="top"><span class="fid">EXE-01</span><h3>Netting partial-fill ticket bind desync</h3>
-      <span class="chip c-high">HIGH</span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 1</span></span></div>
+      <span class="chip c-high">HIGH</span><span class="impact m0"><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="ilab">impact 1</span></span><span class="chip c-good" style="margin-left:6px">Resolved 2026-07-23</span></div>
     <div class="body">
       <p>On a netting account, a partial fill can desync the ticket bind in the executor. The live send path is otherwise sound (retcode-first, bounded retry). Materiality is conditional: it requires a netting broker <em>and</em> a partial fill — rare on market-execution gold — and the coordinator re-adopts the position afterward, so it cannot open a wrong-direction or oversized trade.</p>
       <dl class="kv"><dt>Location</dt><dd><code>CEnhancedTradeExecutor.mqh</code></dd><dt>Confidence</dt><dd>Likely</dd></dl>
+      <p style="margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--hair); color:var(--good); font-size:13.5px"><strong>Update 2026-07-23:</strong> Resolved in a later session. The finding text above is the original snapshot.</p>
     </div>
   </div>
 

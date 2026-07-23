@@ -39,6 +39,7 @@
         <li><a href="#s5">The trailing stop, in detail</a></li>
         <li><a href="#s6">Housekeeping exits</a></li>
         <li><a href="#s7">How they interact</a></li>
+        <li><a href="#s8">On the workbench (not live)</a></li>
       </ul>
     </nav>
     <div class="side-foot">Default behaviour · verified against source · mechanics only, no results claimed.</div>
@@ -65,7 +66,7 @@
         <h2>The initial stop</h2>
         <p class="lead">Set by the scout just past its invalidation point — the price that would prove the idea wrong — and never widened once placed.</p>
         <div class="prose">
-          <p>Every trade is born with a stop-loss. It's parked just beyond the level that would mean the setup has failed — for a bought pin bar, just below the rejection wick; for an engulfing, just under the pattern. But it's never placed <em>closer</em> than a fixed "gold-noise floor," so ordinary hourly jitter can't clip it out of a perfectly good trade.</p>
+          <p>Every trade is born with a stop-loss. It's parked just beyond the level that would mean the setup has failed — for a bought pin bar, just below the rejection wick; for an engulfing, just under the pattern. But it's never placed <em>closer</em> than a fixed "gold-noise floor" — on the order of <b>500 points</b> of price — so ordinary hourly jitter can't clip it out of a perfectly good trade.</p>
           <p>Two properties make it trustworthy: it defines the <b>1R</b> risk the whole account was sized against, and after entry it <b>only ever moves toward safety</b> — tighter, never looser. The bot has no mechanism to widen a stop to avoid a loss. If price reaches it, the trade closes. Full stop.</p>
         </div>
       </section>
@@ -88,7 +89,7 @@
         </div>
         <div class="prose">
           <p>Why slice it up? Because no one knows in advance whether a trade will stall at +1R or run to +5R. Banking part of the position early locks in a real gain and takes the pressure off; keeping a runner leaves the door open to a big trend. That runner is what the trailing stop then manages — the subject of the two sections below.</p>
-          <p><b>A reality check on how often the full ladder runs.</b> These rungs describe what happens <em>if</em> a trade gets there — and most don't. Measured across the <b>801-position release baseline</b>, about <b>63%</b> of trades reach the first nibble (+0.7R), about <b>45%</b> reach the +1.3R slice, and about <b>29%</b> reach the top rung (+1.8R). The majority never complete the ladder — they ride as a single block to their stop or trailing exit. The ladder is the plan for a winner, not the typical path.</p>
+          <p><b>A reality check on how often the full ladder runs.</b> These rungs describe what happens <em>if</em> a trade gets there — and most don't. Measured across the <b>801-position release baseline</b>, about <b>64%</b> of trades reach the first nibble (+0.7R), about <b>46%</b> reach the +1.3R slice, and about <b>29%</b> reach the top rung (+1.8R). The majority never complete the ladder — they ride as a single block to their stop or trailing exit. The ladder is the plan for a winner, not the typical path.</p>
         </div>
       </section>
 
@@ -130,7 +131,7 @@
           <div class="tier"><div class="badge-t" style="font-size:.9rem">Choppy</div><div class="lbl">messy fakeouts</div><div class="bar"><i style="width:71%"></i></div><div class="r">×3.0</div></div>
         </div>
         <div class="prose">
-          <p>Two safeguards stop this from misbehaving. First, the regime that chooses the multiplier is <b>held for a few bars</b> before it's allowed to change, so a one-hour flicker between "trending" and "choppy" doesn't yank the cushion around. Second — and importantly — the cushion width is <b>locked at entry</b>: if the market later flips to a regime with a tighter multiplier, the trail is <em>not</em> allowed to suddenly shrink and knife the runner out. The cushion can widen to protect a trade, but it won't dangerously tighten mid-flight.</p>
+          <p>Two safeguards stop this from misbehaving. First, the regime that chooses the multiplier is <b>held for about three bars</b> before it's allowed to change, so a one-hour flicker between "trending" and "choppy" doesn't yank the cushion around. Second — and importantly — the stop itself <b>only ever ratchets</b>: a freshly computed level is accepted only when it sits <em>tighter</em> than the stop already in the market. So even if the market later flips to a regime with a smaller cushion, the trail simply holds where it is — a narrower cushion can never pull the stop backward and knife the runner out. The cushion can widen to give a trade room, but a tighter one can never move the exit against you mid-flight.</p>
         </div>
 
         <div class="prose">
@@ -168,30 +169,34 @@
           <p>Notice three things: the stop <b>never moved down</b>; it only began advancing once the trade was clearly in profit; and it followed the trend up automatically until the market itself pulled back to it. That's the entire job of the trailing stop — turn a good move into a booked one without ever guessing the top.</p>
           <div class="callout warn">
             <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
-            <div><p><b>One live exception.</b> For the crash-fade short strategy (the "Rubber Band" scout), the ratchet is deliberately <b>held off</b> until price reaches the strategy's target zone. Trailing that particular trade too early was measured to strangle it — its whole thesis is a snap-back to the mean, so tightening a stop on the initial spike would close it before the move it's waiting for. For every other strategy, the trail runs exactly as described above.</p></div>
+            <div><p><b>One live exception.</b> For the crash-fade short strategy (the "Rubber Band" scout), the ratchet is deliberately <b>held off</b> until a <b>closed hourly candle finishes below its 21-hour average</b> — that is, until the snap-back the trade is waiting for has actually begun. Trailing that particular trade too early was measured to strangle it: its whole thesis is a mean-reversion, so tightening a stop on the initial spike would close it before the move it's built around. (The hard stop and take-profit stay live the entire time — only the <em>trailing</em> ratchet waits.) For every other strategy, the trail runs exactly as described above.</p></div>
           </div>
         </div>
       </section>
 
       <section class="sec reveal" id="s6">
         <h2>Housekeeping exits</h2>
-        <p class="lead">Three unconditional exits close a trade for reasons other than hitting a target or a trailing stop — dead trades, weekend gaps, and a market that structurally turns.</p>
+        <p class="lead">A few housekeeping rules act at the calendar or account level, independent of any single trade's target or trailing stop — a weekend gap to dodge, a stalled range trade to cut, and a bad-day circuit-breaker.</p>
         <div class="exits">
-          <div class="exit">
-            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Time exit</h4></div>
-            <p>Close a trade that has gone nowhere for about three days. Capital tied up in a stalled position is capital that can't take a better trade elsewhere.</p>
-            <span class="trg">open &gt; 72 hours</span>
-          </div>
           <div class="exit">
             <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div><h4>Weekend close</h4></div>
             <p>Flatten everything late on Friday to dodge the weekend gap — the jump in price when the market reopens Sunday night that can leap right over a resting stop.</p>
             <span class="trg">Friday ≥ 20:00 server</span>
           </div>
           <div class="exit">
-            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><h4>Regime-aware exit</h4></div>
-            <p>Bail only if the market structurally flips against the trade — a closed hourly candle breaking through a key average the wrong way — not on a brief flicker. It tells a real turn from noise.</p>
-            <span class="trg">hourly close through the 50-EMA</span>
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Range-trade stall-out</h4></div>
+            <p>The two range scouts (the Asian-range breakout and its failed-break reversal) get a dead-trade rule of their own: after about 5 fifteen-minute bars still under +0.8R the position is halved and moved to break-even; after about 8 bars still under +1.0R it's closed outright. The candle scouts don't use this — they lean on the stop and trail instead.</p>
+            <span class="trg">S3 / S6 · 5–8 × M15 bars stalled</span>
           </div>
+          <div class="exit">
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg></div><h4>Daily-loss halt</h4></div>
+            <p>If the account is down about 3% on the day, the bot stops opening new trades until the next session. It's a circuit-breaker on a bad day rather than an exit on any one position — it caps how deep a single day can dig, and leaves already-open trades to their own stops.</p>
+            <span class="trg">equity −3% on the day</span>
+          </div>
+        </div>
+        <div class="callout warn">
+          <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span>
+          <div><p><b>Two exits you might expect are switched off.</b> The code also carries a fixed <b>72-hour time-out</b> and a <b>regime-flip exit</b> (bail when an hourly candle closes back through the 50-EMA). On the default gold configuration neither is wired to a live owner — they're dormant leftovers of protection that now lives entirely in the stop and the trailing stop. So don't count on a stalled candle-scout trade being auto-closed at the three-day mark, or on a single 50-EMA cross pulling you out: apart from the weekend close and the range stall-out above, a normal trade ends only at its stop or its trailing stop.</p></div>
         </div>
       </section>
 
@@ -199,8 +204,23 @@
         <h2>How they interact</h2>
         <p class="lead">On a live trade all of these run at once, and whichever fires first wins.</p>
         <div class="prose">
-          <p>Picture a buy that's going well. It nibbles ~15% at +0.7R, its trailing stop reaches break-even around +0.8R, it banks ~40% of the rest at +1.3R and ~30% of the rest at +1.8R. The remaining runner — around a third of the original position — now rides the chandelier trail described above. If gold keeps climbing, the trail keeps ratcheting the stop higher, locking in more and more, until price finally pulls back and taps it. If instead the trend structurally breaks first, the regime-aware exit takes it. If it simply stalls for three days, the time exit clears it out. And if it's still open late Friday, the weekend close flattens it regardless.</p>
+          <p>Picture a buy that's going well. It nibbles ~15% at +0.7R; its trailing stop climbs up through break-even on its own around +0.8R as the trade advances; it banks ~40% of the rest at +1.3R and ~30% of the rest at +1.8R. The remaining runner — around a third of the original position — now rides the chandelier trail described above. If gold keeps climbing, the trail keeps ratcheting the stop higher, locking in more and more, until price finally pulls back and taps it. And if it's still open late Friday, the weekend close flattens it regardless of where it sits. Two exits you might reach for play no part on a trade like this: on the default config there is no live 72-hour time-out and no 50-EMA regime-flip exit — a candle-scout position ends only at its stop, its trailing stop, or the Friday close.</p>
           <p>That layered design is the heart of the bot's calm temperament: losses are capped at 1R by a stop that never widens, winners are harvested in slices while a runner is left to ride a trailing stop that only ever tightens — and although only a minority of trades climb far enough to reach break-even, the ones that do can no longer become losers. It's why, over the years, the account's dips have stayed roughly <b>half as deep</b> as simply buying and holding gold — the subject that the closing chapter, <a href="07-example.html" style="color:var(--gold-deep)">Start to Finish</a>, ties together on a single worked trade.</p>
+        </div>
+      </section>
+
+      <section class="sec reveal" id="s8">
+        <h2>On the workbench: a smarter exit brain (not yet live)</h2>
+        <p class="lead">One more thing lives in the codebase that this chapter has deliberately left out of the live exits above — because it doesn't touch a single real trade. It is built and tested, but parked in the "off" position.</p>
+        <div class="callout">
+          <span class="ci"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></span>
+          <div><p><span class="st off">Dormant · not live</span> <b>Exit-Momentum Platform — built, proven, switched off.</b> A closed-bar momentum reader and a strategy-aware exit engine run in <b>shadow mode</b> — they observe and log only, propose but never trade — and have been proven decision-free and byte-for-byte identical to the live bot on both data feeds, with both master switches off by default. It changes no live trade today.</p></div>
+        </div>
+        <div class="prose">
+          <p><b>The momentum reader.</b> Once an hour, and only on candles that have already <em>closed</em>, it takes the market's pulse — is the trend accelerating or running out of steam, is price overextended, is a reversal starting to confirm — and turns those readings into a handful of plain 0–100 scores. Crucially, it never guesses: if a reading can't be computed cleanly it is marked <em>"unavailable"</em> rather than filled in with a made-up number, so no downstream decision can ever rest on a fabricated value.</p>
+          <p><b>The strategy-aware exit engine.</b> Instead of one set of exit rules for every trade, it sorts each position into one of five families — trend-continuation, breakout, mean-reversion, reversal, or crash — and then into a profile tuned to the exact scout that opened it, so an engulfing trend trade and a "Rubber Band" crash fade would be managed by different playbooks. But here is the safety spine: these policies only ever <em>propose</em>. They hand the coordinator a suggestion — <span class="mono">tighten this stop</span>, <span class="mono">close a slice</span>, <span class="mono">give the trail more room next time</span> — and the coordinator stays the single piece of code allowed to touch a live order. It will only ever tighten or close, never loosen or widen.</p>
+          <p><b>Why you can trust it's really off.</b> The whole platform runs in shadow: it watches every trade and writes down what it <em>would</em> have done, without doing any of it. Two master switches — one to compute-and-log, one to actually act — both ship <b>off</b>, and the backtests reproduce to the exact cent with the platform present but dormant. It is a fully built engine idling in neutral.</p>
+          <p><b>Tested, and deliberately not adopted.</b> One profile was even taken out for a measured test drive — widening the trailing cushion on trend trades (internally, <span class="mono">TREND_TRAIL_WIDEN_V1</span>). The result was a non-event: a few dollars either way with every risk figure unchanged, because the wide trail it proposed is <em>already</em> the one this chapter's chandelier ships with. So it was tested and <b>not adopted</b>. No profile is live today; if one ever is, it will be switched on a single profile at a time, only once the evidence earns it — never wholesale.</p>
         </div>
       </section>
 

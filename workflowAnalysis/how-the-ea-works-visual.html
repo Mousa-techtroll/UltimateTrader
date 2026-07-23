@@ -369,6 +369,7 @@
       <a href="#compete"><span class="k">03</span>Compete &amp; gauntlet</a>
       <a href="#sizing"><span class="k">05</span>Sizing</a>
       <a href="#exits"><span class="k">07</span>Exits</a>
+      <a href="#platform">On the bench</a>
       <a href="#example">Worked example</a>
       <a href="#reference">Reference</a>
     </nav>
@@ -931,7 +932,8 @@ back above the prior highs → buy, target 1.3R.</code>
       <h4>An honest word on "twelve scouts"</h4>
       <p>Twelve strategies are loaded, but that's a fact about the <b>roster</b>, not the <b>playing time</b>. Over 7.5 years of real gold data, five of the twelve produced <b>zero</b> trades — their internal conditions are simply too demanding to fire on this market, even with their switches on. The live book is really about <b>seven</b> scouts, and three of them — Pin Bar, Engulfing and MA&nbsp;Cross — do the overwhelming majority of the work.</p>
       <p>That isn't a flaw so much as honesty about what actually earns: the bot is, at heart, <b>a disciplined way to buy bullish hourly momentum candles when gold is trending up</b>, wrapped in a great deal of machinery that keeps it out of trouble the rest of the time.</p>
-      <div class="big3"><span>Pin Bar</span><span>Engulfing</span><span>MA Cross</span><span>≈ most of all trades</span></div>
+      <p>By count, the fills land roughly <b>half Pin Bars</b>, about <b>a fifth Crash-fade shorts</b>, <b>one in seven Engulfing</b>, a few percent MA&nbsp;Cross, and the rest small tails from Pullback&nbsp;Continuation and Expansion.</p>
+      <div class="big3"><span>Pin Bar ≈ 52%</span><span>Crash ≈ 20%</span><span>Engulfing ≈ 14%</span><span>MA Cross ≈ 4%</span></div>
     </div>
   </div>
 </section>
@@ -1052,7 +1054,7 @@ back above the prior highs → buy, target 1.3R.</code>
       <div class="rungs">
         <div class="rung"><span class="rr">Stop</span><span class="rd">The <b>initial stop-loss</b>, parked just past where the idea is proven wrong — and never a hair closer than a gold-noise floor. Once set, it only ever moves the <em>safer</em> way.</span><span class="rp">risk = <b>1R</b></span></div>
         <div class="rung"><span class="rr">+0.7R</span><span class="rd">First nibble — take a small slice off the table early to reduce risk.</span><span class="rp">close <span class="pct">~15%</span></span></div>
-        <div class="rung"><span class="rr">+0.8R</span><span class="rd"><b>Break-even</b> — once there's a cushion, slide the stop toward the entry so the trade can't turn into a loss.</span><span class="rp">stop → entry</span></div>
+        <div class="rung"><span class="rr">+0.8R</span><span class="rd"><b>Break-even (implicit)</b> — by this point the trailing ratchet has itself carried the stop up to about the entry, so the trade can no longer turn into a loss. A dedicated break-even mover exists in the code but ships switched <em>off</em> — the trail does the job on its own.</span><span class="rp">stop ≈ entry</span></div>
         <div class="rung"><span class="rr">+1.3R</span><span class="rd">Bank the biggest slice as the trade reaches a solid multiple of its risk.</span><span class="rp">close <span class="pct">~40%</span></span></div>
         <div class="rung"><span class="rr">+1.8R</span><span class="rd">Take another slice, leaving only a small "runner" to chase a bigger move.</span><span class="rp">close <span class="pct">~30%</span></span></div>
         <div class="rung"><span class="rr">Runner</span><span class="rd">The remainder rides the trailing stop below, capturing the tail of a strong trend.</span><span class="rp">trails out</span></div>
@@ -1071,25 +1073,25 @@ back above the prior highs → buy, target 1.3R.</code>
           </div>
           <div class="exit">
             <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 18l6-6 4 4 6-8"/><path d="M20 8v4h-4"/></svg></div><h4>Chandelier trail</h4></div>
-            <p>The runner's stop follows price up like a ratchet, always sitting a volatility-sized cushion below the recent high. It only ever tightens — locking in more of a strong move as it extends, and stepping out only when price finally pulls back to it.</p>
-            <span class="trg">recent high − 3 × ATR (hourly)</span>
+            <p>The runner's stop follows price up like a ratchet, always sitting a volatility-sized cushion below the recent high. How wide that cushion is depends on the market mood — from about 3× the hourly volatility in choppy conditions out to 4.2× in a clean trend, giving a strong trend more room to breathe. It only ever tightens — locking in more of a strong move as it extends, and stepping out only when price finally pulls back to it.</p>
+            <span class="trg">recent high − (3.0–4.2 × ATR), by regime</span>
           </div>
           <div class="exit">
-            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="9"/></svg></div><h4>Break-even shift</h4></div>
-            <p>Once the trade has banked its first nibble and shown a cushion, the design slides the stop up to about the entry price. From there, in the best case, the worst outcome is a scratch rather than a loss.</p>
-            <span class="trg">arms at +0.8R</span>
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9l6 3"/><circle cx="12" cy="12" r="9"/></svg></div><h4>Break-even — implicit</h4></div>
+            <p>The trade becomes risk-free without a dedicated step: once it has a cushion, the trailing ratchet has already climbed the stop to about the entry. A separate break-even mover lives in the code but ships switched off, so break-even here is a <em>by-product</em> of the trail, not its own action.</p>
+            <span class="trg">emerges from the trail</span>
           </div>
         </div>
       </div>
 
       <div class="exgroup reveal">
         <h3 style="font-family:var(--font-display)">Housekeeping exits</h3>
-        <p class="gd">Three unconditional exits that close a trade for reasons other than hitting a target — protecting against dead trades, weekend gaps, and a market that structurally turns.</p>
+        <p class="gd">Only one of these is enforced on the shipped build — the <b>weekend close</b>. The other two are wired into the code but sit <b>dormant</b> (no live component runs them). They're shown here for completeness, clearly labelled.</p>
         <div class="exits">
           <div class="exit">
-            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Time exit</h4></div>
-            <p>Close a trade that has gone nowhere for about three days. Capital tied up in a stalled position is capital that can't take a better trade.</p>
-            <span class="trg">open &gt; 72 hours</span>
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Time exit <span class="st off" style="align-self:center">Dormant</span></h4></div>
+            <p>A 72-hour max-age limit is <em>configured</em> — the intent being that a stalled position is a stale opinion — but on the shipped build nothing live enforces it. Only a dormant plugin reads the setting, so in practice no trade is closed on age alone.</p>
+            <span class="trg">setting present · not enforced</span>
           </div>
           <div class="exit">
             <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div><h4>Weekend close</h4></div>
@@ -1097,11 +1099,52 @@ back above the prior highs → buy, target 1.3R.</code>
             <span class="trg">Friday ≥ 20:00 server</span>
           </div>
           <div class="exit">
-            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><h4>Regime-aware exit</h4></div>
-            <p>Bail only if the market structurally flips against the trade — a closed hourly candle breaking through a key average the wrong way — not on a brief flicker. It distinguishes a real turn from noise.</p>
-            <span class="trg">hourly close through the 50-EMA</span>
+            <div class="eh"><div class="ei"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><h4>Regime-aware exit <span class="st off" style="align-self:center">Dormant</span></h4></div>
+            <p>A rule that would bail when the market structurally flips against the trade — a closed hourly candle breaking through a key average the wrong way — lives in the code, but only on a signal path the live bot never uses. On the shipped build it never fires; it's kept for a possible future owner.</p>
+            <span class="trg">built · not live</span>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DORMANT EXIT-MOMENTUM PLATFORM -->
+<section class="blk" id="platform">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="sec-stage">ON&nbsp;THE&nbsp;BENCH</div>
+      <div>
+        <h2>Built, proven — and deliberately switched off</h2>
+        <p class="sub">Everything above is the bot as it trades <b>today</b>. This last section is different: a whole second layer of trade-management intelligence that has been <b>built and tested</b> but ships <b>dormant</b>. It observes and logs only — on the default settings it <b>changes not one live trade</b>.</p>
+      </div>
+    </div>
+
+    <div class="honesty reveal" style="border-left-color:var(--neutral);margin-top:0">
+      <h4><span class="st off" style="margin-right:10px">Dormant</span>The exit-momentum platform</h4>
+      <p>A closed-bar <b>momentum-reading feature</b> and a strategy-aware <b>exit engine</b> (five policy families resolving into per-signal profiles) run alongside the live bot in <b>shadow mode</b> — they watch each trade and record what they <em>would</em> have done, but the position coordinator remains the <b>sole owner of every broker action</b>; these policies only ever <b>propose</b>, never trade. Both master switches ship <b>off</b>, and with them off the program is <b>byte-for-byte identical</b> to the live version on both independent data feeds.</p>
+      <p>One activation experiment — a slightly wider trend trail — was measured and <b>not adopted</b> (it moved the bottom line by only a few dollars, because the wide trail it proposed is already shipped in the live trailing stop). <b>No profile is live.</b> Activation, if it ever happens, is evidence-gated and one profile at a time.</p>
+      <div class="big3"><span>Momentum feature · built</span><span>Exit engine · built</span><span>Shadow proof · passed</span><span>Live activation · none</span></div>
+    </div>
+
+    <div class="grid-3 reveal" style="margin-top:24px">
+      <div class="ctx">
+        <span class="st off" style="align-self:flex-start">Shadow only</span>
+        <h4>The momentum reader</h4>
+        <p>A single closed-bar snapshot of the market's "push" — trend, impulse, acceleration, exhaustion, a 0–100 bear-state score and more — computed only from <b>finished</b> candles on its own private indicators. It <b>never fabricates</b> a reading: every feature starts unavailable and only turns on when it genuinely computes, so a missing input is reported as missing, not guessed.</p>
+        <div class="ex">CMomentumSnapshotter · closed-bar only</div>
+      </div>
+      <div class="ctx">
+        <span class="st off" style="align-self:flex-start">Shadow only</span>
+        <h4>The exit engine</h4>
+        <p>Five policy families — trend-continuation, breakout, mean-reversion, reversal and crash — each tailored per entry type into a distinct exit <b>profile</b>. Every policy returns a deterministic <b>proposal</b> only: it may tighten a stop or close part of a trade, or ask the future trail to run wider — but it can never move a stop the wrong way, and it never places an order itself.</p>
+        <div class="ex">CExitPolicyEngine · proposals, not orders</div>
+      </div>
+      <div class="ctx">
+        <span class="st off" style="align-self:flex-start">Shadow only</span>
+        <h4>The proof it's inert</h4>
+        <p>With both switches off, the shadow layer is <b>decision-free</b> — it writes telemetry but never touches a decision the bot acts on. That was verified by reproducing the exact result fingerprints on both feeds, unchanged. A separate account-safety monitor is wired the same way: advisory-only, decoupled, and off by default.</p>
+        <div class="ex">two master switches · both OFF · byte-identical</div>
       </div>
     </div>
   </div>
@@ -1124,7 +1167,7 @@ back above the prior highs → buy, target 1.3R.</code>
       <div class="step"><div class="sn"></div><div class="sc"><h4>Stop &amp; reward are set.</h4><p>The stop goes just below the pattern low, about $2,395.50 — a stop <em>distance</em> of roughly $4.50. The laddered targets clear the "reward ≥ 1.3× risk" check.</p><span class="tf">R-geometry</span></div></div>
       <div class="step"><div class="sn"></div><div class="sc"><h4>Size is worked backwards.</h4><p>It risks about 1% — say $100. With a $4.50 stop, that's roughly $100 ÷ $4.50 ≈ 22 ounces (about 0.22 of a lot), rounded down to the broker's step.</p><span class="tf">Pure arithmetic</span></div></div>
       <div class="step"><div class="sn"></div><div class="sc"><h4>The order goes in.</h4><p>The bot re-checks the live price and spread one final time, then places the buy.</p><span class="tf">Live execution</span></div></div>
-      <div class="step"><div class="sn"></div><div class="sc"><h4>It manages to the exit.</h4><p>A 15% nibble at +0.7R; the stop slides to break-even at +0.8R; 40% banked at +1.3R, 30% at +1.8R; the runner rides the trailing stop until price taps it — or a housekeeping exit fires first.</p><span class="tf">Continuous management</span></div></div>
+      <div class="step"><div class="sn"></div><div class="sc"><h4>It manages to the exit.</h4><p>A 15% nibble at +0.7R; by +0.8R the trailing ratchet has carried the stop up to about break-even; 40% banked at +1.3R, 30% at +1.8R; the runner rides the trailing stop until price taps it — or the weekend close flattens it first.</p><span class="tf">Continuous management</span></div></div>
     </div>
     <p class="disclaimer reveal">Illustrative only. Prices, sizes and steps are invented to show the mechanism; no profit, win rate or outcome is implied. The bot makes no promises about any individual trade — only that every trade follows this same disciplined chain.</p>
   </div>
@@ -1165,10 +1208,10 @@ back above the prior highs → buy, target 1.3R.</code>
                 <tr><td>Spread &amp; execution gates</td><td>live</td><td>The instant cost of entering right now</td></tr>
                 <tr><td>Position sizing</td><td>none</td><td>Pure money arithmetic — reads no candles</td></tr>
                 <tr><td>Take-profit ladder</td><td>R-multiples</td><td>0.7R / 1.3R / 1.8R, not clock time</td></tr>
-                <tr><td>Break-even &amp; nibble</td><td>R-multiples</td><td>Arm at +0.8R after the first slice</td></tr>
-                <tr><td>Trailing stop</td><td><span class="tfx">H1</span></td><td>Recent high minus a volatility cushion</td></tr>
-                <tr><td>Regime-aware exit</td><td><span class="tfx">H1</span></td><td>Hourly close through a key average</td></tr>
-                <tr><td>Time exit</td><td>clock</td><td>Older than ~72 hours</td></tr>
+                <tr><td>Break-even (implicit)</td><td>R-multiples</td><td>Emerges from the trail reaching entry (~0.8R); no active mover</td></tr>
+                <tr><td>Trailing stop</td><td><span class="tfx">H1</span></td><td>Recent high minus a regime-scaled cushion (3.0–4.2× ATR)</td></tr>
+                <tr><td>Regime-aware exit</td><td><span class="tfx">H1</span></td><td>Hourly close through a key average — <em>dormant, not live</em></td></tr>
+                <tr><td>Time exit</td><td>clock</td><td>72h max-age setting present but <em>not enforced</em> (dormant)</td></tr>
                 <tr><td>Weekend close</td><td>clock</td><td>Late Friday, server time</td></tr>
                 <tr><td>Daily-loss halt</td><td>account</td><td>Equity down ~3% on the day</td></tr>
                 <tr><td>Friday no-open rule</td><td>clock</td><td>No new trades opened on Fridays</td></tr>
@@ -1199,7 +1242,7 @@ back above the prior highs → buy, target 1.3R.</code>
               <div class="gterm"><dt>Drawdown</dt><dd>How far the account has fallen from its recent peak. The bot brakes its risk as drawdown grows.</dd></div>
               <div class="gterm"><dt>Liquidity / stop-hunt</dt><dd>Liquidity is how easily you can trade without moving price. A "stop-hunt" is a poke past a level to trigger others' stops before reversing.</dd></div>
               <div class="gterm"><dt>Death cross</dt><dd>When a shorter average (50-day) falls below a longer one (200-day) — a classic confirmed-downtrend signal.</dd></div>
-              <div class="gterm"><dt>Smart-money (SMC)</dt><dd>Reading the chart around where large institutional orders likely sit — order blocks, gaps, sweeps. Used here mainly as a quality check.</dd></div>
+              <div class="gterm"><dt>Smart-money (SMC)</dt><dd>Reading the chart around where large institutional orders likely sit — order blocks, gaps, sweeps. The bot computes these for context, but the SMC "confluence" check is a <b>dead no-op</b> on the shipped build — it always passes and changes no trade.</dd></div>
             </dl>
           </div>
         </div>
