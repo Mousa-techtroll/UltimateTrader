@@ -390,7 +390,7 @@
         <dt>Touches</dt><dd><code>CMomentumFilter</code> → <code>GetCurrentRSI()</code> → <code>CSignalValidator</code> &amp; <code>CSetupEvaluator</code></dd>
         <dt>Bears on</dt><dd>WT-5 (sizing) and the per-tier expectancy WT-1/WT-2 read off the CSV</dd>
       </dl>
-      <p style="margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--hair); color:#4A515C; font-size:13.5px"><strong>Update 2026-07-23 — FIXED in code.</strong> <code>GetCurrentRSI()</code> now sources a real, independent CLOSED-BAR H1 RSI, and the three consumers (the exhaustion quality family + the two validator RSI-extreme checks) ABSTAIN when no genuine RSI is available rather than trusting a hardcoded 50. With the real-RSI scoring gate off (default) it is byte-identical to the frozen baseline (GH md5 2713e298 reproduced exactly); enabling it measured immaterial on GH (−$12 / −0.05% net, PF unchanged), so it stays off. No decision now rests on a fabricated 50.</p>
+      <p style="margin:12px 0 0; padding-top:10px; border-top:1px dashed var(--hair); color:#4A515C; font-size:13.5px"><strong>Update 2026-07-23 — FIXED in code.</strong> <code>GetCurrentRSI()</code> now sources a real, independent CLOSED-BAR H1 RSI, and the three consumers (the exhaustion quality family + the two validator RSI-extreme checks) ABSTAIN when no genuine RSI is available rather than trusting a hardcoded 50. With the gate off it was byte-identical to the frozen baseline (GH md5 2713e298 reproduced exactly); the −$12 / −0.05% cost of enabling it (PF unchanged) was accepted to eliminate the fabricated value, so real-RSI scoring is now <strong>ON by default</strong> (new GH baseline $24,074.29 / 763). No decision rests on a fabricated 50.</p>
     </div>
   </div>
 
