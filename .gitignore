@@ -15,3 +15,8 @@ claude/gate/Stats_*.csv
 claude/gate/TradeEvents_*.csv
 claude/gate/tmp_*.csv
 claude/gate/p65/
+
+# Frozen research baselines: large raw exports, reproducible from the md5-frozen binary+config (see IDENTITY-MANIFEST.json)
+claude/research/baseline-*/Events_*.csv
+claude/research/baseline-*/Stats_*.csv
+claude/research/baseline-*/backtest_results_*.csv

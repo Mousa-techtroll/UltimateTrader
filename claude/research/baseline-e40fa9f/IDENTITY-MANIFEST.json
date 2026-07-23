@@ -1,0 +1,23 @@
+{
+  "campaign": "entry-exit-joint-optimization",
+  "role": "FROZEN CONTROL BASELINE (Wave-1)",
+  "git_rev": "e40fa9f6ad71d99526c1d1a89a37ba2dad6abb3d",
+  "git_rev_short": "e40fa9f",
+  "period": "2019.01.01..2026.06.27",
+  "source": { "UltimateTrader.mq5_sha256": "1ab74fb76825179ab40bd017bd80ed81d734c385cec8dee041312452e90c24f2" },
+  "binary": { "UltimateTrader.ex5_md5": "4c49e7a350e722cc0bd8455d7691acf1" },
+  "config": {
+    "canonical_set": "claude/audit/current-canonical.set",
+    "canonical_set_sha256": "c704f8e927d2fbe7734a22e9746b5b89a271c2483b5627f42bced24ce2030e64",
+    "tester_ini_sha256": "5024dc7567c638a631f09999eb6f132782f36e4cd03c0c9716550f2c1521ada8",
+    "real_rsi_active": true,
+    "InpUseRealRSIScoring": true, "InpMinBrokerStopPoints": 10, "InpCounterTrendRiskMult": 0.5
+  },
+  "baselines": {
+    "PRIMARY": { "symbol": "XAUUSD+", "model": 4, "net": 34085.46, "pf": 1.47, "sharpe": 3.10,
+      "positions": 814, "stats_md5": "03ad126b18fec000e4ad6b67d47c985a", "events_md5": "902df1a3b9242378de8ff3d67faa8234" },
+    "GOLDHISTORY": { "symbol": "XAUUSD_GOLDHISTORY", "model": 1, "net": 24074.29, "pf": 1.39, "sharpe": 2.93,
+      "positions": 763, "stats_md5": "ad3cbd3de92da597b1a7c65b2091e913", "events_md5": "e5cdc895a76e4e95306ab8ae1bba07f2" }
+  },
+  "note": "Every Wave-1 arm (C/E/X/EX) is judged vs THIS. C must reproduce these Stats/Events md5 byte-for-byte."
+}
