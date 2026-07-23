@@ -503,6 +503,13 @@ public:
       return m_regime_classifier.GetADX();
    }
 
+   // FILT-04: GetADXValue() returns a REAL ADX whenever the classifier exists;
+   // it only fabricates (0) when NULL. Available iff the classifier is wired.
+   virtual bool IsADXAvailable()
+   {
+      return (m_regime_classifier != NULL);
+   }
+
    virtual double GetATRCurrent()
    {
       if(m_regime_classifier == NULL) return 0;
@@ -590,7 +597,11 @@ public:
    }
 
    //--- True only when the cached MA200 holds a usable (positive) value.
-   bool IsMA200Available() const
+   //--- FILT-04: promoted to a virtual override of IMarketContext (const dropped;
+   //--- the sole caller IsPriceAboveMA200() is itself non-const) so the HTF
+   //--- short-veto consumer can abstain when MA200 is unavailable instead of
+   //--- consuming the directional default IsPriceAboveMA200() returns on warmup.
+   virtual bool IsMA200Available()
    {
       return (m_ma200_value > 0);
    }
@@ -804,6 +815,26 @@ public:
       if(range < _Point * 10) return 50.0;
 
       return 100.0 * MathLog(sum_tr / range) / MathLog(10.0);
+   }
+
+   // FILT-04: TRUE iff GetChoppinessIndex() will take its REAL computation path
+   // (10-bar H1 high-low range >= _Point*10). Returns FALSE in EXACTLY the
+   // degenerate case where GetChoppinessIndex() fabricates 50.0, so the Factor-5
+   // consumer abstains instead of scoring on a fabricated CI. Same 10 CLOSED H1
+   // bars / same range test as GetChoppinessIndex(), so the two never disagree.
+   virtual bool IsChoppinessAvailable()
+   {
+      double highest = -DBL_MAX;
+      double lowest  =  DBL_MAX;
+      for(int i = 1; i <= 10; i++)  // Last 10 completed H1 bars (mirror GetChoppinessIndex)
+      {
+         double h = iHigh(_Symbol, PERIOD_H1, i);
+         double l = iLow(_Symbol, PERIOD_H1, i);
+         if(h > highest) highest = h;
+         if(l < lowest)  lowest  = l;
+      }
+      double range = highest - lowest;
+      return (range >= _Point * 10);
    }
 
    //--- Health (from AICoder HealthMonitor - placeholder) ---

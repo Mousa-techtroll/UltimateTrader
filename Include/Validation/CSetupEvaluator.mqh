@@ -824,7 +824,12 @@ public:
 
       // Factor 5: Choppiness Index regime confirmation (±1 point)
       // CI < 40 = strong trend (directionally efficient), CI > 60 = choppy (random)
-      if(g_profileEnableCIScoring && m_context != NULL)
+      // FILT-04: abstain when CI is UNAVAILABLE (degenerate 10-bar H1 range) rather
+      // than scoring on the fabricated 50.0 GetChoppinessIndex() would return there.
+      // Byte-identical on gold: the 10-bar range is never degenerate, so
+      // IsChoppinessAvailable() is always true and the block runs as before; even
+      // in the degenerate case, 50.0 sits in the no-op band (awards 0) — same as abstaining.
+      if(g_profileEnableCIScoring && m_context != NULL && m_context.IsChoppinessAvailable())
       {
          double ci = m_context.GetChoppinessIndex();
          bool is_mr = (StringFind(pattern, "BB Mean") >= 0 ||

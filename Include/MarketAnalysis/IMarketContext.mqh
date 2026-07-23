@@ -34,6 +34,10 @@ public:
    virtual double               GetMASlowValue()         { return 0; }
    virtual double               GetMA200Value()          { return 0; }
    virtual bool                 IsPriceAboveMA200()      { return false; }
+   // FILT-04: TRUE only when a real MA200 read backs IsPriceAboveMA200(); when
+   // FALSE that getter returns a directional DEFAULT (not a measurement), so the
+   // HTF short-veto consumer must abstain rather than treat it as a real bias.
+   virtual bool                 IsMA200Available()       { return false; }
    virtual ENUM_TREND_DIRECTION GetH4TrendDirection()    { return TREND_NEUTRAL; }
 
    //--- Macro Bias (from CMacroBias)
@@ -97,6 +101,13 @@ public:
    virtual int                  GetBearStateAgeH4()      { return 0; }
    virtual double               GetCurrentRSI()          { return 50; }
    virtual bool                 IsRSIAvailable()         { return false; }
+   // FILT-04: availability contract (mirror of IsRSIAvailable). An implementer
+   // that forgets to override these yields availability=false, so consumers
+   // ABSTAIN rather than trust a fabricated base-stub (GetADXValue()=0 /
+   // GetChoppinessIndex()=50.0). Never make the value getters pure-virtual —
+   // the availability-defaults-false ARE the interface hardening.
+   virtual bool                 IsADXAvailable()         { return false; }
+   virtual bool                 IsChoppinessAvailable()  { return false; }
 
    //--- L1 Location: dealing-range / premium-discount (Multi-Strategy redesign)
    virtual double               GetDealingRangeHigh()    { return 0; }

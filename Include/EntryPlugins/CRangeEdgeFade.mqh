@@ -33,7 +33,10 @@ private:
    {
       double buf[];
       ArraySetAsSeries(buf, true);
-      if(CopyBuffer(m_handle_rsi_m15, 0, 1, 1, buf) <= 0) return 50;
+      // FILT-04: on a read failure return an UNAVAILABLE sentinel (-1.0) instead of
+      // fabricating a neutral 50 — the caller rejects (no signal), matching how
+      // GetATR_H1/GetATR_M15 already sentinel-and-reject in this same plugin.
+      if(CopyBuffer(m_handle_rsi_m15, 0, 1, 1, buf) <= 0) return -1.0;
       return buf[0];
    }
 
@@ -121,6 +124,7 @@ public:
       if(atr_h1 <= 0 || atr_m15 <= 0) return signal;
 
       double rsi = GetRSI_M15();
+      if(rsi < 0.0) return signal;   // FILT-04: RSI read failed -> no signal (never fabricate 50)
       double box_high = m_range_box.GetBoxHigh();
       double box_low = m_range_box.GetBoxLow();
       double sweep_tol = m_range_box.GetSweepTolerance();

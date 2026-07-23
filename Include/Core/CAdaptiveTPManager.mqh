@@ -240,16 +240,25 @@ public:
       }
 
       // Step 2: Trend strength adjustment
+      // FILT-04: apply the boost/cut ONLY with a real ADX (GetCurrentADX() returns
+      // the -1.0 UNAVAILABLE sentinel on a read failure). Abstaining leaves
+      // trend_adjustment == 1.0 — BYTE-IDENTICAL to the old read-fail fabrication
+      // of 25.0, which (sitting between weak_trend_adx=20 and strong_trend_adx=35)
+      // already produced trend_adjustment == 1.0. Real ADX is always >= 0, so this
+      // guard is a no-op on every path where the read succeeds.
       double trend_adjustment = 1.0;
-      if(current_adx >= m_config.strong_trend_adx)
+      if(current_adx >= 0.0)
       {
-         trend_adjustment = m_config.strong_trend_tp_boost;
-         result.tp_mode += "+StrongTrend";
-      }
-      else if(current_adx <= m_config.weak_trend_adx)
-      {
-         trend_adjustment = m_config.weak_trend_tp_cut;
-         result.tp_mode += "+WeakTrend";
+         if(current_adx >= m_config.strong_trend_adx)
+         {
+            trend_adjustment = m_config.strong_trend_tp_boost;
+            result.tp_mode += "+StrongTrend";
+         }
+         else if(current_adx <= m_config.weak_trend_adx)
+         {
+            trend_adjustment = m_config.weak_trend_tp_cut;
+            result.tp_mode += "+WeakTrend";
+         }
       }
 
       // Step 3: Regime-specific adjustments
@@ -381,7 +390,12 @@ public:
    {
       double adx_buffer[];
       ArraySetAsSeries(adx_buffer, true);
-      if(CopyBuffer(m_handle_adx_h4, 0, 0, 1, adx_buffer) <= 0) return 25.0;
+      // FILT-04: on an ADX buffer-read failure return an UNAVAILABLE sentinel
+      // (-1.0) instead of fabricating 25.0. The consumer (Step 2 below) skips the
+      // trend adjustment when ADX < 0, which reproduces the old 25.0 outcome
+      // (25 sat between weak/strong -> no adjustment) without feeding a made-up
+      // ADX into the TP-multiplier math.
+      if(CopyBuffer(m_handle_adx_h4, 0, 0, 1, adx_buffer) <= 0) return -1.0;
       return adx_buffer[0];
    }
 

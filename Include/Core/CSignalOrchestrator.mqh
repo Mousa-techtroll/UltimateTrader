@@ -708,8 +708,14 @@ public:
             // untouched (is_engine is constant-false on the default .set). This does
             // NOT re-enable the full short validator (that would zero ALL shorts = a
             // logic cut); the ATR-min check below still governs every other short.
+            // FILT-04: require a REAL MA200 read. When MA200 is unavailable (warmup /
+            // history-gapped) IsPriceAboveMA200() returns a directional DEFAULT, not a
+            // measurement — so ABSTAIN from the veto rather than veto on an assumption.
+            // Byte-identical on prod: this veto is is_engine-gated (constant-false on the
+            // default .set), so htf_uptrend is unused there; and when MA200 IS available
+            // IsMA200Available() is true, leaving the condition unchanged.
             bool htf_uptrend = ((h4_trend == TREND_BULLISH) || (daily_trend == TREND_BULLISH)) &&
-                               m_context.IsPriceAboveMA200();
+                               m_context.IsMA200Available() && m_context.IsPriceAboveMA200();
             if(is_engine && htf_uptrend)
             {
                reject_reason = "HTF_UPTREND_SHORT_VETO";

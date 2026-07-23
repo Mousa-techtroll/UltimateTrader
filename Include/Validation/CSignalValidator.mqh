@@ -282,7 +282,10 @@ public:
       {
          double current_rsi = (m_context != NULL) ? m_context.GetCurrentRSI() : 50.0;
          bool   rsi_avail   = (m_context != NULL) && m_context.IsRSIAvailable();   // FILT-04
-         double current_adx = (m_context != NULL) ? m_context.GetADXValue() : 25.0;
+         // FILT-04: ADX here only feeds the LogPrint below (no gate) — drop the
+         // fabricated 25.0 to neutral 0.0. In prod m_context != NULL so the real
+         // ADX is logged either way; byte-identical (log is off the Stats-CSV path).
+         double current_adx = (m_context != NULL) ? m_context.GetADXValue() : 0.0;
 
          LogPrint(">>> BEAR REGIME OVERRIDE: Evaluating SHORT pattern...");
          LogPrint(">>> Pattern: ", EnumToString(pattern_type), " | ADX=", DoubleToString(current_adx, 1),
@@ -338,7 +341,12 @@ public:
    {
       bool   rsi_avail   = (m_context != NULL) && m_context.IsRSIAvailable();   // FILT-04
       double current_rsi = (m_context != NULL) ? m_context.GetCurrentRSI() : 50.0;
-      double current_adx = (m_context != NULL) ? m_context.GetADXValue() : 25.0;
+      // FILT-04: never fabricate ADX. adx_avail is TRUE in prod (m_context != NULL
+      // and the regime classifier is wired), so current_adx is the real ADX and
+      // every `adx_avail && (...)` gate below reduces to its original condition —
+      // byte-identical. When ADX is genuinely unavailable, those gates ABSTAIN.
+      bool   adx_avail   = (m_context != NULL) && m_context.IsADXAvailable();   // FILT-04
+      double current_adx = adx_avail ? m_context.GetADXValue() : 0.0;
 
       // FILT-04: RSI-extreme exceptions fire only with a genuine RSI; otherwise abstain.
       bool is_extreme_overbought = rsi_avail && (current_rsi > m_rsi_overbought);
@@ -365,18 +373,18 @@ public:
                   bool macro_strong_bear = (macro_score <= m_bull_mr_short_macro_max);
                   bool allow_short = false;
 
-                  if(pattern_type == PATTERN_VOLATILITY_BREAKOUT && h4 == TREND_BEARISH && current_adx >= 26.0)
+                  if(adx_avail && pattern_type == PATTERN_VOLATILITY_BREAKOUT && h4 == TREND_BEARISH && current_adx >= 26.0)
                   {
                      LogPrint(">>> ALLOW: Breakout short against 200 EMA (H4 bearish + ADX>=26)");
                      allow_short = true;
                   }
 
-                  if(current_adx > m_validation_strong_adx)
+                  if(adx_avail && current_adx > m_validation_strong_adx)
                   {
                      LogPrint("REJECT: Bull Trend too strong (ADX ", DoubleToString(current_adx, 1), ") to short.");
                      return false;
                   }
-                  if(!IsMeanReversionPattern(pattern_type) && current_adx > m_short_trend_max_adx)
+                  if(adx_avail && !IsMeanReversionPattern(pattern_type) && current_adx > m_short_trend_max_adx)
                   {
                      LogPrint("REJECT: Trend short ADX exceeds max (", DoubleToString(current_adx, 1), " > ", m_short_trend_max_adx, ")");
                      return false;
@@ -387,7 +395,7 @@ public:
                      LogPrint(">>> ALLOW: Short allowed (Macro strongly bearish overrides D1 bull)");
                      allow_short = true;
                   }
-                  else if(IsMeanReversionPattern(pattern_type) && current_adx <= ct_adx_cap)
+                  else if(adx_avail && IsMeanReversionPattern(pattern_type) && current_adx <= ct_adx_cap)
                   {
                      if(macro_bearish || h4 == TREND_BEARISH)
                      {
@@ -403,17 +411,17 @@ public:
 
                   if(!allow_short)
                   {
-                     if(h4 == TREND_BEARISH && current_adx <= m_validation_strong_adx)
+                     if(adx_avail && h4 == TREND_BEARISH && current_adx <= m_validation_strong_adx)
                      {
                         LogPrint(">>> ALLOW: Short allowed (H4 Bearish against D1 Bull with controlled ADX)");
                         allow_short = true;
                      }
-                     else if(is_extreme_overbought && current_adx <= m_validation_strong_adx)
+                     else if(adx_avail && is_extreme_overbought && current_adx <= m_validation_strong_adx)
                      {
                         LogPrint(">>> ALLOW: Short allowed (RSI Extreme ", DoubleToString(current_rsi, 1), ")");
                         allow_short = true;
                      }
-                     else if(IsAsiaSession(g_sessionEngine != NULL ? g_sessionEngine.GetGMTOffset() : 0) && current_adx <= ct_adx_cap && macro_score <= 1)
+                     else if(adx_avail && IsAsiaSession(g_sessionEngine != NULL ? g_sessionEngine.GetGMTOffset() : 0) && current_adx <= ct_adx_cap && macro_score <= 1)
                      {
                         LogPrint(">>> ALLOW: Short allowed (Asia Session exception with low ADX)");
                         allow_short = true;
@@ -448,7 +456,7 @@ public:
             {
                if(signal == SIGNAL_LONG)
                {
-                  if(current_adx > m_validation_strong_adx)
+                  if(adx_avail && current_adx > m_validation_strong_adx)
                   {
                      LogPrint("REJECT: Bear Trend too strong (ADX ", DoubleToString(current_adx, 1), ") to buy.");
                      return false;
@@ -491,7 +499,7 @@ public:
                   }
                   else if(IsMeanReversionPattern(pattern_type))
                   {
-                     if(current_adx <= m_bull_mr_short_adx_cap && macro_score <= m_short_mr_macro_max)
+                     if(adx_avail && current_adx <= m_bull_mr_short_adx_cap && macro_score <= m_short_mr_macro_max)
                      {
                         LogPrint(">>> ALLOW: MR short below 200 EMA (macro<=", m_short_mr_macro_max, ", ADX within cap)");
                         allow_short = true;
@@ -499,7 +507,7 @@ public:
                   }
                   else
                   {
-                     if((h4 == TREND_BEARISH || macro_score <= -1) && current_adx <= m_validation_strong_adx)
+                     if(adx_avail && (h4 == TREND_BEARISH || macro_score <= -1) && current_adx <= m_validation_strong_adx)
                         allow_short = true;
                   }
 
@@ -618,7 +626,7 @@ public:
          // Only block when ADX is high (strong trend despite regime classification)
          if(primary_trend == TREND_BULLISH && signal == SIGNAL_SHORT)
          {
-            if(!is_extreme_overbought && current_adx > m_validation_strong_adx)
+            if(adx_avail && !is_extreme_overbought && current_adx > m_validation_strong_adx)
             {
                LogPrint("REJECT: Ranging but ", primary_name, " BULLISH + high ADX - avoiding Short");
                return false;
@@ -627,7 +635,7 @@ public:
 
          if(primary_trend == TREND_BEARISH && signal == SIGNAL_LONG)
          {
-            if(!is_extreme_oversold && current_adx > m_validation_strong_adx)
+            if(adx_avail && !is_extreme_oversold && current_adx > m_validation_strong_adx)
             {
                LogPrint("REJECT: Ranging but ", primary_name, " BEARISH + high ADX - avoiding Long");
                return false;
