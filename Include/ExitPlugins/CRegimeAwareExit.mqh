@@ -51,12 +51,12 @@ private:
    bool IsStructureBroken(int pos_type)
    {
       if(m_handle_ema50_h1 == INVALID_HANDLE)
-         return true;  // Fail-safe: if indicator unavailable, fall back to closing
+         return false;  // Fail-OPEN: an unreadable indicator must NOT trigger a close (no structure-break decision on a missing input)
 
       double ema50[];
       ArraySetAsSeries(ema50, true);
       if(CopyBuffer(m_handle_ema50_h1, 0, 1, 1, ema50) <= 0)
-         return true;  // Fail-safe
+         return false;  // Fail-OPEN: an unreadable EMA read must NOT force a close
 
       double h1_close = iClose(_Symbol, PERIOD_H1, 1);  // Last COMPLETED H1 bar
 

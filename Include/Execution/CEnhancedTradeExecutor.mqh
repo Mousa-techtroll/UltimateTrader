@@ -670,6 +670,13 @@ private:
                Log.Warning("Failed to get valid market data for " + symbol +
                               ", using fallback stop loss");
 
+               // FILT-04 / DEAD-ON-PROD (fabricated-values plan item 13): this whole
+               // m_useAdaptiveParams branch is unreachable on the shipping config —
+               // the live executor is built WITHOUT a CMarketCondition, so
+               // m_useAdaptiveParams is false and control takes the else branch below.
+               // The 0.01/0.005 percentage-of-price stop is a LATENT fabrication: if
+               // the analyzer is ever wired it would size the stop off a magic % of
+               // price. Left as-is (byte-identical); document, do not "fix", until wired.
                // Simple fallback - fixed percentage of price
                double stopPercent = 0.01; // 1% by default
 
@@ -919,7 +926,7 @@ private:
       if(symbol == "" || entryPrice <= 0 || stopLoss <= 0 || riskPercent <= 0)
       {
          Log.Error("Invalid inputs for lot size calculation");
-         return 0.01; // Minimum default
+         return 0.0; // FILT-04: REJECT on invalid inputs — do NOT fabricate a min-lot that would then size a trade
       }
 
       // Get validated market data
@@ -927,7 +934,7 @@ private:
       if(!GetValidatedMarketData(symbol, mdata))
       {
          Log.Error("Market data validation failed for lot size calculation: " + mdata.message);
-         return 0.01;
+         return 0.0; // FILT-04: REJECT on market-data failure — no fabricated min-lot
       }
 
       // Adjust risk percentage based on market conditions
@@ -936,14 +943,14 @@ private:
       // Calculate risk amount in account currency
       double riskAmount = CalculateRiskAmount(adjustedRiskPercent);
       if(riskAmount <= 0)
-         return 0.01;
+         return 0.0; // FILT-04: REJECT when risk amount is unavailable — no fabricated min-lot
 
       // Calculate stop loss distance
       double stopDistance = MathAbs(entryPrice - stopLoss);
       if(stopDistance <= 0)
       {
          Log.Error("Invalid stop distance for " + symbol);
-         return 0.01;
+         return 0.0; // FILT-04: REJECT on invalid stop distance — no fabricated min-lot
       }
 
       // Calculate lot size based on symbol type
@@ -1085,7 +1092,7 @@ private:
       // Calculate actual value per pip based on tick value
       double valuePerPip = (tickValue > 0) ?
                         (tickValue / tickSize) * pipSize :
-                        pipSize * 100.0; // $100 per full point fallback
+                        0.0; // FILT-04: NO fabricated $100/point tick value — leave 0.0 so the guard below REJECTS when broker tickValue is unavailable
 
       // Apply contract size adjustment if needed
       if(contractSize > 0 && contractSize != 100.0) {
@@ -1106,7 +1113,7 @@ private:
       else
       {
          Log.Warning("Invalid pip or value calculation for " + symbol);
-         return 0.01;
+         return 0.0; // FILT-04: REJECT when pip/value unavailable — no fabricated min-lot
       }
    }
 
@@ -1123,7 +1130,7 @@ private:
       if(tickValue <= 0 || tickSize <= 0 || point <= 0)
       {
          Log.Error("Invalid symbol properties for " + symbol);
-         return 0.01;
+         return 0.0; // FILT-04: REJECT on invalid symbol properties — no fabricated min-lot
       }
 
       double pointValue = tickValue / tickSize;
@@ -1134,7 +1141,7 @@ private:
       else
       {
          Log.Warning("Invalid point calculation for " + symbol);
-         return 0.01;
+         return 0.0; // FILT-04: REJECT on invalid point calculation — no fabricated min-lot
       }
    }
 

@@ -658,6 +658,15 @@ public:
 
    //+------------------------------------------------------------------+
    //| Get ATR multiplier based on market condition                      |
+   //| FILT-04 / DEAD-ON-PROD (fabricated-values plan item 13): the      |
+   //| 2.0/2.5/1.5/3.0 multipliers are UNREACHABLE on the shipping       |
+   //| config — the sole live executor (CEnhancedTradeExecutor) is       |
+   //| constructed WITHOUT a CMarketCondition, so m_useAdaptiveParams is |
+   //| false and its only call site (GetSafeSL, adaptive branch) never   |
+   //| runs; the other caller (CAdaptiveParameters) is never instantiated|
+   //| in prod. These hardcoded multipliers are a LATENT fabrication —   |
+   //| if the analyzer is ever wired they size stops off magic numbers.  |
+   //| Left as-is (byte-identical); document, do not "fix", until wired. |
    //+------------------------------------------------------------------+
    double GetAdaptiveATRMultiplier(string symbol)
    {
