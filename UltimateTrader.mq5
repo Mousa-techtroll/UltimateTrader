@@ -2235,6 +2235,10 @@ int OnInit()
    // Fix 4.2: give the trade orchestrator the coordinator so ExecuteSignal
    // can read aggregate open risk and enforce the InpMaxTotalExposure cap.
    g_tradeOrchestrator.SetPositionCoordinator(g_posCoordinator);
+   // RESEARCH LAB (research branch only): inject the lab into the UNIVERSAL entry gateway so the
+   // entry model + open-stamp cover every path (immediate/confirmed/file/sleeve). NULL when the
+   // master is off => the gateway hook is skipped (byte-identical).
+   g_tradeOrchestrator.SetResearchLab(g_researchLab);
 
    // Load existing positions at startup (Phase 0.1: tries state file first)
    g_posCoordinator.LoadOpenPositions();
@@ -3322,6 +3326,11 @@ void OnTick()
                         (g_marketContext != NULL ? g_marketContext.GetADXValue() : 0.0),
                         pending.regime_risk_multiplier);
                }
+               else if(StringFind(g_tradeOrchestrator.GetLastRejectReason(), "RESEARCH_") == 0)
+               {
+                  // Research-lab veto (RESEARCH_REJECT / RESEARCH_WAIT) on the confirmed path:
+                  // a DECISION, not an execution error — keep it out of the halt circuit.
+               }
                else
                {
                   g_riskMonitor.RecordExecutionError();
@@ -3499,39 +3508,10 @@ void OnTick()
                   signal.audit_origin = "IMMEDIATE";
                   signal.session_risk_multiplier = 1.0;
 
-                  // RESEARCH LAB entry admission (research branch only). NULL master / RM_CURRENT /
-                  // non-matching engine family => EvaluateEntry returns pass-through ACCEPT, so this
-                  // is inert unless a matching research ENTRY model is selected. The requested risk
-                  // multiplier is applied to signal.riskPercent HERE, so it composes exactly once with
-                  // every downstream gateway multiplier (session/regime/cohort/EC + the sizing cap).
-                  SCandidateEntry research_verdict; CandEntryInit(research_verdict);
-                  research_verdict.action = CAND_ACCEPT; research_verdict.candidate_id = "RM_CURRENT";
-                  double research_applied_mult = 1.0;
-                  bool   research_block = false;
-                  if(g_researchLab != NULL)
-                  {
-                     int    r_dir  = (signal.action == "BUY" || signal.action == "buy") ? 1 : -1;
-                     double r_risk = MathAbs(signal.entryPrice - signal.stopLoss);
-                     string r_eng  = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
-                     research_verdict = g_researchLab.EvaluateEntry(
-                        ResearchSignalIdHash(signal.signal_id), r_eng, r_dir, signal.entryPrice, r_risk,
-                        0.0, false, 0.0, false, 0.0, false, TimeCurrent());  // aux momentum unavailable => feature-family only
-                     switch(research_verdict.action)
-                     {
-                        case CAND_REJECT:           research_block = true; break;
-                        case CAND_WAIT_FOR_CONFIRM: research_block = true; break;  // lab tracks pending; re-admits when the engine re-emits + confirms
-                        case CAND_RISK_UPGRADE:
-                        case CAND_RISK_DOWNGRADE:
-                           if(signal.riskPercent > 0.0 && research_verdict.risk_mult > 0.0)
-                           {
-                              research_applied_mult = research_verdict.risk_mult;   // requested == applied at this gateway entry (downstream composite cap is a separate bound)
-                              signal.riskPercent *= research_applied_mult;
-                           }
-                           break;
-                        // CAND_RECLASSIFY_SUBTYPE / CAND_ACCEPT: admit; subtype rides the stamp at OnPositionOpened.
-                        default: break;
-                     }
-                  }
+                  // NOTE: research-lab entry admission (evaluate / abort-on-REJECT-or-WAIT /
+                  // risk-multiplier / open-stamp) is hooked INSIDE CTradeOrchestrator::ExecuteSignal
+                  // — the universal gateway — so it covers this immediate path AND the confirmed-
+                  // pending + file + sleeve paths uniformly. No caller-side research hook here.
 
                   // L3-2: preserve the routed-engine activation weight on the IMMEDIATE
                   // path. A routed Expansion signal stamps the router's activation weight
@@ -3647,7 +3627,7 @@ void OnTick()
                      }
                   }
 
-                  if(!entry_rejected && !research_block)   // research_block: lab REJECT / WAIT_FOR_CONFIRM defers this bar
+                  if(!entry_rejected)
                   {
                   // Regime risk scaling: adjust risk based on market state
                   if(g_regimeScaler != NULL && g_regimeScaler.IsEnabled())
@@ -3790,23 +3770,8 @@ void OnTick()
                      }
 
                      // CRITICAL: Register position with coordinator for lifecycle management
+                     // (the research-lab open-stamp is created inside ExecuteSignal at the fill).
                      g_posCoordinator.AddPosition(position);
-
-                     // RESEARCH LAB: normalize this admitted entry into the lab-owned trade stamp
-                     // (sole owner of open-position research metadata). origin_price = the initial
-                     // protective stop, which the engine places at the structural invalidation level
-                     // (engulf origin / parent swing) by design — a faithful proxy consumed by the
-                     // paired exit model; entry_impulse unavailable in this first pass (deterioration-
-                     // from-entry leg inactive). Both are documented stamp-enrichment follow-ups.
-                     if(g_researchLab != NULL && !research_block)
-                     {
-                        string r_eng2 = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
-                        g_researchLab.OnPositionOpened(
-                           position.ticket, ResearchSignalIdHash(signal.signal_id), r_eng2, research_verdict,
-                           research_applied_mult,
-                           0.0, false,                                   // entry_impulse unavailable (first pass)
-                           signal.stopLoss, (signal.stopLoss > 0.0));    // origin_price = initial structural stop proxy
-                     }
 
                      g_riskMonitor.IncrementTradesToday();
                      g_riskMonitor.RecordExecutionSuccess();
@@ -3825,8 +3790,10 @@ void OnTick()
                   {
                      // TIER-2 CLUSTER GUARD: a same-family concentration reject
                      // is a DECISION, not an execution error — keep it out of
-                     // the 5-strike consecutive-error halt circuit.
-                     if(g_tradeOrchestrator.GetLastRejectReason() != "CLUSTER_GUARD")
+                     // the 5-strike consecutive-error halt circuit. A research-lab
+                     // veto (RESEARCH_*) is likewise a decision, not a failure.
+                     if(g_tradeOrchestrator.GetLastRejectReason() != "CLUSTER_GUARD" &&
+                        StringFind(g_tradeOrchestrator.GetLastRejectReason(), "RESEARCH_") != 0)
                         g_riskMonitor.RecordExecutionError();
                   }
                   } // end if(!probation_diverted)
