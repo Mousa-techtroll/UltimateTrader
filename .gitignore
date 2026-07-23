@@ -20,3 +20,6 @@ claude/gate/p65/
 claude/research/baseline-*/Events_*.csv
 claude/research/baseline-*/Stats_*.csv
 claude/research/baseline-*/backtest_results_*.csv
+
+UT_ResearchFeatures.ex5
+ut_rf_log.txt
