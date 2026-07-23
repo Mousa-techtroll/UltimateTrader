@@ -27,10 +27,10 @@
 //|     the blend and the remaining weights are renormalized, not      |
 //|     back-filled with a neutral placeholder).                       |
 //|   - Makes NO market reads, creates NO handles, places NO orders.   |
-//|   - Adds NO fields to the shared ICandidate structs. The entry->   |
-//|     exit coordination rides a self-owned per-ticket imprint channel|
-//|     (see "COORDINATION MECHANISM" below) so nothing shared is      |
-//|     mutated — this file is droppable in isolation.                 |
+//|   - Holds NO per-ticket state. subtype/confidence are carried by   |
+//|     the lab's SResearchTradeStamp into ctx.subtype/                |
+//|     ctx.entry_confidence; this exit is STATELESS (see              |
+//|     "COORDINATION MECHANISM" below).                               |
 //|                                                                  |
 //| CONFIDENCE BLEND (entry)                                           |
 //|   room_score = Wr_R*roomR_norm + Wr_C*clearance_quality           |
@@ -59,26 +59,22 @@
 //|   confidence >= CONF_LO .................... RISK_DOWNGRADE (mult<1)|
 //|   below floor ............................. REJECT                 |
 //|                                                                  |
-//| COORDINATION MECHANISM (entry confidence -> exit) — the integrator |
-//| MUST honor this:                                                   |
+//| COORDINATION MECHANISM (entry confidence -> exit) — LAB-OWNED,     |
+//| the exit is STATELESS:                                             |
 //|   1. EvaluateEntry() stamps the graded value on SCandidateEntry.   |
 //|      confidence and (on RECLASSIFY) .reclass_subtype.              |
-//|   2. At the FILL of that signal the integrator calls               |
-//|         exit.Imprint(ticket, entry.confidence, subtype)            |
-//|      where subtype = entry.reclass_subtype on a RECLASSIFY verdict, |
-//|      else ENGC_SUBTYPE_RUNNER. This writes the position's entry    |
-//|      confidence into the exit's OWN per-ticket registry (no shared |
-//|      struct is touched — that is the whole point of the channel).  |
-//|   3. Each closed bar the integrator calls exit.EvaluateExit(ctx);  |
-//|      EvaluateExit recovers (confidence, subtype) for ctx.ticket    |
-//|      from the registry and shapes the proposal accordingly.        |
-//|   4. On position close the integrator SHOULD call exit.Forget(     |
-//|      ticket) for hygiene (bounded memory).                         |
-//|   GRACEFUL DEGRADATION: if no imprint exists for a ticket (the     |
-//|   integrator did not stamp it), EvaluateExit re-DERIVES a coarse   |
-//|   PROXY confidence from the exit ctx (entry_impulse + live follow- |
-//|   through + room, minus revert) so the exit still coordinates; the |
-//|   reason string is tagged "(proxy)" so the substitution is visible.|
+//|   2. The LAB is the SOLE owner of per-ticket state: it records     |
+//|      subtype/confidence on its SResearchTradeStamp and, each       |
+//|      closed bar, fills them onto the exit ctx as ctx.subtype and   |
+//|      ctx.entry_confidence.                                         |
+//|   3. EvaluateExit() READS ctx.subtype / ctx.entry_confidence and   |
+//|      shapes the proposal accordingly. It owns NO registry and      |
+//|      needs no Imprint/Forget calls.                                |
+//|   GRACEFUL DEGRADATION: when ctx.entry_confidence <= 0.0 (unset),  |
+//|   EvaluateExit re-DERIVES a coarse PROXY confidence from the exit  |
+//|   ctx (entry_impulse + live follow-through + room, minus revert)   |
+//|   so the exit still coordinates; the reason string is tagged       |
+//|   "(proxy)" so the substitution is visible.                        |
 //|                                                                  |
 //| DEFERRED THRESHOLDS                                                |
 //|   Every weight / saturation / threshold below is a NAMED #define,  |
@@ -170,6 +166,8 @@ class CEngulfCandC_Entry : public ICandidateEntry
 {
 public:
    virtual string Id() const { return "ENG_C_confidence"; }
+   virtual int    ModelId() const { return RM_ENG_C; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SCandidateEntry EvaluateEntry(const SResearchSignalCtx &ctx)
    {
@@ -337,81 +335,18 @@ public:
 };
 
 //==================================================================
-//  ENTRY-CONFIDENCE IMPRINT CHANNEL (the coordination mechanism)
-//==================================================================
-// A per-ticket record carrying the entry verdict's confidence + subtype from
-// fill time forward to the exit. Owned entirely by the exit candidate so that
-// NO shared struct is mutated (isolation). The integrator populates it via
-// Imprint() at fill and clears it via Forget() at close (see header contract).
-struct SEngCImprint
-{
-   double confidence;   // 0..1 entry confidence carried onto the position
-   int    subtype;      // ENGC_SUBTYPE_RUNNER / ENGC_SUBTYPE_SCALP
-   bool   valid;        // true = a genuine imprint was found (else proxy)
-};
-
-//==================================================================
-//  EXIT CANDIDATE
+//  EXIT CANDIDATE (STATELESS)
 //==================================================================
 class CEngulfCandC_Exit : public ICandidateExit
 {
-private:
-   //--- per-ticket imprint registry (the coordination channel) ---
-   long   m_tk[];   // ticket keys
-   double m_cf[];   // carried entry confidence
-   int    m_st[];   // carried subtype
-   int    m_n;      // live entries
-
 public:
-                     CEngulfCandC_Exit()
-   {
-      m_n = 0;
-      ArrayResize(m_tk, 64);
-      ArrayResize(m_cf, 64);
-      ArrayResize(m_st, 64);
-   }
-
    virtual string Id() const { return "ENG_C_confidence"; }
+   virtual int    ModelId() const { return RM_ENG_C; }
+   virtual int    ModelVersion() const { return 1; }
 
    //---------------------------------------------------------------
-   // Coordination API — the integrator MUST call Imprint() at the FILL
-   // of an accepted signal, passing the paired entry verdict's confidence
-   // and subtype ( entry.reclass_subtype on a RECLASSIFY verdict, else
-   // ENGC_SUBTYPE_RUNNER ). This is the ONLY way the exit learns how the
-   // position was graded.
-   //---------------------------------------------------------------
-   void Imprint(long ticket, double confidence, int subtype)
-   {
-      int idx = Find(ticket);
-      if(idx < 0)
-      {
-         if(m_n >= ArraySize(m_tk))
-         { ArrayResize(m_tk, m_n + 64); ArrayResize(m_cf, m_n + 64); ArrayResize(m_st, m_n + 64); }
-         idx = m_n++;
-         m_tk[idx] = ticket;
-      }
-      m_cf[idx] = confidence;
-      m_st[idx] = subtype;
-   }
-
-   // Uniform lab hooks (generic per-ticket handoff): map entry verdict -> Imprint.
-   virtual void OnOpen(long ticket, const SCandidateEntry &v)
-   { Imprint(ticket, v.confidence, (v.action==CAND_RECLASSIFY_SUBTYPE ? v.reclass_subtype : ENGC_SUBTYPE_RUNNER)); }
-   virtual void OnClose(long ticket) { Forget(ticket); }
-
-   // Hygiene: the integrator SHOULD call this when the position closes.
-   void Forget(long ticket)
-   {
-      int i = Find(ticket);
-      if(i < 0) return;
-      m_tk[i] = m_tk[m_n - 1];   // swap-remove (order irrelevant)
-      m_cf[i] = m_cf[m_n - 1];
-      m_st[i] = m_st[m_n - 1];
-      m_n--;
-   }
-
-   //---------------------------------------------------------------
-   // EvaluateExit — shape the proposal from the CARRIED entry confidence.
+   // EvaluateExit — shape the proposal from the CARRIED entry confidence,
+   // read STATELESSLY from the ctx (lab-filled from SResearchTradeStamp).
    // Never a fixed take-profit. HIGH conf runs (wide trail); LOW conf is
    // invalidated early and tight; the scalp subtype banks sooner.
    //---------------------------------------------------------------
@@ -423,11 +358,14 @@ public:
 
       const int dir = (ctx.direction >= 0) ? 1 : -1;
 
-      // ---- recover the carried entry confidence (coordination) ----
-      SEngCImprint im = Recall(ctx.ticket);
+      // ---- read the carried entry confidence + subtype from the ctx ----
+      // The LAB is the SOLE owner of per-ticket state: it stamps entry_confidence
+      // and subtype onto SResearchPosCtx from the shared SResearchTradeStamp. This
+      // exit holds NO registry. Fall back to the graceful proxy ONLY when the stamp
+      // is unset (entry_confidence <= 0.0), tagging the reason "(proxy)".
       double conf; int subtype; string src;
-      if(im.valid)
-      { conf = im.confidence; subtype = im.subtype; src = ""; }
+      if(ctx.entry_confidence > 0.0)
+      { conf = ctx.entry_confidence; subtype = ctx.subtype; src = ""; }
       else
       { conf = DeriveProxyConfidence(ctx, dir); subtype = ENGC_SUBTYPE_RUNNER; src = " (proxy)"; }
       p.confidence = conf;
@@ -530,22 +468,7 @@ public:
    }
 
 private:
-   //================= imprint registry lookups =======================
-   int Find(long ticket) const
-   {
-      for(int i = 0; i < m_n; i++)
-         if(m_tk[i] == ticket) return i;
-      return -1;
-   }
-   SEngCImprint Recall(long ticket) const
-   {
-      SEngCImprint r; r.confidence = 0.0; r.subtype = ENGC_SUBTYPE_RUNNER; r.valid = false;
-      int i = Find(ticket);
-      if(i >= 0) { r.confidence = m_cf[i]; r.subtype = m_st[i]; r.valid = true; }
-      return r;
-   }
-
-   //================= exit-side derivations ==========================
+   //================= exit-side derivations (read ctx only) ==========
 
    // Origin break: the frozen engulf origin / parent swing has been given back.
    // current price is reconstructed from R:  px = entry + dir*current_r*risk.
@@ -575,8 +498,9 @@ private:
       return false;
    }
 
-   // Proxy confidence when the integrator did NOT imprint the ticket. Coarse,
-   // documented substitute so the exit still coordinates. A neutral 0.5 is used
+   // Proxy confidence when the lab did NOT stamp the ticket (ctx.entry_confidence
+   // <= 0.0). Coarse, documented substitute so the exit still coordinates. A
+   // neutral 0.5 is used
    // ONLY if literally no feature is available (last resort, and tagged "(proxy)"
    // in every reason string that used it).
    double DeriveProxyConfidence(const SResearchPosCtx &ctx, int dir) const

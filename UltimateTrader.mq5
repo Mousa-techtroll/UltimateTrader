@@ -56,6 +56,10 @@
 #include "Include/ExitPolicies/CExitTelemetry.mqh"
 #include "Include/MarketAnalysis/CNewsGate.mqh"   // News filter engine (hybrid live-calendar / tester-CSV)
 
+// RESEARCH ENTRY×EXIT LAB (research branch only). Self-contained; compiled DORMANT unless
+// InpResearchLabEnable is on (g_researchLab stays NULL otherwise => byte-identical).
+#include "Include/Research/CResearchEntryExitLab.mqh"
+
 // Plugin System
 #include "Include/PluginSystem/CEntryStrategy.mqh"
 #include "Include/PluginSystem/CExitStrategy.mqh"
@@ -160,6 +164,11 @@ CAccountSafety         *g_accountSafety      = NULL;
 CExitTelemetry         *g_exitTelemetry      = NULL;
 datetime                g_lastMomH1Bar       = 0;
 CMarketStateManager    *g_stateManager      = NULL;
+
+// RESEARCH ENTRY×EXIT LAB — sole owner of research pending-signal/open-position metadata.
+// NULL unless InpResearchLabEnable constructs it => every hook is skipped => byte-identical.
+CResearchEntryExitLab  *g_researchLab        = NULL;
+datetime                g_researchLabBar     = 0;   // last closed H1 bar fed to the lab
 
 // Validation
 CSignalValidator       *g_signalValidator    = NULL;
@@ -1383,6 +1392,25 @@ int OnInit()
       Print("[Init] Account-safety layer active (mode=", InpDailyLossMode, ")");
    }
 
+   // RESEARCH ENTRY×EXIT LAB — ABSOLUTE master. Constructed ONLY when InpResearchLabEnable;
+   // otherwise g_researchLab stays NULL and every hook below is skipped => byte-identical.
+   if(InpResearchLabEnable)
+   {
+      g_researchLab = new CResearchEntryExitLab();
+      ENUM_RESEARCH_MODEL rem = (ENUM_RESEARCH_MODEL)InpResearchEntryModel;
+      ENUM_RESEARCH_MODEL rxm = (ENUM_RESEARCH_MODEL)InpResearchExitModel;
+      if(g_researchLab == NULL || !g_researchLab.Init(rem, rxm))
+      {
+         // Incompatible cross-profile pairing (or alloc failure) => hard init failure by design.
+         Print("[Init] CRITICAL: research lab init failed (entry=", InpResearchEntryModel,
+               " exit=", InpResearchExitModel, ") — incompatible pairing or alloc error");
+         if(g_researchLab != NULL) { delete g_researchLab; g_researchLab = NULL; }
+         return(INIT_FAILED);
+      }
+      Print("[Init] Research entry×exit lab ACTIVE (entry=", EnumToString(rem),
+            " exit=", EnumToString(rxm), " labver=", RESEARCH_LAB_VERSION, ")");
+   }
+
    // NEWS FILTER: hybrid event-window engine (live calendar / tester CSV / static fallback).
    // Initialize() never fails hard — worst case it degrades to the static blackout schedule.
    g_newsGate = new CNewsGate();
@@ -2104,6 +2132,9 @@ int OnInit()
    g_posCoordinator.SetSnapshotter(g_momSnapshotter);
    g_posCoordinator.SetExitTelemetry(g_exitTelemetry);
    g_posCoordinator.SetAccountSafety(g_accountSafety);
+   // RESEARCH LAB (research branch only): inject the lab into the coordinator's exit + close
+   // funnels. NULL when InpResearchLabEnable is off => both research seams skipped (byte-identical).
+   g_posCoordinator.SetResearchLab(g_researchLab);
 
    // CRiskMonitor: new constructor (max_trades, daily_loss, alerts, push, email, max_consec_errors)
    g_riskMonitor = new CRiskMonitor(
@@ -2514,6 +2545,7 @@ void OnDeinit(const int reason)
    if(g_meanRevExit != NULL)    { delete g_meanRevExit;    g_meanRevExit    = NULL; }
    if(g_accountSafety != NULL)  { delete g_accountSafety;  g_accountSafety  = NULL; }
    if(g_exitTelemetry != NULL)  { g_exitTelemetry.Close(); delete g_exitTelemetry; g_exitTelemetry = NULL; }
+   if(g_researchLab != NULL)    { delete g_researchLab; g_researchLab = NULL; }  // dtor closes telemetry handle
 
    EventKillTimer();
    Comment("");
@@ -2801,6 +2833,30 @@ void OnTick()
                IntentScores is_row; g_momSnapshotter.GetIntentScores(dummy_long, is_row);
                g_exitTelemetry.LogSnapshot(snap_row, is_row);
             }
+         }
+      }
+
+      // RESEARCH LAB (research branch only): refresh the candidate feature families off the
+      // just-closed H1 bar, ONCE per new bar. NULL unless InpResearchLabEnable => skipped.
+      if(g_researchLab != NULL)
+      {
+         datetime cur_h1_res = iTime(_Symbol, PERIOD_H1, 0);
+         if(cur_h1_res != g_researchLabBar)
+         {
+            g_researchLabBar = cur_h1_res;
+            g_researchLab.UpdateBar(iTime(_Symbol, PERIOD_H1, 1)); // closed-bar feature snapshot
+
+            // Advance the durable WAIT_FOR_CONFIRM state machine on the fresh features, then
+            // drop resolved (confirmed/invalidated/expired/executed) records. Active re-admission
+            // of a confirmed pending relies on the engine re-emitting its full signal next bar
+            // (the sparse pending record cannot reconstruct a tradeable signal); this ledger keeps
+            // the lifecycle durable + attributable and prevents duplicate pending entries.
+            for(int rp = g_researchLab.PendingCount() - 1; rp >= 0; rp--)
+            {
+               SCandidateEntry pend_out;
+               g_researchLab.PendingTick(rp, 0.0, false, 0.0, false, 0.0, false, TimeCurrent(), pend_out);
+            }
+            g_researchLab.PendingPurge();
          }
       }
 
@@ -3443,6 +3499,40 @@ void OnTick()
                   signal.audit_origin = "IMMEDIATE";
                   signal.session_risk_multiplier = 1.0;
 
+                  // RESEARCH LAB entry admission (research branch only). NULL master / RM_CURRENT /
+                  // non-matching engine family => EvaluateEntry returns pass-through ACCEPT, so this
+                  // is inert unless a matching research ENTRY model is selected. The requested risk
+                  // multiplier is applied to signal.riskPercent HERE, so it composes exactly once with
+                  // every downstream gateway multiplier (session/regime/cohort/EC + the sizing cap).
+                  SCandidateEntry research_verdict; CandEntryInit(research_verdict);
+                  research_verdict.action = CAND_ACCEPT; research_verdict.candidate_id = "RM_CURRENT";
+                  double research_applied_mult = 1.0;
+                  bool   research_block = false;
+                  if(g_researchLab != NULL)
+                  {
+                     int    r_dir  = (signal.action == "BUY" || signal.action == "buy") ? 1 : -1;
+                     double r_risk = MathAbs(signal.entryPrice - signal.stopLoss);
+                     string r_eng  = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
+                     research_verdict = g_researchLab.EvaluateEntry(
+                        ResearchSignalIdHash(signal.signal_id), r_eng, r_dir, signal.entryPrice, r_risk,
+                        0.0, false, 0.0, false, 0.0, false, TimeCurrent());  // aux momentum unavailable => feature-family only
+                     switch(research_verdict.action)
+                     {
+                        case CAND_REJECT:           research_block = true; break;
+                        case CAND_WAIT_FOR_CONFIRM: research_block = true; break;  // lab tracks pending; re-admits when the engine re-emits + confirms
+                        case CAND_RISK_UPGRADE:
+                        case CAND_RISK_DOWNGRADE:
+                           if(signal.riskPercent > 0.0 && research_verdict.risk_mult > 0.0)
+                           {
+                              research_applied_mult = research_verdict.risk_mult;   // requested == applied at this gateway entry (downstream composite cap is a separate bound)
+                              signal.riskPercent *= research_applied_mult;
+                           }
+                           break;
+                        // CAND_RECLASSIFY_SUBTYPE / CAND_ACCEPT: admit; subtype rides the stamp at OnPositionOpened.
+                        default: break;
+                     }
+                  }
+
                   // L3-2: preserve the routed-engine activation weight on the IMMEDIATE
                   // path. A routed Expansion signal stamps the router's activation weight
                   // onto signal.regime_risk_multiplier (CExpansionEngine ~:579); the
@@ -3557,7 +3647,7 @@ void OnTick()
                      }
                   }
 
-                  if(!entry_rejected)
+                  if(!entry_rejected && !research_block)   // research_block: lab REJECT / WAIT_FOR_CONFIRM defers this bar
                   {
                   // Regime risk scaling: adjust risk based on market state
                   if(g_regimeScaler != NULL && g_regimeScaler.IsEnabled())
@@ -3701,6 +3791,22 @@ void OnTick()
 
                      // CRITICAL: Register position with coordinator for lifecycle management
                      g_posCoordinator.AddPosition(position);
+
+                     // RESEARCH LAB: normalize this admitted entry into the lab-owned trade stamp
+                     // (sole owner of open-position research metadata). origin_price = the initial
+                     // protective stop, which the engine places at the structural invalidation level
+                     // (engulf origin / parent swing) by design — a faithful proxy consumed by the
+                     // paired exit model; entry_impulse unavailable in this first pass (deterioration-
+                     // from-entry leg inactive). Both are documented stamp-enrichment follow-ups.
+                     if(g_researchLab != NULL && !research_block)
+                     {
+                        string r_eng2 = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
+                        g_researchLab.OnPositionOpened(
+                           position.ticket, ResearchSignalIdHash(signal.signal_id), r_eng2, research_verdict,
+                           research_applied_mult,
+                           0.0, false,                                   // entry_impulse unavailable (first pass)
+                           signal.stopLoss, (signal.stopLoss > 0.0));    // origin_price = initial structural stop proxy
+                     }
 
                      g_riskMonitor.IncrementTradesToday();
                      g_riskMonitor.RecordExecutionSuccess();

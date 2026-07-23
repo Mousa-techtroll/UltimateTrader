@@ -74,6 +74,8 @@ class CPbcCandA_Entry : public ICandidateEntry
 {
 public:
    virtual string Id() const { return "PBC_A_proxy"; }
+   virtual int    ModelId() const { return RM_PBC_A; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SCandidateEntry EvaluateEntry(const SResearchSignalCtx &ctx)
    {
@@ -152,6 +154,8 @@ class CPbcCandA_Exit : public ICandidateExit
 {
 public:
    virtual string Id() const { return "PBC_A_proxy"; }
+   virtual int    ModelId() const { return RM_PBC_A; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx)
    {

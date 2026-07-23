@@ -91,6 +91,8 @@ class CPbcCandB_Entry : public ICandidateEntry
 {
 public:
    virtual string Id() const override { return "PBC_B_realrec"; }
+   virtual int    ModelId() const override { return RM_PBC_B; }
+   virtual int    ModelVersion() const override { return 1; }
 
    virtual SCandidateEntry EvaluateEntry(const SResearchSignalCtx &ctx) override
    {
@@ -226,41 +228,19 @@ private:
 //+------------------------------------------------------------------+
 //| CPbcCandB_Exit — recovery-FADE exit for the real-recovery arm.    |
 //|                                                                  |
-//| Holds the ONE piece of memory the thesis needs: per open ticket,  |
-//| the POST-ENTRY PEAK of recovery_confirmed and the basing_quality  |
-//| captured at first sighting (entry bar). Everything else is read   |
-//| from the pre-computed feature snapshot NOW. No fixed TP.          |
+//| STATELESS: the ONE piece of memory the thesis needs — the         |
+//| POST-ENTRY PEAK of recovery_confirmed and the basing_quality      |
+//| latched at first sighting — is owned and persisted by the LAB     |
+//| (SResearchTradeStamp) and handed in via ctx.peak_recovery /       |
+//| ctx.entry_basing. This candidate reads ctx only, never its own    |
+//| registry. Everything else is the pre-computed snapshot NOW.       |
 //+------------------------------------------------------------------+
 class CPbcCandB_Exit : public ICandidateExit
 {
-private:
-   long   m_tk[];          // tracked tickets
-   double m_peak_rec[];    // running post-entry max of recovery_confirmed per ticket
-   double m_entry_base[];  // basing_quality captured at first sighting (entry bar) per ticket
-   int    m_n;
-
-   int Slot(long ticket) const
-   {
-      for(int i = 0; i < m_n; i++)
-         if(m_tk[i] == ticket) return i;
-      return -1;
-   }
-   int NewSlot(long ticket, double rec0, double base0)
-   {
-      int i = m_n;
-      ArrayResize(m_tk,         i + 1);
-      ArrayResize(m_peak_rec,   i + 1);
-      ArrayResize(m_entry_base, i + 1);
-      m_tk[i]         = ticket;
-      m_peak_rec[i]   = rec0;
-      m_entry_base[i] = base0;
-      m_n             = i + 1;
-      return i;
-   }
-
 public:
-                     CPbcCandB_Exit() { m_n = 0; }
    virtual string    Id() const override { return "PBC_B_realrec"; }
+   virtual int       ModelId() const override { return RM_PBC_B; }
+   virtual int       ModelVersion() const override { return 1; }
 
    virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx) override
    {
@@ -291,20 +271,14 @@ public:
       }
 
       //--- (B) RECOVERY FADE — requires a recovery read NOW (never fabricate).
-      if(pb.recovery_confirmed.available)
+      //    The post-entry peak and the latched entry-basing are lab-owned (ctx),
+      //    so this candidate holds no per-ticket memory of its own.
+      if(pb.recovery_confirmed.available && ctx.peak_recovery_ok)
       {
-         const double rec      = pb.recovery_confirmed.value;
-         const double base_now = pb.basing_quality.available ? pb.basing_quality.value : 0.0;
-
-         int s = Slot(ctx.ticket);
-         if(s < 0)
-            s = NewSlot(ctx.ticket, rec, base_now);   // first sighting = entry bar: seed peak + base
-         if(rec > m_peak_rec[s])
-            m_peak_rec[s] = rec;                       // track the post-entry peak
-
-         const double peak       = m_peak_rec[s];
+         const double rec        = pb.recovery_confirmed.value;
+         const double peak       = ctx.peak_recovery;  // lab-tracked running post-entry max (incl. this bar)
          const double fade       = peak - rec;         // >= 0
-         const double entry_base = m_entry_base[s];
+         const double entry_base = ctx.entry_basing_ok ? ctx.entry_basing : 0.0;
 
          // (B1) sharp collapse of a once-confirmed recovery -> exit the continuation.
          if(fade >= PBCB_X_FADE_HARD && rec <= PBCB_X_REC_FADED)

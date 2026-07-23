@@ -883,3 +883,13 @@ input ENUM_DAILY_LOSS_MODE InpDailyLossMode = DLM_BLOCK_ONLY; // Daily-loss mode
 // Default OFF => the account-safety seam is skipped => byte-identical. REDUCE_AND_PROTECT is
 // currently UNAVAILABLE (no-op) until its full execution+accounting contract exists.
 input bool   InpAccountSafetyActive = false;  // Enable the broker-authoritative daily-loss account-safety layer (decoupled from exit policies)
+
+// RESEARCH ENTRY×EXIT LAB (research branch only) — ABSOLUTE master switch. OFF (default) =>
+// the lab is never constructed, no handles/state/telemetry, every hook is NULL-guarded =>
+// byte-identical to the baseline. Entry and exit models are selected INDEPENDENTLY; 0 = RM_CURRENT
+// (production admission/exit, no research change on that side). IDs (ENUM_RESEARCH_MODEL, never renumber):
+//   0 RM_CURRENT | 1 RM_ENG_A | 2 RM_ENG_B | 3 RM_ENG_C | 4 RM_PBC_A | 5 RM_PBC_B | 6 RM_PBC_C
+// Cross-profile pairs (Engulfing entry + PBC exit, or vice-versa) FAIL lab init by design.
+input bool   InpResearchLabEnable  = false;  // ABSOLUTE master for the research entry×exit lab (OFF => byte-identical)
+input int    InpResearchEntryModel = 0;      // entry model id (0=RM_CURRENT; 1..3 Engulfing A/B/C; 4..6 PBC A/B/C)
+input int    InpResearchExitModel  = 0;      // exit  model id (0=RM_CURRENT; 1..3 Engulfing A/B/C; 4..6 PBC A/B/C)

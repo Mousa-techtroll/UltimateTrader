@@ -362,6 +362,7 @@ struct SPosition
    ExitProposal           policy_trail_mod;    // Contract-B staging, consumed in ApplyTrailingPlugins; reset/tick
    datetime               last_seam_bar;       // exit-policy seam ran for this H1 bar (per-bar gate)
    datetime               last_reduce_bar;     // a native partial reduced this position this H1 bar (RULE-6 guard)
+   datetime               last_research_bar;   // research exit seam ran for this H1 bar (per-bar gate; research branch only)
 
    void Init()
    {
@@ -434,6 +435,7 @@ struct SPosition
       policy_trail_mod.Init();
       last_seam_bar = 0;
       last_reduce_bar = 0;
+      last_research_bar = 0;
    }
 };
 

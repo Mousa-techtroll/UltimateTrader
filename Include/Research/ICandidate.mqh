@@ -45,7 +45,11 @@ struct SResearchPosCtx
    double   entry_impulse; bool entry_impulse_ok;   // momentum-at-entry, for deterioration-from-entry
    double   current_price;                          // live closed price this bar (seam-populated; no reconstruct)
    double   impulse_now;   bool impulse_now_ok;      // live closed-bar impulse (seam-populated)
+   int      subtype;                                // reclassified subtype from the shared entry stamp (lab-filled)
+   double   entry_confidence;                       // entry model's confidence from the shared stamp (lab-filled)
    double   origin_price;  bool origin_ok;          // engulf origin / parent swing low, frozen at entry
+   double   peak_recovery; bool peak_recovery_ok;   // lab-owned running post-entry max of recovery_confirmed
+   double   entry_basing;  bool entry_basing_ok;    // lab-owned basing_quality latched at first sighting
    // pre-computed feature snapshots NOW
    SPullbackRecoveryFeatures pullback;
    SBreakoutFollowThrough    breakout;
@@ -67,21 +71,44 @@ struct SResearchExitProposal
 inline void ExitPropInit(SResearchExitProposal &p)
 { p.action=0; p.pct=0; p.factor=1.0; p.confidence=0; p.candidate_id=""; p.reason=""; p.valid=false; }
 
+// Normalized per-position research metadata — the LAB is its SOLE owner; it is persisted and
+// handed to any independently-selected exit model via SResearchPosCtx (subtype/entry_confidence/
+// entry_impulse/origin). Exit models are STATELESS: they read this, never their own registry.
+struct SResearchTradeStamp
+{
+   long     ticket;
+   int      signal_id;          // link back to the pending-signal identity
+   int      entry_model;        // ENUM_RESEARCH_MODEL
+   int      entry_version;
+   int      exit_model;
+   int      exit_version;
+   int      subtype;            // reclassification decided at entry
+   double   entry_confidence;
+   double   entry_impulse; bool entry_impulse_ok;
+   double   origin_price;  bool origin_ok;
+   double   peak_recovery; bool peak_recovery_ok;  // running post-entry max of recovery_confirmed (lab-tracked, persisted)
+   double   entry_basing;  bool entry_basing_ok;   // basing_quality latched at first exit-eval sighting (persisted)
+   double   req_risk_mult;      // requested by the entry model
+   double   applied_risk_mult;  // actually applied by the risk gateway
+   datetime open_time;
+   bool     valid;
+};
+
 class ICandidateEntry
 {
 public:
    virtual SCandidateEntry       EvaluateEntry(const SResearchSignalCtx &ctx) = 0;
+   virtual int                   ModelId() const = 0;       // ENUM_RESEARCH_MODEL, stable
+   virtual int                   ModelVersion() const = 0;  // bump on any behavior change
    virtual string                Id() const = 0;
 };
 class ICandidateExit
 {
 public:
-   virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx) = 0;
+   virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx) = 0;   // STATELESS: reads ctx only
+   virtual int                   ModelId() const = 0;
+   virtual int                   ModelVersion() const = 0;
    virtual string                Id() const = 0;
-   // Uniform per-ticket lifecycle so the lab can hand any exit its entry-side
-   // metadata (confidence/subtype) generically. Stateful exits override; others no-op.
-   virtual void                  OnOpen(long ticket, const SCandidateEntry &entry_verdict) { }
-   virtual void                  OnClose(long ticket) { }
 };
 
 #endif

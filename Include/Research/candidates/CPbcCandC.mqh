@@ -30,17 +30,14 @@
 //|      (no subtype). Shallow-failing dips are CAND_REJECT.          |
 //|                                                                  |
 //| ENTRY→EXIT COORDINATION (documented; see CPbcCandC_Exit):         |
-//|   The exit context (SResearchPosCtx) carries NO subtype field, so |
-//|   the subtype decided ONCE at entry is handed to the exit through |
-//|   an explicit per-ticket registry: on admission the coordinator   |
-//|   calls exit.RegisterSubtype(ticket, entry.reclass_subtype); the  |
-//|   exit persists it and, every closed bar, looks it up by          |
-//|   ctx.ticket to select the SHALLOW-tight vs DEEP-wide branch. On  |
-//|   position close it calls exit.Forget(ticket). Entry writes the   |
-//|   subtype once; exit reads it many times — a clean single-writer  |
-//|   handoff that touches neither the shared ctx struct nor          |
-//|   production code (the Register/Forget calls ARE the integration  |
-//|   seam, intentionally left unwired here).                         |
+//|   The subtype decided ONCE at entry (reclass_subtype) is carried  |
+//|   by the LAB (the SOLE owner of per-ticket state) onto its        |
+//|   SResearchTradeStamp and filled onto the exit ctx as ctx.subtype |
+//|   each closed bar. The exit READS ctx.subtype to select the       |
+//|   SHALLOW-tight vs DEEP-wide branch (NONE => plain branch). It is  |
+//|   STATELESS: no registry, no Register/Forget hooks. Entry writes  |
+//|   the subtype once; the lab carries it; the exit reads it many    |
+//|   times - a clean single-writer handoff.                          |
 //|                                                                  |
 //| All thresholds and the subtype codes are named #defines at the    |
 //| top — transparent, dev-selected-later, NOT fitted. No fixed TP.   |
@@ -111,6 +108,8 @@ class CPbcCandC_Entry : public ICandidateEntry
 {
 public:
    virtual string Id() const { return "PBC_C_timing"; }
+   virtual int    ModelId() const { return RM_PBC_C; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SCandidateEntry EvaluateEntry(const SResearchSignalCtx &ctx)
    {
@@ -201,49 +200,18 @@ private:
 };
 
 //+------------------------------------------------------------------+
-//| CPbcCandC_Exit — subtype-specific exit. The subtype decided at   |
-//| entry is carried in via RegisterSubtype(ticket, subtype) and     |
-//| looked up per closed bar by ctx.ticket. SHALLOW banks/tightens    |
+//| CPbcCandC_Exit — subtype-specific exit. STATELESS: the subtype   |
+//| decided at entry is carried by the lab's SResearchTradeStamp into|
+//| ctx.subtype and read per closed bar. SHALLOW banks/tightens      |
 //| early; DEEP rides a wide trail, invalidated only on a parent-     |
 //| structure break. No fixed TP.                                    |
 //+------------------------------------------------------------------+
 class CPbcCandC_Exit : public ICandidateExit
 {
-private:
-   long m_tickets[];   // parallel registry: ticket ...
-   int  m_subs[];      // ... -> subtype (PBC_C_SUB_*), written once at admission
-
 public:
    virtual string Id() const { return "PBC_C_timing"; }
-
-   //--- COORDINATION SEAM (called by the coordinator at admission using the
-   //    entry verdict's reclass_subtype). Upsert so a re-admit stays consistent.
-   void RegisterSubtype(const long ticket, const int subtype)
-   {
-      int idx = IndexOf(ticket);
-      if(idx >= 0) { m_subs[idx] = subtype; return; }
-      int n = ArraySize(m_tickets);
-      ArrayResize(m_tickets, n + 1);
-      ArrayResize(m_subs,    n + 1);
-      m_tickets[n] = ticket;
-      m_subs[n]    = subtype;
-   }
-
-   //--- Housekeeping: coordinator calls this when the position closes.
-   void Forget(const long ticket)
-   {
-      int idx = IndexOf(ticket);
-      if(idx < 0) return;
-      int n = ArraySize(m_tickets);
-      m_tickets[idx] = m_tickets[n - 1];   // swap-with-last, then shrink
-      m_subs[idx]    = m_subs[n - 1];
-      ArrayResize(m_tickets, n - 1);
-      ArrayResize(m_subs,    n - 1);
-   }
-
-   // Uniform lab hooks (generic per-ticket handoff): map entry verdict -> RegisterSubtype.
-   virtual void OnOpen(long ticket, const SCandidateEntry &v) { RegisterSubtype(ticket, v.reclass_subtype); }
-   virtual void OnClose(long ticket) { Forget(ticket); }
+   virtual int    ModelId() const { return RM_PBC_C; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx)
    {
@@ -251,7 +219,9 @@ public:
       ExitPropInit(p);
       p.candidate_id = "PBC_C_timing";
 
-      const int subtype = LookupSubtype(ctx.ticket);
+      // Subtype is lab-filled onto the ctx from the shared SResearchTradeStamp
+      // (this exit is STATELESS — no per-ticket registry). NONE => plain branch.
+      const int subtype = ctx.subtype;
 
       // Unknown / no subtype -> this candidate owns no behavior for the trade;
       // defer to the account-safety layer rather than fabricate an action.
@@ -338,19 +308,6 @@ private:
       p.action = PBC_C_ACT_WAIT; p.confidence = 0.30;
       p.reason = "DEEP: below arm threshold — holding, account-safety owns the initial stop";
       p.valid = true; return p;
-   }
-
-   int LookupSubtype(const long ticket) const
-   {
-      int idx = IndexOf(ticket);
-      return (idx >= 0) ? m_subs[idx] : PBC_C_SUB_NONE;
-   }
-
-   int IndexOf(const long ticket) const
-   {
-      for(int i = 0; i < ArraySize(m_tickets); i++)
-         if(m_tickets[i] == ticket) return i;
-      return -1;
    }
 };
 

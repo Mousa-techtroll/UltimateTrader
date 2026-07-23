@@ -118,6 +118,8 @@ class CEngulfCandB_Entry : public ICandidateEntry
 {
 public:
    virtual string Id() const { return "ENG_B_momseq"; }
+   virtual int    ModelId() const { return RM_ENG_B; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SCandidateEntry EvaluateEntry(const SResearchSignalCtx &ctx)
    {
@@ -265,6 +267,8 @@ class CEngulfCandB_Exit : public ICandidateExit
 {
 public:
    virtual string Id() const { return "ENG_B_momseq"; }
+   virtual int    ModelId() const { return RM_ENG_B; }
+   virtual int    ModelVersion() const { return 1; }
 
    virtual SResearchExitProposal EvaluateExit(const SResearchPosCtx &ctx)
    {

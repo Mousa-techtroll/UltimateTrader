@@ -21,6 +21,17 @@ enum ENUM_RESEARCH_MODEL
 inline int ResearchModelProfile(ENUM_RESEARCH_MODEL m)
 { if(m>=RM_ENG_A && m<=RM_ENG_C) return 0; if(m>=RM_PBC_A && m<=RM_PBC_C) return 1; return -1; }
 
+// Deterministic string->int32 hash (FNV-1a, folded positive) for keying pending signals + trade
+// stamps off the EA's STRING signal_id. Stable within a run; the SAME string always maps to the
+// SAME int at both the EvaluateEntry and OnPositionOpened call sites (so pending<->stamp linkage holds).
+inline int ResearchSignalIdHash(const string s)
+{
+   uint h = 2166136261;
+   int  n = StringLen(s);
+   for(int i=0;i<n;i++){ h ^= (uint)StringGetCharacter(s,i); h *= 16777619; }
+   return (int)(h & 0x7FFFFFFF);
+}
+
 // Candidate decision output — RICHER than accept/reject (owner directive).
 enum ENUM_CANDIDATE_ACTION
 {
@@ -47,6 +58,29 @@ struct SCandidateEntry
 inline void CandEntryInit(SCandidateEntry &e)
 { e.action=CAND_REJECT; e.confidence=0.0; e.risk_mult=1.0; e.reclass_subtype=0;
   e.wait_bars=0; e.candidate_id=""; e.reason=""; e.valid=false; }
+
+// Durable WAIT_FOR_CONFIRM lifecycle, keyed by SIGNAL ID (not broker ticket).
+enum ENUM_PENDING_STATE
+{
+   PEND_PENDING = 0,   // awaiting confirmation on a later closed bar
+   PEND_CONFIRMED,     // confirmed -> admit
+   PEND_INVALIDATED,   // thesis broke before confirming -> drop
+   PEND_EXPIRED,       // wait window elapsed without confirmation -> drop
+   PEND_EXECUTED       // admitted + a position opened
+};
+struct SPendingResearchSignal
+{
+   int              signal_id;      // stable signal identity (engine+bar+dir), NOT a ticket
+   int              entry_model;    // ENUM_RESEARCH_MODEL
+   int              direction;
+   double           entry_price;
+   double           risk_distance;
+   datetime         created;
+   int              bars_waited;
+   int              wait_bars_max;
+   ENUM_PENDING_STATE state;
+   bool             valid;
+};
 
 // A feature-family scalar: value + availability (never-fabricate law).
 struct SFeat { double value; bool available; };

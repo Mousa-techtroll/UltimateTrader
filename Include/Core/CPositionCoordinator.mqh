@@ -43,6 +43,9 @@
 #include "../MarketAnalysis/CMomentumSnapshotter.mqh"
 #include "../ExitPolicies/CExitTelemetry.mqh"
 #include "../ExitPolicies/CAccountSafety.mqh"
+// RESEARCH ENTRY×EXIT LAB (research branch only) — injected pointer (NULL unless the master
+// gate constructs it). Guard-protected + already included by the .mq5 before this file.
+#include "../Research/CResearchEntryExitLab.mqh"
 
 //+------------------------------------------------------------------+
 //| Constants for state persistence                                   |
@@ -85,6 +88,7 @@ private:
    CMomentumSnapshotter*  m_snapshotter;
    CExitTelemetry*        m_telemetry;
    CAccountSafety*        m_accountSafety;
+   CResearchEntryExitLab* m_researchLab;   // research branch only; NULL unless the master gate is on
 
    // Plugin arrays for trailing and exit strategies
    CTrailingStrategy*     m_trailing_plugins[];
@@ -1432,6 +1436,7 @@ public:
       m_snapshotter = NULL;
       m_telemetry = NULL;
       m_accountSafety = NULL;
+      m_researchLab = NULL;
       m_smoothed_chand_mult = 0;
       m_regime_hold_bars = 0;
       m_last_regime_class = -1;
@@ -1482,6 +1487,7 @@ public:
    void SetSnapshotter(CMomentumSnapshotter *snap) { m_snapshotter = snap; }
    void SetExitTelemetry(CExitTelemetry *tel) { m_telemetry = tel; }
    void SetAccountSafety(CAccountSafety *as) { m_accountSafety = as; }
+   void SetResearchLab(CResearchEntryExitLab *lab) { m_researchLab = lab; }
    // REDUCE_AND_PROTECT executor: close reduce_fraction of each open position + move its SL to
    // break-even-or-better. Activation-phase only (InpExitPolicyActive + DLM_REDUCE_AND_PROTECT);
    // never reached at the byte-identity gate. Uses the ladder's local-CTrade pattern. NOTE:
@@ -2142,6 +2148,11 @@ public:
    void RemovePosition(int index)
    {
       if(index < 0 || index >= m_position_count) return;
+
+      // RESEARCH LAB (research branch only): drop the lab-owned trade stamp for this ticket at
+      // the single record-removal funnel (mirrors AddPosition/OnPositionOpened). NULL => skipped.
+      if(m_researchLab != NULL)
+         m_researchLab.OnPositionClosed(m_positions[index].ticket);
 
       for(int j = index; j < m_position_count - 1; j++)
          m_positions[j] = m_positions[j + 1];
@@ -4048,6 +4059,63 @@ public:
                else if(ep_imm.action == EX_TIGHTEN_SL && ep_imm.tighten_sl > 0.0)
                {
                   m_positions[i].policy_sl_proposal = ep_imm.tighten_sl;  // consumed at t==-2
+               }
+            }
+         }
+
+         // RESEARCH LAB exit seam (research branch only). NULL lab / RM_CURRENT exit / non-matching
+         // engine family => EvaluateExit returns a NOOP pass-through, so this is inert unless a
+         // matching research EXIT model is selected. Per-bar gated; scoped to baseline non-sleeve/
+         // non-file positions. The proposal flows through the SAME action machinery as the exit-
+         // momentum seam (ClosePosition / ApplyPolicyPartialClose / policy_sl_proposal /
+         // policy_trail_mod = the coordinator, the sole broker-action owner). The two exit platforms
+         // are mutually exclusive by config (exit-momentum masters OFF in research runs).
+         if(m_researchLab != NULL &&
+            !m_positions[i].is_sleeve && m_positions[i].signal_source != SIGNAL_SOURCE_FILE &&
+            iTime(_Symbol, PERIOD_H1, 0) != m_positions[i].last_research_bar)
+         {
+            m_positions[i].last_research_bar = iTime(_Symbol, PERIOD_H1, 0);
+            double rx_risk = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
+            if(rx_risk > 0.0)
+            {
+               int    rx_dir   = (m_positions[i].direction == SIGNAL_LONG) ? 1 : -1;
+               double rx_close = iClose(_Symbol, PERIOD_H1, 1);   // just-closed bar (closed-bar discipline)
+               double rx_curR  = (double)rx_dir * (rx_close - m_positions[i].entry_price) / rx_risk;
+               double rx_mfeR  = m_positions[i].mfe / rx_risk;    // running max favourable R == peak_r
+               double rx_maeR  = m_positions[i].mae / rx_risk;
+               int    rx_bars  = iBarShift(_Symbol, PERIOD_H1, m_positions[i].bar_time_at_entry, false);
+               SResearchExitProposal rxp = m_researchLab.EvaluateExit(
+                  m_positions[i].ticket, m_positions[i].engine_name, rx_dir,
+                  m_positions[i].entry_price, rx_risk, rx_bars,
+                  rx_curR, rx_mfeR, rx_mfeR, rx_maeR,
+                  rx_close, 0.0, false);   // impulse_now unavailable (feature-family driven)
+               if(rxp.valid)
+               {
+                  if(rxp.action == 1)   // CLOSE_ALL
+                  {
+                     StampExitRequest(m_positions[i], rxp.reason);
+                     ClosePosition(m_positions[i].ticket, "RESEARCH:" + rxp.reason);
+                     continue;
+                  }
+                  else if(rxp.action == 2 &&   // CLOSE_PARTIAL (RULE 6: one reduction per bar)
+                          m_positions[i].last_reduce_bar != iTime(_Symbol, PERIOD_H1, 0))
+                  {
+                     ApplyPolicyPartialClose(i, rxp.pct, rxp.reason);
+                     continue;
+                  }
+                  else if(rxp.action == 3)   // TIGHTEN_SL: factor = stop distance as a fraction of R from entry
+                  {
+                     double rx_newsl = m_positions[i].entry_price - (double)rx_dir * rxp.factor * rx_risk;
+                     m_positions[i].policy_sl_proposal = rx_newsl;  // consumed at t==-2 (applied only if tighter)
+                  }
+                  else if(rxp.action == 4)   // TRAIL_SCALE: widen the future trail (Contract-B; never moves SL back)
+                  {
+                     ExitProposal rx_trail; rx_trail.Init();
+                     rx_trail.action = EX_TRAIL_SCALE; rx_trail.factor = rxp.factor;
+                     rx_trail.reason = rxp.reason; rx_trail.confidence = rxp.confidence;
+                     m_positions[i].policy_trail_mod = rx_trail;   // consumed at t==-2 in ApplyTrailingPlugins
+                  }
+                  // rxp.action 0 (NOOP) / 5 (WAIT): hold.
                }
             }
          }
