@@ -1,0 +1,553 @@
+Kind,Time,Engine,SignalId,Ticket,EntryModel,EntryVer,ExitModel,ExitVer,LabVer,Action,Conf,ReqRisk,ApplRisk,Wait,Subtype,Impulse,TrendAlign,PbDepth,RecConf,MomPhase,SeqExh,FollowThru,RoomR,Reason
+OPEN	2019.01.03 09:00	MACrossEntry	1041383338	2	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.07 02:00	PinBarEntry	1733409479	5	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.07 10:00	MACrossEntry	333189048	7	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.08 09:00	PinBarEntry	1329167209	9	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.22 03:00	PinBarEntry	1120970889	12	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.28 18:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.01.28 18:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C	1	2	3	0.113		0.60		0	0.000		0.244	1.000	2	0.509	0.000	0.338	low-conf(0.11): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.01.28 19:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C	1	2	3	0.063		0.60		0	0.000		0.244	0.600	3	0.534	0.000	0.188	low-conf(0.06): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.01.28 20:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C	1	2	1	0.069		1.00		0	0.000		0.244	0.400	4	0.000	0.000	0.208	low-conf(0.07): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.01.29 09:00	PinBarEntry	1508575854	16	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.07 03:00	PinBarEntry	489217350	20	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.18 15:00	PinBarEntry	566158636	23	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.19 11:00	EngulfingEntry	102827559	24	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.02.19 11:00	EngulfingEntry	102827559	24	RM_CURRENT	0	RM_ENG_C	1	2	3	0.000		0.60		0	0.000		0.000	0.000	2	0.183	0.000	0.190	low-conf(0.00): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.02.19 12:00	EngulfingEntry	102827559	24	RM_CURRENT	0	RM_ENG_C	1	2	3	0.000		0.60		0	0.000		0.000	0.000	3	0.607	0.167	0.111	low-conf(0.00): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.02.19 13:00	EngulfingEntry	102827559	24	RM_CURRENT	0	RM_ENG_C	1	2	3	0.086		0.60		0	0.000		0.093	0.600	3	0.791	0.333	0.103	low-conf(0.09): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.02.19 14:00	EngulfingEntry	102827559	24	RM_CURRENT	0	RM_ENG_C	1	2	1	0.028		1.00		0	0.000		0.000	0.000	4	0.000	0.333	0.141	low-conf(0.03): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.02.19 15:00	MACrossEntry	1728141223	27	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.19 16:00	EngulfingEntry	1909373858	28	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.02.19 16:00	EngulfingEntry	1909373858	28	RM_CURRENT	0	RM_ENG_C	1	2	3	0.315		0.60		0	0.000		0.000	0.000	2	0.208	0.333	1.247	low-conf(0.32): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.02.19 17:00	EngulfingEntry	1909373858	28	RM_CURRENT	0	RM_ENG_C	1	2	3	0.296		0.60		0	0.000		0.000	0.000	1	0.200	0.333	0.794	low-conf(0.30): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.02.19 18:00	EngulfingEntry	1909373858	28	RM_CURRENT	0	RM_ENG_C	1	2	4	0.507		1.10		0	0.000		0.000	0.000	1	0.300	0.000	1.817	mid-conf(0.51): modest trail (x1.10) (proxy)
+EXIT	2019.02.19 19:00	EngulfingEntry	1909373858	28	RM_CURRENT	0	RM_ENG_C	1	2	1	0.105		1.00		0	0.000		0.152	0.400	4	0.000	0.000	1.918	low-conf(0.10): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.02.25 17:00	PinBarEntry	562179751	38	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.26 08:00	PinBarEntry	1369788164	39	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.04 10:00	ExpansionEngine	984580396	43	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.07 14:00	PinBarEntry	575033570	47	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.13 13:00	EngulfingEntry	1075494813	49	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.03.13 13:00	EngulfingEntry	1075494813	49	RM_CURRENT	0	RM_ENG_C	1	2	3	0.070		0.60		0	0.000		0.000	0.000	2	0.325	0.167	0.352	low-conf(0.07): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.03.13 14:00	EngulfingEntry	1075494813	49	RM_CURRENT	0	RM_ENG_C	1	2	3	0.141		0.60		0	0.000		0.000	0.000	3	0.598	0.333	0.284	low-conf(0.14): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.03.13 15:00	EngulfingEntry	1075494813	49	RM_CURRENT	0	RM_ENG_C	1	2	1	0.095		1.00		0	0.000		0.091	0.400	4	0.000	0.333	0.373	low-conf(0.09): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.03.25 12:00	EngulfingEntry	2080149445	51	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.03.25 12:00	EngulfingEntry	2080149445	51	RM_CURRENT	0	RM_ENG_C	1	2	3	0.000		0.60		0	0.000		0.788	0.600	2	0.470	0.167	0.546	low-conf(0.00): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.03.25 13:00	EngulfingEntry	2080149445	51	RM_CURRENT	0	RM_ENG_C	1	2	3	0.128		0.60		0	0.000		0.788	0.600	3	0.652	0.333	0.524	low-conf(0.13): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.03.25 14:00	EngulfingEntry	2080149445	51	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.788	0.400	4	0.000	0.333	0.623	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.03.28 07:00	PinBarEntry	880396572	53	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.01 05:00	PinBarEntry	626875995	58	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.22 07:00	PinBarEntry	748242441	61	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.23 12:00	PinBarEntry	1803453776	63	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.14 03:00	PullbackContinuationEngine	982439591	67	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.20 06:00	PullbackContinuationEngine	785417698	69	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.21 03:00	PinBarEntry	1738789118	70	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.23 10:00	PinBarEntry	1150901954	76	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.30 19:00	EngulfingEntry	601281956	78	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.05.30 19:00	EngulfingEntry	601281956	78	RM_CURRENT	0	RM_ENG_C	1	2	3	0.193		0.60		0	0.000		1.341	0.000	1	0.100	0.167	1.476	low-conf(0.19): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.05.30 20:00	EngulfingEntry	601281956	78	RM_CURRENT	0	RM_ENG_C	1	2	1	0.187		1.00		0	0.000		1.341	0.200	4	0.000	0.167	1.496	low-conf(0.19): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.06.03 03:00	PinBarEntry	521386297	80	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.05 14:00	EngulfingEntry	1153922400	85	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.05 14:00	EngulfingEntry	1153922400	85	RM_CURRENT	0	RM_ENG_C	1	2	3	0.185		0.60		0	0.000		0.000	0.000	2	0.526	0.000	1.714	low-conf(0.19): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.05 15:00	EngulfingEntry	1153922400	85	RM_CURRENT	0	RM_ENG_C	1	2	1	0.144		1.00		0	0.000		0.320	0.400	4	0.000	0.000	2.283	low-conf(0.14): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.06.05 16:00	ExpansionEngine	1006103916	87	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.06 11:00	ExpansionEngine	2075473705	89	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.06 16:00	ExpansionEngine	407719561	90	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.10 11:00	PinBarEntry	1450208358	95	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.12 07:00	PinBarEntry	810367243	98	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.12 12:00	EngulfingEntry	1237910082	100	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.12 12:00	EngulfingEntry	1237910082	100	RM_CURRENT	0	RM_ENG_C	1	2	3	0.334		0.60		0	0.000		1.503	0.600	2	0.538	0.167	1.969	low-conf(0.33): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.12 13:00	EngulfingEntry	1237910082	100	RM_CURRENT	0	RM_ENG_C	1	2	1	0.234		1.00		0	0.000		1.907	0.400	4	0.000	0.000	0.701	low-conf(0.23): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.06.13 10:00	MACrossEntry	1854966224	102	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.13 18:00	PinBarEntry	199842234	103	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.19 23:00	EngulfingEntry	2146650996	112	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.19 23:00	EngulfingEntry	2146650996	112	RM_CURRENT	0	RM_ENG_C	1	2	3	0.100		0.60		0	0.000		0.321	0.600	2	0.390	0.167	0.278	low-conf(0.10): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.20 01:00	EngulfingEntry	2146650996	112	RM_CURRENT	0	RM_ENG_C	1	2	3	0.176		0.60		0	0.000		0.000	0.000	1	0.387	0.333	0.212	low-conf(0.18): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.20 02:00	EngulfingEntry	2146650996	112	RM_CURRENT	0	RM_ENG_C	1	2	1	0.164		1.00		0	0.000		0.172	0.400	4	0.000	0.333	0.317	low-conf(0.16): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.06.20 05:00	EngulfingEntry	1647072359	114	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.20 05:00	EngulfingEntry	1647072359	114	RM_CURRENT	0	RM_ENG_C	1	2	3	0.226		0.60		0	0.000		0.000	0.000	2	0.433	0.333	1.132	low-conf(0.23): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.20 06:00	EngulfingEntry	1647072359	114	RM_CURRENT	0	RM_ENG_C	1	2	3	0.337		0.60		0	0.000		0.309	0.600	3	0.634	0.000	1.012	low-conf(0.34): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.20 07:00	EngulfingEntry	1647072359	114	RM_CURRENT	0	RM_ENG_C	1	2	3	0.321		0.60		0	0.000		0.309	0.600	3	0.773	0.000	0.962	low-conf(0.32): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.06.20 08:00	EngulfingEntry	1647072359	114	RM_CURRENT	0	RM_ENG_C	1	2	1	0.256		1.00		0	0.000		0.309	0.400	4	0.000	0.000	0.768	low-conf(0.26): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.06.25 22:00	PinBarEntry	298193214	116	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.04 18:00	EngulfingEntry	1454917613	118	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.07.04 18:00	EngulfingEntry	1454917613	118	RM_CURRENT	0	RM_ENG_C	1	2	3	0.270		0.60		0	0.000		0.490	1.000	1	0.100	0.000	0.810	low-conf(0.27): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.07.04 19:00	EngulfingEntry	1454917613	118	RM_CURRENT	0	RM_ENG_C	1	2	1	0.311		1.00		0	0.000		0.490	0.000	2	0.000	0.000	0.934	low-conf(0.31): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.07.10 20:00	PinBarEntry	1597666760	120	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.10 22:00	PinBarEntry	155288612	121	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.15 12:00	PinBarEntry	2117436741	128	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.15 23:00	PinBarEntry	2131998616	130	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.16 06:00	MACrossEntry	380944851	131	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.05 20:00	PinBarEntry	635958560	134	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.06 14:00	PinBarEntry	653826464	135	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.06 17:00	EngulfingEntry	481603917	136	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.08.06 17:00	EngulfingEntry	481603917	136	RM_CURRENT	0	RM_ENG_C	1	2	4	0.560		1.10		0	0.000		0.420	0.600	2	0.553	0.000	1.679	mid-conf(0.56): modest trail (x1.10) (proxy)
+EXIT	2019.08.06 18:00	EngulfingEntry	481603917	136	RM_CURRENT	0	RM_ENG_C	1	2	3	0.212		0.60		0	0.000		0.420	1.000	1	0.200	0.000	0.635	low-conf(0.21): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.08.06 19:00	EngulfingEntry	481603917	136	RM_CURRENT	0	RM_ENG_C	1	2	1	0.338		1.00		0	0.000		0.420	0.400	4	0.000	0.000	1.015	low-conf(0.34): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.08.07 15:00	PullbackContinuationEngine	1281171933	145	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.13 10:00	EngulfingEntry	1119542290	148	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.08.13 10:00	EngulfingEntry	1119542290	148	RM_CURRENT	0	RM_ENG_C	1	2	3	0.146		0.60		0	0.000		0.000	0.000	2	0.186	0.000	0.956	low-conf(0.15): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.08.13 11:00	EngulfingEntry	1119542290	148	RM_CURRENT	0	RM_ENG_C	1	2	4	0.439		1.10		0	0.000		0.000	0.000	1	0.251	0.167	3.044	mid-conf(0.44): modest trail (x1.10) (proxy)
+EXIT	2019.08.13 12:00	EngulfingEntry	1119542290	148	RM_CURRENT	0	RM_ENG_C	1	2	1	0.317		1.00		0	0.000		0.104	0.400	4	0.000	0.167	3.350	low-conf(0.32): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.08.14 03:00	PinBarEntry	1244524312	150	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.14 19:00	PinBarEntry	404455341	153	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.20 15:00	PinBarEntry	1795175502	156	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.29 08:00	MACrossEntry	2035015831	158	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.10 12:00	PinBarEntry	879431545	161	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.12 16:00	EngulfingEntry	1628426146	164	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.09.12 16:00	EngulfingEntry	1628426146	164	RM_CURRENT	0	RM_ENG_C	1	2	3	0.195		0.60		0	0.000		0.000	0.000	2	0.448	0.333	0.780	low-conf(0.19): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.09.12 17:00	EngulfingEntry	1628426146	164	RM_CURRENT	0	RM_ENG_C	1	2	3	0.257		0.60		0	0.000		0.310	0.600	3	0.695	0.000	0.772	low-conf(0.26): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.09.12 18:00	EngulfingEntry	1628426146	164	RM_CURRENT	0	RM_ENG_C	1	2	1	0.385		1.00		0	0.000		0.493	0.400	4	0.000	0.000	1.155	low-conf(0.38): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.09.19 13:00	PinBarEntry	376121808	166	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.23 18:00	EngulfingEntry	610245163	168	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.09.23 18:00	EngulfingEntry	610245163	168	RM_CURRENT	0	RM_ENG_C	1	2	3	0.041		0.60		0	0.000		0.000	0.000	2	0.104	0.000	0.430	low-conf(0.04): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.09.23 19:00	EngulfingEntry	610245163	168	RM_CURRENT	0	RM_ENG_C	1	2	1	0.250		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.749	low-conf(0.25): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.09.30 11:00	PinBarEntry	882820372	170	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.08 04:00	PullbackContinuationEngine	135665763	174	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.14 14:00	PinBarEntry	883425315	176	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.30 11:00	PinBarEntry	1658329485	178	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.31 12:00	EngulfingEntry	845633609	180	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.10.31 12:00	EngulfingEntry	845633609	180	RM_CURRENT	0	RM_ENG_C	1	2	3	0.211		0.60		0	0.000		0.000	0.000	2	0.503	0.167	1.305	low-conf(0.21): tighten (x0.60); early-invalidation bias (proxy)
+OPEN	2019.10.31 13:00	PinBarEntry	604913306	182	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.10.31 13:00	EngulfingEntry	845633609	180	RM_CURRENT	0	RM_ENG_C	1	2	3	0.235		0.60		0	0.000		0.000	0.000	1	0.200	0.333	0.512	low-conf(0.23): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.10.31 14:00	EngulfingEntry	845633609	180	RM_CURRENT	0	RM_ENG_C	1	2	1	0.202		1.00		0	0.000		0.000	0.000	4	0.000	0.333	0.548	low-conf(0.20): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.11.04 09:00	PinBarEntry	1282422624	186	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.05 18:00	ExpansionEngine	9107341	188	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.11 13:00	PinBarEntry	1512560662	190	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.12 03:00	PinBarEntry	761287673	192	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.28 11:00	PinBarEntry	482265637	196	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.28 12:00	PinBarEntry	1684459753	197	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.03 17:00	EngulfingEntry	1592084772	202	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.12.03 17:00	EngulfingEntry	1592084772	202	RM_CURRENT	0	RM_ENG_C	1	2	3	0.150		0.60		0	0.000		0.000	0.000	2	0.198	0.333	0.182	low-conf(0.15): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.03 18:00	EngulfingEntry	1592084772	202	RM_CURRENT	0	RM_ENG_C	1	2	3	0.157		0.60		0	0.000		0.189	0.600	1	0.599	0.333	0.078	low-conf(0.16): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.03 19:00	EngulfingEntry	1592084772	202	RM_CURRENT	0	RM_ENG_C	1	2	3	0.014		0.60		0	0.000		0.189	0.600	3	0.766	0.000	0.041	low-conf(0.01): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.03 20:00	EngulfingEntry	1592084772	202	RM_CURRENT	0	RM_ENG_C	1	2	1	0.097		1.00		0	0.000		0.189	0.400	4	0.000	0.000	0.290	low-conf(0.10): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.12.04 09:00	EngulfingEntry	1830082345	204	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.12.04 09:00	EngulfingEntry	1830082345	204	RM_CURRENT	0	RM_ENG_C	1	2	3	0.025		0.60		0	0.000		0.210	1.000	2	0.111	0.000	0.075	low-conf(0.03): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.04 10:00	EngulfingEntry	1830082345	204	RM_CURRENT	0	RM_ENG_C	1	2	3	0.286		0.60		0	0.000		0.000	0.000	1	0.200	0.000	0.966	low-conf(0.29): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.04 11:00	EngulfingEntry	1830082345	204	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.072	0.400	4	0.000	0.000	1.190	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2019.12.04 23:00	PinBarEntry	436231453	206	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.09 05:00	PullbackContinuationEngine	1959552566	208	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.09 12:00	PinBarEntry	1660158760	209	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.10 06:00	PullbackContinuationEngine	1684612643	210	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.10 08:00	PinBarEntry	709980053	211	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.16 21:00	PinBarEntry	1079511707	216	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.16 23:00	PinBarEntry	1668288406	217	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.19 20:00	EngulfingEntry	68126870	222	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.12.19 20:00	EngulfingEntry	68126870	222	RM_CURRENT	0	RM_ENG_C	1	2	3	0.068		0.60		0	0.000		1.156	1.000	2	0.389	0.167	0.115	low-conf(0.07): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.19 21:00	EngulfingEntry	68126870	222	RM_CURRENT	0	RM_ENG_C	1	2	3	0.260		0.60		0	0.000		0.000	0.000	3	0.488	0.333	0.922	low-conf(0.26): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2019.12.19 22:00	EngulfingEntry	68126870	222	RM_CURRENT	0	RM_ENG_C	1	2	1	0.171		1.00		0	0.000		0.195	0.400	4	0.000	0.333	1.120	low-conf(0.17): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.01.02 14:00	PinBarEntry	1312254176	224	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.02 23:00	PinBarEntry	2052996804	227	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.06 12:00	PinBarEntry	770196697	234	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.06 14:00	PinBarEntry	209908922	235	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.07 10:00	ExpansionEngine	1876139	238	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.09 08:00	PullbackContinuationEngine	2104972896	242	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.22 23:00	PinBarEntry	66131253	245	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.30 06:00	EngulfingEntry	1560395076	248	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.01.30 06:00	EngulfingEntry	1560395076	248	RM_CURRENT	0	RM_ENG_C	1	2	3	0.131		0.60		0	0.000		0.768	0.600	2	0.516	0.000	0.392	low-conf(0.13): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.01.30 07:00	EngulfingEntry	1560395076	248	RM_CURRENT	0	RM_ENG_C	1	2	1	0.198		1.00		0	0.000		0.768	0.400	4	0.000	0.000	0.595	low-conf(0.20): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.02.18 19:00	EngulfingEntry	1243599872	250	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.02.18 19:00	EngulfingEntry	1243599872	250	RM_CURRENT	0	RM_ENG_C	1	2	3	0.123		0.60		0	0.000		0.000	0.000	2	0.456	0.167	0.383	low-conf(0.12): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.02.18 20:00	EngulfingEntry	1243599872	250	RM_CURRENT	0	RM_ENG_C	1	2	1	0.067		1.00		0	0.000		0.165	0.400	4	0.000	0.167	0.554	low-conf(0.07): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.02.19 04:00	PinBarEntry	501153769	252	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.20 18:00	EngulfingEntry	1582729062	256	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.02.20 18:00	EngulfingEntry	1582729062	256	RM_CURRENT	0	RM_ENG_C	1	2	3	0.000		0.60		0	0.000		0.000	0.000	2	0.497	0.000	0.380	low-conf(0.00): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.02.20 19:00	EngulfingEntry	1582729062	256	RM_CURRENT	0	RM_ENG_C	1	2	3	0.133		0.60		0	0.000		0.000	0.000	1	0.200	0.000	1.537	low-conf(0.13): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.02.20 20:00	EngulfingEntry	1582729062	256	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.297	0.400	4	0.000	0.000	0.590	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.02.25 03:00	ExpansionEngine	392046044	260	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.26 10:00	PinBarEntry	816598124	262	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 13:00	PinBarEntry	58949751	264	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 14:00	PinBarEntry	952814979	265	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 15:00	ExpansionEngine	1886058649	268	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.02 04:00	PinBarEntry	405386893	273	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.05 14:00	MACrossEntry	1922614514	275	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.05 19:00	PinBarEntry	1171439068	279	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.09 04:00	PinBarEntry	65837321	285	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.18 14:00	PinBarEntry	257036425	287	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.02 11:00	PinBarEntry	661203854	289	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.06 10:00	PinBarEntry	487010312	292	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.06 15:00	EngulfingEntry	827158396	295	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.06 15:00	EngulfingEntry	827158396	295	RM_CURRENT	0	RM_ENG_C	1	2	3	0.178		0.60		0	0.000		0.000	0.000	3	0.100	0.167	1.206	low-conf(0.18): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.06 16:00	EngulfingEntry	827158396	295	RM_CURRENT	0	RM_ENG_C	1	2	3	0.174		0.60		0	0.000		0.000	0.000	2	0.268	0.167	0.928	low-conf(0.17): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.06 17:00	EngulfingEntry	827158396	295	RM_CURRENT	0	RM_ENG_C	1	2	3	0.103		0.60		0	0.000		0.000	0.000	1	0.300	0.167	0.166	low-conf(0.10): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.06 18:00	EngulfingEntry	827158396	295	RM_CURRENT	0	RM_ENG_C	1	2	1	0.144		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.433	low-conf(0.14): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.04.09 14:00	EngulfingEntry	1096806429	300	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.09 14:00	EngulfingEntry	1096806429	300	RM_CURRENT	0	RM_ENG_C	1	2	3	0.056		0.60		0	0.000		0.496	0.600	2	0.339	0.000	1.069	low-conf(0.06): tighten (x0.60); early-invalidation bias (proxy)
+OPEN	2020.04.13 11:00	PullbackContinuationEngine	169026407	302	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.13 19:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.13 19:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	3	0.061		0.60		0	0.000		0.000	0.000	2	0.251	0.167	0.047	low-conf(0.06): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.13 20:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	3	0.392		0.60		0	0.000		0.000	0.000	3	0.508	0.333	1.548	low-conf(0.39): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.13 21:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	4	0.470		1.10		0	0.000		0.000	0.000	3	0.674	0.500	1.393	mid-conf(0.47): modest trail (x1.10) (proxy)
+EXIT	2020.04.13 22:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	4	0.546		1.10		0	0.000		0.000	0.000	3	0.794	0.667	1.260	mid-conf(0.55): modest trail (x1.10) (proxy)
+EXIT	2020.04.13 23:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	3	0.515		0.60		0	0.000		0.090	0.400	4	0.000	0.667	1.452	mid-conf(0.52): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2020.04.14 01:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	1	0.337		1.00		0	0.000		0.144	0.400	4	0.263	0.667	0.397	low-conf(0.34): origin break / momentum deterioration -> close early (proxy)
+EXIT	2020.04.14 02:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	3	0.085		0.60		0	0.000		0.178	0.600	3	0.000	0.000	0.254	low-conf(0.08): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.14 03:00	EngulfingEntry	1891930701	304	RM_CURRENT	0	RM_ENG_C	1	2	1	0.086		1.00		0	0.000		0.178	0.400	2	0.000	0.000	0.257	low-conf(0.09): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.04.14 17:00	EngulfingEntry	1738908208	308	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.14 17:00	EngulfingEntry	1738908208	308	RM_CURRENT	0	RM_ENG_C	1	2	3	0.161		0.60		0	0.000		0.000	0.000	2	0.304	0.167	0.803	low-conf(0.16): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.14 18:00	EngulfingEntry	1738908208	308	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.000	0.000	4	0.000	0.167	1.087	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.04.16 14:00	MACrossEntry	852513972	311	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.16 15:00	EngulfingEntry	1536285559	312	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.16 15:00	EngulfingEntry	1536285559	312	RM_CURRENT	0	RM_ENG_C	1	2	3	0.184		0.60		0	0.000		0.545	1.000	2	0.314	0.167	0.659	low-conf(0.18): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.04.16 16:00	EngulfingEntry	1536285559	312	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.545	0.400	4	0.000	0.167	1.377	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.04.30 10:00	EngulfingEntry	1620276946	315	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.30 10:00	EngulfingEntry	1620276946	315	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.000	0.000	2	0.249	0.000	0.573	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.05.06 10:00	PinBarEntry	771493776	317	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.06 11:00	PinBarEntry	1325097830	318	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.07 20:00	EngulfingEntry	1898906518	321	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.05.07 20:00	EngulfingEntry	1898906518	321	RM_CURRENT	0	RM_ENG_C	1	2	3	0.026		0.60		0	0.000		0.000	0.000	2	0.347	0.000	0.324	low-conf(0.03): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.05.07 21:00	EngulfingEntry	1898906518	321	RM_CURRENT	0	RM_ENG_C	1	2	3	0.004		0.60		0	0.000		0.000	0.000	3	0.541	0.000	0.104	low-conf(0.00): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.05.07 22:00	EngulfingEntry	1898906518	321	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.131	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.05.25 10:00	PinBarEntry	2027280364	323	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.06.01 09:00	EngulfingEntry	1922923618	325	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.06.01 09:00	EngulfingEntry	1922923618	325	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.000	0.000	2	0.254	0.000	0.897	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.08.25 15:00	PinBarEntry	216434674	327	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.08.31 17:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.08.31 17:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	3	0.273		0.60		0	0.000		0.336	1.000	2	0.252	0.000	0.818	low-conf(0.27): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.08.31 18:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	3	0.489		0.60		0	0.000		0.336	0.000	4	0.000	0.000	1.467	mid-conf(0.49): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2020.08.31 19:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	3	0.274		0.60		0	0.000		0.336	0.600	2	0.000	0.000	0.822	low-conf(0.27): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.08.31 20:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	3	0.177		0.60		0	0.000		0.336	0.600	2	0.384	0.000	0.530	low-conf(0.18): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.08.31 21:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	3	0.142		0.60		0	0.000		0.336	0.600	3	0.625	0.000	0.425	low-conf(0.14): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.08.31 22:00	EngulfingEntry	599817619	331	RM_CURRENT	0	RM_ENG_C	1	2	1	0.203		1.00		0	0.000		0.336	0.400	4	0.000	0.000	0.608	low-conf(0.20): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.09.03 06:00	PinBarEntry	851735234	333	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.07 04:00	PinBarEntry	1008104158	337	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.15 06:00	EngulfingEntry	183953965	339	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.09.15 06:00	EngulfingEntry	183953965	339	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.634	1.000	2	0.411	0.000	0.417	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.09.16 11:00	EngulfingEntry	1868568049	341	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.09.16 11:00	EngulfingEntry	1868568049	341	RM_CURRENT	0	RM_ENG_C	1	2	3	0.319		0.60		0	0.000		0.677	1.000	1	0.100	0.000	0.957	low-conf(0.32): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.09.16 12:00	EngulfingEntry	1868568049	341	RM_CURRENT	0	RM_ENG_C	1	2	3	0.286		0.60		0	0.000		0.677	0.600	2	0.567	0.000	0.857	low-conf(0.29): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.09.16 13:00	EngulfingEntry	1868568049	341	RM_CURRENT	0	RM_ENG_C	1	2	1	0.315		1.00		0	0.000		0.677	0.400	4	0.000	0.000	0.945	low-conf(0.31): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.09.28 08:00	PinBarEntry	976596422	343	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.28 11:00	PinBarEntry	497056129	345	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.01 11:00	MACrossEntry	594709791	351	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.01 19:00	PinBarEntry	195852574	354	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.05 13:00	EngulfingEntry	2098567260	358	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.10.05 13:00	EngulfingEntry	2098567260	358	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		1.845	0.000	2	0.368	0.000	1.220	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.10.05 15:00	PinBarEntry	931222534	360	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.05 16:00	EngulfingEntry	494515717	362	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.10.05 16:00	EngulfingEntry	494515717	362	RM_CURRENT	0	RM_ENG_C	1	2	3	0.177		0.60		0	0.000		0.851	1.000	1	0.100	0.000	0.532	low-conf(0.18): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.10.05 17:00	EngulfingEntry	494515717	362	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.851	1.000	2	0.443	0.000	0.285	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.10.06 15:00	PinBarEntry	1014042454	366	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.12 18:00	PinBarEntry	1594392587	369	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.12 23:00	PinBarEntry	107548001	370	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.21 18:00	PinBarEntry	2140660502	373	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.28 05:00	PinBarEntry	1800676313	375	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.03 12:00	EngulfingEntry	931301583	378	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.11.03 12:00	EngulfingEntry	931301583	378	RM_CURRENT	0	RM_ENG_C	1	2	1	0.120		1.00		0	0.000		0.000	0.000	2	0.273	0.000	1.115	low-conf(0.12): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.11.04 08:00	PinBarEntry	1203139497	380	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.16 11:00	PinBarEntry	251993881	384	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.18 06:00	FailedBreakReversal	457690248	386	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.24 10:00	PinBarEntry	388397386	390	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.30 07:00	PinBarEntry	69648473	394	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.09 09:00	PinBarEntry	130267591	397	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.21 08:00	EngulfingEntry	1970264840	399	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.12.21 08:00	EngulfingEntry	1970264840	399	RM_CURRENT	0	RM_ENG_C	1	2	3	0.208		0.60		0	0.000		0.000	0.000	2	0.256	0.167	0.885	low-conf(0.21): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.12.21 09:00	EngulfingEntry	1970264840	399	RM_CURRENT	0	RM_ENG_C	1	2	1	0.000		1.00		0	0.000		0.000	0.000	4	0.000	0.167	0.056	low-conf(0.00): origin break / momentum deterioration -> close early (proxy)
+OPEN	2020.12.22 13:00	PinBarEntry	105381388	401	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.23 12:00	PinBarEntry	2084256747	403	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.24 05:00	PullbackContinuationEngine	569299350	408	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.29 11:00	PinBarEntry	1413865217	412	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 04:00	PinBarEntry	807635771	415	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 11:00	EngulfingEntry	1191411532	417	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.12.31 11:00	EngulfingEntry	1191411532	417	RM_CURRENT	0	RM_ENG_C	1	2	3	0.276		0.60		0	0.000		0.511	0.600	2	0.482	0.000	0.827	low-conf(0.28): tighten (x0.60); early-invalidation bias (proxy)
+OPEN	2020.12.31 12:00	PinBarEntry	1452901313	418	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.12.31 12:00	EngulfingEntry	1191411532	417	RM_CURRENT	0	RM_ENG_C	1	2	3	0.240		0.60		0	0.000		0.511	0.600	3	0.626	0.000	0.721	low-conf(0.24): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2020.12.31 13:00	EngulfingEntry	1191411532	417	RM_CURRENT	0	RM_ENG_C	1	2	1	0.311		1.00		0	0.000		0.511	0.400	4	0.000	0.000	0.932	low-conf(0.31): origin break / momentum deterioration -> close early (proxy)
+OPEN	2021.01.04 04:00	PinBarEntry	549295182	422	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 14:00	PinBarEntry	23693294	426	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 17:00	EngulfingEntry	1013624405	429	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.01.04 17:00	EngulfingEntry	1013624405	429	RM_CURRENT	0	RM_ENG_C	1	2	3	0.349		0.60		0	0.000		0.000	0.000	2	0.504	0.500	0.700	low-conf(0.35): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2021.01.04 18:00	EngulfingEntry	1013624405	429	RM_CURRENT	0	RM_ENG_C	1	2	3	0.191		0.60		0	0.000		0.000	0.000	3	0.615	0.000	0.574	low-conf(0.19): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2021.01.04 19:00	EngulfingEntry	1013624405	429	RM_CURRENT	0	RM_ENG_C	1	2	1	0.270		1.00		0	0.000		0.121	0.400	4	0.000	0.000	0.811	low-conf(0.27): origin break / momentum deterioration -> close early (proxy)
+OPEN	2021.01.04 23:00	PinBarEntry	1806798879	431	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.05 14:00	PinBarEntry	989861761	435	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.11 03:00	PinBarEntry	58344201	438	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.18 11:00	PinBarEntry	1748868995	443	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.18 14:00	PinBarEntry	1101837209	445	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.25 06:00	PinBarEntry	722312100	447	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.04 07:00	PinBarEntry	2105448623	450	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.18 14:00	PinBarEntry	733613830	454	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.25 04:00	PinBarEntry	637056623	457	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.09 11:00	CrashBreakoutEntry	2144379815	461	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.11 08:00	CrashBreakoutEntry	929072633	463	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.11 11:00	CrashBreakoutEntry	351005489	464	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.17 22:00	CrashBreakoutEntry	1879668452	471	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.18 05:00	CrashBreakoutEntry	1212548766	473	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 10:00	PinBarEntry	1301299999	479	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 13:00	PinBarEntry	1959646401	481	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 22:00	PullbackContinuationEngine	817422687	487	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.31 18:00	CrashBreakoutEntry	2145510045	489	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.31 19:00	CrashBreakoutEntry	1116747341	490	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.01 18:00	CrashBreakoutEntry	105985137	493	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.01 19:00	CrashBreakoutEntry	766884319	494	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.06 09:00	CrashBreakoutEntry	127423267	499	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 15:00	CrashBreakoutEntry	116716788	503	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 17:00	CrashBreakoutEntry	872508540	505	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 18:00	CrashBreakoutEntry	1627115810	506	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.13 04:00	PullbackContinuationEngine	238601135	513	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 10:00	CrashBreakoutEntry	2088043344	516	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 17:00	CrashBreakoutEntry	157492867	518	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 18:00	CrashBreakoutEntry	727789231	520	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 19:00	CrashBreakoutEntry	1403502043	521	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 09:00	CrashBreakoutEntry	1433101381	525	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 10:00	CrashBreakoutEntry	39140136	526	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 17:00	CrashBreakoutEntry	1616386712	534	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.26 09:00	PinBarEntry	1246120498	538	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.29 05:00	CrashBreakoutEntry	201960846	541	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 06:00	PinBarEntry	47151760	545	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 17:00	CrashBreakoutEntry	34395233	547	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 18:00	CrashBreakoutEntry	102254885	548	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.06 18:00	CrashBreakoutEntry	1820508048	555	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.06 19:00	CrashBreakoutEntry	1586003514	556	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.10 08:00	PinBarEntry	1848711188	559	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.11 18:00	PinBarEntry	1024734407	563	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 05:00	CrashBreakoutEntry	112472339	565	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 06:00	CrashBreakoutEntry	615605493	566	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 07:00	CrashBreakoutEntry	642294043	567	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 09:00	CrashBreakoutEntry	1770990490	568	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 10:00	CrashBreakoutEntry	505150255	569	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 05:00	CrashBreakoutEntry	797027589	582	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 09:00	CrashBreakoutEntry	1666831126	584	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 16:00	PinBarEntry	1663395498	586	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.19 07:00	MACrossEntry	1743793280	589	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.20 15:00	PinBarEntry	690781273	594	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.26 06:00	EngulfingEntry	1554859842	599	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.05.26 06:00	EngulfingEntry	1554859842	599	RM_CURRENT	0	RM_ENG_C	1	2	3	0.100		0.60		0	0.000		0.000	0.000	2	0.246	0.167	0.374	low-conf(0.10): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2021.05.26 07:00	EngulfingEntry	1554859842	599	RM_CURRENT	0	RM_ENG_C	1	2	1	0.052		1.00		0	0.000		0.000	0.000	4	0.000	0.167	0.507	low-conf(0.05): origin break / momentum deterioration -> close early (proxy)
+OPEN	2021.06.02 05:00	PinBarEntry	1346383669	601	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.03 14:00	PinBarEntry	1457022303	604	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.14 15:00	PinBarEntry	667030747	607	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.16 05:00	PinBarEntry	1333859707	611	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.15 08:00	PinBarEntry	1505413173	613	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.20 06:00	PinBarEntry	2108302557	616	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.22 11:00	PinBarEntry	31910186	618	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.29 04:00	MACrossEntry	855596177	622	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.03 11:00	PinBarEntry	1228834535	626	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.04 07:00	PinBarEntry	1352115906	628	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.04 10:00	EngulfingEntry	455418916	629	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.08.04 10:00	EngulfingEntry	455418916	629	RM_CURRENT	0	RM_ENG_C	1	2	3	0.040		0.60		0	0.000		0.538	0.000	2	0.419	0.000	0.120	low-conf(0.04): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2021.08.04 11:00	EngulfingEntry	455418916	629	RM_CURRENT	0	RM_ENG_C	1	2	3	0.298		0.60		0	0.000		0.538	0.000	3	0.535	0.000	0.893	low-conf(0.30): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2021.08.04 12:00	EngulfingEntry	455418916	629	RM_CURRENT	0	RM_ENG_C	1	2	3	0.487		0.60		0	0.000		0.538	1.000	4	0.000	0.000	1.462	mid-conf(0.49): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2021.08.04 13:00	EngulfingEntry	455418916	629	RM_CURRENT	0	RM_ENG_C	1	2	1	0.276		1.00		0	0.000		0.538	0.000	4	0.000	0.000	0.828	low-conf(0.28): origin break / momentum deterioration -> close early (proxy)
+OPEN	2021.08.05 03:00	PinBarEntry	1715565032	632	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.16 04:00	CrashBreakoutEntry	485287487	634	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.17 11:00	CrashBreakoutEntry	1633549401	638	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.17 12:00	CrashBreakoutEntry	937740761	639	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.23 17:00	CrashBreakoutEntry	826131272	646	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.23 18:00	CrashBreakoutEntry	1486610254	648	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.25 10:00	PinBarEntry	1105020580	653	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.26 09:00	PinBarEntry	1989474052	658	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.30 12:00	PinBarEntry	579147524	661	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.31 11:00	MACrossEntry	1176020077	663	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.07 23:00	PullbackContinuationEngine	1739045051	665	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.08 15:00	PinBarEntry	440383147	666	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.09 15:00	CrashBreakoutEntry	1393830885	670	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.20 05:00	PullbackContinuationEngine	2067489344	673	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.21 14:00	PinBarEntry	715314806	676	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.11 14:00	PinBarEntry	880556326	678	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.13 18:00	CrashBreakoutEntry	259903799	680	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 09:00	CrashBreakoutEntry	1653868771	681	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 10:00	CrashBreakoutEntry	859574816	682	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 11:00	CrashBreakoutEntry	600432546	683	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 12:00	CrashBreakoutEntry	791647540	685	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 16:00	CrashBreakoutEntry	227236125	689	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 09:00	CrashBreakoutEntry	1709112551	695	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 10:00	CrashBreakoutEntry	1175291784	696	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 11:00	CrashBreakoutEntry	42771334	698	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 12:00	CrashBreakoutEntry	937586576	700	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 13:00	CrashBreakoutEntry	555697562	701	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.20 16:00	CrashBreakoutEntry	1614363197	711	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 04:00	PinBarEntry	248225327	715	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 07:00	PinBarEntry	384257069	716	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 12:00	MACrossEntry	561379019	718	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.26 09:00	PinBarEntry	1824478700	721	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.02 13:00	PinBarEntry	939261339	726	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 06:00	PinBarEntry	115005807	728	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 08:00	PinBarEntry	1736288254	729	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 18:00	CrashBreakoutEntry	1015129941	734	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.08 08:00	CrashBreakoutEntry	645100237	738	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.09 22:00	PinBarEntry	1964647290	741	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 16:00	CrashBreakoutEntry	1025563135	743	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 17:00	CrashBreakoutEntry	860200829	745	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 18:00	CrashBreakoutEntry	998945547	747	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 19:00	CrashBreakoutEntry	507244677	748	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 08:00	PinBarEntry	1854190304	752	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 10:00	ExpansionEngine	1497884584	753	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 14:00	PinBarEntry	2082220666	757	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.15 16:00	PinBarEntry	605081860	762	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.17 14:00	MACrossEntry	255700121	764	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.30 11:00	MACrossEntry	519295040	767	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.30 12:00	ExpansionEngine	762532616	768	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.01 02:00	PinBarEntry	197193638	773	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 04:00	CrashBreakoutEntry	131041956	775	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 05:00	CrashBreakoutEntry	1312186128	776	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 09:00	CrashBreakoutEntry	1087459096	777	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 10:00	CrashBreakoutEntry	275580969	778	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 11:00	CrashBreakoutEntry	352772293	779	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.27 17:00	PinBarEntry	1838790951	792	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.28 13:00	CrashBreakoutEntry	329707494	794	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.12 20:00	PinBarEntry	1318526147	800	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.17 11:00	EngulfingEntry	1467805426	802	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.01.17 11:00	EngulfingEntry	1467805426	802	RM_CURRENT	0	RM_ENG_C	1	2	1	0.319		1.00		0	0.000		1.063	0.000	2	0.901	0.000	0.958	low-conf(0.32): origin break / momentum deterioration -> close early (proxy)
+OPEN	2022.01.20 16:00	PinBarEntry	190574409	804	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.24 20:00	PinBarEntry	564298852	806	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.25 16:00	EngulfingEntry	2080796070	807	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.01.25 16:00	EngulfingEntry	2080796070	807	RM_CURRENT	0	RM_ENG_C	1	2	3	0.027		0.60		0	0.000		0.926	1.000	1	0.100	0.000	0.082	low-conf(0.03): tighten (x0.60); early-invalidation bias (proxy)
+OPEN	2022.01.27 04:00	PullbackContinuationEngine	2040347503	814	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.31 12:00	PinBarEntry	1904589342	817	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.02 07:00	PinBarEntry	1979304313	819	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.08 05:00	PullbackContinuationEngine	1841947179	821	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.09 05:00	PullbackContinuationEngine	1963137267	823	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.10 13:00	PinBarEntry	1890295861	826	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.14 11:00	PinBarEntry	537857913	830	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 09:00	PinBarEntry	630617235	834	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 15:00	ExpansionEngine	977607408	839	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 18:00	PinBarEntry	1038685126	843	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.21 11:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.02.21 11:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	3	0.423		0.60		0	0.000		0.583	1.000	4	0.100	0.000	1.270	mid-conf(0.42): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2022.02.21 12:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	4	0.415		1.10		0	0.000		0.583	0.600	2	0.675	0.000	1.246	mid-conf(0.42): modest trail (x1.10) (proxy)
+EXIT	2022.02.21 13:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	3	0.380		0.60		0	0.000		0.583	0.600	3	0.689	0.000	1.139	low-conf(0.38): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2022.02.21 14:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	3	0.475		0.60		0	0.000		0.583	0.000	4	0.000	0.000	1.425	mid-conf(0.47): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2022.02.21 15:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	3	0.385		0.60		0	0.000		0.583	0.600	2	0.000	0.000	1.156	low-conf(0.39): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2022.02.21 16:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	3	0.429		0.60		0	0.000		0.583	0.400	4	0.000	0.000	1.286	mid-conf(0.43): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2022.02.21 17:00	EngulfingEntry	1982436534	846	RM_CURRENT	0	RM_ENG_C	1	2	1	0.126		1.00		0	0.000		0.583	0.000	3	0.211	0.000	0.377	low-conf(0.13): origin break / momentum deterioration -> close early (proxy)
+OPEN	2022.02.23 11:00	PinBarEntry	2142700010	848	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.23 19:00	PinBarEntry	1010617950	850	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.24 06:00	EngulfingEntry	721636530	855	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.02.24 06:00	EngulfingEntry	721636530	855	RM_CURRENT	0	RM_ENG_C	1	2	3	0.228		0.60		0	0.000		0.000	0.000	1	0.100	0.167	1.201	low-conf(0.23): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2022.02.24 07:00	EngulfingEntry	721636530	855	RM_CURRENT	0	RM_ENG_C	1	2	3	0.090		0.60		0	0.000		0.000	0.000	2	0.370	0.167	0.827	low-conf(0.09): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2022.02.24 08:00	EngulfingEntry	721636530	855	RM_CURRENT	0	RM_ENG_C	1	2	3	0.096		0.60		0	0.000		0.256	0.600	3	0.569	0.167	0.550	low-conf(0.10): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2022.02.24 09:00	EngulfingEntry	721636530	855	RM_CURRENT	0	RM_ENG_C	1	2	1	0.145		1.00		0	0.000		0.256	0.600	3	0.808	0.000	0.436	low-conf(0.15): origin break / momentum deterioration -> close early (proxy)
+OPEN	2022.02.24 10:00	PinBarEntry	1074709352	858	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.03 21:00	PinBarEntry	2038159152	863	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.03 23:00	PinBarEntry	1677189735	865	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.16 05:00	PinBarEntry	1382459519	872	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.21 22:00	PinBarEntry	704005419	876	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.23 03:00	PinBarEntry	567914939	878	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.24 11:00	EngulfingEntry	1284163790	881	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.03.24 11:00	EngulfingEntry	1284163790	881	RM_CURRENT	0	RM_ENG_C	1	2	3	0.206		0.60		0	0.000		0.296	1.000	2	0.213	0.000	0.618	low-conf(0.21): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2022.03.24 12:00	EngulfingEntry	1284163790	881	RM_CURRENT	0	RM_ENG_C	1	2	1	0.346		1.00		0	0.000		0.296	0.400	4	0.000	0.000	1.038	low-conf(0.35): origin break / momentum deterioration -> close early (proxy)
+OPEN	2022.03.28 06:00	MACrossEntry	268607166	883	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.28 10:00	PinBarEntry	1090677679	885	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.29 14:00	PinBarEntry	700724605	888	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.30 12:00	PinBarEntry	1476837332	892	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.11 16:00	EngulfingEntry	2062449405	894	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.04.11 16:00	EngulfingEntry	2062449405	894	RM_CURRENT	0	RM_ENG_C	1	2	3	0.095		0.60		0	0.000		0.000	0.000	2	0.315	0.167	0.807	low-conf(0.10): tighten (x0.60); early-invalidation bias (proxy)
+OPEN	2022.04.12 16:00	PinBarEntry	1311480339	896	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.20 04:00	PullbackContinuationEngine	1784611664	898	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.20 09:00	PinBarEntry	494129861	899	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.20 15:00	PinBarEntry	230266765	902	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.02 03:00	PinBarEntry	1125891964	907	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.02 05:00	PinBarEntry	1096926195	910	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.05 13:00	PinBarEntry	133729455	915	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.16 05:00	PinBarEntry	1916750424	918	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.16 13:00	PinBarEntry	1949508686	922	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.18 10:00	PinBarEntry	1153890359	924	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.19 08:00	PinBarEntry	810575958	926	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.31 05:00	FailedBreakReversal	1593443280	929	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.06 03:00	PinBarEntry	2051970049	934	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.06 04:00	PinBarEntry	2020480617	935	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.07 05:00	FailedBreakReversal	168399516	938	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.07 11:00	PinBarEntry	266099219	940	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.04 06:00	PinBarEntry	220213947	942	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.06 12:00	PinBarEntry	1251864063	946	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.12 03:00	PinBarEntry	282658253	950	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 11:00	CrashBreakoutEntry	1921619617	955	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 12:00	CrashBreakoutEntry	841236433	956	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 13:00	CrashBreakoutEntry	1109700769	958	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 16:00	CrashBreakoutEntry	304407770	964	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 18:00	CrashBreakoutEntry	283679669	968	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 19:00	CrashBreakoutEntry	1727823015	969	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 05:00	CrashBreakoutEntry	686040904	972	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 11:00	CrashBreakoutEntry	1629775409	973	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 12:00	CrashBreakoutEntry	728965967	975	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 17:00	CrashBreakoutEntry	309642069	980	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 18:00	CrashBreakoutEntry	462501527	981	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 12:00	CrashBreakoutEntry	1658116660	984	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 13:00	CrashBreakoutEntry	2081933756	985	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 14:00	CrashBreakoutEntry	1853367392	987	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 15:00	CrashBreakoutEntry	242627064	989	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 16:00	CrashBreakoutEntry	705582524	992	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.08 18:00	CrashBreakoutEntry	825993967	997	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.09 17:00	CrashBreakoutEntry	1060307920	1000	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.11 07:00	PinBarEntry	1290612149	1003	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.18 05:00	PinBarEntry	423564014	1005	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 11:00	CrashBreakoutEntry	692341830	1008	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 12:00	CrashBreakoutEntry	1221875492	1009	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 13:00	CrashBreakoutEntry	1371657306	1010	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.30 23:00	PullbackContinuationEngine	1202835352	1021	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 13:00	CrashBreakoutEntry	1152855610	1024	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 14:00	CrashBreakoutEntry	1791528854	1026	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 15:00	CrashBreakoutEntry	1733770794	1027	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 14:00	CrashBreakoutEntry	129687213	1033	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 15:00	CrashBreakoutEntry	924237629	1034	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 16:00	CrashBreakoutEntry	1978716481	1036	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 19:00	CrashBreakoutEntry	1597008584	1039	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.15 04:00	PullbackContinuationEngine	91103997	1045	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.19 09:00	PinBarEntry	1349693804	1048	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.22 09:00	PinBarEntry	170453808	1052	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.27 15:00	PinBarEntry	1555425939	1055	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.03 18:00	CrashBreakoutEntry	652142222	1057	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.03 19:00	CrashBreakoutEntry	1335678562	1058	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 09:00	CrashBreakoutEntry	723207370	1061	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 10:00	CrashBreakoutEntry	433781729	1062	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 11:00	CrashBreakoutEntry	1384131119	1064	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 12:00	CrashBreakoutEntry	1441228824	1065	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 13:00	CrashBreakoutEntry	1856152554	1066	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.10 09:00	PinBarEntry	401687498	1075	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.11 12:00	PinBarEntry	1664775554	1079	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.12 12:00	PinBarEntry	1852589824	1082	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.12 15:00	PinBarEntry	1877029046	1083	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.17 16:00	CrashBreakoutEntry	288522036	1087	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.17 17:00	CrashBreakoutEntry	284783436	1088	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.19 07:00	PinBarEntry	1221124155	1094	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.19 19:00	PullbackContinuationEngine	148395544	1098	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.25 12:00	PinBarEntry	692707411	1100	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 11:00	CrashBreakoutEntry	445354932	1103	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 12:00	CrashBreakoutEntry	768277430	1104	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 13:00	CrashBreakoutEntry	1236035632	1105	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 14:00	CrashBreakoutEntry	533900958	1108	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 10:00	CrashBreakoutEntry	2023330502	1122	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 12:00	CrashBreakoutEntry	503860431	1124	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 13:00	CrashBreakoutEntry	529300352	1125	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 14:00	CrashBreakoutEntry	1504854280	1127	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 15:00	CrashBreakoutEntry	1198693872	1129	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 05:00	PinBarEntry	879103854	1135	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 10:00	PullbackContinuationEngine	816342076	1137	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 11:00	ExpansionEngine	1984642772	1139	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.07 12:00	CrashBreakoutEntry	593643133	1145	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.07 13:00	CrashBreakoutEntry	826220479	1146	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 18:00	CrashBreakoutEntry	1520908175	1151	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 19:00	CrashBreakoutEntry	524416538	1152	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 21:00	CrashBreakoutEntry	214784313	1153	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 22:00	CrashBreakoutEntry	759803901	1155	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.10 18:00	CrashBreakoutEntry	648475107	1163	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.14 17:00	PinBarEntry	1846145268	1166	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.17 11:00	PinBarEntry	148486970	1170	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.22 09:00	PinBarEntry	1380534788	1175	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.24 14:00	CrashBreakoutEntry	570801131	1177	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.29 11:00	CrashBreakoutEntry	333958219	1181	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 11:00	CrashBreakoutEntry	1434392794	1185	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 12:00	CrashBreakoutEntry	404859092	1186	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 14:00	CrashBreakoutEntry	1720004133	1188	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 08:00	PullbackContinuationEngine	1199088499	1196	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 16:00	CrashBreakoutEntry	1279522646	1198	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 17:00	CrashBreakoutEntry	735968000	1201	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 18:00	CrashBreakoutEntry	2027904870	1203	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 19:00	CrashBreakoutEntry	1845874172	1204	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.05 03:00	PinBarEntry	982112563	1216	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.06 07:00	PinBarEntry	947069963	1220	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.08 08:00	PinBarEntry	371483921	1223	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.08 09:00	PinBarEntry	369200033	1224	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 16:00	CrashBreakoutEntry	2130875389	1233	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 17:00	CrashBreakoutEntry	387108169	1235	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 18:00	CrashBreakoutEntry	422847585	1238	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 19:00	CrashBreakoutEntry	1508233525	1239	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.15 06:00	PinBarEntry	1070082666	1246	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 12:00	CrashBreakoutEntry	441706261	1251	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 18:00	CrashBreakoutEntry	437151554	1254	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 19:00	CrashBreakoutEntry	1028761490	1255	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 12:00	CrashBreakoutEntry	1588600600	1262	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 14:00	CrashBreakoutEntry	2038896733	1263	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 18:00	CrashBreakoutEntry	880163732	1268	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 19:00	CrashBreakoutEntry	1295635178	1270	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									

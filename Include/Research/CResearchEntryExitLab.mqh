@@ -65,6 +65,15 @@ private:
       c.impulse=imp; c.impulse_ok=impok; c.trend_align=tal; c.trend_align_ok=talok; c.exhaustion=exh; c.exhaustion_ok=exhok;
       m_pullback.GetFeatures(c.pullback); m_breakout.GetFeatures(c.breakout); m_momseq.GetFeatures(c.momseq);
       c.room=m_room.Evaluate(dir,entry,risk);
+      // Self-source the aux momentum from the lab's OWN closed-bar features when the caller didn't
+      // supply it (fixes the entry-side "momentum snapshot unavailable" handicap; never-fabricate).
+      // impulse = break-bar thrust (0..1); trend_align = signed dir*persistence; exhaustion = seq-exh.
+      if(!c.impulse_ok && c.breakout.impulse_confirmation.available)
+      { c.impulse=c.breakout.impulse_confirmation.value; c.impulse_ok=true; }
+      if(!c.trend_align_ok && c.momseq.momentum_persistence.available)
+      { c.trend_align=(double)dir * c.momseq.momentum_persistence.value; c.trend_align_ok=true; }
+      if(!c.exhaustion_ok && c.momseq.sequence_exhaustion.available)
+      { c.exhaustion=c.momseq.sequence_exhaustion.value; c.exhaustion_ok=true; }
    }
    void logEntry(datetime t,string engine,int sid,SResearchSignalCtx &c,SCandidateEntry &v)
    {
@@ -165,6 +174,15 @@ public:
       m_stamp[n].entry_model=(int)m_sel_entry; m_stamp[n].entry_version=entryVer(m_sel_entry);
       m_stamp[n].exit_model=(int)m_sel_exit;   m_stamp[n].exit_version=exitVer(m_sel_exit);
       m_stamp[n].subtype=v.reclass_subtype; m_stamp[n].entry_confidence=v.confidence;
+      // Entry-momentum snapshot (never-fabricate): if the caller did not supply it, self-source the
+      // SAME measure the exit's LiveImpulse() reads now — momseq.momentum_persistence on the just-closed
+      // entry bar — so the deterioration-from-entry (impulse_now - entry_impulse) leg is on one scale.
+      if(!entry_impulse_ok)
+      {
+         SMomentumSequence ms_entry; m_momseq.GetFeatures(ms_entry);
+         if(ms_entry.momentum_persistence.available)
+         { entry_impulse=ms_entry.momentum_persistence.value; entry_impulse_ok=true; }
+      }
       m_stamp[n].entry_impulse=entry_impulse; m_stamp[n].entry_impulse_ok=entry_impulse_ok;
       m_stamp[n].origin_price=origin_price; m_stamp[n].origin_ok=origin_ok;
       m_stamp[n].peak_recovery=0.0; m_stamp[n].peak_recovery_ok=false;   // seeded on first exit sighting

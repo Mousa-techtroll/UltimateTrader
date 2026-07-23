@@ -47,7 +47,7 @@
 //==================================================================//
 
 //--- ENTRY: follow-through confirmation floors (breakout family, 0..1) ---
-#define ENGB_FT_PERSIST_FLOOR    0.34  // follow_through_persistence floor to CONFIRM the thrust
+#define ENGB_FT_PERSIST_FLOOR    0.17  // FROZEN dev-dist calibration: p80 of Engulf follow_through (was 0.34; most=0)
                                        //   (~2 of FT_MAX_TRACK=6 tracked bars still pushing)
 #define ENGB_IMP_CONFIRM_FLOOR   0.45  // impulse_confirmation floor (break-bar body dominance)
                                        //   — either follow-through OR impulse clearing its floor

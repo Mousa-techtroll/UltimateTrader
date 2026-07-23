@@ -35,11 +35,11 @@
 //==================================================================
 //--- ENTRY: healthy pullback-DEPTH band (retracement fraction of the parent leg).
 //    Below LO = too shallow (not a real pullback); above HI = leg breached / failing.
-#define PBCB_DEPTH_LO        0.30   // shallowest admissible retracement
-#define PBCB_DEPTH_HI        0.75   // deepest admissible retracement (beyond = failing)
+#define PBCB_DEPTH_LO        0.12   // FROZEN dev-dist calibration: p20 of PBC pullback_depth (was 0.30)
+#define PBCB_DEPTH_HI        0.31   // FROZEN dev-dist calibration: p80 of PBC pullback_depth (was 0.75)
 
 //--- ENTRY: recovery_confirmed gates (0..1; impulse resumed + reclaimed reference).
-#define PBCB_REC_HI          0.70   // confirmation floor to ADMIT (else WAIT_FOR_CONFIRM)
+#define PBCB_REC_HI          0.60   // FROZEN dev-dist calibration: p20 of recovery_conf (was 0.70)
 #define PBCB_REC_STRONG      0.90   // fully-confirmed recovery (part of the UPGRADE bar)
 
 //--- ENTRY: basing_quality gates (0..1; clean consolidation vs a violent V).

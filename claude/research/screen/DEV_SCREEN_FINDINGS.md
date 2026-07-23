@@ -85,3 +85,15 @@ a net-negative entry with an OOS-negative exit has no plausible path to positive
    standalone entries are rare in the portfolio, so payoff is uncertain.
 3. **Forward / shadow validation** — deploy the seam in shadow (log proposals, don't act) to gather live data; the
    standing guidance is that the next real signal is forward validation, not more backtest tuning.
+
+## Phase 2 result — Engulfing stamp enrichment (true origin + entry-momentum)
+Removing the origin=stopLoss handicap (true origin = engulf signal-candle extreme, tighter than SL) + snapshotting
+entry momentum (momentum_persistence, activating the conjunctive deterioration leg):
+| exit | pre-enrich dev | ENRICHED dev | ENRICHED full | ENRICHED GH | Sharpe (dev/full/GH) |
+|---|---|---|---|---|---|
+| X1 Eng-A struct-room | inert | inert | inert (=34,085) | inert (=24,074) | unchanged |
+| X2 Eng-B momentum | −30% | −30% (3,790) | −42% (19,771) | −15% (20,434) | down |
+| **X3 Eng-C confidence** | −28% | **+20% (6,558)** | −4.2% (32,641) | **+16% (28,011)** | **2.46 / 3.39 / 3.54 (UP all)** |
+Enrichment FLIPS Eng-C from harmful to the first CROSS-FEED-POSITIVE candidate (GH +16% net; Sharpe up everywhere;
+full-primary −4.2% net but +9% Sharpe). Validates the origin handicap. Master-OFF identity still byte-exact.
+NEXT: Eng-C exit OOS (confirm/late), then it enters the Engulf matrix as a promoted exit.

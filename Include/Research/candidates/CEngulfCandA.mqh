@@ -51,7 +51,7 @@
 //      ROOM_R on engulf WINNERS, set to a LOW percentile so only
 //      room-starved setups are rejected.
 #ifndef ENGA_ROOM_MIN_R
-#define ENGA_ROOM_MIN_R     1.00   // placeholder — dev-period-selected later
+#define ENGA_ROOM_MIN_R     0.33   // FROZEN dev-dist calibration: p20 of Engulf room_R (was 1.00; caused 100% WAIT)
 #endif
 // (iii) Momentum-decay-from-entry floor (exit). SOURCE: dev-period
 //       distribution of (impulse[exit] - impulse[entry]) on engulf

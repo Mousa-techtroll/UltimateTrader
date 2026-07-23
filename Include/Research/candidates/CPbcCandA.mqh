@@ -48,10 +48,10 @@
 // NONE chosen by sweep or by P/L. Any value that would violate a
 // TREND_PBC non-goal is out of bounds. Contracts FROZEN vs manifest.
 //==================================================================
-#define DEPTH_LO     0.30    // dev-selected later (placeholder)
-#define DEPTH_HI     0.79    // dev-selected later (placeholder)
-#define IMP_MIN_PBC  0.15    // dev-selected later (placeholder)
-#define REC_MIN      0.60    // dev-selected later (placeholder)
+#define DEPTH_LO     0.12    // FROZEN dev-dist calibration: p20 of PBC pullback_depth (was 0.30)
+#define DEPTH_HI     0.31    // FROZEN dev-dist calibration: p80 of PBC pullback_depth (was 0.79)
+#define IMP_MIN_PBC  0.15    // kept (impulse dist not telemetered)
+#define REC_MIN      0.60    // FROZEN = p20 of recovery_conf (already 0.60)
 #define H            12      // dev-selected later (placeholder; P90 time-to-0.5R)
 
 //+------------------------------------------------------------------+

@@ -979,9 +979,12 @@ public:
          if(m_researchLab != NULL)
          {
             string r_eng2 = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
+            // origin = the TRUE structural invalidation level when the engine supplies it
+            // (Engulfing signal-candle extreme, tighter than the SL); else the SL proxy.
+            double r_origin = (signal.struct_origin != 0.0) ? signal.struct_origin : signal.stopLoss;
             m_researchLab.OnPositionOpened(
                position.ticket, ResearchSignalIdHash(signal.signal_id), r_eng2, research_v,
-               research_applied_mult, 0.0, false, signal.stopLoss, (signal.stopLoss > 0.0));
+               research_applied_mult, 0.0, false, r_origin, (r_origin > 0.0));
          }
          position.pattern_type = signal.patternType;
          position.major_engine = signal.major_engine;   // L4-3 (cherry-pick d61277c): propagate producing engine to executed position (attribution only; no decision reads it -> byte-identical)

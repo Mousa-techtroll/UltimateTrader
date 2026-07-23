@@ -61,7 +61,7 @@
 // depth is pullback_depth (retracement fraction of the parent leg:
 // ~0 no retrace, ~0.5 healthy, >=1 leg fully retraced/breached).
 //==================================================================
-#define PBC_C_DEPTH_MIN         0.20  // below this: no real discount -> shallow-failing dip -> REJECT
+#define PBC_C_DEPTH_MIN         0.12  // FROZEN dev-dist calibration: p20 of PBC pullback_depth (was 0.20)
 #define PBC_C_DEPTH_SHALLOW_MAX 0.45  // depth <= this (+ fast recovery) leans SHALLOW subtype
 #define PBC_C_DEPTH_DEEP_MIN    0.55  // depth >= this (+ slow recovery) leans DEEP subtype
 #define PBC_C_DEPTH_BREACHED    1.00  // depth >= this: parent leg breached -> continuation dead -> REJECT
