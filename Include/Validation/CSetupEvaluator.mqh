@@ -674,9 +674,11 @@ public:
       // to the running total (preserves the bear boost + pattern/H4 bonus).
       points += MathMax(trend_alignment, choch_points);
 
-      // Factor 1.5: Counter-Trend / RSI Bonus
-      double rsi = (m_context != NULL) ? m_context.GetCurrentRSI() : 50.0;
-      if(rsi > m_rsi_overbought || rsi < m_rsi_oversold)
+      // Factor 1.5: Counter-Trend / RSI Bonus. FILT-04: abstain when no real RSI is
+      // available (never award the bonus on a fabricated hardcoded 50).
+      bool   rsi_ok = (m_context != NULL) && m_context.IsRSIAvailable();
+      double rsi    = rsi_ok ? m_context.GetCurrentRSI() : 50.0;
+      if(rsi_ok && (rsi > m_rsi_overbought || rsi < m_rsi_oversold))
       {
          points += 3;
          LogPrint("   +3 Quality Points for Extreme RSI (", DoubleToString(rsi, 1), ")");
