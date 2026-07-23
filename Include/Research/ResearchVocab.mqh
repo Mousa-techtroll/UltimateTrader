@@ -28,6 +28,9 @@ struct SCandidateEntry
    string                reason;
    bool                  valid;
 };
+inline void CandEntryInit(SCandidateEntry &e)
+{ e.action=CAND_REJECT; e.confidence=0.0; e.risk_mult=1.0; e.reclass_subtype=0;
+  e.wait_bars=0; e.candidate_id=""; e.reason=""; e.valid=false; }
 
 // A feature-family scalar: value + availability (never-fabricate law).
 struct SFeat { double value; bool available; };

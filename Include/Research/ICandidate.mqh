@@ -43,6 +43,8 @@ struct SResearchPosCtx
    double   peak_r;            // running max R since entry
    double   mfe_r; double mae_r;
    double   entry_impulse; bool entry_impulse_ok;   // momentum-at-entry, for deterioration-from-entry
+   double   current_price;                          // live closed price this bar (seam-populated; no reconstruct)
+   double   impulse_now;   bool impulse_now_ok;      // live closed-bar impulse (seam-populated)
    double   origin_price;  bool origin_ok;          // engulf origin / parent swing low, frozen at entry
    // pre-computed feature snapshots NOW
    SPullbackRecoveryFeatures pullback;
