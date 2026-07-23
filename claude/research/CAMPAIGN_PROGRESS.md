@@ -34,7 +34,26 @@ Freeze each selection rule from the dev FEATURE distribution BEFORE computing ou
 First target: PBC entry depth band → ~[p20,p80]=[0.14,0.36] (from the dist above). Calibrate each model's binding
 thresholds (entry + exit), freeze, re-run + OOS. Thresholds are #defines in the candidate files.
 
-## Phase 4 — within-profile cross-model matrices  (PENDING)
+## Phase 2 RESULT (commit 380b9ee)
+Enrichment FLIPS Engulfing exit C: -28% dev → +20% dev / +16% GH / +3.3% confirm / Sharpe up ALL periods —
+BUT late-sample -25%, full -4.2% => mixed, not robustly promotable standalone. Validates the origin handicap.
+X1 stays inert, X2 harmful. Identity byte-exact preserved.
+
+## Phase 3 RESULT — frozen calibration largely INEFFECTIVE / counterproductive (commit 380b9ee)
+Pre-committed rule (bands→[p20,p80], floors→p20), frozen before outcomes. Diagnosis of why default reject-heavy:
+- PBC-A rejects on "impulse not resumed" (NOT depth) → depth calibration inert; still 100% reject at default.
+- Eng-A "momentum snapshot unavailable" → a WIRING GAP (aux momentum passed unavailable), not a threshold.
+- PBC-B calibrated admits 52% but those shallow pullbacks are LOSERS (direct-profile -0.277R) → net worse.
+KEY FINDING: default thresholds were CORRECTLY rejecting low-quality trades; entry models have NO selection edge
+over baseline (strict removes good trades, loose admits losers). Both directions fail.
+
+## Aux-momentum wiring FIX (commit 380b9ee)
+Eng-A/PBC-A REQUIRE ctx.impulse/trend_align, which were passed unavailable → 100% wait/reject. lab fillSignalCtx
+now self-sources impulse=breakout.impulse_confirmation, trend_align=dir*momentum_persistence, exhaustion=seq_exh.
+After fix (dev): Eng-A WAIT100%→ACCEPT30%/RISK_DOWN28%/WAIT30%; PBC-A REJECT100%→ACCEPT17%. Both testable now,
+still net-negative (confirms no selection edge). Identity byte-exact. All 6 entries now fairly evaluable.
+
+## Phase 4 — within-profile cross-model matrices  (RUNNING)
 Engulf entries A/B/C × Engulf exits A/B/C (9) and PBC A/B/C × PBC A/B/C (9), with control + E-only + X-only to
 compute the factorial I = EX − E − X + C. Promote only a few survivors to confirm/late/GH/forward-shadow.
 Negative standalone E and X effects do NOT rule out a positive interaction.
