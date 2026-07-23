@@ -18,6 +18,19 @@
 #include "CSessionBreakoutEntry.mqh"
 
 //+------------------------------------------------------------------+
+//| Expansion-engine internal confluence confidences.                 |
+//| These are DESIGN arbitration weights (engine-internal scoring     |
+//| confidences), NOT Inp* — surfaced as named, auditable constants   |
+//| instead of silent inline literals. Values are byte-identical to   |
+//| the prior hardcoded numbers (int, matching engine_confluence).    |
+//+------------------------------------------------------------------+
+const int EXP_CONF_VOLBREAKOUT = 70;  // composed Volatility Breakout default confluence (was inline 70)
+const int EXP_CONF_SESSION     = 65;  // composed Session Breakout default confluence (was inline 65)
+const int EXP_CONF_IC          = 70;  // Institutional-Candle breakout default confluence (was inline 70)
+const int EXP_CONF_IC_STRONG   = 75;  // Compression BO, trend-aligned (was inline 75)
+const int EXP_CONF_IC_WEAK     = 65;  // Compression BO, counter/neutral trend (was inline 65)
+
+//+------------------------------------------------------------------+
 //| CExpansionEngine - Multi-mode expansion entry strategy            |
 //| MAJOR ENGINE (4): Breakout / Expansion (trend-aligned, both dir). |
 //| Mode 1: Panic Momentum (Death Cross + Rubber Band) -- DEAD (Ph D) |
@@ -510,7 +523,7 @@ public:
                // Vol breakout (Donchian + Keltner + ADX) is a confirmed expansion
                // spine; ensure engine_confluence > 0 so the scorer gate passes.
                if(signal.engine_confluence <= 0)
-                  signal.engine_confluence = 70;
+                  signal.engine_confluence = EXP_CONF_VOLBREAKOUT;
                signal.requiresConfirmation = false;  // breakout-retest = immediate
                TagAndScore(signal);
                return signal;
@@ -525,7 +538,7 @@ public:
             {
                signal.engine_mode = MODE_LONDON_BREAKOUT;  // session breakout
                if(signal.engine_confluence <= 0)
-                  signal.engine_confluence = 65;
+                  signal.engine_confluence = EXP_CONF_SESSION;
                signal.requiresConfirmation = false;
                TagAndScore(signal);
                return signal;
@@ -811,7 +824,7 @@ private:
             signal.engine_intent = INTENT_BREAKOUT;
             signal.source = SIGNAL_SOURCE_PATTERN;
             signal.engine_mode = MODE_INSTITUTIONAL_CANDLE;
-            signal.engine_confluence = 70;
+            signal.engine_confluence = EXP_CONF_IC;
             signal.day_type = m_day_type;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
@@ -865,7 +878,7 @@ private:
             signal.engine_intent = INTENT_BREAKOUT;
             signal.source = SIGNAL_SOURCE_PATTERN;
             signal.engine_mode = MODE_INSTITUTIONAL_CANDLE;
-            signal.engine_confluence = 70;
+            signal.engine_confluence = EXP_CONF_IC;
             signal.day_type = m_day_type;
             if(m_context != NULL)
                signal.regimeAtSignal = m_context.GetCurrentRegime();
@@ -1006,7 +1019,7 @@ private:
                   double tp = entry + risk * 2.5;
 
                   double rr = 2.5;
-                  int confluence = trend_aligned ? 75 : 65;
+                  int confluence = trend_aligned ? EXP_CONF_IC_STRONG : EXP_CONF_IC_WEAK;
 
                   signal.valid = true;
                   signal.symbol = _Symbol;
@@ -1030,10 +1043,17 @@ private:
                      signal.regimeAtSignal = m_context.GetCurrentRegime();
 
                   // Phase 2: ATR percentile confluence boost
-                  if(atr_pctile < 10)
-                     signal.engine_confluence += 20;
-                  else if(atr_pctile < 25)
-                     signal.engine_confluence += 10;
+                  // Abstain on warmup: GetATRPercentile returns <0 (sentinel) when
+                  // history is insufficient; skip the boost entirely rather than let a
+                  // negative sentinel trip the (< 10) branch. Byte-identical to the old
+                  // warmup 50 (which fell through both bands = no boost).
+                  if(atr_pctile >= 0)
+                  {
+                     if(atr_pctile < 10)
+                        signal.engine_confluence += 20;
+                     else if(atr_pctile < 25)
+                        signal.engine_confluence += 10;
+                  }
 
                   // Phase 2: Mid-range location penalty
                   signal.qualityScore += GetLocationPenalty();
@@ -1085,7 +1105,7 @@ private:
                   double tp = entry - risk * 2.5;
 
                   double rr = 2.5;
-                  int confluence = trend_aligned ? 75 : 65;
+                  int confluence = trend_aligned ? EXP_CONF_IC_STRONG : EXP_CONF_IC_WEAK;
 
                   signal.valid = true;
                   signal.symbol = _Symbol;
@@ -1109,10 +1129,17 @@ private:
                      signal.regimeAtSignal = m_context.GetCurrentRegime();
 
                   // Phase 2: ATR percentile confluence boost
-                  if(atr_pctile < 10)
-                     signal.engine_confluence += 20;
-                  else if(atr_pctile < 25)
-                     signal.engine_confluence += 10;
+                  // Abstain on warmup: GetATRPercentile returns <0 (sentinel) when
+                  // history is insufficient; skip the boost entirely rather than let a
+                  // negative sentinel trip the (< 10) branch. Byte-identical to the old
+                  // warmup 50 (which fell through both bands = no boost).
+                  if(atr_pctile >= 0)
+                  {
+                     if(atr_pctile < 10)
+                        signal.engine_confluence += 20;
+                     else if(atr_pctile < 25)
+                        signal.engine_confluence += 10;
+                  }
 
                   // Phase 2: Mid-range location penalty
                   signal.qualityScore += GetLocationPenalty();
@@ -1156,7 +1183,12 @@ private:
 
    double GetATRPercentile(double atr)
    {
-      if(m_atr_history_count < 20) return 50; // Not enough data
+      // FILT-04 anti-fabrication: on warmup (insufficient history) ABSTAIN with a
+      // negative sentinel instead of returning a fabricated 50. The only consumer
+      // (the ATR-percentile confluence BOOST) skips when this is <0, so no boost is
+      // applied on warmup — byte-identical to the old 50 (50 was already in the
+      // no-boost band, >=25). Never feed a fabricated percentile into a decision.
+      if(m_atr_history_count < 20) return -1; // warmup: abstain (consumer skips boost when <0)
       int below = 0;
       for(int i = 0; i < m_atr_history_count; i++)
          if(m_atr_history[i] < atr) below++;

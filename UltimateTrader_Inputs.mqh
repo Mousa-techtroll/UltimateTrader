@@ -63,6 +63,7 @@ input double InpMaxSameDirRisk    = 0.0;      // Cap on Σ open initial-stop ris
 input bool   InpSameDirCapResize  = false;    // false = reject on breach (Arm A); true = scale lot to directional headroom (Arm D)
 input double InpRiskBSetup = 0.54;            // Risk % for B setups — EC filter compensated
 input double InpMaxRiskPerTrade = 2.0;       // Hard cap % per trade (catches regime+ATR stacking outliers)
+input double InpCounterTrendRiskMult = 0.5;  // Counter-trend (vs 200-EMA) risk cut multiplier — was hardcoded 0.5 (byte-identical default). See CTradeOrchestrator counter-trend block.
 input double InpMaxTotalExposure = 5.0;      // 5.0% portfolio cap = fail-safe backstop, NOT a DD lever.
                                              // OPT-2 (2026-06-27, Model=4 real ticks, FIT 2019-2022) tested 4.0/3.5/3.0:
                                              // cap binds monotonically (0/10/16/19 events) but Eq-DD barely responds
@@ -167,6 +168,7 @@ input int    InpATRPeriod = 14;              // ATR period
 input group "══════ STOP LOSS & ATR ══════"
 input double InpATRMultiplierSL = 3.0;       // ATR multiplier for SL
 input double InpMinSLPoints = 800.0;         // Minimum SL distance (points) — auto-scaled for non-gold symbols
+input int    InpMinBrokerStopPoints = 10;    // Broker min-stop floor (points) when STOPS_LEVEL==0 — was hardcoded 10 (byte-identical default). See CTradeOrchestrator min_stop_dist.
 input bool   InpAutoScalePoints = true;      // Auto-scale all point distances by symbol price (gold=reference)
 input double InpScaleAnchorPrice = 1282.43;  // TIER-1 (2026-07-09): fixed anchor for point scaling (was first-tick price — start-date-dependent: $5.13 vs $17.28 floors for 2019 vs 2026 starts). 1282.43 = the 2019.01 first tick ALL tuning is calibrated to. 0 = legacy first-tick behavior.
 input double InpMinSLRangePct = 0.0;         // FIX-1: min SL as fraction of trailing 48h H1 range (0 = off = baseline-identical). Replaces the frozen first-tick $-floor pathology (InpMinSLPoints x first-tick price scale = $5.13 for a 2019 start, held to $3,750 gold).

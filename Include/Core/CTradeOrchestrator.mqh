@@ -348,7 +348,7 @@ public:
       double sym_point = SymbolInfoDouble(trade_symbol, SYMBOL_POINT);
       if(sym_point <= 0) sym_point = _Point;
       double min_stop_dist = SymbolInfoInteger(trade_symbol, SYMBOL_TRADE_STOPS_LEVEL) * sym_point;
-      if(min_stop_dist < sym_point * 10) min_stop_dist = sym_point * 10;  // Min 10 points for any symbol
+      if(min_stop_dist < sym_point * InpMinBrokerStopPoints) min_stop_dist = sym_point * InpMinBrokerStopPoints;  // Min stop-points floor for any symbol (InpMinBrokerStopPoints, default 10)
       if(MathAbs(entry_price - sl) < min_stop_dist)
       {
          // Widen SL to meet broker minimum (for the BROKER order, not for lot sizing)
@@ -666,8 +666,8 @@ public:
             if(is_counter_trend)
             {
                counter_trend_reduced = true;
-               counter_trend_multiplier = 0.5;
-               risk_pct *= 0.5;
+               counter_trend_multiplier = InpCounterTrendRiskMult;
+               risk_pct *= InpCounterTrendRiskMult;
                final_risk_pct = risk_pct;
                LogPrint(">>> RISK ALERT: Counter-trend trade against 200 EMA. Risk reduced to ",
                         DoubleToString(risk_pct, 2), "%");

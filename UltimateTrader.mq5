@@ -968,6 +968,8 @@ void EmitEffectiveConfigManifest()
    CfgRow(h,"InpPointsBSetupOverride",IntegerToString(InpPointsBSetupOverride),"int",acc);
    CfgRow(h,"InpRRGateSymmetric",(InpRRGateSymmetric?"true":"false"),"bool",acc);
    CfgRow(h,"InpRSIPeriod",IntegerToString(InpRSIPeriod),"int",acc);
+   CfgRow(h,"InpMinBrokerStopPoints",IntegerToString(InpMinBrokerStopPoints),"int",acc);
+   CfgRow(h,"InpCounterTrendRiskMult",DoubleToString(InpCounterTrendRiskMult,6),"double",acc);
    CfgRow(h,"InpRegExitChoppyBE",DoubleToString(InpRegExitChoppyBE,6),"double",acc);
    CfgRow(h,"InpRegExitChoppyChand",DoubleToString(InpRegExitChoppyChand,6),"double",acc);
    CfgRow(h,"InpRegExitChoppyTP0Dist",DoubleToString(InpRegExitChoppyTP0Dist,6),"double",acc);
