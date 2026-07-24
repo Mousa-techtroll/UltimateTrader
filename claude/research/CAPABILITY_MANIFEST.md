@@ -42,6 +42,11 @@ Engineering note (applies to ALL): compile 0/0; master-OFF AND shadow-ON decisio
 | 5 | PBC_B real-recovery fade | 1 | partial de-risking on recovery collapse (lab-owned peak) | PASS | PASS | NOT_PROMOTED |
 | 6 | PBC_C subtype | 1 | subtype-matched de-risking (scalp bank / runner) | PASS | PASS | NOT_PROMOTED |
 
+## EXIT models (Crash family, profile 2) — PLATFORM WAVE
+| id | Id() | ver | intended objective | ENG | BEH | ECON |
+|---|---|---|---|---|---|---|
+| 13 | CRASH_A_rubberband | 1 | crash-protection: bank into the reversion snap-back, protect the runner on stall, close on fade-invalidation | PASS | PASS (fires on CrashBreakoutEntry: fade-invalid close / reversion-bank partial / stall tighten) | PENDING_FORWARD |
+
 ## Reading
 - ALL models: ENGINEERING PASS + BEHAVIOR PASS → they belong in the shared architecture (kept, versioned, off-by-default).
 - ECON: NOT_PROMOTED (historical null / collateral edge) or PENDING_FORWARD (in the forward-shadow queue). NONE is REJECTED_AS_BAD_CODE.

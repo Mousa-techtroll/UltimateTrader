@@ -19,6 +19,8 @@
 // WAVE 2: regime-conditioned Eng-C exit variants + preservation-first entry models
 #include "candidates/CEngulfCandCVariants.mqh"
 #include "candidates/CWave2Entries.mqh"
+// PLATFORM WAVE: per-signal-type families (Crash first)
+#include "candidates/CCrashCandA.mqh"
 
 #define RESEARCH_LAB_VERSION 3   // v3: forward-shadow virtual candidate ledgers
 
@@ -71,6 +73,7 @@ private:
    CEngCHyst_Exit     m_engChyst_x;
    CEngulfAllocator_Entry m_engAlloc_e;
    CPbcState_Entry        m_pbcState_e;
+   CCrashCandA_Exit       m_crashA_x;   // platform wave: Crash family (profile 2) exit
    ICandidateEntry* m_entry[RESEARCH_MODEL_COUNT];
    ICandidateExit*  m_exit[RESEARCH_MODEL_COUNT];
    // INDEPENDENT selectors
@@ -84,7 +87,8 @@ private:
 
    int  stampIdx(long t){ for(int i=0;i<ArraySize(m_stamp);i++) if(m_stamp[i].ticket==t) return i; return -1; }
    int  pendIdx(int sid){ for(int i=0;i<ArraySize(m_pend);i++) if(m_pend[i].signal_id==sid) return i; return -1; }
-   int  engineProfile(string e){ if(StringFind(e,"Engulf")>=0) return 0; if(StringFind(e,"PullbackContinuation")>=0) return 1; return -1; }
+   int  engineProfile(string e){ if(StringFind(e,"Engulf")>=0) return 0; if(StringFind(e,"PullbackContinuation")>=0) return 1;
+        if(StringFind(e,"Crash")>=0) return 2; return -1; }
    string san(string s){ StringReplace(s,",",";"); StringReplace(s,"\n"," "); return s; }
    int  entryVer(ENUM_RESEARCH_MODEL m){ return (m!=RM_CURRENT && m_entry[m]!=NULL)? m_entry[m].ModelVersion():0; }
    int  exitVer (ENUM_RESEARCH_MODEL m){ return (m!=RM_CURRENT && m_exit[m]!=NULL)?  m_exit[m].ModelVersion():0; }
@@ -151,6 +155,7 @@ public:
       m_exit[RM_ENG_C_HYST]   =GetPointer(m_engChyst_x);
       m_entry[RM_ENG_ALLOC]   =GetPointer(m_engAlloc_e);
       m_entry[RM_PBC_STATE]   =GetPointer(m_pbcState_e);
+      m_exit[RM_CRASH_X_A]    =GetPointer(m_crashA_x);   // platform wave: Crash exit
       teleOpen(); m_ready=true; return true;
    }
 
