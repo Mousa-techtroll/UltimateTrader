@@ -362,6 +362,7 @@ struct SPosition
    ExitProposal           policy_trail_mod;    // Contract-B staging, consumed in ApplyTrailingPlugins; reset/tick
    datetime               last_seam_bar;       // exit-policy seam ran for this H1 bar (per-bar gate)
    datetime               last_reduce_bar;     // a native partial reduced this position this H1 bar (RULE-6 guard)
+   datetime               last_research_bar;   // research exit seam ran for this H1 bar (per-bar gate; research branch only)
 
    void Init()
    {
@@ -434,6 +435,7 @@ struct SPosition
       policy_trail_mod.Init();
       last_seam_bar = 0;
       last_reduce_bar = 0;
+      last_research_bar = 0;
    }
 };
 
@@ -852,6 +854,10 @@ struct EntrySignal
    double            takeProfit1;
    double            takeProfit2;
    double            takeProfit3;
+   double            struct_origin;   // research: true structural invalidation level at signal time
+                                      // (engulf signal-candle extreme low[1]/high[1]); 0 = not set.
+                                      // Tighter than stopLoss (which sits below it) => a real structural
+                                      // exit leg, not one redundant with the broker SL. DATA-ONLY.
    double            riskPercent;
    string            comment;
    string            signal_id;
@@ -920,6 +926,7 @@ struct EntrySignal
       entryPriceRaw = 0;
       entryPriceMaxRaw = 0;
       stopLoss = 0;
+      struct_origin = 0;
       takeProfit1 = 0;
       takeProfit2 = 0;
       takeProfit3 = 0;

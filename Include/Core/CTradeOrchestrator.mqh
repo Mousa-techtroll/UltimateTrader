@@ -17,6 +17,10 @@
 #include "../Execution/CEnhancedTradeExecutor.mqh"
 #include "CAdaptiveTPManager.mqh"
 #include "../Display/CTradeLogger.mqh"
+// RESEARCH ENTRY×EXIT LAB (research branch only) — injected pointer (NULL unless the master gate
+// constructs it). Guard-protected; already included by the .mq5 before this file. Hooking the
+// UNIVERSAL gateway here covers every entry path (immediate / confirmed-pending / file / sleeve).
+#include "../Research/CResearchEntryExitLab.mqh"
 
 // Fix 4.2: forward-declare the coordinator (defined AFTER this file in the
 // main include order) so ExecuteSignal can query aggregate open risk for the
@@ -35,6 +39,7 @@ private:
    IMarketContext*         m_context;
    CTradeLogger*         m_trade_logger;
    CPositionCoordinator* m_pos_coordinator;   // Fix 4.2: queried for aggregate open risk (exposure cap)
+   CResearchEntryExitLab* m_researchLab;      // research branch only; NULL unless the master gate is on
 
    // TIER-2 cluster guard: why the LAST ExecuteSignal/ProcessConfirmedSignal
    // call rejected ("" when it did not reject via a tagged decision). Cleared
@@ -88,6 +93,7 @@ public:
       m_context = context;
       m_trade_logger = NULL;
       m_pos_coordinator = NULL;   // Fix 4.2: wired post-construction via SetPositionCoordinator
+      m_researchLab = NULL;       // research branch only; wired post-construction via SetResearchLab
       m_last_reject_reason = "";  // TIER-2 cluster guard reject tag
 
       m_min_rr_ratio = min_rr;
@@ -135,6 +141,7 @@ public:
    // Fix 4.2: inject the position coordinator so ExecuteSignal can read
    // aggregate open risk and enforce the InpMaxTotalExposure ceiling.
    void SetPositionCoordinator(CPositionCoordinator* coord) { m_pos_coordinator = coord; }
+   void SetResearchLab(CResearchEntryExitLab* lab) { m_researchLab = lab; }
 
    // TIER-2 cluster guard: reject tag of the LAST execution call ("" = none).
    // "CLUSTER_GUARD" marks a same-family concentration reject the callers must
@@ -231,6 +238,54 @@ public:
       // OFF (default) => baseline byte-identical.
       if(InpShortOnlyMode && sig_type == SIGNAL_LONG)
          return position;
+
+      // RESEARCH LAB entry admission (research branch only). This is the UNIVERSAL gateway, so a
+      // single hook here covers EVERY entry path (immediate / confirmed-pending / file / sleeve).
+      // NULL master / RM_CURRENT / non-matching engine family => pass-through ACCEPT (inert).
+      // REJECT/WAIT => early return (ticket==0) tagged "RESEARCH_*" so callers treat it as a
+      // DECISION, not an execution error (kept out of the consecutive-error halt, like CLUSTER_GUARD);
+      // WAIT records a durable pending keyed by signal_id (swept in OnTick). UPGRADE/DOWNGRADE scales
+      // signal.riskPercent BEFORE it is captured below, so it composes once with every downstream
+      // gateway multiplier. The verdict + applied mult are stashed for the open-stamp after the fill.
+      SCandidateEntry research_v; CandEntryInit(research_v);
+      research_v.action = CAND_ACCEPT; research_v.candidate_id = "RM_CURRENT";
+      double research_applied_mult = 1.0;
+      if(m_researchLab != NULL)
+      {
+         string r_eng  = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
+         double r_risk = MathAbs(signal.entryPrice - signal.stopLoss);
+         int    r_dir  = (sig_type == SIGNAL_LONG) ? 1 : -1;
+         research_v = m_researchLab.EvaluateEntry(
+            ResearchSignalIdHash(signal.signal_id), r_eng, r_dir,
+            signal.entryPrice, r_risk, 0.0, false, 0.0, false, 0.0, false, TimeCurrent());
+         if(research_v.action == CAND_REJECT || research_v.action == CAND_WAIT_FOR_CONFIRM)
+         {
+            m_last_reject_reason = (research_v.action == CAND_REJECT) ? "RESEARCH_REJECT" : "RESEARCH_WAIT";
+            return position;   // ticket==0; a research DECISION, not an execution error
+         }
+         if((research_v.action == CAND_RISK_UPGRADE || research_v.action == CAND_RISK_DOWNGRADE) &&
+            signal.riskPercent > 0.0 && research_v.risk_mult > 0.0)
+         {
+            research_applied_mult = research_v.risk_mult;   // requested == applied here (downstream composite cap is a separate bound)
+            signal.riskPercent *= research_applied_mult;
+         }
+         // SUBTYPE-MATCHED ENTRY GEOMETRY (classify-before-geometry): a research classifier that reclassified
+         // a raw candidate into a distinct thesis (e.g. Crash CONTINUATION/RECOVERY) can scale the production
+         // stop/target distances so the position's geometry matches its thesis. Applied HERE, before risk
+         // sizing (requested_risk_pct is captured below), so lot sizing composes with the new stop. Keeps the
+         // entry direction/price; only the distances scale. Inert (identity-safe) when geometry_ok is false.
+         if(research_v.geometry_ok && signal.entryPrice > 0.0 &&
+            research_v.geom_sl_mult > 0.0 && research_v.geom_tp_mult > 0.0)
+         {
+            double g_stop_dist = MathAbs(signal.entryPrice - signal.stopLoss) * research_v.geom_sl_mult;
+            signal.stopLoss    = signal.entryPrice - (double)r_dir * g_stop_dist;   // short (r_dir<0): stop above entry
+            if(signal.takeProfit1 > 0.0)
+            {
+               double g_tp_dist = MathAbs(signal.takeProfit1 - signal.entryPrice) * research_v.geom_tp_mult;
+               signal.takeProfit1 = signal.entryPrice + (double)r_dir * g_tp_dist;  // short: target below entry
+            }
+         }
+      }
 
       double requested_risk_pct = signal.riskPercent;
       double adjusted_risk_pct = requested_risk_pct;
@@ -932,6 +987,21 @@ public:
          position.ticket = (exec_result.positionId > 0) ? exec_result.positionId
                                                         : exec_result.resultTicket;
          position.direction = sig_type;
+         // RESEARCH LAB: normalize this admitted entry into the lab-owned trade stamp (sole owner
+         // of open-position research metadata). At the universal gateway => covers every entry path.
+         // origin_price = signal.stopLoss (the engine places the protective stop at the structural
+         // invalidation level by design — a faithful proxy consumed by the paired exit model);
+         // entry_impulse unavailable in this first pass. Both are documented stamp-enrichment items.
+         if(m_researchLab != NULL)
+         {
+            string r_eng2 = (signal.plugin_name != "") ? signal.plugin_name : signal.comment;
+            // origin = the TRUE structural invalidation level when the engine supplies it
+            // (Engulfing signal-candle extreme, tighter than the SL); else the SL proxy.
+            double r_origin = (signal.struct_origin != 0.0) ? signal.struct_origin : signal.stopLoss;
+            m_researchLab.OnPositionOpened(
+               position.ticket, ResearchSignalIdHash(signal.signal_id), r_eng2, research_v,
+               research_applied_mult, 0.0, false, r_origin, (r_origin > 0.0));
+         }
          position.pattern_type = signal.patternType;
          position.major_engine = signal.major_engine;   // L4-3 (cherry-pick d61277c): propagate producing engine to executed position (attribution only; no decision reads it -> byte-identical)
          // Fix 4.7: seed lot_size from the ACTUAL filled volume, not the requested

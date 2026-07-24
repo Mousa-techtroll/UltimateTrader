@@ -1,0 +1,72 @@
+================ ATTRIBUTION PACK: PROTECT (full) (DESCRIPTIVE) ================
+portfolio net: control 34,605 -> variant 35,774  (delta +1,169)
+  DIRECT Engulfing net: 9,885 -> 8,898  (delta -987)
+  COLLATERAL (non-Engulfing) net: 24,719 -> 26,875  (delta +2,156)
+  Engulfing trades: control 126  variant 126
+CLIPPING / LOSS-AVOIDED (Engulfing changed trades vs control):
+  CLIPPED (variant cut R): n=17 sum_dR=-21.1 mean_dR=-1.242 control_MFE_R mean=2.34
+  HELPFUL (variant added R): n=32 sum_dR=+21.5 mean_dR=+0.671 control_MFE_R mean=0.72
+  NEUTRAL: n=77 sum_dR=-0.3 mean_dR=-0.004 control_MFE_R mean=1.48
+REMAINING MFE (give-back R, Engulfing): control 1.14 -> variant 0.80
+CONCENTRATION top-10 winners %% of gross profit: control 12.2% -> variant 12.6%
+PER-YEAR net (control -> variant):
+    2019:       239 ->       616  (+377)
+    2020:     1,182 ->     1,652  (+470)
+    2021:       341 ->       591  (+249)
+    2022:     3,896 ->     4,262  (+365)
+    2023:     4,049 ->     4,933  (+884)
+    2024:     4,129 ->     3,945  (-184)
+    2025:    20,982 ->    21,450  (+468)
+    2026:      -213 ->    -1,673  (-1,460)
+REGIME bands (Engulfing sumR / n, control -> variant):
+    TRENDING  :  +35.2R/117 ->  +33.8R/117
+    VOLATILE  :   -1.9R/9   ->   -0.4R/9  
+
+================ ATTRIBUTION PACK: PARTIAL (full) (DESCRIPTIVE) ================
+portfolio net: control 34,605 -> variant 35,121  (delta +516)
+  DIRECT Engulfing net: 9,885 -> 8,190  (delta -1,695)
+  COLLATERAL (non-Engulfing) net: 24,719 -> 26,931  (delta +2,212)
+  Engulfing trades: control 126  variant 126
+CLIPPING / LOSS-AVOIDED (Engulfing changed trades vs control):
+  CLIPPED (variant cut R): n=28 sum_dR=-27.6 mean_dR=-0.984 control_MFE_R mean=2.42
+  HELPFUL (variant added R): n=42 sum_dR=+27.0 mean_dR=+0.644 control_MFE_R mean=0.95
+  NEUTRAL: n=56 sum_dR=-0.1 mean_dR=-0.002 control_MFE_R mean=1.22
+REMAINING MFE (give-back R, Engulfing): control 1.14 -> variant 0.80
+CONCENTRATION top-10 winners %% of gross profit: control 12.2% -> variant 12.6%
+PER-YEAR net (control -> variant):
+    2019:       239 ->       696  (+457)
+    2020:     1,182 ->     1,562  (+380)
+    2021:       341 ->       593  (+251)
+    2022:     3,896 ->     4,387  (+491)
+    2023:     4,049 ->     4,844  (+794)
+    2024:     4,129 ->     4,623  (+495)
+    2025:    20,982 ->    20,489  (-492)
+    2026:      -213 ->    -2,072  (-1,859)
+REGIME bands (Engulfing sumR / n, control -> variant):
+    TRENDING  :  +35.2R/117 ->  +34.0R/117
+    VOLATILE  :   -1.9R/9   ->   -1.3R/9  
+
+================ ATTRIBUTION PACK: HYST (full) (DESCRIPTIVE) ================
+portfolio net: control 34,605 -> variant 35,504  (delta +899)
+  DIRECT Engulfing net: 9,885 -> 8,121  (delta -1,765)
+  COLLATERAL (non-Engulfing) net: 24,719 -> 27,384  (delta +2,664)
+  Engulfing trades: control 126  variant 126
+CLIPPING / LOSS-AVOIDED (Engulfing changed trades vs control):
+  CLIPPED (variant cut R): n=24 sum_dR=-27.1 mean_dR=-1.130 control_MFE_R mean=2.39
+  HELPFUL (variant added R): n=42 sum_dR=+27.8 mean_dR=+0.662 control_MFE_R mean=0.93
+  NEUTRAL: n=60 sum_dR=-0.6 mean_dR=-0.009 control_MFE_R mean=1.33
+REMAINING MFE (give-back R, Engulfing): control 1.14 -> variant 0.76
+CONCENTRATION top-10 winners %% of gross profit: control 12.2% -> variant 12.7%
+PER-YEAR net (control -> variant):
+    2019:       239 ->       697  (+458)
+    2020:     1,182 ->     1,581  (+399)
+    2021:       341 ->       584  (+243)
+    2022:     3,896 ->     4,503  (+607)
+    2023:     4,049 ->     5,006  (+957)
+    2024:     4,129 ->     4,895  (+766)
+    2025:    20,982 ->    20,714  (-267)
+    2026:      -213 ->    -2,476  (-2,263)
+REGIME bands (Engulfing sumR / n, control -> variant):
+    TRENDING  :  +35.2R/117 ->  +33.9R/117
+    VOLATILE  :   -1.9R/9   ->   -0.4R/9  
+

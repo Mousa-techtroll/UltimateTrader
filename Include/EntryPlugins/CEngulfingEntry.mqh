@@ -220,6 +220,7 @@ public:
                   signal.action = "BUY";
                   signal.entryPrice = entry;
                   signal.stopLoss = sl;
+                  signal.struct_origin = low[1];   // research: true structural extreme (signal-candle low), tighter than SL
                   signal.takeProfit1 = tp;
                   signal.patternType = PATTERN_ENGULFING;
                   signal.qualityScore = 92;
@@ -281,6 +282,7 @@ public:
                   signal.action = "SELL";
                   signal.entryPrice = entry;
                   signal.stopLoss = sl;
+                  signal.struct_origin = high[1];   // research: true structural extreme (signal-candle high), tighter than SL
                   signal.takeProfit1 = tp;
                   signal.patternType = PATTERN_ENGULFING;
                   signal.qualityScore = 42;

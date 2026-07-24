@@ -1,0 +1,601 @@
+Kind,Time,Engine,SignalId,Ticket,EntryModel,EntryVer,ExitModel,ExitVer,LabVer,Action,Conf,ReqRisk,ApplRisk,Wait,Subtype,Impulse,TrendAlign,PbDepth,RecConf,MomPhase,SeqExh,FollowThru,RoomR,Reason
+OPEN	2019.01.03 09:00	MACrossEntry	1041383338	2	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.07 02:00	PinBarEntry	1733409479	5	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.07 10:00	MACrossEntry	333189048	7	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.08 09:00	PinBarEntry	1329167209	9	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.22 03:00	PinBarEntry	1120970889	12	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.28 18:00	EngulfingEntry	423034742	14	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.29 09:00	PinBarEntry	1508575854	15	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.07 03:00	PinBarEntry	489217350	23	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.18 15:00	PinBarEntry	566158636	26	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.19 11:00	EngulfingEntry	102827559	27	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.19 15:00	MACrossEntry	1728141223	29	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.19 16:00	EngulfingEntry	1909373858	30	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.25 17:00	PinBarEntry	562179751	46	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.26 08:00	PinBarEntry	1369788164	47	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.04 10:00	ExpansionEngine	984580396	51	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.07 14:00	PinBarEntry	575033570	55	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.13 13:00	EngulfingEntry	1075494813	57	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.25 12:00	EngulfingEntry	2080149445	59	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.28 07:00	PinBarEntry	880396572	62	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.01 05:00	PinBarEntry	626875995	67	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.22 07:00	PinBarEntry	748242441	70	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.23 12:00	PinBarEntry	1803453776	72	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2019.05.14 03:00	PullbackContinuationEngine	982439591	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.585	3.000	0.000	0.000	1	0.200	0.000	0.992	abstain: pullback structure / recovery not available
+ENTRY	2019.05.20 06:00	PullbackContinuationEngine	785417698	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	2.000	0.170	1.000	2	0.254	0.000	0.204	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2019.05.20 06:00	PullbackContinuationEngine	785417698	76	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2019.05.21 03:00	PinBarEntry	1738789118	77	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.23 10:00	PinBarEntry	1150901954	83	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.30 19:00	EngulfingEntry	601281956	85	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.03 03:00	PinBarEntry	521386297	89	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.05 14:00	EngulfingEntry	1153922400	94	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.05 16:00	ExpansionEngine	1006103916	96	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.06 11:00	ExpansionEngine	2075473705	99	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.06 16:00	ExpansionEngine	407719561	100	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.10 11:00	PinBarEntry	1450208358	105	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.12 07:00	PinBarEntry	810367243	108	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.12 12:00	EngulfingEntry	1237910082	110	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.13 10:00	MACrossEntry	1854966224	112	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.13 18:00	PinBarEntry	199842234	113	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.19 23:00	EngulfingEntry	2146650996	122	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.20 05:00	EngulfingEntry	1647072359	127	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.25 22:00	PinBarEntry	298193214	131	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.04 18:00	EngulfingEntry	1454917613	133	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.10 20:00	PinBarEntry	1597666760	136	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.10 22:00	PinBarEntry	155288612	137	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.15 12:00	PinBarEntry	2117436741	144	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.15 23:00	PinBarEntry	2131998616	146	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.16 06:00	MACrossEntry	380944851	147	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.05 20:00	PinBarEntry	635958560	150	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.06 14:00	PinBarEntry	653826464	151	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.06 17:00	EngulfingEntry	481603917	152	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2019.08.07 15:00	PullbackContinuationEngine	1281171933	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.778	4.000	0.000	0.000	1	0.300	0.000	0.328	abstain: pullback structure / recovery not available
+OPEN	2019.08.13 10:00	EngulfingEntry	1119542290	162	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.14 03:00	PinBarEntry	1244524312	166	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.14 19:00	PinBarEntry	404455341	169	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.20 15:00	PinBarEntry	1795175502	172	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.29 08:00	MACrossEntry	2035015831	174	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.10 12:00	PinBarEntry	879431545	177	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.12 16:00	EngulfingEntry	1628426146	180	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.19 13:00	PinBarEntry	376121808	182	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.23 18:00	EngulfingEntry	610245163	184	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.30 11:00	PinBarEntry	882820372	186	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2019.10.08 04:00	PullbackContinuationEngine	135665763	0	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00		0	1	0.793	3.000	0.232	1.000	1	0.200	0.000	0.123	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2019.10.08 04:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2019.10.08 04:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.232	1.000	1	0.200	0.000	0.123	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 05:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	4	0.000	0.000	1.676	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 06:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.192	0.400	3	0.576	0.000	1.686	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 07:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.201	0.600	3	0.000	0.000	1.642	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 08:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.201	0.600	2	0.376	0.000	0.417	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 09:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.201	0.600	1	0.276	0.000	0.385	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 10:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.201	0.400	2	0.000	0.000	0.405	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2019.10.08 11:00	PullbackContinuationEngine	135665763	190	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.384	0.000	1	0.100	0.000	0.968	SHALLOW: too early — holding; account-safety owns the initial stop
+OPEN	2019.10.14 14:00	PinBarEntry	883425315	192	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.30 11:00	PinBarEntry	1658329485	194	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.31 12:00	EngulfingEntry	845633609	196	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.31 13:00	PinBarEntry	604913306	198	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.04 09:00	PinBarEntry	1282422624	204	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.05 18:00	ExpansionEngine	9107341	206	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.11 13:00	PinBarEntry	1512560662	208	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.12 03:00	PinBarEntry	761287673	210	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.28 11:00	PinBarEntry	482265637	214	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.28 12:00	PinBarEntry	1684459753	215	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.03 17:00	EngulfingEntry	1592084772	220	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.04 09:00	EngulfingEntry	1830082345	221	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.04 23:00	PinBarEntry	436231453	224	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2019.12.09 05:00	PullbackContinuationEngine	1959552566	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	2.000	0.160	1.000	2	0.100	0.000	0.100	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2019.12.09 05:00	PullbackContinuationEngine	1959552566	226	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2019.12.09 12:00	PinBarEntry	1660158760	227	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2019.12.10 06:00	PullbackContinuationEngine	1684612643	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	3.000	0.309	1.000	2	0.200	0.000	0.153	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2019.12.10 06:00	PullbackContinuationEngine	1684612643	228	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2019.12.10 08:00	PinBarEntry	709980053	229	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.16 21:00	PinBarEntry	1079511707	234	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.16 23:00	PinBarEntry	1668288406	235	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.19 20:00	EngulfingEntry	68126870	240	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.02 14:00	PinBarEntry	1312254176	242	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.02 23:00	PinBarEntry	2052996804	245	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.06 12:00	PinBarEntry	770196697	252	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.06 14:00	PinBarEntry	209908922	253	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.07 10:00	ExpansionEngine	1876139	256	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2020.01.09 08:00	PullbackContinuationEngine	2104972896	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	3.000	0.166	1.000	1	0.200	0.000	0.259	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2020.01.09 08:00	PullbackContinuationEngine	2104972896	260	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2020.01.22 23:00	PinBarEntry	66131253	263	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.30 06:00	EngulfingEntry	1560395076	266	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.18 19:00	EngulfingEntry	1243599872	268	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.19 04:00	PinBarEntry	501153769	269	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.20 18:00	EngulfingEntry	1582729062	274	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.25 03:00	ExpansionEngine	392046044	283	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.26 10:00	PinBarEntry	816598124	285	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 13:00	PinBarEntry	58949751	287	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 14:00	PinBarEntry	952814979	288	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 15:00	ExpansionEngine	1886058649	291	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.02 04:00	PinBarEntry	405386893	296	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.05 14:00	MACrossEntry	1922614514	298	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.05 19:00	PinBarEntry	1171439068	302	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.09 04:00	PinBarEntry	65837321	308	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.18 14:00	PinBarEntry	257036425	310	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.02 11:00	PinBarEntry	661203854	312	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.06 10:00	PinBarEntry	487010312	315	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.06 15:00	EngulfingEntry	827158396	318	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.09 14:00	EngulfingEntry	1096806429	325	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2020.04.13 11:00	PullbackContinuationEngine	169026407	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.000	4.000	0.000	0.000	2	0.784	0.000	0.397	abstain: pullback structure / recovery not available
+OPEN	2020.04.13 19:00	EngulfingEntry	1891930701	327	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.14 17:00	EngulfingEntry	1738908208	329	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.16 14:00	MACrossEntry	852513972	333	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.16 15:00	EngulfingEntry	1536285559	334	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.30 10:00	EngulfingEntry	1620276946	337	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.06 10:00	PinBarEntry	771493776	339	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.06 11:00	PinBarEntry	1325097830	340	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.07 20:00	EngulfingEntry	1898906518	343	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.25 10:00	PinBarEntry	2027280364	345	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.06.01 09:00	EngulfingEntry	1922923618	347	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.08.25 15:00	PinBarEntry	216434674	349	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.08.31 17:00	EngulfingEntry	599817619	353	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.03 06:00	PinBarEntry	851735234	357	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.07 04:00	PinBarEntry	1008104158	361	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.15 06:00	EngulfingEntry	183953965	363	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.16 11:00	EngulfingEntry	1868568049	366	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.28 08:00	PinBarEntry	976596422	369	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.28 11:00	PinBarEntry	497056129	371	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.01 11:00	MACrossEntry	594709791	377	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.01 19:00	PinBarEntry	195852574	380	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.05 13:00	EngulfingEntry	2098567260	384	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.05 15:00	PinBarEntry	931222534	385	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.05 16:00	EngulfingEntry	494515717	388	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.06 15:00	PinBarEntry	1014042454	394	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.12 18:00	PinBarEntry	1594392587	400	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.12 23:00	PinBarEntry	107548001	401	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.21 18:00	PinBarEntry	2140660502	404	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.28 05:00	PinBarEntry	1800676313	406	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.03 12:00	EngulfingEntry	931301583	409	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.04 08:00	PinBarEntry	1203139497	413	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.16 11:00	PinBarEntry	251993881	417	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.18 06:00	FailedBreakReversal	457690248	419	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.24 10:00	PinBarEntry	388397386	423	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.30 07:00	PinBarEntry	69648473	427	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.09 09:00	PinBarEntry	130267591	430	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.21 08:00	EngulfingEntry	1970264840	432	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.22 13:00	PinBarEntry	105381388	434	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.23 12:00	PinBarEntry	2084256747	436	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2020.12.24 05:00	PullbackContinuationEngine	569299350	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.000	3.000	0.843	0.000	2	0.653	0.000	0.354	reject: pullback leg orientation opposes intended direction
+OPEN	2020.12.29 11:00	PinBarEntry	1413865217	441	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 04:00	PinBarEntry	807635771	444	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 11:00	EngulfingEntry	1191411532	446	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 12:00	PinBarEntry	1452901313	447	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 04:00	PinBarEntry	549295182	454	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 14:00	PinBarEntry	23693294	458	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 17:00	EngulfingEntry	1013624405	461	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 23:00	PinBarEntry	1806798879	462	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.11 03:00	PinBarEntry	295643628	469	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.18 11:00	PinBarEntry	1815979471	474	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.18 14:00	PinBarEntry	1168947685	476	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.25 06:00	PinBarEntry	655201624	478	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.04 07:00	PinBarEntry	25075451	481	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.18 14:00	PinBarEntry	934945258	485	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.25 04:00	PinBarEntry	569946147	488	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.09 11:00	CrashBreakoutEntry	1943048387	492	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.11 08:00	CrashBreakoutEntry	1197367442	494	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.11 11:00	CrashBreakoutEntry	418115965	495	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.17 22:00	CrashBreakoutEntry	1812557976	502	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.18 05:00	CrashBreakoutEntry	1145438290	504	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 10:00	PinBarEntry	1334708142	510	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 13:00	PinBarEntry	2026756877	512	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2021.03.30 22:00	PullbackContinuationEngine	750312211	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	3.000	0.179	1.000	1	0.200	0.000	0.249	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2021.03.30 22:00	PullbackContinuationEngine	750312211	518	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2021.03.31 18:00	CrashBreakoutEntry	2078399569	520	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.31 19:00	CrashBreakoutEntry	1049636865	521	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.01 18:00	CrashBreakoutEntry	173095613	524	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.01 19:00	CrashBreakoutEntry	699773843	525	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.06 09:00	CrashBreakoutEntry	498943646	530	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 15:00	CrashBreakoutEntry	2062869008	534	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 17:00	CrashBreakoutEntry	872655635	536	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 18:00	CrashBreakoutEntry	1526303001	537	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2021.04.13 04:00	PullbackContinuationEngine	171490659	0	RM_PBC_C	1	RM_PBC_C	1	2	5	0.853	1.00		0	1	0.000	3.000	0.210	1.000	1	0.200	0.000	0.394	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2021.04.13 04:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	5	0.853	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2021.04.13 04:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.210	1.000	1	0.200	0.000	0.396	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.04.13 05:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.218	0.400	1	0.000	0.000	0.717	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.04.13 06:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.303	0.000	1	0.100	0.000	1.037	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.04.13 07:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.303	0.600	4	0.000	0.000	0.540	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.04.13 08:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.303	1.000	2	0.349	0.000	0.227	SHALLOW: partial into the first opposing structure
+EXIT	2021.04.13 09:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	3	0.401	0.000	0.332	SHALLOW: partial into the first opposing structure
+EXIT	2021.04.13 10:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.352	0.000	0.313	SHALLOW: partial into the first opposing structure
+EXIT	2021.04.13 11:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.000	0.000	4	0.000	0.000	0.700	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.04.13 12:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.223	0.400	4	0.495	0.000	0.781	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.04.13 13:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.281	0.600	3	0.000	0.000	0.553	SHALLOW: partial into the first opposing structure
+EXIT	2021.04.13 14:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.281	1.000	2	0.480	0.000	0.275	SHALLOW: partial into the first opposing structure
+EXIT	2021.04.13 15:00	PullbackContinuationEngine	171490659	544	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.284	0.400	4	0.000	0.000	0.659	SHALLOW: bounce fading (giveback from peak) — tightening
+OPEN	2021.04.15 10:00	CrashBreakoutEntry	141891124	551	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 17:00	CrashBreakoutEntry	1091518921	553	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 18:00	CrashBreakoutEntry	660678755	555	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 19:00	CrashBreakoutEntry	1470612519	556	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 09:00	CrashBreakoutEntry	1365990905	560	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 10:00	CrashBreakoutEntry	106250612	561	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 17:00	CrashBreakoutEntry	1683497188	569	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.26 09:00	PinBarEntry	1313230974	573	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.29 05:00	CrashBreakoutEntry	430739	576	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 06:00	PinBarEntry	382505461	580	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 17:00	CrashBreakoutEntry	101505709	582	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 18:00	CrashBreakoutEntry	35144409	583	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.06 18:00	CrashBreakoutEntry	1887618524	590	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.06 19:00	CrashBreakoutEntry	1518893038	591	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.10 08:00	PinBarEntry	1814023117	594	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.11 18:00	PinBarEntry	823402979	598	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 05:00	CrashBreakoutEntry	179582815	600	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 06:00	CrashBreakoutEntry	548495017	601	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 07:00	CrashBreakoutEntry	575183567	602	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 09:00	CrashBreakoutEntry	1703681335	603	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 10:00	CrashBreakoutEntry	740478206	604	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 05:00	CrashBreakoutEntry	729917113	617	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 09:00	CrashBreakoutEntry	1733941602	619	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 16:00	PinBarEntry	1462064070	621	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.19 07:00	MACrossEntry	1945124708	624	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.20 15:00	PinBarEntry	690634178	629	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.26 06:00	EngulfingEntry	1487749366	634	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.02 05:00	PinBarEntry	1279273193	636	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.03 14:00	PinBarEntry	1389911827	639	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.14 15:00	PinBarEntry	633622604	642	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.16 05:00	PinBarEntry	1400970183	646	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.15 08:00	PinBarEntry	1572523649	648	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.20 06:00	PinBarEntry	2041192081	651	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.22 11:00	PinBarEntry	2112283358	653	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.29 04:00	MACrossEntry	888364356	657	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.03 11:00	PinBarEntry	1161724059	661	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.04 07:00	PinBarEntry	1419226382	663	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.04 10:00	EngulfingEntry	254087488	664	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.05 03:00	PinBarEntry	1849933079	670	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.16 04:00	CrashBreakoutEntry	418177011	672	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.17 11:00	CrashBreakoutEntry	1667251734	676	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.17 12:00	CrashBreakoutEntry	1205983986	677	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.23 17:00	CrashBreakoutEntry	756902225	684	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.23 18:00	CrashBreakoutEntry	1454482039	686	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.25 10:00	PinBarEntry	836777355	691	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.26 09:00	PinBarEntry	1821550767	696	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.30 12:00	PinBarEntry	512037048	699	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.31 11:00	MACrossEntry	974688649	701	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2021.09.07 23:00	PullbackContinuationEngine	1806155527	0	RM_PBC_C	1	RM_PBC_C	1	2	5	0.797	1.00		0	1	0.865	2.000	0.160	1.000	2	0.100	0.000	0.125	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2021.09.07 23:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.797	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2021.09.07 23:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.160	1.000	2	0.100	0.000	0.125	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 01:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.160	0.400	4	0.000	0.000	0.136	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 02:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.160	0.400	4	0.100	0.000	0.273	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 03:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.160	0.400	2	0.501	0.000	0.254	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 04:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.160	0.400	1	0.300	0.000	0.513	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 05:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.162	0.600	4	0.000	0.000	0.496	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 06:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.216	0.400	1	0.000	0.000	0.708	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 07:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.216	0.600	4	0.000	0.000	0.485	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 08:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.216	0.400	2	0.000	0.000	0.501	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 09:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.216	1.000	4	0.000	0.000	0.307	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 10:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.216	1.000	2	0.455	0.000	0.255	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 11:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.220	0.400	4	0.000	0.000	0.563	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 12:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.220	0.600	2	0.000	0.000	0.548	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 13:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.220	0.600	3	0.100	0.000	0.267	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 14:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.220	0.400	2	0.000	0.000	0.347	SHALLOW: too early — holding; account-safety owns the initial stop
+OPEN	2021.09.08 15:00	PinBarEntry	507493623	704	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.09.08 15:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.220	0.600	4	0.000	0.000	0.264	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 16:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.242	0.600	4	0.450	0.000	0.237	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2021.09.08 17:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.000	0.000	1	0.200	0.000	0.855	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.08 18:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.182	0.600	2	0.797	0.167	0.850	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.08 19:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.400	4	0.000	0.167	0.187	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.08 20:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.600	2	0.000	0.167	0.836	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.08 21:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.400	4	0.000	0.167	0.960	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.08 22:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.600	2	0.000	0.167	0.881	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.08 23:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	1.000	4	0.100	0.167	0.620	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 01:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.400	2	0.000	0.000	0.656	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 02:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.400	4	0.100	0.000	0.727	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.09 03:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.400	3	0.200	0.000	0.218	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 04:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.600	1	0.000	0.000	0.701	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.09 05:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.600	2	0.288	0.000	0.627	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 06:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.400	1	0.000	0.000	0.695	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2021.09.09 07:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.600	1	0.000	0.000	0.575	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 08:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.600	2	0.514	0.000	0.560	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 09:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.600	3	0.418	0.000	0.514	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 10:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.285	0.400	4	0.000	0.000	0.578	SHALLOW: partial into the first opposing structure
+EXIT	2021.09.09 11:00	PullbackContinuationEngine	1806155527	703	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.285	0.000	1	0.100	0.000	0.969	SHALLOW: bounce fading (giveback from peak) — tightening
+OPEN	2021.09.09 15:00	CrashBreakoutEntry	1460941361	710	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2021.09.20 05:00	PullbackContinuationEngine	288966219	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	2.000	0.360	1.000	1	0.100	0.000	0.031	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2021.09.20 05:00	PullbackContinuationEngine	288966219	713	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2021.09.21 14:00	PinBarEntry	1017113269	716	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.11 14:00	PinBarEntry	947666802	718	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.13 18:00	CrashBreakoutEntry	192793323	720	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 09:00	CrashBreakoutEntry	1820806318	721	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 10:00	CrashBreakoutEntry	926685292	722	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 11:00	CrashBreakoutEntry	533322070	723	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 12:00	CrashBreakoutEntry	724537064	725	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 16:00	CrashBreakoutEntry	25904697	729	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 09:00	CrashBreakoutEntry	1675704408	735	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 10:00	CrashBreakoutEntry	1175438879	736	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 11:00	CrashBreakoutEntry	344569797	738	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 12:00	CrashBreakoutEntry	1004697052	740	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 13:00	CrashBreakoutEntry	488587086	741	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.20 16:00	CrashBreakoutEntry	1547252721	751	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 04:00	PinBarEntry	315335803	755	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 07:00	PinBarEntry	182925641	756	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 12:00	MACrossEntry	359554722	758	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.26 09:00	PinBarEntry	1891442081	761	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.02 13:00	PinBarEntry	1006371815	766	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 06:00	PinBarEntry	47895331	768	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 08:00	PinBarEntry	1803398730	769	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 18:00	CrashBreakoutEntry	1082240417	774	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.08 08:00	CrashBreakoutEntry	577989761	778	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.09 22:00	PinBarEntry	1763315862	781	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 16:00	CrashBreakoutEntry	1227041658	783	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 17:00	CrashBreakoutEntry	758696472	785	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 18:00	CrashBreakoutEntry	864231726	787	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 19:00	CrashBreakoutEntry	472262416	788	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 08:00	PinBarEntry	1921300780	793	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 10:00	ExpansionEngine	1564995060	794	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 14:00	PinBarEntry	2015110190	798	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.15 16:00	PinBarEntry	605228955	803	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.17 14:00	MACrossEntry	289402454	805	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.30 11:00	MACrossEntry	563906008	808	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.30 12:00	ExpansionEngine	1190306420	809	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.01 02:00	PinBarEntry	174694130	814	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 04:00	CrashBreakoutEntry	97339623	816	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 05:00	CrashBreakoutEntry	1580775127	817	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 09:00	CrashBreakoutEntry	1154569572	818	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 10:00	CrashBreakoutEntry	342691445	819	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 11:00	CrashBreakoutEntry	419882769	820	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.27 17:00	PinBarEntry	1770547642	833	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.28 13:00	CrashBreakoutEntry	364101375	835	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.12 20:00	PinBarEntry	1653585658	841	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.17 11:00	EngulfingEntry	1400694950	843	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.20 16:00	PinBarEntry	391905837	845	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.24 20:00	PinBarEntry	530596519	847	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.25 16:00	EngulfingEntry	235162469	848	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.01.27 04:00	PullbackContinuationEngine	1973237027	0	RM_PBC_C	1	RM_PBC_C	1	2	5	0.959	1.00		0	1	0.000	2.000	0.185	1.000	1	0.100	0.000	0.065	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2022.01.27 04:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.959	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2022.01.27 04:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.185	1.000	1	0.100	0.000	0.064	SHALLOW: partial into the first opposing structure
+EXIT	2022.01.27 05:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	4	0.000	0.000	0.535	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 06:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.106	0.600	3	0.000	0.000	0.494	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 07:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.106	0.600	3	0.422	0.000	0.480	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 08:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.200	0.000	0.209	SHALLOW: partial into the first opposing structure
+EXIT	2022.01.27 09:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	2	0.458	0.167	0.919	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 10:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.138	0.400	4	0.000	0.167	0.948	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 11:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.000	0.000	4	0.100	0.167	1.244	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.01.27 12:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.160	0.400	2	0.467	0.167	0.093	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.01.27 13:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.165	0.600	1	0.000	0.167	1.011	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 14:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	2	0.564	0.167	0.985	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.01.27 15:00	PullbackContinuationEngine	1973237027	855	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	3	0.225	0.000	0.617	SHALLOW: partial into the first opposing structure
+OPEN	2022.01.31 12:00	PinBarEntry	1971699818	861	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.02 07:00	PinBarEntry	134310676	863	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.02.08 05:00	PullbackContinuationEngine	1774836703	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.000	2.000	0.105	0.600	2	0.593	0.000	0.196	reject: shallow-failing dip — retrace too small to be a real discount
+ENTRY	2022.02.09 05:00	PullbackContinuationEngine	2030247743	0	RM_PBC_C	1	RM_PBC_C	1	2	5	0.929	1.00		0	1	0.000	2.000	0.191	1.000	2	0.292	0.000	0.134	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2022.02.09 05:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.929	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2022.02.09 05:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.191	1.000	2	0.292	0.000	0.151	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 06:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.486	0.000	0.082	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.09 07:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.082	0.400	4	0.000	0.000	0.185	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 08:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	2	0.000	0.000	0.165	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 09:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.142	0.600	3	0.333	0.000	0.156	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 10:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.182	0.400	3	0.000	0.000	0.252	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 11:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.182	0.400	2	0.393	0.000	0.346	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 12:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.182	0.600	4	0.000	0.000	0.184	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.09 13:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.182	0.400	2	0.000	0.000	0.289	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 14:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.185	0.600	3	0.000	0.000	0.287	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.02.09 15:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.185	0.600	3	0.100	0.000	0.134	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.09 16:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.000	0.000	4	0.000	0.000	0.337	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.02.09 17:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.466	0.600	1	0.000	0.000	0.019	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.09 18:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.466	0.400	2	0.000	0.000	0.042	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.09 19:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	3	0.550		1.00		1	0.000		0.000	0.000	3	0.000	0.000	0.939	SHALLOW: in profit — tightening early (fast bounce won't run far)
+EXIT	2022.02.09 20:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	3	0.550		1.00		1	0.000		0.000	0.000	2	0.422	0.167	2.009	SHALLOW: in profit — tightening early (fast bounce won't run far)
+EXIT	2022.02.09 21:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	3	0.550		1.00		1	0.000		0.098	0.600	3	0.641	0.333	1.943	SHALLOW: in profit — tightening early (fast bounce won't run far)
+EXIT	2022.02.09 22:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	3	0.550		1.00		1	0.000		0.135	0.400	4	0.000	0.333	2.106	SHALLOW: in profit — tightening early (fast bounce won't run far)
+EXIT	2022.02.09 23:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	4	0.585	0.333	0.319	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 01:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	4	0.652	0.333	0.334	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 02:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	3	0.568	0.333	0.406	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 03:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	0	0.000	0.000	0.406	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 04:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	1.000	4	0.000	0.000	0.247	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 05:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.600	2	0.440	0.000	0.196	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 06:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	3	0.000	0.000	0.216	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 07:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	3	0.489	0.000	0.220	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 08:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.600	3	0.000	0.000	0.171	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 09:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.229	0.400	4	0.000	0.000	0.194	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 10:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.000	0.000	0.135	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 11:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.307	0.000	1	0.000	0.000	0.475	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 12:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.307	0.600	4	0.000	0.000	0.418	SHALLOW: partial into the first opposing structure
+OPEN	2022.02.10 13:00	PinBarEntry	2119003903	871	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.02.10 13:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.307	0.600	4	0.100	0.000	0.387	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 14:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.307	0.000	3	0.000	0.000	0.478	SHALLOW: partial into the first opposing structure
+EXIT	2022.02.10 15:00	PullbackContinuationEngine	2030247743	865	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.307	0.000	2	0.206	0.000	0.554	SHALLOW: partial into the first opposing structure
+OPEN	2022.02.14 11:00	PinBarEntry	1828480155	874	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 09:00	PinBarEntry	697727711	878	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 15:00	ExpansionEngine	1044717884	883	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 18:00	PinBarEntry	1105795602	887	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.21 11:00	EngulfingEntry	36284314	890	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.23 11:00	PinBarEntry	1773739487	894	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.23 19:00	PinBarEntry	876889867	896	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.24 06:00	EngulfingEntry	654526054	901	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.24 10:00	PinBarEntry	1141819828	903	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.03 21:00	PinBarEntry	259636027	911	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.03 23:00	PinBarEntry	1475711212	913	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.16 05:00	PinBarEntry	1516187602	920	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.21 22:00	PinBarEntry	771115895	924	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.23 03:00	PinBarEntry	500804463	926	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.24 11:00	EngulfingEntry	1217200409	929	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.28 06:00	MACrossEntry	335717642	934	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.28 10:00	PinBarEntry	1023567203	936	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.29 14:00	PinBarEntry	633614129	939	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.30 12:00	PinBarEntry	1275505904	943	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.11 16:00	EngulfingEntry	1995338929	945	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.12 16:00	PinBarEntry	1512811767	947	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.04.20 04:00	PullbackContinuationEngine	2053200663	0	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00		0	1	0.579	2.000	0.144	1.000	1	0.100	0.000	0.318	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2022.04.20 04:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2022.04.20 04:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.144	1.000	1	0.100	0.000	0.318	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.04.20 05:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	2	0.464	0.000	0.456	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.04.20 06:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.091	0.400	1	0.000	0.000	0.588	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.04.20 07:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.000	0.000	0.319	SHALLOW: partial into the first opposing structure
+EXIT	2022.04.20 08:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	2	0.451	0.000	0.338	SHALLOW: partial into the first opposing structure
+OPEN	2022.04.20 09:00	PinBarEntry	662104730	952	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.04.20 09:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.108	0.600	3	0.449	0.000	0.231	SHALLOW: partial into the first opposing structure
+EXIT	2022.04.20 10:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	2	0.614	0.000	0.152	SHALLOW: partial into the first opposing structure
+EXIT	2022.04.20 11:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.095	0.400	4	0.000	0.000	0.012	SHALLOW: partial into the first opposing structure
+EXIT	2022.04.20 12:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.133	0.400	1	0.100	0.000	0.305	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 13:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.173	0.400	2	0.326	0.000	0.966	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 14:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.244	0.000	1	0.300	0.000	1.396	SHALLOW: bounce fading (giveback from peak) — tightening
+OPEN	2022.04.20 15:00	PinBarEntry	163156289	956	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.04.20 15:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.200	4	0.000	0.000	1.301	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 16:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.600	4	0.100	0.000	1.074	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 17:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.600	4	0.531	0.000	0.993	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 18:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.000	3	0.000	0.000	1.326	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 19:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.600	4	0.000	0.000	1.173	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 20:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.000	4	0.000	0.000	0.955	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 21:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.200	2	0.000	0.000	0.831	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.04.20 22:00	PullbackContinuationEngine	2053200663	949	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.267	0.200	3	0.563	0.000	0.822	SHALLOW: bounce fading (giveback from peak) — tightening
+OPEN	2022.05.02 03:00	PinBarEntry	1058781488	961	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.02 05:00	PinBarEntry	1298257623	964	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.05 13:00	PinBarEntry	200839931	969	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.16 05:00	PinBarEntry	1983860900	972	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.16 13:00	PinBarEntry	2016619162	976	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.18 10:00	PinBarEntry	952558931	978	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.19 08:00	PinBarEntry	877833529	980	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.31 05:00	FailedBreakReversal	10514244	983	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.06 03:00	PinBarEntry	2119080525	988	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.06 04:00	PinBarEntry	74328397	989	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.07 05:00	FailedBreakReversal	235509992	992	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.07 11:00	PinBarEntry	601504504	994	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.04 06:00	PinBarEntry	52930626	996	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.06 12:00	PinBarEntry	1184753587	1000	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.12 03:00	PinBarEntry	215547777	1004	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 11:00	CrashBreakoutEntry	1988730093	1009	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 12:00	CrashBreakoutEntry	908346909	1010	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 13:00	CrashBreakoutEntry	1042590293	1012	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 16:00	CrashBreakoutEntry	203543377	1018	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 18:00	CrashBreakoutEntry	283532574	1022	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 19:00	CrashBreakoutEntry	1426024552	1023	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 05:00	CrashBreakoutEntry	586213833	1026	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 11:00	CrashBreakoutEntry	1696885885	1027	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 12:00	CrashBreakoutEntry	661855491	1029	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 17:00	CrashBreakoutEntry	242531593	1034	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 18:00	CrashBreakoutEntry	261170099	1035	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 12:00	CrashBreakoutEntry	1490141791	1038	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 13:00	CrashBreakoutEntry	2014823280	1039	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 14:00	CrashBreakoutEntry	1920477868	1041	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 15:00	CrashBreakoutEntry	309737540	1043	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 16:00	CrashBreakoutEntry	638472048	1046	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.08 18:00	CrashBreakoutEntry	893104443	1051	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.09 17:00	CrashBreakoutEntry	1463412061	1054	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.11 07:00	PinBarEntry	1391770732	1057	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.18 05:00	PinBarEntry	490674490	1059	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 11:00	CrashBreakoutEntry	725749973	1062	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 12:00	CrashBreakoutEntry	953632267	1063	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 13:00	CrashBreakoutEntry	1136571961	1064	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.08.30 23:00	PullbackContinuationEngine	1269945828	0	RM_PBC_C	1	RM_PBC_C	1	2	5	0.844	1.00		0	2	0.858	1.000	0.637	1.000	3	0.000	0.000	0.211	reclassify DEEP: high depth + slow recovery — wider runner exit
+OPEN	2022.08.30 23:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.844	1.00	1.00		2									reclassify DEEP: high depth + slow recovery — wider runner exit
+EXIT	2022.08.30 23:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	1.000	3	0.000	0.000	0.213	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 01:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.400	1	0.000	0.000	0.340	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 02:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	1.000	1	0.000	0.000	0.184	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 03:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.400	2	0.000	0.000	0.238	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 04:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.600	3	0.000	0.000	0.193	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 05:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.600	3	0.576	0.000	0.285	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 06:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.400	3	0.000	0.000	0.302	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 07:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.400	1	0.100	0.000	0.403	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 08:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.400	2	0.275	0.000	0.457	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 09:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	0.600	1	0.000	0.000	0.430	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 10:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.637	1.000	1	0.100	0.000	0.176	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 11:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		2	0.000		0.000	0.000	2	0.444	0.000	0.114	DEEP: below arm threshold — holding; account-safety owns the initial stop
+EXIT	2022.08.31 12:00	PullbackContinuationEngine	1269945828	1075	RM_PBC_C	1	RM_PBC_C	1	2	4	0.600		1.60		2	0.000		0.000	0.000	1	0.300	0.000	1.545	DEEP: wide runner — trail-scale at factor>1; invalidate only on parent break
+OPEN	2022.09.08 13:00	CrashBreakoutEntry	885546539	1078	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 14:00	CrashBreakoutEntry	2025282687	1080	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 15:00	CrashBreakoutEntry	1666660318	1081	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 14:00	CrashBreakoutEntry	62576737	1087	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 15:00	CrashBreakoutEntry	722906201	1088	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 16:00	CrashBreakoutEntry	1911606005	1090	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 19:00	CrashBreakoutEntry	1731376631	1093	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.09.15 04:00	PullbackContinuationEngine	1869627122	0	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00		0	1	0.679	2.000	0.121	1.000	2	0.100	0.000	0.239	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2022.09.15 04:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2022.09.15 04:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.121	1.000	2	0.100	0.000	0.254	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.09.15 05:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.121	0.400	2	0.000	0.000	0.307	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.09.15 06:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.000	0.000	0.291	SHALLOW: partial into the first opposing structure
+EXIT	2022.09.15 07:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	2	0.392	0.000	0.358	SHALLOW: partial into the first opposing structure
+EXIT	2022.09.15 08:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	2	0.700		1.00		1	0.000		0.000	0.000	1	0.200	0.167	0.949	SHALLOW: banking partial into a fast bounce (>= BANK_R)
+EXIT	2022.09.15 09:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	3	0.550		1.00		1	0.000		0.000	0.000	4	0.000	0.167	1.133	SHALLOW: in profit — tightening early (fast bounce won't run far)
+EXIT	2022.09.15 10:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	2	0.700		1.00		1	0.000		0.080	0.600	3	0.000	0.167	1.008	SHALLOW: banking partial into a fast bounce (>= BANK_R)
+EXIT	2022.09.15 11:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.000	0.000	4	0.000	0.167	1.251	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.09.15 12:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	2	0.700		1.00		1	0.000		0.181	0.600	1	0.000	0.167	0.929	SHALLOW: banking partial into a fast bounce (>= BANK_R)
+EXIT	2022.09.15 13:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.187	0.400	4	0.000	0.167	1.220	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.09.15 14:00	PullbackContinuationEngine	1869627122	1099	RM_PBC_C	1	RM_PBC_C	1	2	2	0.700		1.00		1	0.000		0.237	0.600	4	0.000	0.000	0.109	SHALLOW: banking partial into a fast bounce (>= BANK_R)
+OPEN	2022.09.19 09:00	PinBarEntry	1349840899	1106	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.22 09:00	PinBarEntry	237564284	1110	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.27 15:00	PinBarEntry	1622536415	1113	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.03 18:00	CrashBreakoutEntry	719252698	1115	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.03 19:00	CrashBreakoutEntry	1268568086	1116	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 09:00	CrashBreakoutEntry	656096894	1119	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 10:00	CrashBreakoutEntry	366671253	1120	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 11:00	CrashBreakoutEntry	1451241595	1122	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 12:00	CrashBreakoutEntry	1307500741	1123	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 13:00	CrashBreakoutEntry	1487192031	1124	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.10 09:00	PinBarEntry	334577022	1133	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.11 12:00	PinBarEntry	1731886030	1137	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.12 12:00	PinBarEntry	1987009455	1140	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.12 15:00	PinBarEntry	1910385605	1141	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.17 16:00	CrashBreakoutEntry	120547167	1145	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.17 17:00	CrashBreakoutEntry	217672960	1146	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.19 07:00	PinBarEntry	1288234631	1152	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.10.19 19:00	PullbackContinuationEngine	215506020	0	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00		0	1	0.000	1.000	0.241	1.000	1	0.000	0.000	0.015	reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+OPEN	2022.10.19 19:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	1.000	1.00	1.00		1									reclassify SHALLOW: low depth + fast recovery — bank sooner / tighter exit
+EXIT	2022.10.19 19:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.241	1.000	1	0.000	0.000	0.016	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.10.19 20:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	2	0.444	0.000	2.418	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.10.19 21:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	3	0.524	0.167	2.324	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.10.19 22:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	2	0.769	0.333	2.308	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.10.19 23:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	4	0.000	0.333	2.413	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.10.20 01:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.055	0.600	2	0.000	0.333	0.100	SHALLOW: partial into the first opposing structure
+EXIT	2022.10.20 02:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.080	0.600	3	0.100	0.333	0.029	SHALLOW: partial into the first opposing structure
+EXIT	2022.10.20 03:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	5	0.300		1.00		1	0.000		0.000	0.000	3	0.200	0.333	0.586	SHALLOW: too early — holding; account-safety owns the initial stop
+EXIT	2022.10.20 04:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	3	0.000	0.000	0.061	SHALLOW: partial into the first opposing structure
+EXIT	2022.10.20 05:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	1	0.000	0.000	0.385	SHALLOW: partial into the first opposing structure
+EXIT	2022.10.20 06:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.000	0.000	4	0.000	0.000	0.541	SHALLOW: partial into the first opposing structure
+EXIT	2022.10.20 07:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	2	0.650		1.00		1	0.000		0.131	0.600	3	0.000	0.000	0.510	SHALLOW: partial into the first opposing structure
+EXIT	2022.10.20 08:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.297	0.000	4	0.000	0.000	0.427	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.10.20 09:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.357	0.200	4	0.000	0.000	0.803	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.10.20 10:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.357	0.600	4	0.100	0.000	0.601	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.10.20 11:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.357	0.000	3	0.000	0.000	0.837	SHALLOW: bounce fading (giveback from peak) — tightening
+EXIT	2022.10.20 12:00	PullbackContinuationEngine	215506020	1156	RM_PBC_C	1	RM_PBC_C	1	2	3	0.600		1.00		1	0.000		0.357	0.600	4	0.000	0.000	0.551	SHALLOW: bounce fading (giveback from peak) — tightening
+OPEN	2022.10.25 12:00	PinBarEntry	827767006	1162	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 11:00	CrashBreakoutEntry	344196349	1165	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 12:00	CrashBreakoutEntry	835387906	1166	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 13:00	CrashBreakoutEntry	1303146108	1167	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 14:00	CrashBreakoutEntry	601011434	1170	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 10:00	CrashBreakoutEntry	77178282	1184	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 12:00	CrashBreakoutEntry	570970907	1186	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 13:00	CrashBreakoutEntry	663719983	1187	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 14:00	CrashBreakoutEntry	1336930995	1189	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 15:00	CrashBreakoutEntry	1467282871	1191	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 05:00	PinBarEntry	912511997	1197	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.11.03 10:00	PullbackContinuationEngine	749231600	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.000	2.000	1.257	1.000	1	0.100	0.000	0.226	reject: parent leg breached (depth>=1) — continuation invalidated
+OPEN	2022.11.03 11:00	ExpansionEngine	1917532296	1200	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.07 12:00	CrashBreakoutEntry	526532657	1204	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.07 13:00	CrashBreakoutEntry	759110003	1205	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 18:00	CrashBreakoutEntry	1588018651	1210	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 19:00	CrashBreakoutEntry	457107383	1211	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 21:00	CrashBreakoutEntry	281401920	1212	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 22:00	CrashBreakoutEntry	592520580	1214	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.10 18:00	CrashBreakoutEntry	715585583	1222	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.14 17:00	PinBarEntry	1578836197	1225	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.17 11:00	PinBarEntry	2028661547	1229	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.22 09:00	PinBarEntry	1280656133	1234	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.24 14:00	CrashBreakoutEntry	637911607	1236	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.29 11:00	CrashBreakoutEntry	401068695	1240	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 11:00	CrashBreakoutEntry	1367282318	1244	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 12:00	CrashBreakoutEntry	203527664	1245	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 14:00	CrashBreakoutEntry	1787114609	1247	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.12.01 08:00	PullbackContinuationEngine	1266198975	0	RM_PBC_C	1	RM_PBC_C	1	2	1	0.000	1.00		0	0	0.116	3.000	0.000	0.000	2	0.600	0.000	1.474	abstain: pullback structure / recovery not available
+OPEN	2022.12.01 16:00	CrashBreakoutEntry	1480854074	1255	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 17:00	CrashBreakoutEntry	937299428	1257	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 18:00	CrashBreakoutEntry	1755191954	1259	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 19:00	CrashBreakoutEntry	2139427024	1260	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+ENTRY	2022.12.01 23:00	PullbackContinuationEngine	804340178	0	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00		0	0	0.000	2.000	0.134	1.000	2	0.573	0.000	0.038	accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2022.12.01 23:00	PullbackContinuationEngine	804340178	1261	RM_PBC_C	1	RM_PBC_C	1	2	0	1.000	1.00	1.00		0									accept: recovery confirmed; subtype ambiguous — nominal; no subtype exit
+OPEN	2022.12.05 03:00	PinBarEntry	965334944	1273	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.06 07:00	PinBarEntry	930292344	1277	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.08 08:00	PinBarEntry	354706302	1280	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.08 09:00	PinBarEntry	251756700	1281	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 16:00	CrashBreakoutEntry	2080542532	1290	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 17:00	CrashBreakoutEntry	370330550	1292	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 18:00	CrashBreakoutEntry	439625204	1295	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 19:00	CrashBreakoutEntry	1491455906	1296	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.15 06:00	PinBarEntry	1053305047	1303	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 12:00	CrashBreakoutEntry	458483880	1308	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 18:00	CrashBreakoutEntry	420373935	1311	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 19:00	CrashBreakoutEntry	1045539109	1312	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 12:00	CrashBreakoutEntry	1605378219	1319	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 14:00	CrashBreakoutEntry	1787232448	1320	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 18:00	CrashBreakoutEntry	896941351	1325	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 19:00	CrashBreakoutEntry	1077379036	1327	RM_PBC_C	1	RM_PBC_C	1	2	0	0.000	1.00	1.00		0									

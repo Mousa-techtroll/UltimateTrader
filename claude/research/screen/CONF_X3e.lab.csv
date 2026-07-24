@@ -1,0 +1,600 @@
+Kind,Time,Engine,SignalId,Ticket,EntryModel,EntryVer,ExitModel,ExitVer,LabVer,Action,Conf,ReqRisk,ApplRisk,Wait,Subtype,Impulse,TrendAlign,PbDepth,RecConf,MomPhase,SeqExh,FollowThru,RoomR,Reason
+OPEN	2023.01.03 05:00	CrashBreakoutEntry	1805128719	2	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.03 09:00	CrashBreakoutEntry	915890591	3	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.03 10:00	CrashBreakoutEntry	317209690	6	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.03 13:00	ExpansionEngine	626637039	9	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.03 20:00	PinBarEntry	1689389225	12	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.04 09:00	CrashBreakoutEntry	1239666448	14	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.04 10:00	CrashBreakoutEntry	43433039	17	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.04 11:00	CrashBreakoutEntry	51792529	20	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.04 12:00	CrashBreakoutEntry	1302211003	21	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.04 14:00	CrashBreakoutEntry	1005224759	22	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.05 04:00	LiquidityEngine	737773487	32	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.09 05:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.09 05:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	4	0.656		1.10		0	0.000		0.000	0.000	2	0.206	0.167	1.795	mid-conf(0.66): modest trail (x1.10) (proxy)
+EXIT	2023.01.09 06:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	3	0.588		0.60		0	0.000		0.000	0.000	4	0.000	0.167	1.961	mid-conf(0.59): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.01.09 07:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	3	0.579		0.60		0	0.000		0.048	0.400	4	0.515	0.167	1.985	mid-conf(0.58): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.01.09 08:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	4	0.616		1.10		0	0.000		0.088	0.600	3	0.000	0.167	1.894	mid-conf(0.62): modest trail (x1.10) (proxy)
+OPEN	2023.01.09 09:00	PinBarEntry	1058129244	38	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.09 09:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	4	0.601		1.10		0	0.000		0.000	0.000	2	0.575	0.167	1.891	mid-conf(0.60): modest trail (x1.10) (proxy)
+EXIT	2023.01.09 10:00	EngulfingEntry	1760721861	37	RM_CURRENT	0	RM_ENG_C	1	2	1	0.374		1.00		0	0.000		0.000	0.000	4	0.000	0.167	0.428	low-conf(0.37): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.01.10 12:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.10 12:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	4	0.779		1.60		0	0.000		0.268	1.000	2	0.303	0.000	0.683	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.01.10 13:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	3	0.803		0.70		0	0.000		0.268	0.400	4	0.000	0.000	0.930	high-conf(0.80): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2023.01.10 14:00	MACrossEntry	68246860	42	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.10 14:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	4	0.802		1.60		0	0.000		0.268	0.600	3	0.000	0.000	0.924	high-conf(0.80): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.01.10 15:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	3	0.791		0.70		0	0.000		0.268	0.000	4	0.000	0.000	0.807	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.01.10 16:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	4	0.769		1.60		0	0.000		0.268	0.600	2	0.000	0.000	0.571	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.01.10 17:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	3	0.531		0.60		0	0.000		0.268	1.000	4	0.100	0.000	0.478	mid-conf(0.53): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.01.10 18:00	EngulfingEntry	625521096	41	RM_CURRENT	0	RM_ENG_C	1	2	1	0.206		1.00		0	0.000		0.268	0.400	2	0.000	0.000	0.846	low-conf(0.21): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.01.10 22:00	PinBarEntry	1804861750	45	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.17 17:00	EngulfingEntry	2075702231	51	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.17 17:00	EngulfingEntry	2075702231	51	RM_CURRENT	0	RM_ENG_C	1	2	1	0.252		1.00		0	0.000		0.425	0.600	2	0.528	0.167	0.783	low-conf(0.25): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.01.18 14:00	PinBarEntry	1983993171	53	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.19 11:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.19 11:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	4	0.899		1.60		0	0.000		1.292	0.000	2	0.380	0.000	1.939	high-conf(0.90): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.01.19 12:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	3	0.929		0.70		0	0.000		0.849	0.400	4	0.000	0.000	2.256	high-conf(0.93): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.01.19 13:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	3	0.941		0.70		0	0.000		0.849	0.400	2	0.415	0.000	2.377	high-conf(0.94): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.01.19 14:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	3	0.834		0.70		0	0.000		0.849	0.000	3	0.381	0.000	1.253	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.01.19 15:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	3	0.835		0.70		0	0.000		1.292	0.600	2	0.785	0.000	1.263	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.01.19 16:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	3	0.764		0.70		0	0.000		0.849	1.000	4	0.000	0.000	0.520	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2023.01.19 17:00	EngulfingEntry	1371449554	59	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.19 17:00	EngulfingEntry	1371449554	59	RM_CURRENT	0	RM_ENG_C	1	2	4	0.614		1.10		0	0.000		0.849	1.000	2	0.185	0.000	0.747	mid-conf(0.61): modest trail (x1.10) (proxy)
+EXIT	2023.01.19 17:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	4	0.660		1.10		0	0.000		0.849	1.000	2	0.185	0.000	1.230	mid-conf(0.66): modest trail (x1.10) (proxy)
+EXIT	2023.01.19 18:00	EngulfingEntry	1371449554	59	RM_CURRENT	0	RM_ENG_C	1	2	1	0.316		1.00		0	0.000		0.849	0.600	1	0.646	0.167	0.697	low-conf(0.32): origin break / momentum deterioration -> close early (proxy)
+EXIT	2023.01.19 18:00	EngulfingEntry	1690999433	57	RM_CURRENT	0	RM_ENG_C	1	2	1	0.346		1.00		0	0.000		0.849	0.600	1	0.646	0.167	1.147	low-conf(0.35): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.01.23 12:00	EngulfingEntry	1045836975	63	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.01.23 12:00	EngulfingEntry	1045836975	63	RM_CURRENT	0	RM_ENG_C	1	2	1	0.233		1.00		0	0.000		0.510	0.200	4	0.304	0.000	1.249	low-conf(0.23): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.01.24 04:00	MACrossEntry	1290367087	65	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.01.25 12:00	PinBarEntry	539889105	67	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.02.07 13:00	PinBarEntry	1466854590	70	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.02.09 06:00	PinBarEntry	397616428	73	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.02.27 09:00	PinBarEntry	539355316	75	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.02.27 11:00	PinBarEntry	736114510	77	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.01 11:00	PinBarEntry	705493177	79	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.07 21:00	ExpansionEngine	2070468309	81	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.13 16:00	EngulfingEntry	757104675	83	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.03.13 16:00	EngulfingEntry	757104675	83	RM_CURRENT	0	RM_ENG_C	1	2	4	0.575		1.10		0	0.000		0.000	0.000	1	0.100	0.000	0.034	mid-conf(0.58): modest trail (x1.10) (proxy)
+EXIT	2023.03.13 17:00	EngulfingEntry	757104675	83	RM_CURRENT	0	RM_ENG_C	1	2	1	0.217		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.172	low-conf(0.22): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.03.14 11:00	EngulfingEntry	1591761060	85	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.03.14 11:00	EngulfingEntry	1591761060	85	RM_CURRENT	0	RM_ENG_C	1	2	4	0.734		1.60		0	0.000		0.151	0.600	2	0.317	0.000	0.204	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2023.03.15 19:00	PinBarEntry	1838715137	87	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.16 15:00	PinBarEntry	1840461051	90	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.20 11:00	ExpansionEngine	964935441	92	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.28 18:00	ExpansionEngine	936208676	94	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.30 06:00	PinBarEntry	629027546	96	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.03.30 19:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.03.30 19:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	4	0.719		1.10		0	0.000		0.568	1.000	2	0.348	0.000	0.045	mid-conf(0.72): modest trail (x1.10) (proxy)
+EXIT	2023.03.30 20:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	4	0.834		1.60		0	0.000		0.000	0.000	1	0.200	0.000	1.738	high-conf(0.83): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.03.30 21:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	3	0.462		0.60		0	0.000		0.215	0.400	4	0.000	0.000	2.023	mid-conf(0.46): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.03.30 22:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	4	0.512		1.10		0	0.000		0.215	0.600	3	0.000	0.000	1.890	mid-conf(0.51): modest trail (x1.10) (proxy)
+EXIT	2023.03.30 23:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	3	0.400		0.60		0	0.000		0.215	0.400	4	0.000	0.000	0.264	mid-conf(0.40): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.03.31 01:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	1	0.367		1.00		0	0.000		0.215	0.400	4	0.100	0.000	0.353	low-conf(0.37): origin break / momentum deterioration -> close early (proxy)
+EXIT	2023.03.31 02:00	EngulfingEntry	1660306492	98	RM_CURRENT	0	RM_ENG_C	1	2	1	0.326		1.00		0	0.000		0.215	0.400	4	0.200	0.000	0.461	low-conf(0.33): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.04.03 19:00	EngulfingEntry	1420127014	101	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.04.03 19:00	EngulfingEntry	1420127014	101	RM_CURRENT	0	RM_ENG_C	1	2	4	0.539		1.10		0	0.000		0.000	0.000	2	0.507	0.167	1.200	mid-conf(0.54): modest trail (x1.10) (proxy)
+EXIT	2023.04.03 20:00	EngulfingEntry	1420127014	101	RM_CURRENT	0	RM_ENG_C	1	2	3	0.509		0.60		0	0.000		0.000	0.000	4	0.000	0.167	1.275	mid-conf(0.51): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.04.03 21:00	EngulfingEntry	1420127014	101	RM_CURRENT	0	RM_ENG_C	1	2	3	0.448		0.60		0	0.000		0.211	0.400	4	0.100	0.167	1.432	mid-conf(0.45): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.04.03 22:00	EngulfingEntry	1420127014	101	RM_CURRENT	0	RM_ENG_C	1	2	1	0.369		1.00		0	0.000		0.211	0.400	4	0.200	0.167	1.636	low-conf(0.37): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.04.04 11:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.04.04 11:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	4	0.850		1.60		0	0.000		0.331	0.600	2	0.497	0.000	1.422	high-conf(0.85): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.04 12:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	3	0.874		0.70		0	0.000		0.331	0.400	4	0.000	0.000	1.675	high-conf(0.87): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.04.04 13:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	4	0.836		1.60		0	0.000		0.331	0.600	3	0.000	0.000	1.282	high-conf(0.84): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.04 14:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	3	0.850		0.70		0	0.000		0.331	0.400	4	0.000	0.000	1.421	high-conf(0.85): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.04.04 15:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	3	0.853		0.70		0	0.000		0.331	0.400	4	0.481	0.000	1.455	high-conf(0.85): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.04.04 16:00	EngulfingEntry	1872214046	103	RM_CURRENT	0	RM_ENG_C	1	2	4	0.826		1.60		0	0.000		0.331	0.600	3	0.000	0.000	1.169	high-conf(0.83): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2023.04.05 10:00	PullbackContinuationEngine	1224847818	106	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.06 12:00	EngulfingEntry	1746455126	109	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.04.06 12:00	EngulfingEntry	1746455126	109	RM_CURRENT	0	RM_ENG_C	1	2	4	0.942		1.60		0	0.000		0.436	0.600	2	0.417	0.000	2.387	high-conf(0.94): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.06 13:00	EngulfingEntry	1746455126	109	RM_CURRENT	0	RM_ENG_C	1	2	4	0.907		1.60		0	0.000		0.436	0.600	3	0.296	0.000	2.023	high-conf(0.91): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.06 14:00	EngulfingEntry	1746455126	109	RM_CURRENT	0	RM_ENG_C	1	2	4	0.897		1.60		0	0.000		0.436	0.600	2	0.681	0.000	1.914	high-conf(0.90): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.06 15:00	EngulfingEntry	1746455126	109	RM_CURRENT	0	RM_ENG_C	1	2	3	0.923		0.70		0	0.000		0.436	0.400	4	0.000	0.000	2.190	high-conf(0.92): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2023.04.11 04:00	PinBarEntry	1326834737	111	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.13 03:00	PinBarEntry	1602717878	114	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.13 06:00	MACrossEntry	2006691230	115	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.13 08:00	PinBarEntry	173448879	116	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.13 11:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.04.13 11:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	4	0.750		1.60		0	0.000		0.661	1.000	2	0.212	0.000	0.378	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.13 12:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	4	0.767		1.60		0	0.000		0.000	0.000	3	0.495	0.000	0.550	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.13 13:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	3	0.767		0.70		0	0.000		0.118	0.400	0	0.000	0.000	0.550	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.04.13 14:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	4	0.765		1.60		0	0.000		0.143	0.600	3	0.000	0.000	0.536	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.13 15:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	4	0.720		1.60		0	0.000		0.143	0.600	2	0.100	0.000	0.063	high-conf(0.72): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.13 16:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	4	0.745		1.60		0	0.000		0.000	0.000	1	0.200	0.000	0.503	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.04.13 17:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	4	0.563		1.10		0	0.000		0.000	0.000	2	0.757	0.167	0.352	mid-conf(0.56): modest trail (x1.10) (proxy)
+EXIT	2023.04.13 18:00	EngulfingEntry	365104419	119	RM_CURRENT	0	RM_ENG_C	1	2	1	0.396		1.00		0	0.000		0.000	0.000	4	0.000	0.167	1.598	low-conf(0.40): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.04.17 13:00	PinBarEntry	1207588528	134	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.24 14:00	PinBarEntry	830033678	138	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.04.24 15:00	PinBarEntry	1988336038	139	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.03 19:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.05.03 19:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	4	0.521		1.10		0	0.000		0.000	0.000	2	0.464	0.167	2.147	mid-conf(0.52): modest trail (x1.10) (proxy)
+EXIT	2023.05.03 20:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	4	0.595		1.10		0	0.000		0.082	0.600	3	0.669	0.333	2.105	mid-conf(0.60): modest trail (x1.10) (proxy)
+EXIT	2023.05.03 21:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	3	0.549		0.60		0	0.000		0.000	0.000	4	0.000	0.333	2.117	mid-conf(0.55): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.05.03 22:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	3	0.460		0.60		0	0.000		0.000	0.000	4	0.100	0.333	2.191	mid-conf(0.46): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.05.03 23:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	4	0.660		1.10		0	0.000		0.293	0.600	1	0.000	0.333	1.211	mid-conf(0.66): modest trail (x1.10) (proxy)
+EXIT	2023.05.04 01:00	EngulfingEntry	2028347136	146	RM_CURRENT	0	RM_ENG_C	1	2	4	0.588		1.10		0	0.000		0.000	0.000	2	0.436	0.333	0.083	mid-conf(0.59): modest trail (x1.10) (proxy)
+OPEN	2023.05.04 18:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.05.04 18:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	4	0.813		1.60		0	0.000		0.489	1.000	1	0.100	0.000	1.037	high-conf(0.81): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.05.04 19:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.830		0.70		0	0.000		0.489	0.400	4	0.000	0.000	1.218	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.04 20:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.831		0.70		0	0.000		0.489	0.400	4	0.582	0.000	1.224	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.04 21:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.767		0.70		0	0.000		0.489	0.400	4	0.200	0.000	0.556	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.04 22:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	4	0.755		1.60		0	0.000		0.489	0.600	2	0.000	0.000	0.423	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.05.04 23:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	4	0.754		1.60		0	0.000		0.489	0.600	3	0.589	0.000	0.421	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.05.05 01:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.752		0.70		0	0.000		0.489	0.600	4	0.616	0.000	0.400	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 02:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.756		0.70		0	0.000		0.489	0.400	3	0.000	0.000	0.436	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 03:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	4	0.753		1.60		0	0.000		0.489	0.600	2	0.000	0.000	0.403	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.05.05 04:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.757		0.70		0	0.000		0.489	0.400	3	0.000	0.000	0.447	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 05:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	4	0.745		1.60		0	0.000		0.489	1.000	1	0.000	0.000	0.318	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.05.05 06:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.765		0.70		0	0.000		0.489	0.400	1	0.000	0.000	0.530	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 07:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	4	0.753		1.60		0	0.000		0.489	0.600	2	0.000	0.000	0.410	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.05.05 08:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.732		0.70		0	0.000		0.489	0.400	3	0.000	0.000	0.185	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 09:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.742		0.70		0	0.000		0.489	0.000	3	0.100	0.000	0.293	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 10:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.738		0.70		0	0.000		0.489	0.600	4	0.000	0.000	0.247	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 11:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.764		0.70		0	0.000		0.489	0.000	1	0.000	0.000	0.520	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 12:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.766		0.70		0	0.000		0.489	0.000	2	0.550	0.000	0.545	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 13:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.774		0.70		0	0.000		0.489	0.000	3	0.523	0.000	0.631	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 14:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.769		0.70		0	0.000		0.489	0.200	4	0.000	0.000	0.575	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.05.05 15:00	EngulfingEntry	1072140937	149	RM_CURRENT	0	RM_ENG_C	1	2	3	0.619		0.60		0	0.000		0.489	0.000	1	0.000	0.000	0.732	mid-conf(0.62): momentum deteriorating -> tighten (x0.60) (proxy)
+OPEN	2023.05.08 18:00	PinBarEntry	100223450	151	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.09 13:00	MACrossEntry	556050997	152	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.17 11:00	PinBarEntry	886770699	158	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.18 10:00	PinBarEntry	1365061294	162	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.25 07:00	PinBarEntry	1301060152	166	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.25 13:00	PinBarEntry	227709804	168	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.05.29 10:00	PinBarEntry	1642182137	172	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.06.07 15:00	PinBarEntry	106536432	176	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.06.08 09:00	PinBarEntry	777638163	179	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.06.08 17:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.06.08 17:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.492		1.10		0	0.000		0.945	0.000	2	0.352	0.167	0.171	mid-conf(0.49): modest trail (x1.10) (proxy)
+EXIT	2023.06.08 18:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.546		1.10		0	0.000		1.012	0.000	3	0.680	0.333	0.665	mid-conf(0.55): modest trail (x1.10) (proxy)
+EXIT	2023.06.08 19:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.535		0.60		0	0.000		1.012	0.200	4	0.000	0.333	0.683	mid-conf(0.54): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.06.08 20:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.523		0.60		0	0.000		0.164	0.400	4	0.100	0.333	0.706	mid-conf(0.52): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.06.08 21:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.424		0.60		0	0.000		0.283	0.400	4	0.200	0.333	0.317	mid-conf(0.42): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.06.08 22:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.458		1.10		0	0.000		0.283	0.600	2	0.000	0.333	0.255	mid-conf(0.46): modest trail (x1.10) (proxy)
+EXIT	2023.06.08 23:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.739		0.70		0	0.000		0.283	0.400	3	0.000	0.000	0.264	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 01:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.738		1.60		0	0.000		0.283	0.600	3	0.000	0.000	0.246	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.06.09 02:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.734		1.60		0	0.000		0.283	1.000	1	0.100	0.000	0.211	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.06.09 03:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.738		0.70		0	0.000		0.283	0.400	2	0.000	0.000	0.245	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 04:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.747		0.70		0	0.000		0.283	0.400	1	0.100	0.000	0.341	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 05:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.723		1.60		0	0.000		0.283	0.600	2	0.000	0.000	0.088	high-conf(0.72): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.06.09 06:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.724		0.70		0	0.000		0.283	0.400	3	0.000	0.000	0.102	high-conf(0.72): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 07:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.726		0.70		0	0.000		0.283	0.400	3	0.100	0.000	0.120	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 08:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.729		0.70		0	0.000		0.283	0.400	1	0.200	0.000	0.152	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 09:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.721		0.70		0	0.000		0.283	0.600	4	0.000	0.000	0.076	high-conf(0.72): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 10:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	4	0.717		1.10		0	0.000		0.283	1.000	2	0.300	0.000	0.031	mid-conf(0.72): modest trail (x1.10) (proxy)
+EXIT	2023.06.09 11:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.729		0.70		0	0.000		0.283	0.400	4	0.000	0.000	0.149	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 12:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.733		0.70		0	0.000		0.320	0.400	2	0.372	0.000	0.199	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 13:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.733		0.70		0	0.000		0.320	0.000	3	0.638	0.000	0.200	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 14:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.725		0.70		0	0.000		0.320	0.600	4	0.000	0.000	0.117	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 15:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.733		0.70		0	0.000		0.320	1.000	4	0.100	0.000	0.194	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.06.09 16:00	EngulfingEntry	875988235	181	RM_CURRENT	0	RM_ENG_C	1	2	3	0.749		0.70		0	0.000		0.000	0.000	2	0.000	0.000	0.362	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2023.06.20 08:00	PinBarEntry	904675917	183	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.06.29 03:00	PinBarEntry	3111610	185	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.07.10 11:00	EngulfingEntry	474798176	189	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.07.10 11:00	EngulfingEntry	474798176	189	RM_CURRENT	0	RM_ENG_C	1	2	4	0.762		1.60		0	0.000		0.481	1.000	2	0.374	0.000	0.505	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.10 12:00	EngulfingEntry	474798176	189	RM_CURRENT	0	RM_ENG_C	1	2	4	0.758		1.60		0	0.000		0.481	0.600	3	0.659	0.000	0.464	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.10 13:00	EngulfingEntry	474798176	189	RM_CURRENT	0	RM_ENG_C	1	2	3	0.786		0.70		0	0.000		0.481	0.400	4	0.000	0.000	0.753	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.10 14:00	EngulfingEntry	474798176	189	RM_CURRENT	0	RM_ENG_C	1	2	4	0.781		1.60		0	0.000		0.481	0.600	2	0.000	0.000	0.700	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.10 15:00	EngulfingEntry	474798176	189	RM_CURRENT	0	RM_ENG_C	1	2	4	0.766		1.60		0	0.000		0.481	0.600	3	0.100	0.000	0.538	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2023.07.17 22:00	PinBarEntry	1262925270	191	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.07.18 06:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.07.18 06:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.726		1.60		0	0.000		0.595	0.600	1	0.100	0.000	0.121	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 07:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.754		1.60		0	0.000		0.595	1.000	2	0.436	0.000	0.414	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 08:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.752		1.60		0	0.000		0.595	0.600	3	0.751	0.000	0.396	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 09:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	3	0.761		0.70		0	0.000		0.595	0.400	4	0.000	0.000	0.491	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.18 10:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.729		1.60		0	0.000		0.595	0.600	1	0.000	0.000	0.151	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 11:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	3	0.830		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.220	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.18 12:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.828		1.60		0	0.000		0.197	0.600	3	0.000	0.000	1.197	high-conf(0.83): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 13:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.810		1.60		0	0.000		0.197	0.600	3	0.100	0.000	1.010	high-conf(0.81): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 14:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.808		1.60		0	0.000		0.000	0.000	2	0.644	0.000	0.989	high-conf(0.81): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 15:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	3	0.809		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.993	high-conf(0.81): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.18 16:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.732		1.60		0	0.000		0.432	0.600	1	0.000	0.000	0.184	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2023.07.18 17:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.07.18 17:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	4	0.788		1.60		0	0.000		0.000	0.000	2	0.401	0.000	0.778	high-conf(0.79): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 17:00	EngulfingEntry	1276278184	192	RM_CURRENT	0	RM_ENG_C	1	2	4	0.833		1.60		0	0.000		0.000	0.000	2	0.401	0.000	1.249	high-conf(0.83): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2023.07.18 18:00	PinBarEntry	2008793203	203	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.07.18 18:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	4	0.834		1.60		0	0.000		0.000	0.000	1	0.200	0.000	1.537	high-conf(0.83): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.18 19:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.451		0.60		0	0.000		0.000	0.000	4	0.000	0.000	1.953	mid-conf(0.45): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.07.18 20:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.446		0.60		0	0.000		0.193	0.400	4	0.578	0.000	1.972	mid-conf(0.45): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.07.18 21:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.409		0.60		0	0.000		0.243	0.400	4	0.531	0.000	2.116	mid-conf(0.41): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.07.18 22:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.328		0.60		0	0.000		0.243	0.600	2	0.000	0.000	0.679	low-conf(0.33): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2023.07.18 23:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.348		0.60		0	0.000		0.243	0.600	3	0.100	0.000	0.597	low-conf(0.35): tighten (x0.60); early-invalidation bias (proxy)
+EXIT	2023.07.19 01:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	1	0.373		1.00		0	0.000		0.243	1.000	4	0.200	0.000	0.500	low-conf(0.37): origin break / momentum deterioration -> close early (proxy)
+EXIT	2023.07.19 02:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	4	0.762		1.60		0	0.000		0.243	0.600	2	0.781	0.000	0.497	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.19 03:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.773		0.70		0	0.000		0.243	0.400	3	0.000	0.000	0.614	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.19 04:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	4	0.764		1.60		0	0.000		0.243	0.600	2	0.000	0.000	0.527	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.07.19 05:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.736		0.70		0	0.000		0.243	0.400	1	0.000	0.000	0.232	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.19 06:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.738		0.70		0	0.000		0.259	0.400	2	0.552	0.000	0.246	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.19 07:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.746		0.70		0	0.000		0.259	0.400	3	0.370	0.000	0.329	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.19 08:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.751		0.70		0	0.000		0.267	0.400	2	0.536	0.000	0.388	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.07.19 09:00	EngulfingEntry	280787498	199	RM_CURRENT	0	RM_ENG_C	1	2	3	0.723		0.70		0	0.000		0.267	1.000	4	0.000	0.000	0.094	high-conf(0.72): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2023.07.19 23:00	PinBarEntry	1194161773	205	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.07.20 04:00	PinBarEntry	1155190185	206	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.07.25 07:00	PinBarEntry	1782862147	213	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.02 23:00	PullbackContinuationEngine	273580791	217	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.03 04:00	PinBarEntry	1640029133	218	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.03 06:00	PinBarEntry	1537698266	219	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.09 04:00	PinBarEntry	44917307	228	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.14 05:00	FailedBreakReversal	491497056	230	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.16 07:00	PinBarEntry	2136368185	235	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.08.29 17:00	PinBarEntry	1627376434	239	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.09.11 06:00	PinBarEntry	1546476885	244	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.09.13 04:00	PinBarEntry	397241942	246	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.02 07:00	PinBarEntry	2062482108	250	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.02 11:00	ExpansionEngine	98757607	252	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.02 12:00	PinBarEntry	175475108	253	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.02 16:00	ExpansionEngine	1683018298	259	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.05 03:00	PinBarEntry	36638308	266	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.05 12:00	PinBarEntry	879412497	268	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.10 04:00	CrashBreakoutEntry	46730335	271	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.10 05:00	CrashBreakoutEntry	1966562631	272	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.10 06:00	CrashBreakoutEntry	1356887487	273	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.11 13:00	CrashBreakoutEntry	1996797569	282	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.11 14:00	CrashBreakoutEntry	838652783	284	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.11 15:00	CrashBreakoutEntry	1014603893	286	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.11 16:00	CrashBreakoutEntry	473282650	289	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.12 09:00	CrashBreakoutEntry	1459628047	294	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.12 10:00	CrashBreakoutEntry	963330190	295	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.12 12:00	CrashBreakoutEntry	838638664	297	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.12 13:00	CrashBreakoutEntry	1305802028	298	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.12 15:00	CrashBreakoutEntry	642145296	302	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.16 08:00	PinBarEntry	569163373	308	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.17 07:00	PinBarEntry	1547968045	310	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.18 05:00	CrashBreakoutEntry	228466247	313	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.18 06:00	CrashBreakoutEntry	283305801	314	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.18 09:00	CrashBreakoutEntry	1728934623	315	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.18 11:00	CrashBreakoutEntry	844529253	316	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.18 13:00	CrashBreakoutEntry	14509478	320	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.19 14:00	PinBarEntry	684833094	323	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.19 21:00	CrashBreakoutEntry	2111788455	328	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.24 10:00	PinBarEntry	1557480788	330	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.25 05:00	MACrossEntry	1262028523	332	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.10.26 12:00	EngulfingEntry	9600862	335	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.10.26 12:00	EngulfingEntry	9600862	335	RM_CURRENT	0	RM_ENG_C	1	2	4	0.464		1.10		0	0.000		0.000	0.000	2	0.382	0.000	0.594	mid-conf(0.46): modest trail (x1.10) (proxy)
+EXIT	2023.10.26 13:00	EngulfingEntry	9600862	335	RM_CURRENT	0	RM_ENG_C	1	2	1	0.390		1.00		0	0.000		0.129	0.400	4	0.000	0.000	0.771	low-conf(0.39): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.10.31 09:00	PinBarEntry	1423146114	337	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.11.13 09:00	PinBarEntry	1906675552	339	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.11.15 10:00	EngulfingEntry	332499607	342	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.11.15 10:00	EngulfingEntry	332499607	342	RM_CURRENT	0	RM_ENG_C	1	2	4	0.726		1.60		0	0.000		0.000	0.000	2	0.478	0.000	0.118	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.11.15 11:00	EngulfingEntry	332499607	342	RM_CURRENT	0	RM_ENG_C	1	2	3	0.616		0.60		0	0.000		0.000	0.000	3	0.477	0.000	1.449	mid-conf(0.62): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2023.11.15 12:00	EngulfingEntry	332499607	342	RM_CURRENT	0	RM_ENG_C	1	2	1	0.354		1.00		0	0.000		0.064	0.400	4	0.000	0.000	1.454	low-conf(0.35): origin break / momentum deterioration -> close early (proxy)
+OPEN	2023.11.21 05:00	MACrossEntry	2058027641	344	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.11.27 11:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2023.11.27 11:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	4	0.764		1.60		0	0.000		0.381	1.000	1	0.100	0.000	0.525	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.11.27 12:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	3	0.770		0.70		0	0.000		0.381	0.400	4	0.000	0.000	0.583	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.11.27 13:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	4	0.758		1.60		0	0.000		0.381	0.600	3	0.000	0.000	0.457	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.11.27 14:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	3	0.779		0.70		0	0.000		0.381	0.400	4	0.000	0.000	0.682	high-conf(0.78): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.11.27 15:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	4	0.736		1.60		0	0.000		0.381	0.600	2	0.000	0.000	0.231	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2023.11.27 16:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	3	0.794		0.70		0	0.000		0.381	0.400	4	0.000	0.000	0.842	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.11.27 17:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	3	0.792		0.70		0	0.000		0.381	0.600	4	0.000	0.000	0.819	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2023.11.27 18:00	EngulfingEntry	1010772174	348	RM_CURRENT	0	RM_ENG_C	1	2	3	0.806		0.70		0	0.000		0.381	0.400	3	0.000	0.000	0.963	high-conf(0.81): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2023.11.28 03:00	PinBarEntry	44639659	350	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.04 08:00	PinBarEntry	462419022	355	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.05 11:00	PinBarEntry	1823525770	357	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.13 06:00	PullbackContinuationEngine	1502498375	362	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.13 07:00	PinBarEntry	1914666784	363	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.14 09:00	PullbackContinuationEngine	435600970	367	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.14 17:00	PinBarEntry	1698632203	369	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.20 17:00	PinBarEntry	209896738	372	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.21 11:00	MACrossEntry	914541223	374	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2023.12.26 07:00	MACrossEntry	1498073324	378	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.01.15 09:00	PinBarEntry	890200573	383	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.01.15 19:00	PinBarEntry	979210039	385	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.01.30 17:00	PinBarEntry	223927264	387	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.05 02:00	PinBarEntry	401317351	389	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.06 10:00	PinBarEntry	1250803150	393	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.06 13:00	PinBarEntry	1706311574	394	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.07 16:00	PinBarEntry	787815478	397	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.08 13:00	EngulfingEntry	1132546460	400	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.02.08 13:00	EngulfingEntry	1132546460	400	RM_CURRENT	0	RM_ENG_C	1	2	4	0.750		1.60		0	0.000		0.721	1.000	2	0.519	0.000	0.380	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2024.02.12 03:00	PinBarEntry	1396688714	402	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.12 05:00	PullbackContinuationEngine	1205682136	403	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.13 22:00	PullbackContinuationEngine	989455000	409	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.02.22 09:00	MACrossEntry	1830818781	411	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.04 10:00	ExpansionEngine	985375346	414	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.05 20:00	PinBarEntry	1700952922	418	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.06 15:00	ExpansionEngine	1189181114	420	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.07 06:00	PullbackContinuationEngine	1066913518	424	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.11 23:00	PinBarEntry	72640416	428	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.21 20:00	PinBarEntry	1304129437	430	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.26 14:00	MACrossEntry	1695394177	432	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.03.27 14:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.03.27 14:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.748		1.60		0	0.000		0.660	0.600	2	0.419	0.000	0.357	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.27 15:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.777		0.70		0	0.000		0.660	0.400	4	0.000	0.000	0.654	high-conf(0.78): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.27 16:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.789		0.70		0	0.000		0.660	0.400	4	0.379	0.000	0.789	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.27 17:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.751		1.60		0	0.000		0.660	0.600	3	0.000	0.000	0.380	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.27 18:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.736		1.60		0	0.000		0.660	0.600	2	0.595	0.000	0.233	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.27 19:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.752		0.70		0	0.000		0.660	0.400	4	0.000	0.000	0.401	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.27 20:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.742		0.70		0	0.000		0.660	0.600	4	0.000	0.000	0.288	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.27 21:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.753		0.70		0	0.000		0.660	0.400	4	0.000	0.000	0.404	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.27 22:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.742		1.60		0	0.000		0.660	0.600	2	0.000	0.000	0.290	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.27 23:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.737		1.60		0	0.000		0.660	0.600	1	0.360	0.000	0.235	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 01:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.730		1.60		0	0.000		0.660	1.000	3	0.385	0.000	0.163	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 02:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.742		0.70		0	0.000		0.660	0.400	4	0.000	0.000	0.290	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 03:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.751		0.70		0	0.000		0.660	0.400	2	0.198	0.000	0.387	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 04:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.747		0.70		0	0.000		0.660	0.400	3	0.233	0.000	0.345	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 05:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.746		0.70		0	0.000		0.660	0.600	4	0.000	0.000	0.329	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 06:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.729		0.70		0	0.000		0.660	1.000	4	0.100	0.000	0.156	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 07:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.729		0.70		0	0.000		0.660	0.400	2	0.000	0.000	0.157	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 08:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.725		1.60		0	0.000		0.660	0.600	3	0.000	0.000	0.112	high-conf(0.72): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 09:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.792		1.60		0	0.000		0.000	0.000	3	0.100	0.000	0.813	high-conf(0.79): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 10:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.784		1.60		0	0.000		0.186	0.600	2	0.250	0.000	0.731	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 11:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.811		0.70		0	0.000		0.275	0.400	4	0.000	0.000	1.011	high-conf(0.81): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.03.28 12:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.745		1.60		0	0.000		0.337	0.600	2	0.000	0.000	0.327	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 13:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.729		1.60		0	0.000		0.337	0.600	3	0.100	0.000	0.156	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 14:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.730		1.60		0	0.000		0.000	0.000	1	0.200	0.000	0.602	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.03.28 15:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	3	0.457		0.60		0	0.000		0.162	0.400	4	0.000	0.000	0.703	mid-conf(0.46): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.03.28 16:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	4	0.500		1.10		0	0.000		0.000	0.000	3	0.000	0.000	0.406	mid-conf(0.50): modest trail (x1.10) (proxy)
+EXIT	2024.03.28 17:00	EngulfingEntry	185025536	434	RM_CURRENT	0	RM_ENG_C	1	2	1	0.341		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.905	low-conf(0.34): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.04.01 22:00	PinBarEntry	736239383	438	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.02 20:00	PinBarEntry	206111338	443	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.02 21:00	PinBarEntry	1211700539	444	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.03 06:00	PinBarEntry	288458085	451	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.03 17:00	PinBarEntry	1825635528	453	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.03 22:00	PinBarEntry	575196670	458	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.08 14:00	PinBarEntry	897028057	463	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.09 03:00	PinBarEntry	988418508	465	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.09 12:00	EngulfingEntry	1010695178	469	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.04.09 12:00	EngulfingEntry	1010695178	469	RM_CURRENT	0	RM_ENG_C	1	2	4	0.507		1.10		0	0.000		0.000	0.000	2	0.397	0.167	0.173	mid-conf(0.51): modest trail (x1.10) (proxy)
+EXIT	2024.04.09 13:00	EngulfingEntry	1010695178	469	RM_CURRENT	0	RM_ENG_C	1	2	4	0.589		1.10		0	0.000		0.000	0.000	1	0.398	0.333	0.489	mid-conf(0.59): modest trail (x1.10) (proxy)
+EXIT	2024.04.09 14:00	EngulfingEntry	1010695178	469	RM_CURRENT	0	RM_ENG_C	1	2	3	0.433		0.60		0	0.000		0.151	0.400	4	0.000	0.333	0.255	mid-conf(0.43): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.04.09 15:00	EngulfingEntry	1010695178	469	RM_CURRENT	0	RM_ENG_C	1	2	3	0.402		0.60		0	0.000		0.252	0.400	4	0.466	0.333	0.396	mid-conf(0.40): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.04.09 16:00	EngulfingEntry	1010695178	469	RM_CURRENT	0	RM_ENG_C	1	2	1	0.347		1.00		0	0.000		0.314	0.400	4	0.383	0.333	1.155	low-conf(0.35): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.04.16 07:00	PinBarEntry	473840693	471	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.16 19:00	EngulfingEntry	2010638121	473	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.04.16 19:00	EngulfingEntry	2010638121	473	RM_CURRENT	0	RM_ENG_C	1	2	4	0.902		1.60		0	0.000		1.013	1.000	2	0.513	0.000	1.968	high-conf(0.90): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.04.16 20:00	EngulfingEntry	2010638121	473	RM_CURRENT	0	RM_ENG_C	1	2	4	0.803		1.60		0	0.000		1.013	1.000	3	0.385	0.000	1.472	high-conf(0.80): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.04.16 21:00	EngulfingEntry	2010638121	473	RM_CURRENT	0	RM_ENG_C	1	2	1	0.285		1.00		0	0.000		1.013	0.400	4	0.000	0.000	2.026	low-conf(0.29): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.04.17 12:00	PinBarEntry	875085747	475	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.23 06:00	PinBarEntry	592728991	477	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.04.29 09:00	PinBarEntry	503721499	480	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.01 10:00	PinBarEntry	964284484	482	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.06 22:00	PinBarEntry	1626766939	484	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.07 04:00	PinBarEntry	2034413641	485	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.09 18:00	PinBarEntry	223722077	488	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.20 19:00	PinBarEntry	1838237211	492	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.21 23:00	PinBarEntry	1544668844	495	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.22 22:00	ExpansionEngine	1055308569	497	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.05.30 13:00	PinBarEntry	671580867	500	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.03 07:00	PullbackContinuationEngine	391418468	502	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.04 14:00	PinBarEntry	1223091655	504	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.06 18:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.06.06 18:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	3	0.804		0.70		0	0.000		0.362	0.600	4	0.100	0.000	0.944	high-conf(0.80): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.06 19:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.932		1.60		0	0.000		0.000	0.000	1	0.200	0.000	2.284	high-conf(0.93): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.06 20:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	3	0.943		0.70		0	0.000		0.155	0.400	4	0.000	0.000	2.399	high-conf(0.94): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.06 21:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.941		1.60		0	0.000		0.155	0.600	3	0.000	0.000	2.378	high-conf(0.94): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.06 22:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	3	0.768		0.70		0	0.000		0.181	0.400	4	0.000	0.000	0.566	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.06 23:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.765		1.60		0	0.000		0.181	0.600	2	0.000	0.000	0.532	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.07 01:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.737		1.60		0	0.000		0.181	1.000	1	0.100	0.000	0.243	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.07 02:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.727		1.60		0	0.000		0.181	1.000	2	0.490	0.000	0.128	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.07 03:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	3	0.727		0.70		0	0.000		0.181	0.400	4	0.000	0.000	0.138	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.07 04:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.715		1.10		0	0.000		0.000	0.000	3	0.000	0.000	0.007	mid-conf(0.71): modest trail (x1.10) (proxy)
+EXIT	2024.06.07 05:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	3	0.777		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.660	high-conf(0.78): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.07 06:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.730		1.60		0	0.000		0.208	0.600	2	0.000	0.000	0.165	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.07 07:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	3	0.565		0.60		0	0.000		0.000	0.000	1	0.268	0.000	1.750	mid-conf(0.56): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.06.07 08:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	4	0.591		1.10		0	0.000		0.000	0.000	3	0.200	0.167	1.179	mid-conf(0.59): modest trail (x1.10) (proxy)
+EXIT	2024.06.07 09:00	EngulfingEntry	1830932559	506	RM_CURRENT	0	RM_ENG_C	1	2	1	0.215		1.00		0	0.000		0.000	0.000	4	0.000	0.167	0.225	low-conf(0.21): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.06.10 06:00	PinBarEntry	1637955386	510	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.10 07:00	PinBarEntry	401794474	511	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.13 05:00	FailedBreakReversal	1405018869	516	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.19 10:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.06.19 10:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	4	0.738		1.60		0	0.000		0.723	1.000	2	0.156	0.000	0.245	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.19 11:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	4	0.734		1.60		0	0.000		0.723	1.000	1	0.200	0.000	0.207	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.19 12:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	4	0.762		1.60		0	0.000		0.722	0.600	2	0.579	0.000	0.499	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.19 13:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	3	0.831		0.70		0	0.000		0.722	0.400	4	0.000	0.000	1.222	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.19 14:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	3	0.834		0.70		0	0.000		0.266	0.400	2	0.578	0.000	1.253	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.19 15:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	4	0.785		1.60		0	0.000		0.321	0.600	3	0.000	0.000	0.741	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.06.19 16:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	3	0.817		0.70		0	0.000		0.342	0.400	2	0.000	0.000	1.082	high-conf(0.82): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.06.19 17:00	EngulfingEntry	506468089	519	RM_CURRENT	0	RM_ENG_C	1	2	3	0.820		0.70		0	0.000		0.342	0.000	3	0.557	0.000	1.113	high-conf(0.82): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2024.06.20 22:00	PinBarEntry	916046219	522	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.26 04:00	PinBarEntry	827429503	526	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.06.26 13:00	PinBarEntry	1025705533	528	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.07.03 11:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.03 11:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.514		1.10		0	0.000		0.000	0.000	2	0.247	0.167	0.352	mid-conf(0.51): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 12:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	3	0.483		0.60		0	0.000		0.000	0.000	4	0.000	0.167	0.410	mid-conf(0.48): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.03 13:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.529		1.10		0	0.000		0.190	0.600	3	0.000	0.167	0.282	mid-conf(0.53): modest trail (x1.10) (proxy)
+OPEN	2024.07.03 14:00	EngulfingEntry	908998569	535	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.03 14:00	EngulfingEntry	908998569	535	RM_CURRENT	0	RM_ENG_C	1	2	4	0.515		1.10		0	0.000		0.000	0.000	2	0.411	0.167	0.529	mid-conf(0.52): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 14:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.496		1.10		0	0.000		0.000	0.000	2	0.411	0.167	0.232	mid-conf(0.50): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 15:00	EngulfingEntry	908998569	535	RM_CURRENT	0	RM_ENG_C	1	2	3	0.491		0.60		0	0.000		0.232	0.400	4	0.000	0.167	0.800	mid-conf(0.49): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.03 15:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	3	0.461		0.60		0	0.000		0.232	0.400	4	0.000	0.167	0.350	mid-conf(0.46): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.03 16:00	EngulfingEntry	908998569	535	RM_CURRENT	0	RM_ENG_C	1	2	4	0.559		1.10		0	0.000		0.000	0.000	1	0.000	0.167	1.666	mid-conf(0.56): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 16:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.497		1.10		0	0.000		0.000	0.000	1	0.000	0.167	0.729	mid-conf(0.50): modest trail (x1.10) (proxy)
+OPEN	2024.07.03 17:00	EngulfingEntry	919770059	541	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.03 17:00	EngulfingEntry	919770059	541	RM_CURRENT	0	RM_ENG_C	1	2	4	0.753		1.60		0	0.000		0.000	0.000	2	0.170	0.000	0.405	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.03 17:00	EngulfingEntry	908998569	535	RM_CURRENT	0	RM_ENG_C	1	2	4	0.790		1.60		0	0.000		0.000	0.000	2	0.170	0.000	0.794	high-conf(0.79): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.03 17:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.747		1.60		0	0.000		0.000	0.000	2	0.170	0.000	0.348	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.03 18:00	EngulfingEntry	919770059	541	RM_CURRENT	0	RM_ENG_C	1	2	4	0.638		1.10		0	0.000		0.000	0.000	1	0.200	0.000	0.674	mid-conf(0.64): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 18:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.629		1.10		0	0.000		0.000	0.000	1	0.200	0.000	0.578	mid-conf(0.63): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 19:00	EngulfingEntry	919770059	541	RM_CURRENT	0	RM_ENG_C	1	2	4	0.643		1.10		0	0.000		0.108	0.600	2	0.758	0.167	3.308	mid-conf(0.64): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 19:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	4	0.633		1.10		0	0.000		0.108	0.600	2	0.758	0.167	2.840	mid-conf(0.63): modest trail (x1.10) (proxy)
+EXIT	2024.07.03 20:00	EngulfingEntry	919770059	541	RM_CURRENT	0	RM_ENG_C	1	2	1	0.220		1.00		0	0.000		0.214	0.400	4	0.000	0.167	0.304	low-conf(0.22): origin break / momentum deterioration -> close early (proxy)
+EXIT	2024.07.03 20:00	EngulfingEntry	1285112191	534	RM_CURRENT	0	RM_ENG_C	1	2	1	0.217		1.00		0	0.000		0.214	0.400	4	0.000	0.167	0.261	low-conf(0.22): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.07.04 11:00	PinBarEntry	578046223	547	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.07.04 12:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.04 12:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.768		1.60		0	0.000		0.314	1.000	3	0.100	0.000	0.568	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.04 13:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.784		0.70		0	0.000		0.314	0.400	2	0.000	0.000	0.733	high-conf(0.78): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.04 14:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.780		1.60		0	0.000		0.314	0.600	3	0.000	0.000	0.685	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.04 15:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.774		1.60		0	0.000		0.314	0.600	3	0.100	0.000	0.622	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.04 16:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.785		0.70		0	0.000		0.314	0.400	4	0.000	0.000	0.743	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.04 17:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.755		1.60		0	0.000		0.314	0.600	1	0.000	0.000	0.429	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.04 18:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.767		0.70		0	0.000		0.314	0.400	2	0.000	0.000	0.555	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.04 19:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.789		0.70		0	0.000		0.314	0.400	3	0.100	0.000	0.786	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.04 20:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.784		1.60		0	0.000		0.314	0.600	2	0.000	0.000	0.730	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.05 01:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.782		0.70		0	0.000		0.314	0.400	3	0.000	0.000	0.710	high-conf(0.78): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.05 02:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.779		1.60		0	0.000		0.314	0.600	2	0.000	0.000	0.683	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.05 03:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.790		0.70		0	0.000		0.314	0.000	1	0.000	0.000	0.794	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.05 04:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.758		0.70		0	0.000		0.314	1.000	4	0.000	0.000	0.462	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.05 05:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	3	0.765		0.70		0	0.000		0.314	0.400	2	0.000	0.000	0.534	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.05 06:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.781		1.60		0	0.000		0.314	1.000	1	0.000	0.000	0.699	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.05 07:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.761		1.60		0	0.000		0.314	0.600	2	0.269	0.000	0.488	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.05 08:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.574		1.10		0	0.000		0.314	1.000	1	0.200	0.000	0.153	mid-conf(0.57): modest trail (x1.10) (proxy)
+EXIT	2024.07.05 09:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	4	0.510		1.10		0	0.000		0.000	0.000	2	0.609	0.167	0.025	mid-conf(0.51): modest trail (x1.10) (proxy)
+EXIT	2024.07.05 10:00	EngulfingEntry	700439682	548	RM_CURRENT	0	RM_ENG_C	1	2	1	0.356		1.00		0	0.000		0.000	0.000	4	0.000	0.167	0.938	low-conf(0.36): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.07.11 17:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.11 17:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	4	0.480		1.10		0	0.000		0.000	0.000	2	0.594	0.167	0.112	mid-conf(0.48): modest trail (x1.10) (proxy)
+EXIT	2024.07.11 18:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	4	0.671		1.10		0	0.000		0.000	0.000	3	0.541	0.333	1.095	mid-conf(0.67): modest trail (x1.10) (proxy)
+EXIT	2024.07.11 19:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.611		0.60		0	0.000		0.000	0.000	4	0.000	0.333	1.109	mid-conf(0.61): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.11 20:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.574		0.60		0	0.000		0.210	0.400	4	0.100	0.333	1.302	mid-conf(0.57): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.11 21:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	4	0.587		1.10		0	0.000		0.236	0.600	2	0.000	0.333	1.233	mid-conf(0.59): modest trail (x1.10) (proxy)
+EXIT	2024.07.11 22:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	4	0.547		1.10		0	0.000		0.236	0.600	3	0.100	0.333	0.275	mid-conf(0.55): modest trail (x1.10) (proxy)
+EXIT	2024.07.11 23:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.748		0.70		0	0.000		0.236	0.400	4	0.000	0.000	0.354	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 01:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	4	0.745		1.60		0	0.000		0.236	0.600	3	0.000	0.000	0.327	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.12 02:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.748		0.70		0	0.000		0.236	0.400	3	0.000	0.000	0.357	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 03:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	4	0.742		1.60		0	0.000		0.236	1.000	3	0.000	0.000	0.291	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.12 04:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.755		0.70		0	0.000		0.236	0.400	1	0.000	0.000	0.424	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 05:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.768		0.70		0	0.000		0.284	0.400	1	0.100	0.000	0.563	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 06:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.763		0.70		0	0.000		0.291	0.600	4	0.000	0.000	0.508	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 07:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.739		0.70		0	0.000		0.291	0.400	3	0.000	0.000	0.257	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 08:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.739		0.70		0	0.000		0.291	0.400	3	0.492	0.000	0.262	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.12 09:00	EngulfingEntry	1815563718	553	RM_CURRENT	0	RM_ENG_C	1	2	3	0.741		0.70		0	0.000		0.310	0.400	1	0.263	0.000	0.281	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2024.07.15 15:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.15 15:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	4	0.784		1.60		0	0.000		0.538	1.000	2	0.206	0.000	0.733	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.15 16:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	3	0.822		0.70		0	0.000		0.538	0.400	4	0.000	0.000	1.134	high-conf(0.82): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.07.15 17:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	4	0.775		1.60		0	0.000		0.538	0.600	2	0.000	0.000	0.635	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2024.07.15 18:00	EngulfingEntry	1472440648	558	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.15 18:00	EngulfingEntry	1472440648	558	RM_CURRENT	0	RM_ENG_C	1	2	4	0.783		1.60		0	0.000		0.000	0.000	1	0.100	0.000	0.893	high-conf(0.78): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.15 18:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	4	0.904		1.60		0	0.000		0.000	0.000	1	0.100	0.000	2.156	high-conf(0.90): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.15 19:00	EngulfingEntry	1472440648	558	RM_CURRENT	0	RM_ENG_C	1	2	4	0.516		1.10		0	0.000		0.000	0.000	2	0.628	0.167	0.806	mid-conf(0.52): modest trail (x1.10) (proxy)
+EXIT	2024.07.15 19:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	4	0.592		1.10		0	0.000		0.000	0.000	2	0.628	0.167	1.948	mid-conf(0.59): modest trail (x1.10) (proxy)
+EXIT	2024.07.15 20:00	EngulfingEntry	1472440648	558	RM_CURRENT	0	RM_ENG_C	1	2	3	0.438		0.60		0	0.000		0.000	0.000	4	0.000	0.167	0.954	mid-conf(0.44): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.15 20:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	3	0.528		0.60		0	0.000		0.000	0.000	4	0.000	0.167	2.303	mid-conf(0.53): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.15 21:00	EngulfingEntry	1472440648	558	RM_CURRENT	0	RM_ENG_C	1	2	1	0.305		1.00		0	0.000		0.399	0.400	4	0.100	0.167	1.372	low-conf(0.31): origin break / momentum deterioration -> close early (proxy)
+EXIT	2024.07.15 21:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	3	0.414		0.60		0	0.000		0.399	0.400	4	0.100	0.167	3.314	mid-conf(0.41): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.15 22:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	3	0.430		0.60		0	0.000		0.413	0.600	2	0.000	0.167	3.211	mid-conf(0.43): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.15 23:00	EngulfingEntry	1404421352	555	RM_CURRENT	0	RM_ENG_C	1	2	1	0.351		1.00		0	0.000		0.413	0.400	4	0.000	0.167	2.169	low-conf(0.35): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.07.16 09:00	PinBarEntry	1909940017	562	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.07.16 11:00	PinBarEntry	1894046339	564	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.07.22 05:00	PinBarEntry	255796836	572	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.07.24 07:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.24 07:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	4	0.468		1.10		0	0.000		0.557	0.000	2	0.401	0.167	0.347	mid-conf(0.47): modest trail (x1.10) (proxy)
+EXIT	2024.07.24 08:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	4	0.584		1.10		0	0.000		0.104	0.600	3	0.577	0.333	0.212	mid-conf(0.58): modest trail (x1.10) (proxy)
+EXIT	2024.07.24 09:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	3	0.500		0.60		0	0.000		0.154	0.400	4	0.000	0.333	0.385	mid-conf(0.50): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.24 10:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	4	0.534		1.10		0	0.000		0.000	0.000	2	0.000	0.333	0.244	mid-conf(0.53): modest trail (x1.10) (proxy)
+EXIT	2024.07.24 11:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	3	0.407		0.60		0	0.000		0.214	0.400	4	0.000	0.333	0.540	mid-conf(0.41): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.07.24 12:00	EngulfingEntry	1118852688	576	RM_CURRENT	0	RM_ENG_C	1	2	1	0.252		1.00		0	0.000		0.240	0.400	2	0.115	0.333	0.023	low-conf(0.25): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.07.31 08:00	EngulfingEntry	587775314	578	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.07.31 08:00	EngulfingEntry	587775314	578	RM_CURRENT	0	RM_ENG_C	1	2	4	0.767		1.60		0	0.000		0.000	0.000	2	0.330	0.000	0.746	high-conf(0.77): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.07.31 09:00	EngulfingEntry	587775314	578	RM_CURRENT	0	RM_ENG_C	1	2	1	0.215		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.976	low-conf(0.22): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.08.01 05:00	ExpansionEngine	1900606145	580	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.06 15:00	PinBarEntry	1566448034	582	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.08 05:00	PinBarEntry	466804585	587	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.12 10:00	PinBarEntry	199684443	589	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.12 17:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.08.12 17:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	4	0.614		1.10		0	0.000		0.000	0.000	1	0.100	0.500	0.306	mid-conf(0.61): modest trail (x1.10) (proxy)
+EXIT	2024.08.12 18:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	3	0.749		0.70		0	0.000		0.319	0.400	4	0.000	0.000	0.365	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.08.12 19:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	4	0.739		1.60		0	0.000		0.000	0.000	3	0.000	0.000	1.215	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.08.12 20:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	4	0.494		1.10		0	0.000		0.000	0.000	2	0.350	0.167	0.989	mid-conf(0.49): modest trail (x1.10) (proxy)
+EXIT	2024.08.12 21:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	4	0.601		1.10		0	0.000		0.000	0.000	1	0.412	0.333	0.718	mid-conf(0.60): modest trail (x1.10) (proxy)
+EXIT	2024.08.12 22:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	4	0.665		1.10		0	0.000		0.000	0.000	2	0.569	0.500	0.503	mid-conf(0.67): modest trail (x1.10) (proxy)
+EXIT	2024.08.12 23:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	3	0.693		0.60		0	0.000		0.000	0.000	3	0.886	0.667	0.491	mid-conf(0.69): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.08.13 01:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	3	0.758		0.70		0	0.000		0.000	0.000	3	0.851	0.833	0.359	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.08.13 02:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	3	0.911		0.70		0	0.000		0.000	0.000	2	0.821	1.000	1.778	high-conf(0.91): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.08.13 03:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	4	0.796		1.60		0	0.000		0.000	0.000	1	0.740	0.000	1.652	high-conf(0.80): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.08.13 04:00	EngulfingEntry	1547456364	594	RM_CURRENT	0	RM_ENG_C	1	2	1	0.154		1.00		0	0.000		0.000	0.000	4	0.000	0.000	0.066	low-conf(0.15): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.08.14 06:00	FailedBreakReversal	1053051639	598	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.19 18:00	PinBarEntry	911579097	601	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.26 20:00	PinBarEntry	2105606874	605	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.08.29 21:00	PinBarEntry	574506294	607	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.04 04:00	PinBarEntry	1319297384	609	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.04 11:00	PinBarEntry	1354631329	611	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.09 06:00	PinBarEntry	1616021041	615	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.12 12:00	MACrossEntry	350233310	620	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.16 17:00	PinBarEntry	414095865	624	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.19 13:00	MACrossEntry	1722728000	626	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.24 08:00	EngulfingEntry	266638332	629	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.09.24 08:00	EngulfingEntry	266638332	629	RM_CURRENT	0	RM_ENG_C	1	2	4	0.804		1.60		0	0.000		0.000	0.000	2	0.179	0.000	1.199	high-conf(0.80): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2024.09.24 22:00	PinBarEntry	1675586870	631	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.09.26 15:00	EngulfingEntry	932475628	636	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.09.26 15:00	EngulfingEntry	932475628	636	RM_CURRENT	0	RM_ENG_C	1	2	4	0.518		1.10		0	0.000		0.000	0.000	1	0.100	0.000	1.082	mid-conf(0.52): modest trail (x1.10) (proxy)
+EXIT	2024.09.26 16:00	EngulfingEntry	932475628	636	RM_CURRENT	0	RM_ENG_C	1	2	3	0.435		0.60		0	0.000		0.476	0.400	4	0.000	0.000	1.429	mid-conf(0.43): momentum deteriorating -> tighten (x0.60) (proxy)
+OPEN	2024.10.09 04:00	PinBarEntry	334945052	638	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.15 22:00	PinBarEntry	92208295	642	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.16 05:00	PinBarEntry	1691013316	643	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.16 06:00	PullbackContinuationEngine	1228960606	645	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.21 06:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.10.21 06:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	4	0.602		1.10		0	0.000		0.000	0.000	2	0.135	0.000	1.874	mid-conf(0.60): modest trail (x1.10) (proxy)
+EXIT	2024.10.21 07:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	4	0.577		1.10		0	0.000		0.000	0.000	3	0.614	0.000	1.799	mid-conf(0.58): modest trail (x1.10) (proxy)
+EXIT	2024.10.21 08:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	3	0.546		0.60		0	0.000		0.054	0.400	4	0.000	0.000	1.910	mid-conf(0.55): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.10.21 09:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	3	0.947		0.70		0	0.000		0.139	0.400	4	0.100	0.000	2.446	high-conf(0.95): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.10.21 10:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	4	0.737		1.60		0	0.000		0.154	0.600	2	0.000	0.000	0.243	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.10.21 11:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	4	0.736		1.60		0	0.000		0.154	0.600	3	0.591	0.000	0.233	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.10.21 12:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	4	0.887		1.60		0	0.000		0.000	0.000	3	0.610	0.000	1.813	high-conf(0.89): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.10.21 13:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	4	0.642		1.10		0	0.000		0.000	0.000	3	0.513	0.000	1.507	mid-conf(0.64): modest trail (x1.10) (proxy)
+EXIT	2024.10.21 14:00	EngulfingEntry	1884019344	657	RM_CURRENT	0	RM_ENG_C	1	2	1	0.282		1.00		0	0.000		0.172	0.400	4	0.000	0.000	1.623	low-conf(0.28): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.10.21 15:00	PinBarEntry	483392648	659	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.24 21:00	PinBarEntry	1094835594	662	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.29 03:00	PinBarEntry	116610249	664	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.30 04:00	PinBarEntry	1893744778	668	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.10.30 20:00	PinBarEntry	1498783179	670	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.05 02:00	PinBarEntry	1502038024	673	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.05 08:00	PinBarEntry	2027503284	678	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.06 14:00	ExpansionEngine	148028563	680	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.11 13:00	PinBarEntry	504795048	682	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.12 11:00	PinBarEntry	1660401738	686	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.13 12:00	PinBarEntry	1517111957	690	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.14 02:00	PinBarEntry	1607508022	692	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.20 20:00	PinBarEntry	1600267358	696	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.11.21 10:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.11.21 10:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.586		1.10		0	0.000		0.000	0.000	2	0.405	0.000	0.957	mid-conf(0.59): modest trail (x1.10) (proxy)
+EXIT	2024.11.21 11:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.687		1.10		0	0.000		0.000	0.000	1	0.200	0.167	4.360	mid-conf(0.69): modest trail (x1.10) (proxy)
+EXIT	2024.11.21 12:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.696		1.10		0	0.000		0.000	0.000	2	0.798	0.333	4.357	mid-conf(0.70): modest trail (x1.10) (proxy)
+EXIT	2024.11.21 13:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.786		0.70		0	0.000		0.125	0.600	3	0.809	0.500	4.207	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2024.11.21 14:00	PinBarEntry	1694944444	700	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.11.21 14:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.837		0.70		0	0.000		0.000	0.000	3	0.870	0.667	3.990	high-conf(0.84): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.21 15:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.445		0.60		0	0.000		0.192	0.400	4	0.000	0.667	0.934	mid-conf(0.44): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.11.21 16:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.649		0.60		0	0.000		0.239	0.600	2	0.000	0.667	4.836	mid-conf(0.65): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.11.21 17:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.828		0.70		0	0.000		0.239	0.400	3	0.000	0.000	1.192	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.21 18:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.791		0.70		0	0.000		0.239	0.600	4	0.000	0.000	0.810	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.21 19:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.831		0.70		0	0.000		0.239	0.400	1	0.000	0.000	1.228	high-conf(0.83): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.21 20:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.736		0.70		0	0.000		0.239	1.000	4	0.000	0.000	0.232	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.21 21:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.729		1.60		0	0.000		0.239	0.600	2	0.560	0.000	0.151	high-conf(0.73): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.11.21 22:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.766		0.70		0	0.000		0.239	0.400	4	0.000	0.000	0.538	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.21 23:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.741		1.60		0	0.000		0.239	0.600	2	0.000	0.000	0.280	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.11.22 01:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.768		0.70		0	0.000		0.239	0.400	4	0.000	0.000	0.569	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.22 02:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	3	0.772		0.70		0	0.000		0.239	0.400	4	0.527	0.000	0.606	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.11.22 03:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.719		1.10		0	0.000		0.000	0.000	1	0.000	0.000	0.052	mid-conf(0.72): modest trail (x1.10) (proxy)
+EXIT	2024.11.22 04:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.902		1.60		0	0.000		0.000	0.000	1	0.100	0.000	3.106	high-conf(0.90): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.11.22 05:00	EngulfingEntry	1270168537	698	RM_CURRENT	0	RM_ENG_C	1	2	4	0.670		1.10		0	0.000		0.000	0.000	1	0.200	0.167	1.951	mid-conf(0.67): modest trail (x1.10) (proxy)
+OPEN	2024.11.25 07:00	FailedBreakReversal	255192064	705	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.12.03 03:00	PinBarEntry	1594206790	707	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.12.09 17:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.12.09 17:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.620		1.10		0	0.000		0.000	0.000	2	0.128	0.167	1.290	mid-conf(0.62): modest trail (x1.10) (proxy)
+EXIT	2024.12.09 18:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.544		0.60		0	0.000		0.000	0.000	4	0.000	0.167	1.580	mid-conf(0.54): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.12.09 19:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.868		0.70		0	0.000		0.170	0.400	4	0.538	0.000	1.615	high-conf(0.87): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.09 20:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.883		0.70		0	0.000		0.201	0.400	4	0.413	0.000	1.772	high-conf(0.88): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.09 21:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.778		0.70		0	0.000		0.233	0.400	4	0.664	0.000	0.666	high-conf(0.78): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.09 22:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.791		0.70		0	0.000		0.277	0.400	3	0.634	0.000	0.810	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.09 23:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.802		0.70		0	0.000		0.312	0.400	2	0.781	0.000	0.924	high-conf(0.80): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 01:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.792		0.70		0	0.000		0.312	0.600	4	0.000	0.000	0.812	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 02:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.790		0.70		0	0.000		0.312	0.600	4	0.510	0.000	0.792	high-conf(0.79): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 03:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.768		0.70		0	0.000		0.312	1.000	4	0.200	0.000	0.567	high-conf(0.77): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 04:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.757		1.60		0	0.000		0.312	1.000	2	0.547	0.000	0.448	high-conf(0.76): runner -> widen trail (x1.60); let it run (proxy)
+OPEN	2024.12.10 05:00	PinBarEntry	41755257	712	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.12.10 05:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.749		1.60		0	0.000		0.312	1.000	1	0.722	0.000	0.366	high-conf(0.75): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.12.10 06:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.745		0.70		0	0.000		0.312	0.600	3	0.903	0.000	0.321	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 07:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.743		0.70		0	0.000		0.312	0.600	3	0.950	0.000	0.300	high-conf(0.74): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 08:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.750		0.70		0	0.000		0.312	0.400	4	0.000	0.000	0.378	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 09:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.745		1.60		0	0.000		0.312	0.600	2	0.000	0.000	0.318	high-conf(0.74): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.12.10 10:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.758		0.70		0	0.000		0.312	0.400	1	0.000	0.000	0.456	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 11:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.765		0.70		0	0.000		0.312	0.400	2	0.464	0.000	0.528	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 12:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.756		0.70		0	0.000		0.312	0.600	4	0.000	0.000	0.437	high-conf(0.76): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 13:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.718		0.60		0	0.000		0.000	0.000	4	0.100	0.000	0.039	mid-conf(0.72): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.12.10 14:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.723		0.70		0	0.000		0.142	0.400	4	0.000	0.000	0.091	high-conf(0.72): momentum reversing -> lock gains (tighten x0.70) (proxy)
+OPEN	2024.12.10 15:00	PinBarEntry	191462863	714	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.12.10 15:00	ExpansionEngine	1609039226	715	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.12.10 15:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.588		0.60		0	0.000		0.000	0.000	3	0.000	0.000	1.111	mid-conf(0.59): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.12.10 16:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.507		1.10		0	0.000		0.000	0.000	2	0.218	0.167	0.979	mid-conf(0.51): modest trail (x1.10) (proxy)
+OPEN	2024.12.10 17:00	PinBarEntry	1816633439	724	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+EXIT	2024.12.10 17:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.569		1.10		0	0.000		0.000	0.000	1	0.200	0.333	0.560	mid-conf(0.57): modest trail (x1.10) (proxy)
+EXIT	2024.12.10 18:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.539		0.60		0	0.000		0.111	0.400	4	0.000	0.333	0.633	mid-conf(0.54): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.12.10 19:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.620		1.10		0	0.000		0.000	0.000	3	0.000	0.333	0.386	mid-conf(0.62): modest trail (x1.10) (proxy)
+EXIT	2024.12.10 20:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.596		1.10		0	0.000		0.000	0.000	2	0.386	0.333	0.282	mid-conf(0.60): modest trail (x1.10) (proxy)
+EXIT	2024.12.10 21:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.566		0.60		0	0.000		0.054	0.400	4	0.000	0.333	0.382	mid-conf(0.57): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.12.10 22:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.753		0.70		0	0.000		0.065	0.400	4	0.498	0.000	0.403	high-conf(0.75): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.10 23:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.732		0.70		0	0.000		0.068	0.400	3	0.651	0.000	0.190	high-conf(0.73): momentum reversing -> lock gains (tighten x0.70) (proxy)
+EXIT	2024.12.11 01:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.724		1.60		0	0.000		0.068	0.600	1	0.000	0.000	0.098	high-conf(0.72): runner -> widen trail (x1.60); let it run (proxy)
+EXIT	2024.12.11 02:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	3	0.448		0.60		0	0.000		0.000	0.000	1	0.100	0.000	0.195	mid-conf(0.45): momentum deteriorating -> tighten (x0.60) (proxy)
+EXIT	2024.12.11 03:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	4	0.529		1.10		0	0.000		0.000	0.000	1	0.200	0.167	0.451	mid-conf(0.53): modest trail (x1.10) (proxy)
+EXIT	2024.12.11 04:00	EngulfingEntry	1079816125	711	RM_CURRENT	0	RM_ENG_C	1	2	1	0.388		1.00		0	0.000		0.000	0.000	4	0.000	0.167	0.007	low-conf(0.39): origin break / momentum deterioration -> close early (proxy)
+OPEN	2024.12.16 13:00	PinBarEntry	1536699201	730	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
+OPEN	2024.12.17 13:00	PinBarEntry	1953495591	732	RM_CURRENT	0	RM_ENG_C	1	2	0	0.000	1.00	1.00		0									
