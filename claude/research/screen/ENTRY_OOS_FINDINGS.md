@@ -1,3 +1,6 @@
+> STATUS LANGUAGE (see MODEL_GOVERNANCE.md): 'REJECTED'/'null' below means ECONOMICALLY_NOT_PROMOTED
+> (engineering + behavior PASS, default-off, kept in the capability set) — NOT rejected-as-bad-code.
+
 # Phase 1 — entry-only OOS evidence (all 6 models, DEFAULT thresholds)
 
 Controls: FULL 34,085/814 · GH 24,074/763 · CONF(23-24) 5,120/237 · LATE(25-26H1) 10,745/163.

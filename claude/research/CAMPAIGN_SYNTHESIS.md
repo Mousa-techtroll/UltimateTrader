@@ -1,3 +1,6 @@
+> STATUS LANGUAGE (see MODEL_GOVERNANCE.md): 'REJECTED'/'null' below means ECONOMICALLY_NOT_PROMOTED
+> (engineering + behavior PASS, default-off, kept in the capability set) — NOT rejected-as-bad-code.
+
 # Entry×Exit research campaign — complete synthesis (all 4 phases)
 
 Branch `research/exploration-entry-exit`. Master-OFF identity byte-exact throughout (six recompiles):

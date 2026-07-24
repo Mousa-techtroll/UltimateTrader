@@ -1,3 +1,6 @@
+> STATUS LANGUAGE (see MODEL_GOVERNANCE.md): 'REJECTED'/'null' below means ECONOMICALLY_NOT_PROMOTED
+> (engineering + behavior PASS, default-off, kept in the capability set) — NOT rejected-as-bad-code.
+
 # Independent dev screen — entry & exit models (2019–2022, PRIMARY XAUUSD+ Model4)
 
 Branch `research/exploration-entry-exit`. Master-OFF identity byte-exact (03ad126b/814/$34,085.46 primary,
