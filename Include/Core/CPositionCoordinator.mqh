@@ -4084,10 +4084,15 @@ public:
                double rx_mfeR  = m_positions[i].mfe / rx_risk;    // running max favourable R == peak_r
                double rx_maeR  = m_positions[i].mae / rx_risk;
                int    rx_bars  = iBarShift(_Symbol, PERIOD_H1, m_positions[i].bar_time_at_entry, false);
-               // FORWARD SHADOW: log every candidate's proposal side-by-side (acts on nothing).
+               // FORWARD SHADOW: drive each candidate's virtual ledger side-by-side (acts on nothing).
+               // base_sl_r = the EA's ACTUAL current trailed stop in R, so a ride/NOOP candidate reproduces
+               // the baseline trade exactly and only real modulation creates a counterfactual delta.
                if(m_researchLab.ShadowActive())
+               {
+                  double rx_base_sl_r = (double)rx_dir * (m_positions[i].stop_loss - m_positions[i].entry_price) / rx_risk;
                   m_researchLab.ShadowTick(m_positions[i].ticket, m_positions[i].engine_name, rx_dir,
-                     m_positions[i].entry_price, rx_risk, rx_bars, rx_curR, rx_mfeR, rx_mfeR, rx_maeR, rx_close, 0.0, false);
+                     m_positions[i].entry_price, rx_risk, rx_bars, rx_curR, rx_mfeR, rx_mfeR, rx_maeR, rx_close, 0.0, false, rx_base_sl_r);
+               }
                SResearchExitProposal rxp = m_researchLab.EvaluateExit(
                   m_positions[i].ticket, m_positions[i].engine_name, rx_dir,
                   m_positions[i].entry_price, rx_risk, rx_bars,
@@ -4315,6 +4320,15 @@ private:
                " hwm=", DoubleToString(m_sleeve_hwm, 2),
                " dd$=", DoubleToString(m_sleeve_hwm - m_sleeve_realized_pnl, 2),
                " dailyLoss$=", DoubleToString(m_sleeve_daily_loss, 2));
+      }
+
+      // FORWARD SHADOW: hand the real trade's exit R to the virtual ledgers so a non-intervening
+      // candidate rides to the REAL outcome (accurate counterfactual), before the record is removed.
+      if(m_researchLab != NULL && m_researchLab.ShadowActive())
+      {
+         double rd_shadow = CalculatePositionRiskDollars(m_positions[index]);
+         double exit_r_shadow = (rd_shadow > 0.0) ? total_trade_pnl / rd_shadow : 0.0;
+         m_researchLab.ShadowSetExitR(m_positions[index].ticket, exit_r_shadow);
       }
 
       // Remove from array

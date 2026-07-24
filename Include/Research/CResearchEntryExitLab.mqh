@@ -20,7 +20,34 @@
 #include "candidates/CEngulfCandCVariants.mqh"
 #include "candidates/CWave2Entries.mqh"
 
-#define RESEARCH_LAB_VERSION 2
+#define RESEARCH_LAB_VERSION 3   // v3: forward-shadow virtual candidate ledgers
+
+// FORWARD-SHADOW VIRTUAL LEDGER — one INDEPENDENT virtual position per (candidate, real ticket).
+// Each candidate's exit path diverges from the real baseline trade once it closes/tightens/partials,
+// so its counterfactual P&L can only be measured on its OWN virtual position. All R-denominated
+// (per unit initial volume). The virtual exit model is self-contained + documented-approximate:
+//  - direct actions are exact: CLOSE_ALL banks remaining at current_r; PARTIAL banks pct at current_r.
+//  - stop trajectory: an R-chandelier (peak_r - VLED_CHANDELIER_R, monotone up) modulated by the
+//    candidate — TIGHTEN locks a stop at (current_r - factor); TRAIL_SCALE widens the chandelier.
+//  - virtual close: closed-bar current_r <= virtual_sl_r, or a CLOSE_ALL, or (ride case) the real
+//    position closing (remaining banked at the last-seen current_r). Closed-bar (no intrabar).
+#define VLED_INIT_SL_R      -1.00   // initial virtual stop = the entry SL (-1R by construction)
+#define VLED_CHANDELIER_R    2.00   // base virtual trail distance in R (approximates the EA chandelier)
+struct SVirtualLedger
+{
+   int      candidate;       // ENUM_RESEARCH_MODEL (the exit candidate this ledger simulates)
+   long     ticket;          // the real baseline position this shadows
+   double   virtual_sl_r;    // current virtual stop in R (monotone up)
+   double   remaining_vol;   // 1.0 -> 0.0 as partials/closes bank
+   double   realized_r;      // accumulated realized R (per unit initial volume)
+   double   peak_r;          // running max current_r
+   double   chandelier_r;    // this ledger's trail distance (widened by TRAIL_SCALE)
+   double   last_r;          // last-seen current_r (ride-case close level)
+   int      det_streak;      // per-candidate consecutive deterioration bars (HYSTERESIS)
+   int      interventions;   // # of meaningful (non-NOOP/non-WAIT) actions taken on this virtual position
+   bool     closed;          // virtual position fully closed
+   bool     valid;
+};
 
 class CResearchEntryExitLab
 {
@@ -51,6 +78,7 @@ private:
    // SOLE-OWNED state
    SResearchTradeStamp     m_stamp[];     // open positions
    SPendingResearchSignal  m_pend[];      // WAIT_FOR_CONFIRM, keyed by signal_id
+   SVirtualLedger          m_vl[];        // forward-shadow: independent virtual position per (candidate, ticket)
    int      m_tele; bool m_ready; datetime m_last_bar;
    bool     m_shadow_all;   // wave-2 forward-shadow: evaluate ALL candidates side-by-side, act on none
 
@@ -268,7 +296,9 @@ public:
    void OnPositionClosed(long ticket)
    {
       if(!m_ready) return;
-      int i=stampIdx(ticket); if(i<0) return;
+      int i=stampIdx(ticket);
+      if(m_shadow_all) VLedgerCloseAll(ticket,(i>=0)?m_stamp[i].signal_id:0,"");   // finalize + log virtual counterfactuals
+      if(i<0) return;
       int n=ArraySize(m_stamp); for(int k=i;k<n-1;k++) m_stamp[k]=m_stamp[k+1]; ArrayResize(m_stamp,n-1);
    }
 
@@ -280,6 +310,10 @@ public:
    ENUM_RESEARCH_MODEL SelExit(){ return m_sel_exit; }
    void SetShadowAll(bool on){ m_shadow_all=on; }
    bool ShadowActive(){ return m_shadow_all; }
+   // Provide the REAL trade's exit R so still-open virtual ledgers ride to the real outcome (accurate
+   // counterfactual). Called by the coordinator on close, just before OnPositionClosed finalizes.
+   void ShadowSetExitR(long ticket,double exit_r)
+   { for(int i=0;i<ArraySize(m_vl);i++) if(m_vl[i].valid && m_vl[i].ticket==ticket && !m_vl[i].closed) m_vl[i].last_r=exit_r; }
 
    // WAVE-2 FORWARD SHADOW: evaluate EVERY registered exit candidate of this position's family
    // side-by-side (incl. the original Eng-C = RM_ENG_C), log each proposal + the counterfactual
@@ -288,7 +322,7 @@ public:
    // exit stays RM_CURRENT so trades are byte-identical to the control while all candidates log.
    void ShadowTick(long ticket,string engine,int direction,double entry_price,double risk_distance,
                    int bars_since_entry,double current_r,double peak_r,double mfe_r,double mae_r,
-                   double current_price,double impulse_now,bool impulse_now_ok)
+                   double current_price,double impulse_now,bool impulse_now_ok,double base_sl_r)
    {
       if(!m_ready || !m_shadow_all) return;
       int prof=engineProfile(engine); if(prof<0) return;
@@ -317,19 +351,76 @@ public:
       c.peak_recovery_ok = (si>=0)? m_stamp[si].peak_recovery_ok : false;
       c.entry_basing     = (si>=0)? m_stamp[si].entry_basing     : 0.0;
       c.entry_basing_ok  = (si>=0)? m_stamp[si].entry_basing_ok  : false;
+      int sigid=(si>=0)?m_stamp[si].signal_id:0;
       for(int m=0;m<RESEARCH_MODEL_COUNT;m++)
       {
          if(m_exit[m]==NULL) continue;
          if(ResearchModelProfile((ENUM_RESEARCH_MODEL)m)!=prof) continue;
-         c.deterioration_streak = (si>=0)? m_stamp[si].shadow_streak[m] : 0;   // per-candidate streak (HYSTERESIS)
+         int vi=vlIdx((int)m,ticket);
+         if(vi<0) vi=vlAdd((int)m,ticket);   // lazily open this candidate's virtual position on first sighting
+         if(m_vl[vi].closed){ logShadow(ticket,engine,(ENUM_RESEARCH_MODEL)m,c,sp_none(),sigid,vi); continue; }
+         if(current_r>m_vl[vi].peak_r) m_vl[vi].peak_r=current_r;
+         m_vl[vi].last_r=current_r;
+         c.deterioration_streak = m_vl[vi].det_streak;   // the candidate sees ITS OWN virtual streak
          SResearchExitProposal sp=m_exit[m].EvaluateExit(c);
-         if(si>=0){ if(sp.deteriorating) m_stamp[si].shadow_streak[m]++; else m_stamp[si].shadow_streak[m]=0; }
-         logShadow(ticket,engine,(ENUM_RESEARCH_MODEL)m,c,sp,(si>=0)?m_stamp[si].signal_id:0);
+         if(sp.deteriorating) m_vl[vi].det_streak++; else m_vl[vi].det_streak=0;
+         vlApply(vi,sp,current_r,base_sl_r); // advance the virtual position, grounded in the EA base trail
+         logShadow(ticket,engine,(ENUM_RESEARCH_MODEL)m,c,sp,sigid,vi);
       }
    }
 
 private:
-   void logShadow(long ticket,string engine,ENUM_RESEARCH_MODEL m,const SResearchPosCtx &c,const SResearchExitProposal &sp,int sigid)
+   int  vlIdx(int cand,long tk){ for(int i=0;i<ArraySize(m_vl);i++) if(m_vl[i].valid && m_vl[i].candidate==cand && m_vl[i].ticket==tk) return i; return -1; }
+   int  vlAdd(int cand,long tk)
+   {
+      int n=ArraySize(m_vl); ArrayResize(m_vl,n+1);
+      m_vl[n].candidate=cand; m_vl[n].ticket=tk; m_vl[n].virtual_sl_r=VLED_INIT_SL_R; m_vl[n].remaining_vol=1.0;
+      m_vl[n].realized_r=0.0; m_vl[n].peak_r=0.0; m_vl[n].chandelier_r=VLED_CHANDELIER_R; m_vl[n].last_r=0.0;
+      m_vl[n].det_streak=0; m_vl[n].interventions=0; m_vl[n].closed=false; m_vl[n].valid=true;
+      return n;
+   }
+   SResearchExitProposal sp_none(){ SResearchExitProposal p; ExitPropInit(p); return p; }
+   // Advance a virtual position from a candidate proposal. GROUNDED in the EA's actual trailed stop
+   // (base_sl_r, in R) so a NOOP/ride candidate reproduces the baseline trade EXACTLY (delta 0) and
+   // only real modulation (earlier CLOSE / PARTIAL / a tighter TIGHTEN) creates a counterfactual delta.
+   // Closed-bar; matches the coordinator's action mapping (TIGHTEN factor -> stop at -factor R).
+   void vlApply(int vi,const SResearchExitProposal &sp,double current_r,double base_sl_r)
+   {
+      if(!m_vl[vi].valid || m_vl[vi].closed) return;
+      if(sp.action!=0 && sp.action!=5) m_vl[vi].interventions++;   // meaningful intervention (not NOOP/WAIT)
+      if(sp.action==1)         // CLOSE_ALL -> bank the remainder at current_r
+      { m_vl[vi].realized_r += m_vl[vi].remaining_vol*current_r; m_vl[vi].remaining_vol=0.0; m_vl[vi].closed=true; return; }
+      else if(sp.action==2)    // CLOSE_PARTIAL -> bank pct of the remaining at current_r, keep the runner
+      { double f=sp.pct/100.0; if(f>0.0 && f<=1.0){ m_vl[vi].realized_r += f*m_vl[vi].remaining_vol*current_r; m_vl[vi].remaining_vol*=(1.0-f); } }
+      else if(sp.action==3)    // TIGHTEN_SL -> the candidate's OWN stop at -factor R (monotone up)
+      { double s=-sp.factor; if(s>m_vl[vi].virtual_sl_r) m_vl[vi].virtual_sl_r=s; }
+      // action 4 TRAIL_SCALE loosens a future trail -> no early exit here; the runner rides to the real outcome.
+      // Closed-bar check of the candidate's OWN stop only (initial -1R + its tightens). The RIDE portion is NOT
+      // modelled with a synthetic trail (that missed the real take-profit and over-captured) — a non-intervening
+      // candidate rides to the real trade's outcome (VLedgerCloseAll banks it), reproducing the baseline exactly.
+      if(current_r <= m_vl[vi].virtual_sl_r)
+      { m_vl[vi].realized_r += m_vl[vi].remaining_vol*m_vl[vi].virtual_sl_r; m_vl[vi].remaining_vol=0.0; m_vl[vi].closed=true; }
+   }
+   // On real close: bank any still-open virtual remainder at the last-seen current_r (ride case), log the
+   // candidate's FINAL counterfactual outcome, and drop this ticket's ledgers.
+   void VLedgerCloseAll(long ticket,int sigid,string engine)
+   {
+      for(int i=ArraySize(m_vl)-1;i>=0;i--)
+      {
+         if(!m_vl[i].valid || m_vl[i].ticket!=ticket) continue;
+         if(!m_vl[i].closed && m_vl[i].remaining_vol>0.0)
+         { m_vl[i].realized_r += m_vl[i].remaining_vol*m_vl[i].last_r; m_vl[i].remaining_vol=0.0; m_vl[i].closed=true; }
+         if(m_tele!=-1)
+            FileWrite(m_tele,"VCLOSE",TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES),engine,sigid,(int)ticket,
+              EnumToString((ENUM_RESEARCH_MODEL)m_vl[i].candidate),exitVer((ENUM_RESEARCH_MODEL)m_vl[i].candidate),"","",
+              RESEARCH_LAB_VERSION,m_vl[i].interventions,DoubleToString(m_vl[i].realized_r,4),
+              DoubleToString(m_vl[i].peak_r,3),DoubleToString(m_vl[i].virtual_sl_r,3),"","","","","","","","","",
+              "vclose realized_r="+DoubleToString(m_vl[i].realized_r,4));
+         int n=ArraySize(m_vl); for(int k=i;k<n-1;k++) m_vl[k]=m_vl[k+1]; ArrayResize(m_vl,n-1);
+      }
+   }
+
+   void logShadow(long ticket,string engine,ENUM_RESEARCH_MODEL m,const SResearchPosCtx &c,const SResearchExitProposal &sp,int sigid,int vi)
    {
       if(m_tele==-1) return;
       double trendval=(c.momseq.momentum_persistence.available)?(double)c.direction*c.momseq.momentum_persistence.value:0.0;
@@ -339,7 +430,9 @@ private:
         DoubleToString(c.mfe_r,3),DoubleToString(trendval,3),
         DoubleToString(c.pullback.pullback_depth.value,3),DoubleToString(c.pullback.recovery_confirmed.value,3),
         DoubleToString(c.momseq.momentum_phase.value,0),DoubleToString(c.momseq.sequence_exhaustion.value,3),
-        DoubleToString(c.breakout.follow_through_persistence.value,3),DoubleToString(c.room.room_R.value,3),san(sp.reason));
+        DoubleToString(c.breakout.follow_through_persistence.value,3),DoubleToString(c.room.room_R.value,3),
+        san(sp.reason)+StringFormat(" | vl realR=%.4f rem=%.2f sl=%.2f int=%d closed=%d",
+          m_vl[vi].realized_r,m_vl[vi].remaining_vol,m_vl[vi].virtual_sl_r,m_vl[vi].interventions,(m_vl[vi].closed?1:0)));
    }
 };
 
