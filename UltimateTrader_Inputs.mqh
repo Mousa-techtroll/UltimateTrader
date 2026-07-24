@@ -887,12 +887,12 @@ input bool   InpAccountSafetyActive = false;  // Enable the broker-authoritative
 // RESEARCH ENTRY×EXIT LAB (research branch only) — ABSOLUTE master switch. OFF (default) =>
 // the lab is never constructed, no handles/state/telemetry, every hook is NULL-guarded =>
 // byte-identical to the baseline. Entry and exit models are selected INDEPENDENTLY; 0 = RM_CURRENT
-// (production admission/exit, no research change on that side). IDs (ENUM_RESEARCH_MODEL, never renumber):
-//   0 RM_CURRENT | 1 RM_ENG_A | 2 RM_ENG_B | 3 RM_ENG_C | 4 RM_PBC_A | 5 RM_PBC_B | 6 RM_PBC_C
-// Cross-profile pairs (Engulfing entry + PBC exit, or vice-versa) FAIL lab init by design.
+// (production admission/exit, no research change on that side). IDs (ENUM_RESEARCH_MODEL in ResearchVocab.mqh,
+// never renumber). Profiles 0-9: 0 Engulf, 1 PBC, 2 Crash, 3 PinBar, 4 Expansion, 5 FailedBreak, 6 MACross,
+// 7 CONT sleeve, 8 CREV sleeve, 9 TMF sleeve. A cross-profile entry/exit pair FAILS lab init by design.
 input bool   InpResearchLabEnable  = false;  // ABSOLUTE master for the research entry×exit lab (OFF => byte-identical)
-input int    InpResearchEntryModel = 0;      // entry model id (0=RM_CURRENT; 1..3 Engulfing A/B/C; 4..6 PBC A/B/C; 11 Eng-alloc; 12 PBC-state)
-input int    InpResearchExitModel  = 0;      // exit  model id (0=RM_CURRENT; 1..3 Eng A/B/C; 4..6 PBC A/B/C; 7-10 Eng-C gated/protect/partial/hyst)
+input int    InpResearchEntryModel = 0;      // entry model id (0=RM_CURRENT; 1-6/11-12 Eng/PBC; 16/19/22/24/26 family classifiers; 27-29 sleeves)
+input int    InpResearchExitModel  = 0;      // exit  model id (0=RM_CURRENT; 1-10 Eng/PBC; 13-15 Crash; 17-18 Pin; 20-21 Exp; 23 FBR; 25 MAC)
 // FORWARD SHADOW: evaluate ALL exit candidates side-by-side per bar + log counterfactuals, act on NONE
 // (trades stay byte-identical to control while every candidate is logged). Needs InpResearchLabEnable.
 input bool   InpResearchShadowAll  = false;  // research forward-shadow: log all exit candidates, act on none
