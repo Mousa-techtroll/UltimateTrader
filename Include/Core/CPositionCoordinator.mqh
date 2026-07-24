@@ -4084,6 +4084,10 @@ public:
                double rx_mfeR  = m_positions[i].mfe / rx_risk;    // running max favourable R == peak_r
                double rx_maeR  = m_positions[i].mae / rx_risk;
                int    rx_bars  = iBarShift(_Symbol, PERIOD_H1, m_positions[i].bar_time_at_entry, false);
+               // FORWARD SHADOW: log every candidate's proposal side-by-side (acts on nothing).
+               if(m_researchLab.ShadowActive())
+                  m_researchLab.ShadowTick(m_positions[i].ticket, m_positions[i].engine_name, rx_dir,
+                     m_positions[i].entry_price, rx_risk, rx_bars, rx_curR, rx_mfeR, rx_mfeR, rx_maeR, rx_close, 0.0, false);
                SResearchExitProposal rxp = m_researchLab.EvaluateExit(
                   m_positions[i].ticket, m_positions[i].engine_name, rx_dir,
                   m_positions[i].entry_price, rx_risk, rx_bars,

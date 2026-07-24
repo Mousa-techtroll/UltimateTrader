@@ -1,0 +1,1173 @@
+Kind,Time,Engine,SignalId,Ticket,EntryModel,EntryVer,ExitModel,ExitVer,LabVer,Action,Conf,ReqRisk,ApplRisk,Wait,Subtype,Impulse,TrendAlign,PbDepth,RecConf,MomPhase,SeqExh,FollowThru,RoomR,Reason
+OPEN	2019.01.03 09:00	MACrossEntry	1041383338	2	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.07 02:00	PinBarEntry	1733409479	5	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.07 10:00	MACrossEntry	333189048	7	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.08 09:00	PinBarEntry	1329167209	9	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.22 03:00	PinBarEntry	1120970889	12	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.01.28 18:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.01.28 18:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.746		1.15		0	0.000		0.244	1.000	2	0.509	0.000	0.338	gated: healthy -> modest trail
+EXIT	2019.01.28 19:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.244	0.600	3	0.534	0.000	0.188	gated: healthy -> modest trail
+EXIT	2019.01.28 20:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.734		0.70		0	0.000		0.244	0.400	4	0.000	0.000	0.208	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.22) -> tighten
+EXIT	2019.01.28 21:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.244	0.400	4	0.100	0.000	0.311	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.29) -> tighten
+EXIT	2019.01.28 22:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.244	0.400	4	0.611	0.000	0.329	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.29) -> tighten
+EXIT	2019.01.28 23:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.723		1.15		0	0.000		0.244	0.600	1	0.000	0.000	0.088	gated: healthy -> modest trail
+EXIT	2019.01.29 01:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.736		0.70		0	0.000		0.244	0.400	4	0.000	0.000	0.227	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.29) -> tighten
+EXIT	2019.01.29 02:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.723		1.15		0	0.000		0.244	0.600	3	0.000	0.000	0.095	gated: healthy -> modest trail
+EXIT	2019.01.29 03:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.809		1.15		0	0.000		0.000	0.000	3	0.247	0.000	0.995	gated: healthy -> modest trail
+EXIT	2019.01.29 04:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.735		0.70		0	0.000		0.081	0.400	4	0.000	0.000	0.218	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.35) -> tighten
+EXIT	2019.01.29 05:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.718		1.15		0	0.000		0.081	0.600	2	0.000	0.000	0.038	gated: healthy -> modest trail
+EXIT	2019.01.29 06:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.728		0.70		0	0.000		0.081	0.400	3	0.000	0.000	0.145	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.35) -> tighten
+EXIT	2019.01.29 07:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.728		1.15		0	0.000		0.081	0.600	3	0.000	0.000	0.140	gated: healthy -> modest trail
+EXIT	2019.01.29 08:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.722		1.15		0	0.000		0.081	0.600	3	0.100	0.000	0.084	gated: healthy -> modest trail
+OPEN	2019.01.29 09:00	PinBarEntry	1508575854	15	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.01.29 09:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.542		0.70		0	0.000		0.000	0.000	1	0.200	0.000	0.882	gated: mom decayed; not a strong-trend winner (trend=3.0 peak_r=0.69) -> tighten
+EXIT	2019.01.29 10:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.572		1.15		0	0.000		0.000	0.000	1	0.300	0.167	0.429	gated: healthy -> modest trail
+EXIT	2019.01.29 11:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.557		1.15		0	0.000		0.000	0.000	2	0.730	0.333	0.270	gated: healthy -> modest trail
+EXIT	2019.01.29 12:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.549		0.70		0	0.000		0.119	0.400	4	0.000	0.333	0.293	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.20) -> tighten
+EXIT	2019.01.29 13:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.513		0.70		0	0.000		0.119	0.400	4	0.100	0.333	0.399	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.20) -> tighten
+EXIT	2019.01.29 14:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.499		0.70		0	0.000		0.119	0.400	4	0.623	0.333	0.292	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.20) -> tighten
+EXIT	2019.01.29 15:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.524		1.15		0	0.000		0.000	0.000	1	0.000	0.333	0.233	gated: healthy -> modest trail
+EXIT	2019.01.29 16:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.309	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.58) -> tighten
+EXIT	2019.01.29 17:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.758		0.70		0	0.000		0.369	0.400	3	0.100	0.000	0.454	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.58) -> tighten
+EXIT	2019.01.29 18:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.869		1.15		0	0.000		0.000	0.000	1	0.000	0.000	1.628	gated: healthy -> modest trail
+EXIT	2019.01.29 19:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.726		0.70		0	0.000		0.186	0.400	4	0.000	0.000	0.127	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.63) -> tighten
+EXIT	2019.01.29 20:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.717		1.15		0	0.000		0.220	0.600	3	0.000	0.000	0.025	gated: healthy -> modest trail
+EXIT	2019.01.29 21:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.737		1.15		0	0.000		0.220	0.600	3	0.116	0.000	0.234	gated: healthy -> modest trail
+EXIT	2019.01.29 22:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.867		1.15		0	0.000		0.000	0.000	3	0.211	0.000	1.608	gated: healthy -> modest trail
+EXIT	2019.01.29 23:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.862		1.15		0	0.000		0.085	0.600	2	0.527	0.000	1.553	gated: healthy -> modest trail
+EXIT	2019.01.30 01:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.723		1.15		0	0.000		0.000	0.000	3	0.778	0.000	0.095	gated: healthy -> modest trail
+EXIT	2019.01.30 02:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.735		0.70		0	0.000		0.087	0.400	4	0.000	0.000	0.213	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.68) -> tighten
+EXIT	2019.01.30 03:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.726		1.15		0	0.000		0.097	0.600	2	0.000	0.000	0.122	gated: healthy -> modest trail
+EXIT	2019.01.30 04:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.795		1.15		0	0.000		0.000	0.000	1	0.100	0.000	1.102	gated: healthy -> modest trail
+EXIT	2019.01.30 05:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.508		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.122	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.06) -> tighten
+EXIT	2019.01.30 06:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.433		0.70		0	0.000		0.089	0.400	4	0.100	0.000	1.211	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.06) -> tighten
+EXIT	2019.01.30 07:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.466		1.15		0	0.000		0.000	0.000	3	0.000	0.000	1.104	gated: healthy -> modest trail
+EXIT	2019.01.30 08:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.540		1.15		0	0.000		0.000	0.000	1	0.100	0.000	0.864	gated: healthy -> modest trail
+EXIT	2019.01.30 09:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.457		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.996	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.31) -> tighten
+EXIT	2019.01.30 10:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.476		1.15		0	0.000		0.113	0.600	3	0.000	0.000	0.957	gated: healthy -> modest trail
+EXIT	2019.01.30 11:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.818		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.093	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 12:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.820		0.70		0	0.000		0.164	0.400	2	0.527	0.000	1.113	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 13:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.836		0.70		0	0.000		0.170	0.400	3	0.200	0.000	1.276	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 14:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.758		0.70		0	0.000		0.175	0.600	4	0.000	0.000	0.463	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 15:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.779		0.70		0	0.000		0.214	0.400	1	0.000	0.000	0.682	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 16:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.793		0.70		0	0.000		0.304	0.000	2	0.274	0.000	0.828	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 17:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.803		0.70		0	0.000		0.357	0.000	3	0.482	0.000	0.930	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 18:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.778		0.70		0	0.000		0.357	0.600	4	0.000	0.000	0.673	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 19:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.790		0.70		0	0.000		0.357	0.000	2	0.000	0.000	0.796	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.39) -> tighten
+EXIT	2019.01.30 20:00	EngulfingEntry	423034742	14	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.796		0.70		0	0.000		0.357	0.000	3	0.336	0.000	0.861	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.39) -> tighten
+OPEN	2019.02.07 03:00	PinBarEntry	489217350	23	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.18 15:00	PinBarEntry	566158636	26	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.19 11:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.02.19 11:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.649		1.15		0	0.000		0.000	0.000	2	0.183	0.000	0.190	gated: healthy -> modest trail
+EXIT	2019.02.19 12:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.421		1.15		0	0.000		0.000	0.000	3	0.607	0.167	0.111	gated: healthy -> modest trail
+EXIT	2019.02.19 13:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.479		1.15		0	0.000		0.093	0.600	3	0.791	0.333	0.103	gated: healthy -> modest trail
+EXIT	2019.02.19 14:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.418		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.141	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.24) -> tighten
+OPEN	2019.02.19 15:00	MACrossEntry	1728141223	29	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.02.19 15:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.592		1.15		0	0.000		0.000	0.000	1	0.000	0.333	1.221	gated: healthy -> modest trail
+OPEN	2019.02.19 16:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.02.19 16:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.632		1.15		0	0.000		0.000	0.000	2	0.208	0.333	1.247	gated: healthy -> modest trail
+EXIT	2019.02.19 16:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.619		1.15		0	0.000		0.000	0.000	2	0.208	0.333	1.044	gated: healthy -> modest trail
+EXIT	2019.02.19 17:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.643		1.15		0	0.000		0.000	0.000	1	0.200	0.333	0.794	gated: healthy -> modest trail
+EXIT	2019.02.19 17:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.634		1.15		0	0.000		0.000	0.000	1	0.200	0.333	0.665	gated: healthy -> modest trail
+EXIT	2019.02.19 18:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.789		1.15		0	0.000		0.000	0.000	1	0.300	0.000	1.817	gated: healthy -> modest trail
+EXIT	2019.02.19 18:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.761		1.15		0	0.000		0.000	0.000	1	0.300	0.000	1.521	gated: healthy -> modest trail
+EXIT	2019.02.19 19:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.477		0.70		0	0.000		0.152	0.400	4	0.000	0.000	1.918	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.15) -> tighten
+EXIT	2019.02.19 19:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.456		0.70		0	0.000		0.152	0.400	4	0.000	0.000	1.607	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.40) -> tighten
+EXIT	2019.02.19 20:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.574		1.15		0	0.000		0.000	0.000	3	0.000	0.000	1.453	gated: healthy -> modest trail
+EXIT	2019.02.19 20:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.558		1.15		0	0.000		0.000	0.000	3	0.000	0.000	1.217	gated: healthy -> modest trail
+EXIT	2019.02.19 21:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.515		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.513	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.52) -> tighten
+EXIT	2019.02.19 21:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.498		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.267	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.71) -> tighten
+EXIT	2019.02.19 22:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.504		0.70		0	0.000		0.129	0.400	4	0.255	0.000	1.555	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.52) -> tighten
+EXIT	2019.02.19 22:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.487		0.70		0	0.000		0.129	0.400	4	0.255	0.000	1.302	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.71) -> tighten
+EXIT	2019.02.19 23:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.535		1.15		0	0.000		0.129	0.600	3	0.000	0.000	1.438	gated: healthy -> modest trail
+EXIT	2019.02.19 23:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.519		1.15		0	0.000		0.129	0.600	3	0.000	0.000	1.204	gated: healthy -> modest trail
+EXIT	2019.02.20 01:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.467		1.15		0	0.000		0.129	0.600	2	0.341	0.000	0.125	gated: healthy -> modest trail
+EXIT	2019.02.20 01:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.465		1.15		0	0.000		0.129	0.600	2	0.341	0.000	0.105	gated: healthy -> modest trail
+EXIT	2019.02.20 02:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.748		0.70		0	0.000		0.129	0.400	4	0.000	0.000	0.351	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.52) -> tighten
+EXIT	2019.02.20 02:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.742		0.70		0	0.000		0.129	0.400	4	0.000	0.000	0.294	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.71) -> tighten
+EXIT	2019.02.20 03:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.734		1.15		0	0.000		0.129	0.600	2	0.000	0.000	0.203	gated: healthy -> modest trail
+EXIT	2019.02.20 03:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.731		1.15		0	0.000		0.129	0.600	2	0.000	0.000	0.170	gated: healthy -> modest trail
+EXIT	2019.02.20 04:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.000	0.000	1	0.100	0.000	0.820	gated: healthy -> modest trail
+EXIT	2019.02.20 04:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.725		1.15		0	0.000		0.000	0.000	1	0.100	0.000	0.686	gated: healthy -> modest trail
+EXIT	2019.02.20 05:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.569		1.15		0	0.000		0.000	0.000	2	0.482	0.167	0.539	gated: healthy -> modest trail
+EXIT	2019.02.20 05:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.563		1.15		0	0.000		0.000	0.000	2	0.482	0.167	0.452	gated: healthy -> modest trail
+EXIT	2019.02.20 06:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.424		0.70		0	0.000		0.120	0.400	4	0.000	0.167	0.903	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 06:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.414		0.70		0	0.000		0.120	0.400	4	0.000	0.167	0.756	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 07:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.371		0.70		0	0.000		0.170	0.400	4	0.412	0.167	1.037	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 07:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.360		0.70		0	0.000		0.170	0.400	4	0.412	0.167	0.868	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 08:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.288		0.70		0	0.000		0.186	0.400	4	0.515	0.167	0.660	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 08:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.280		0.70		0	0.000		0.186	0.400	4	0.515	0.167	0.552	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 09:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.252		0.70		0	0.000		0.212	0.400	4	0.609	0.167	0.775	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 09:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.243		0.70		0	0.000		0.212	0.400	4	0.609	0.167	0.649	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 10:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.295		0.70		0	0.000		0.212	0.600	4	0.000	0.167	0.641	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 10:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.288		0.70		0	0.000		0.212	0.600	4	0.000	0.167	0.537	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 11:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.787		0.70		0	0.000		0.212	0.400	2	0.000	0.000	0.760	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 11:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.775		0.70		0	0.000		0.212	0.400	2	0.000	0.000	0.636	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 12:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.758		0.70		0	0.000		0.212	0.600	4	0.000	0.000	0.459	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 12:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.751		0.70		0	0.000		0.212	0.600	4	0.000	0.000	0.385	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 13:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.744		1.15		0	0.000		0.212	1.000	2	0.356	0.000	0.308	gated: healthy -> modest trail
+EXIT	2019.02.20 13:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.739		1.15		0	0.000		0.212	1.000	2	0.356	0.000	0.258	gated: healthy -> modest trail
+EXIT	2019.02.20 14:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.759		0.70		0	0.000		0.212	0.400	4	0.000	0.000	0.470	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 14:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.752		0.70		0	0.000		0.212	0.400	4	0.000	0.000	0.394	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 15:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.756		1.15		0	0.000		0.212	0.600	2	0.000	0.000	0.436	gated: healthy -> modest trail
+EXIT	2019.02.20 15:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.749		1.15		0	0.000		0.212	0.600	2	0.000	0.000	0.365	gated: healthy -> modest trail
+EXIT	2019.02.20 16:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.753		0.70		0	0.000		0.212	0.400	4	0.000	0.000	0.402	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 16:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.212	0.400	4	0.000	0.000	0.337	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 17:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.734		1.15		0	0.000		0.212	0.600	1	0.000	0.000	0.203	gated: healthy -> modest trail
+EXIT	2019.02.20 17:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.731		1.15		0	0.000		0.212	0.600	1	0.000	0.000	0.170	gated: healthy -> modest trail
+EXIT	2019.02.20 18:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.742		1.15		0	0.000		0.212	0.600	2	0.294	0.000	0.296	gated: healthy -> modest trail
+EXIT	2019.02.20 18:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.212	0.600	2	0.294	0.000	0.248	gated: healthy -> modest trail
+EXIT	2019.02.20 19:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.743		0.70		0	0.000		0.212	0.400	3	0.000	0.000	0.299	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 19:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.738		0.70		0	0.000		0.212	0.400	3	0.000	0.000	0.250	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.34) -> tighten
+EXIT	2019.02.20 20:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.212	0.600	3	0.000	0.000	0.231	gated: healthy -> modest trail
+EXIT	2019.02.20 20:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.733		1.15		0	0.000		0.212	0.600	3	0.000	0.000	0.194	gated: healthy -> modest trail
+EXIT	2019.02.20 21:00	EngulfingEntry	1909373858	30	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.763		0.70		0	0.000		0.212	0.400	4	0.000	0.000	0.512	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.28) -> tighten
+EXIT	2019.02.20 21:00	EngulfingEntry	102827559	27	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.755		0.70		0	0.000		0.212	0.400	4	0.000	0.000	0.428	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.34) -> tighten
+OPEN	2019.02.25 17:00	PinBarEntry	562179751	46	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.02.26 08:00	PinBarEntry	1369788164	47	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.04 10:00	ExpansionEngine	984580396	51	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.07 14:00	PinBarEntry	575033570	55	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.03.13 13:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.03.13 13:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.497		1.15		0	0.000		0.000	0.000	2	0.325	0.167	0.352	gated: healthy -> modest trail
+EXIT	2019.03.13 14:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.523		1.15		0	0.000		0.000	0.000	3	0.598	0.333	0.284	gated: healthy -> modest trail
+EXIT	2019.03.13 15:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.470		0.70		0	0.000		0.091	0.400	4	0.000	0.333	0.373	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.20) -> tighten
+EXIT	2019.03.13 16:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.425		0.70		0	0.000		0.171	0.400	4	0.197	0.333	0.449	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.20) -> tighten
+EXIT	2019.03.13 17:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.545		1.15		0	0.000		0.000	0.000	1	0.000	0.333	0.210	gated: healthy -> modest trail
+EXIT	2019.03.13 18:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.379		0.70		0	0.000		0.153	0.400	4	0.000	0.333	0.513	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.24) -> tighten
+EXIT	2019.03.13 19:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.745		0.70		0	0.000		0.159	0.600	4	0.000	0.000	0.324	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.24) -> tighten
+EXIT	2019.03.13 20:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.159	0.600	3	0.497	0.000	0.189	gated: healthy -> modest trail
+EXIT	2019.03.13 21:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.728		1.15		0	0.000		0.159	0.600	3	0.584	0.000	0.144	gated: healthy -> modest trail
+EXIT	2019.03.13 22:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.828		1.15		0	0.000		0.000	0.000	1	0.300	0.000	1.437	gated: healthy -> modest trail
+EXIT	2019.03.13 23:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.491		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.484	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.53) -> tighten
+EXIT	2019.03.14 01:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.173		0.70		0	0.000		0.134	0.400	4	0.100	0.000	0.352	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.53) -> tighten
+EXIT	2019.03.14 02:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.249		0.70		0	0.000		0.146	0.600	2	0.000	0.000	0.219	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.53) -> tighten
+EXIT	2019.03.14 03:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.173		0.70		0	0.000		0.146	0.400	4	0.000	0.000	0.286	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.53) -> tighten
+EXIT	2019.03.14 04:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.181		0.70		0	0.000		0.189	0.400	3	0.100	0.000	0.470	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.53) -> tighten
+EXIT	2019.03.14 05:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.204		0.70		0	0.000		0.322	0.000	1	0.200	0.000	0.805	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.53) -> tighten
+EXIT	2019.03.14 06:00	EngulfingEntry	1075494813	57	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.802		0.70		0	0.000		0.356	0.000	2	0.635	0.000	0.916	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.53) -> tighten
+OPEN	2019.03.25 12:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.03.25 12:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.402		1.15		0	0.000		0.788	0.600	2	0.470	0.167	0.546	gated: healthy -> modest trail
+EXIT	2019.03.25 13:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.493		1.15		0	0.000		0.788	0.600	3	0.652	0.333	0.524	gated: healthy -> modest trail
+EXIT	2019.03.25 14:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.292		0.70		0	0.000		0.788	0.400	4	0.000	0.333	0.623	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.30) -> tighten
+EXIT	2019.03.25 15:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.429		1.15		0	0.000		0.788	0.600	1	0.000	0.333	0.454	gated: healthy -> modest trail
+EXIT	2019.03.25 16:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.539		1.15		0	0.000		0.788	1.000	1	0.100	0.333	0.178	gated: healthy -> modest trail
+EXIT	2019.03.25 17:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.587		1.15		0	0.000		0.788	0.600	2	0.521	0.333	0.073	gated: healthy -> modest trail
+EXIT	2019.03.25 18:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.718		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.038	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.92) -> tighten
+EXIT	2019.03.25 19:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.863		1.15		0	0.000		0.000	0.000	3	0.000	0.000	1.557	gated: healthy -> modest trail
+EXIT	2019.03.25 20:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.860		1.15		0	0.000		0.172	0.600	2	0.563	0.000	1.533	gated: healthy -> modest trail
+EXIT	2019.03.25 21:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.841		1.15		0	0.000		0.172	0.600	3	0.408	0.000	1.335	gated: healthy -> modest trail
+EXIT	2019.03.25 22:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.867		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.608	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.29) -> tighten
+EXIT	2019.03.25 23:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.850		1.15		0	0.000		0.219	0.600	2	0.000	0.000	1.427	gated: healthy -> modest trail
+EXIT	2019.03.26 01:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.761		0.70		0	0.000		0.219	0.400	4	0.000	0.000	0.495	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 02:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.757		1.15		0	0.000		0.219	0.600	3	0.000	0.000	0.451	gated: healthy -> modest trail
+EXIT	2019.03.26 03:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.769		0.70		0	0.000		0.219	0.400	3	0.000	0.000	0.579	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 04:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.778		0.70		0	0.000		0.245	0.400	2	0.264	0.000	0.665	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 05:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.765		1.15		0	0.000		0.245	0.600	3	0.000	0.000	0.527	gated: healthy -> modest trail
+EXIT	2019.03.26 06:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.760		0.70		0	0.000		0.266	0.400	1	0.000	0.000	0.484	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 07:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.763		0.70		0	0.000		0.266	0.400	2	0.517	0.000	0.513	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 08:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.774		0.70		0	0.000		0.292	0.000	3	0.353	0.000	0.630	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 09:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.806		0.70		0	0.000		0.414	0.000	1	0.300	0.000	0.958	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=1.29) -> tighten
+EXIT	2019.03.26 10:00	EngulfingEntry	2080149445	59	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.801		0.70		0	0.000		0.414	0.200	4	0.000	0.000	0.914	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.29) -> tighten
+OPEN	2019.03.28 07:00	PinBarEntry	880396572	62	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.01 05:00	PinBarEntry	626875995	67	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.22 07:00	PinBarEntry	748242441	70	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.04.23 12:00	PinBarEntry	1803453776	72	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.14 03:00	PullbackContinuationEngine	982439591	76	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.20 06:00	PullbackContinuationEngine	785417698	78	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.21 03:00	PinBarEntry	1738789118	79	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.23 10:00	PinBarEntry	1150901954	85	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.05.30 19:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.05.30 19:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.545		1.15		0	0.000		1.341	0.000	1	0.100	0.167	1.476	gated: healthy -> modest trail
+EXIT	2019.05.30 20:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.537		0.70		0	0.000		1.341	0.200	4	0.000	0.167	1.496	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.02) -> tighten
+EXIT	2019.05.30 21:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.579		1.15		0	0.000		0.238	0.600	3	0.000	0.167	1.394	gated: healthy -> modest trail
+EXIT	2019.05.30 22:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.501		1.15		0	0.000		0.238	0.600	2	0.528	0.167	0.120	gated: healthy -> modest trail
+EXIT	2019.05.30 23:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.534		1.15		0	0.000		0.238	1.000	1	0.319	0.167	0.039	gated: healthy -> modest trail
+EXIT	2019.05.31 01:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.513		0.70		0	0.000		0.238	0.400	4	0.000	0.167	0.089	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.18) -> tighten
+EXIT	2019.05.31 02:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.725		0.70		0	0.000		0.238	0.400	3	0.385	0.000	0.109	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.18) -> tighten
+EXIT	2019.05.31 03:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.770		1.15		0	0.000		0.000	0.000	1	0.000	0.000	1.112	gated: healthy -> modest trail
+EXIT	2019.05.31 04:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.557		1.15		0	0.000		0.000	0.000	2	0.329	0.167	0.970	gated: healthy -> modest trail
+EXIT	2019.05.31 05:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.549		1.15		0	0.000		0.000	0.000	3	0.668	0.333	0.952	gated: healthy -> modest trail
+EXIT	2019.05.31 06:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.464		0.70		0	0.000		0.140	0.400	4	0.000	0.333	1.073	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.67) -> tighten
+EXIT	2019.05.31 07:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.529		1.15		0	0.000		0.140	0.600	2	0.000	0.333	0.980	gated: healthy -> modest trail
+EXIT	2019.05.31 08:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.563		1.15		0	0.000		0.140	1.000	1	0.100	0.333	0.052	gated: healthy -> modest trail
+EXIT	2019.05.31 09:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.577		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.866	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.72) -> tighten
+EXIT	2019.05.31 10:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.771		1.15		0	0.000		0.000	0.000	1	0.000	0.000	0.628	gated: healthy -> modest trail
+EXIT	2019.05.31 11:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.493		1.15		0	0.000		0.000	0.000	2	0.470	0.167	0.566	gated: healthy -> modest trail
+EXIT	2019.05.31 12:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.444		0.70		0	0.000		0.088	0.400	4	0.000	0.167	0.603	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.97) -> tighten
+EXIT	2019.05.31 13:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.549		1.15		0	0.000		0.000	0.000	1	0.000	0.167	0.135	gated: healthy -> modest trail
+EXIT	2019.05.31 14:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.454		0.70		0	0.000		0.000	0.000	4	0.000	0.167	0.307	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.39) -> tighten
+EXIT	2019.05.31 15:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.466		1.15		0	0.000		0.154	0.600	3	0.000	0.167	0.281	gated: healthy -> modest trail
+EXIT	2019.05.31 16:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.445		0.70		0	0.000		0.158	0.400	4	0.000	0.167	0.325	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.39) -> tighten
+EXIT	2019.05.31 17:00	EngulfingEntry	601281956	87	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.158	0.400	4	0.100	0.000	0.312	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.39) -> tighten
+OPEN	2019.06.03 03:00	PinBarEntry	521386297	91	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.05 14:00	EngulfingEntry	1153922400	96	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.05 14:00	EngulfingEntry	1153922400	96	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.571		1.15		0	0.000		0.000	0.000	2	0.526	0.000	1.714	gated: healthy -> modest trail
+EXIT	2019.06.05 15:00	EngulfingEntry	1153922400	96	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.491		0.70		0	0.000		0.320	0.400	4	0.000	0.000	2.283	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.00) -> tighten
+OPEN	2019.06.05 16:00	ExpansionEngine	1006103916	98	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.05 16:00	EngulfingEntry	1153922400	96	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.518		1.15		0	0.000		0.000	0.000	1	0.000	0.000	1.386	gated: healthy -> modest trail
+EXIT	2019.06.05 17:00	EngulfingEntry	1153922400	96	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.896		0.70		0	0.000		0.304	0.400	4	0.000	0.000	1.905	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.80) -> tighten
+OPEN	2019.06.06 11:00	ExpansionEngine	2075473705	101	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.06 16:00	ExpansionEngine	407719561	102	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.10 11:00	PinBarEntry	1450208358	107	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.12 07:00	PinBarEntry	810367243	110	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.12 12:00	EngulfingEntry	1237910082	112	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.12 12:00	EngulfingEntry	1237910082	112	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.653		1.15		0	0.000		1.503	0.600	2	0.538	0.167	1.969	gated: healthy -> modest trail
+EXIT	2019.06.12 13:00	EngulfingEntry	1237910082	112	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.781		0.70		0	0.000		1.907	0.400	4	0.000	0.000	0.701	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.03) -> tighten
+EXIT	2019.06.12 14:00	EngulfingEntry	1237910082	112	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.804		0.70		0	0.000		1.907	0.400	4	0.155	0.000	0.941	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.03) -> tighten
+EXIT	2019.06.12 15:00	EngulfingEntry	1237910082	112	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.773		1.15		0	0.000		0.220	0.600	3	0.000	0.000	0.621	gated: healthy -> modest trail
+OPEN	2019.06.13 10:00	MACrossEntry	1854966224	114	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.13 18:00	PinBarEntry	199842234	115	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.06.19 23:00	EngulfingEntry	2146650996	124	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.19 23:00	EngulfingEntry	2146650996	124	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.532		1.15		0	0.000		0.321	0.600	2	0.390	0.167	0.278	gated: healthy -> modest trail
+EXIT	2019.06.20 01:00	EngulfingEntry	2146650996	124	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.562		1.15		0	0.000		0.000	0.000	1	0.387	0.333	0.212	gated: healthy -> modest trail
+EXIT	2019.06.20 02:00	EngulfingEntry	2146650996	124	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.543		0.70		0	0.000		0.172	0.400	4	0.000	0.333	0.317	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.68) -> tighten
+EXIT	2019.06.20 03:00	EngulfingEntry	2146650996	124	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.523		0.70		0	0.000		0.208	0.400	4	0.100	0.333	0.431	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.68) -> tighten
+EXIT	2019.06.20 04:00	EngulfingEntry	2146650996	124	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.613		1.15		0	0.000		0.000	0.000	1	0.000	0.333	0.816	gated: healthy -> modest trail
+OPEN	2019.06.20 05:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.06.20 05:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.551		1.15		0	0.000		0.000	0.000	2	0.433	0.333	1.132	gated: healthy -> modest trail
+EXIT	2019.06.20 06:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.811		1.15		0	0.000		0.309	0.600	3	0.634	0.000	1.012	gated: healthy -> modest trail
+EXIT	2019.06.20 07:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.806		1.15		0	0.000		0.309	0.600	3	0.773	0.000	0.962	gated: healthy -> modest trail
+EXIT	2019.06.20 08:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.787		0.70		0	0.000		0.309	0.400	4	0.000	0.000	0.768	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.27) -> tighten
+EXIT	2019.06.20 09:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.768		1.15		0	0.000		0.309	0.600	1	0.000	0.000	0.569	gated: healthy -> modest trail
+EXIT	2019.06.20 10:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.767		1.15		0	0.000		0.309	0.600	2	0.567	0.000	0.555	gated: healthy -> modest trail
+EXIT	2019.06.20 11:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.772		0.70		0	0.000		0.309	0.400	4	0.000	0.000	0.605	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.47) -> tighten
+EXIT	2019.06.20 12:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.779		0.70		0	0.000		0.309	0.400	3	0.100	0.000	0.677	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.47) -> tighten
+EXIT	2019.06.20 13:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.309	0.600	1	0.000	0.000	0.184	gated: healthy -> modest trail
+EXIT	2019.06.20 14:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.743		0.70		0	0.000		0.309	0.400	4	0.000	0.000	0.301	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.47) -> tighten
+EXIT	2019.06.20 15:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.741		1.15		0	0.000		0.309	0.600	3	0.000	0.000	0.281	gated: healthy -> modest trail
+EXIT	2019.06.20 16:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.309	0.600	3	0.100	0.000	0.183	gated: healthy -> modest trail
+EXIT	2019.06.20 17:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.737		0.70		0	0.000		0.309	0.400	2	0.000	0.000	0.236	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.47) -> tighten
+EXIT	2019.06.20 18:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.733		1.15		0	0.000		0.309	0.600	3	0.000	0.000	0.199	gated: healthy -> modest trail
+EXIT	2019.06.20 19:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.720		1.15		0	0.000		0.309	1.000	1	0.100	0.000	0.065	gated: healthy -> modest trail
+EXIT	2019.06.20 20:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.743		1.15		0	0.000		0.309	1.000	2	0.228	0.000	0.306	gated: healthy -> modest trail
+EXIT	2019.06.20 21:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.309	0.600	1	0.362	0.000	0.186	gated: healthy -> modest trail
+EXIT	2019.06.20 22:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.732		0.70		0	0.000		0.309	0.400	4	0.000	0.000	0.191	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.79) -> tighten
+EXIT	2019.06.20 23:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.736		0.70		0	0.000		0.309	0.400	4	0.100	0.000	0.224	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.79) -> tighten
+EXIT	2019.06.21 01:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.738		0.70		0	0.000		0.309	0.400	4	0.200	0.000	0.251	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.79) -> tighten
+EXIT	2019.06.21 02:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.309	0.600	2	0.000	0.000	0.225	gated: healthy -> modest trail
+EXIT	2019.06.21 03:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.726		1.15		0	0.000		0.309	1.000	1	0.100	0.000	0.124	gated: healthy -> modest trail
+EXIT	2019.06.21 04:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.718		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.036	gated: healthy -> modest trail
+EXIT	2019.06.21 05:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.739		1.15		0	0.000		0.000	0.000	1	0.300	0.000	0.277	gated: healthy -> modest trail
+EXIT	2019.06.21 06:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.441		1.30		0	0.000		0.000	0.000	2	0.838	0.167	0.201	gated: mom decayed BUT strong trend(persist=5.0>=3.0) + winner(peak_r=1.72) -> hold/widen (no clip)
+EXIT	2019.06.21 07:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.422		0.70		0	0.000		0.108	0.400	4	0.000	0.167	0.252	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.72) -> tighten
+EXIT	2019.06.21 08:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.401		0.70		0	0.000		0.120	0.400	4	0.100	0.167	0.310	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.72) -> tighten
+EXIT	2019.06.21 09:00	EngulfingEntry	1647072359	129	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.289		0.70		0	0.000		0.217	0.400	4	0.200	0.167	0.728	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.72) -> tighten
+OPEN	2019.06.25 22:00	PinBarEntry	298193214	133	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.04 18:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.07.04 18:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.791		1.15		0	0.000		0.490	1.000	1	0.100	0.000	0.810	gated: healthy -> modest trail
+EXIT	2019.07.04 19:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.803		0.70		0	0.000		0.490	0.000	2	0.000	0.000	0.934	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.03) -> tighten
+EXIT	2019.07.04 20:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.808		0.70		0	0.000		0.490	0.000	3	0.393	0.000	0.983	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.03) -> tighten
+EXIT	2019.07.04 21:20	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.746		1.15		0	0.000		0.490	0.200	3	0.000	0.000	0.329	gated: healthy -> modest trail
+EXIT	2019.07.04 22:22	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.745		1.15		0	0.000		0.490	0.200	3	0.100	0.000	0.318	gated: healthy -> modest trail
+EXIT	2019.07.04 23:41	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.490	0.000	1	0.000	0.000	0.329	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.03) -> tighten
+EXIT	2019.07.05 01:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.490	0.000	0	0.000	0.000	0.329	gated: mom decayed; not a strong-trend winner (trend=0.0 peak_r=0.03) -> tighten
+EXIT	2019.07.05 02:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.653		1.15		0	0.000		0.490	1.000	1	0.000	0.000	1.079	gated: healthy -> modest trail
+EXIT	2019.07.05 03:00	EngulfingEntry	1454917613	135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.157		0.70		0	0.000		0.490	0.400	4	0.000	0.000	0.110	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.18) -> tighten
+OPEN	2019.07.10 20:00	PinBarEntry	1597666760	138	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.10 22:00	PinBarEntry	155288612	139	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.15 12:00	PinBarEntry	2117436741	146	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.15 23:00	PinBarEntry	2131998616	148	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.07.16 06:00	MACrossEntry	380944851	149	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.05 20:00	PinBarEntry	635958560	152	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.06 14:00	PinBarEntry	653826464	153	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.06 17:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.08.06 17:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.874		1.15		0	0.000		0.420	0.600	2	0.553	0.000	1.679	gated: healthy -> modest trail
+EXIT	2019.08.06 18:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.775		1.15		0	0.000		0.420	1.000	1	0.200	0.000	0.635	gated: healthy -> modest trail
+EXIT	2019.08.06 19:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.811		0.70		0	0.000		0.420	0.400	4	0.000	0.000	1.015	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.46) -> tighten
+EXIT	2019.08.06 20:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.776		1.15		0	0.000		0.420	0.600	3	0.000	0.000	0.643	gated: healthy -> modest trail
+EXIT	2019.08.06 21:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.773		1.15		0	0.000		0.420	0.600	2	0.559	0.000	0.615	gated: healthy -> modest trail
+EXIT	2019.08.06 22:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.769		0.70		0	0.000		0.420	0.400	4	0.000	0.000	0.579	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.46) -> tighten
+EXIT	2019.08.06 23:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.734		1.15		0	0.000		0.420	0.600	1	0.000	0.000	0.203	gated: healthy -> modest trail
+EXIT	2019.08.07 01:00	EngulfingEntry	481603917	154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.724		1.15		0	0.000		0.420	1.000	2	0.184	0.000	0.107	gated: healthy -> modest trail
+OPEN	2019.08.07 15:00	PullbackContinuationEngine	1281171933	164	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.13 10:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.08.13 10:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.632		1.15		0	0.000		0.000	0.000	2	0.186	0.000	0.956	gated: healthy -> modest trail
+EXIT	2019.08.13 11:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.689		1.15		0	0.000		0.000	0.000	1	0.251	0.167	3.044	gated: healthy -> modest trail
+EXIT	2019.08.13 12:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.567		0.70		0	0.000		0.104	0.400	4	0.000	0.167	3.350	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.57) -> tighten
+EXIT	2019.08.13 13:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.675		1.15		0	0.000		0.000	0.000	1	0.000	0.167	2.230	gated: healthy -> modest trail
+EXIT	2019.08.13 14:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.563		0.70		0	0.000		0.000	0.000	4	0.000	0.167	2.833	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.57) -> tighten
+EXIT	2019.08.13 15:00	EngulfingEntry	1119542290	167	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.534		0.70		0	0.000		0.202	0.400	4	0.428	0.167	3.044	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.57) -> tighten
+OPEN	2019.08.14 03:00	PinBarEntry	1244524312	171	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.14 19:00	PinBarEntry	404455341	174	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.20 15:00	PinBarEntry	1795175502	177	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.08.29 08:00	MACrossEntry	2035015831	179	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.10 12:00	PinBarEntry	879431545	182	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.12 16:00	EngulfingEntry	1628426146	185	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.09.12 16:00	EngulfingEntry	1628426146	185	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.543		1.15		0	0.000		0.000	0.000	2	0.448	0.333	0.780	gated: healthy -> modest trail
+EXIT	2019.09.12 17:00	EngulfingEntry	1628426146	185	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.788		1.15		0	0.000		0.310	0.600	3	0.695	0.000	0.772	gated: healthy -> modest trail
+EXIT	2019.09.12 18:00	EngulfingEntry	1628426146	185	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.824		0.70		0	0.000		0.493	0.400	4	0.000	0.000	1.155	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.28) -> tighten
+OPEN	2019.09.19 13:00	PinBarEntry	376121808	187	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.09.23 18:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.09.23 18:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.512		1.15		0	0.000		0.000	0.000	2	0.104	0.000	0.430	gated: healthy -> modest trail
+EXIT	2019.09.23 19:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.786		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.749	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.23 20:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.786		0.70		0	0.000		0.215	0.400	4	0.597	0.000	0.751	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.09) -> tighten
+EXIT	2019.09.23 21:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.782		1.15		0	0.000		0.215	0.600	3	0.000	0.000	0.709	gated: healthy -> modest trail
+EXIT	2019.09.23 22:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.743		1.15		0	0.000		0.215	0.600	3	0.100	0.000	0.305	gated: healthy -> modest trail
+EXIT	2019.09.23 23:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.215	0.600	1	0.200	0.000	0.225	gated: healthy -> modest trail
+EXIT	2019.09.24 01:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.762		0.70		0	0.000		0.215	0.400	1	0.000	0.000	0.505	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 02:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.759		1.15		0	0.000		0.215	0.600	2	0.000	0.000	0.472	gated: healthy -> modest trail
+EXIT	2019.09.24 03:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.775		0.70		0	0.000		0.251	0.400	3	0.000	0.000	0.634	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 04:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.771		0.70		0	0.000		0.251	0.600	4	0.000	0.000	0.592	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 05:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.774		0.70		0	0.000		0.256	0.400	3	0.000	0.000	0.628	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 06:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.768		0.70		0	0.000		0.256	0.600	4	0.000	0.000	0.564	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 07:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.771		0.70		0	0.000		0.256	0.400	2	0.000	0.000	0.597	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 08:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.781		0.70		0	0.000		0.256	0.000	1	0.100	0.000	0.700	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 09:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.774		1.15		0	0.000		0.256	0.600	2	0.000	0.000	0.622	gated: healthy -> modest trail
+EXIT	2019.09.24 10:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.760		1.15		0	0.000		0.258	1.000	1	0.100	0.000	0.482	gated: healthy -> modest trail
+EXIT	2019.09.24 11:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.752		1.15		0	0.000		0.258	1.000	2	0.398	0.000	0.396	gated: healthy -> modest trail
+EXIT	2019.09.24 12:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.765		0.70		0	0.000		0.258	0.400	4	0.000	0.000	0.529	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 13:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.774		0.70		0	0.000		0.258	0.000	2	0.235	0.000	0.624	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 14:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.741		1.15		0	0.000		0.258	0.600	3	0.000	0.000	0.280	gated: healthy -> modest trail
+EXIT	2019.09.24 15:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.747		0.70		0	0.000		0.258	0.000	3	0.000	0.000	0.342	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.09) -> tighten
+EXIT	2019.09.24 16:00	EngulfingEntry	610245163	189	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.737		0.70		0	0.000		0.258	0.600	4	0.000	0.000	0.239	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.09) -> tighten
+OPEN	2019.09.30 11:00	PinBarEntry	882820372	191	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.08 04:00	PullbackContinuationEngine	135665763	195	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.14 14:00	PinBarEntry	883425315	197	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.30 11:00	PinBarEntry	1658329485	199	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.10.31 12:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.10.31 12:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.574		1.15		0	0.000		0.000	0.000	2	0.503	0.167	1.305	gated: healthy -> modest trail
+OPEN	2019.10.31 13:00	PinBarEntry	604913306	203	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.10.31 13:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.601		1.15		0	0.000		0.000	0.000	1	0.200	0.333	0.512	gated: healthy -> modest trail
+EXIT	2019.10.31 14:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.565		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.548	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.00) -> tighten
+EXIT	2019.10.31 15:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.560		1.15		0	0.000		0.000	0.000	3	0.000	0.333	0.301	gated: healthy -> modest trail
+EXIT	2019.10.31 16:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.665		1.15		0	0.000		0.000	0.000	3	0.100	0.333	1.697	gated: healthy -> modest trail
+EXIT	2019.10.31 17:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.668		1.15		0	0.000		0.000	0.000	1	0.200	0.333	1.079	gated: healthy -> modest trail
+EXIT	2019.10.31 18:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.826		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.176	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.35) -> tighten
+EXIT	2019.10.31 19:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.853		0.70		0	0.000		0.183	0.400	4	0.100	0.000	1.456	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.35) -> tighten
+EXIT	2019.10.31 20:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.816		1.15		0	0.000		0.183	0.600	2	0.000	0.000	1.063	gated: healthy -> modest trail
+EXIT	2019.10.31 21:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.746		1.15		0	0.000		0.183	0.600	2	0.516	0.000	0.336	gated: healthy -> modest trail
+EXIT	2019.10.31 22:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.761		0.70		0	0.000		0.183	0.400	4	0.000	0.000	0.493	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.35) -> tighten
+EXIT	2019.10.31 23:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.763		0.70		0	0.000		0.183	0.400	2	0.545	0.000	0.511	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 01:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.742		1.15		0	0.000		0.183	0.600	2	0.000	0.000	0.289	gated: healthy -> modest trail
+EXIT	2019.11.01 02:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.729		0.70		0	0.000		0.183	0.400	4	0.000	0.000	0.157	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 03:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.729		0.70		0	0.000		0.183	0.400	0	0.000	0.000	0.157	gated: mom decayed; not a strong-trend winner (trend=0.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 04:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.722		1.15		0	0.000		0.183	0.600	3	0.000	0.000	0.079	gated: healthy -> modest trail
+EXIT	2019.11.01 05:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.763		0.70		0	0.000		0.183	0.400	1	0.000	0.000	0.516	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 06:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.771		0.70		0	0.000		0.183	0.400	2	0.423	0.000	0.600	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 07:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.774		0.70		0	0.000		0.183	0.400	3	0.638	0.000	0.627	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 08:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.764		0.70		0	0.000		0.183	0.600	4	0.000	0.000	0.521	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 09:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.776		0.70		0	0.000		0.183	0.400	2	0.000	0.000	0.648	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 10:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.771		0.70		0	0.000		0.183	0.600	4	0.000	0.000	0.599	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=2.35) -> tighten
+EXIT	2019.11.01 11:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.734		1.15		0	0.000		0.183	1.000	1	0.100	0.000	0.211	gated: healthy -> modest trail
+EXIT	2019.11.01 12:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.802		1.15		0	0.000		0.000	0.000	2	0.633	0.000	0.921	gated: healthy -> modest trail
+EXIT	2019.11.01 13:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.815		0.70		0	0.000		0.086	0.400	4	0.000	0.000	1.055	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.44) -> tighten
+EXIT	2019.11.01 14:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.840		0.70		0	0.000		0.151	0.400	4	0.100	0.000	1.315	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.44) -> tighten
+EXIT	2019.11.01 15:00	EngulfingEntry	845633609	201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.787		0.70		0	0.000		0.176	0.400	2	0.667	0.000	0.766	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.44) -> tighten
+OPEN	2019.11.04 09:00	PinBarEntry	1282422624	209	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.05 18:00	ExpansionEngine	9107341	211	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.11 13:00	PinBarEntry	1512560662	213	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.12 03:00	PinBarEntry	761287673	215	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.28 11:00	PinBarEntry	482265637	219	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.11.28 12:00	PinBarEntry	1684459753	220	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.03 17:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.12.03 17:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.538		1.15		0	0.000		0.000	0.000	2	0.198	0.333	0.182	gated: healthy -> modest trail
+EXIT	2019.12.03 18:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.552		1.15		0	0.000		0.189	0.600	1	0.599	0.333	0.078	gated: healthy -> modest trail
+EXIT	2019.12.03 19:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.718		1.15		0	0.000		0.189	0.600	3	0.766	0.000	0.041	gated: healthy -> modest trail
+EXIT	2019.12.03 20:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.742		0.70		0	0.000		0.189	0.400	4	0.000	0.000	0.290	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.31) -> tighten
+EXIT	2019.12.03 21:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.743		0.70		0	0.000		0.189	0.400	4	0.550	0.000	0.297	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.31) -> tighten
+EXIT	2019.12.03 22:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.189	0.400	4	0.465	0.000	0.331	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.31) -> tighten
+EXIT	2019.12.03 23:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.759		0.70		0	0.000		0.189	0.400	1	0.300	0.000	0.469	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.31) -> tighten
+EXIT	2019.12.04 01:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.758		0.70		0	0.000		0.189	0.600	4	0.000	0.000	0.459	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.31) -> tighten
+EXIT	2019.12.04 02:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.764		0.70		0	0.000		0.210	0.400	3	0.000	0.000	0.519	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.31) -> tighten
+EXIT	2019.12.04 03:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.756		0.70		0	0.000		0.210	0.600	4	0.000	0.000	0.436	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.31) -> tighten
+EXIT	2019.12.04 04:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.751		1.15		0	0.000		0.210	0.600	2	0.276	0.000	0.387	gated: healthy -> modest trail
+EXIT	2019.12.04 05:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.745		1.15		0	0.000		0.210	0.600	3	0.301	0.000	0.328	gated: healthy -> modest trail
+EXIT	2019.12.04 06:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.741		1.15		0	0.000		0.210	1.000	2	0.474	0.000	0.281	gated: healthy -> modest trail
+EXIT	2019.12.04 07:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.210	0.400	4	0.000	0.000	0.313	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.31) -> tighten
+EXIT	2019.12.04 08:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.731		1.15		0	0.000		0.210	0.600	1	0.000	0.000	0.173	gated: healthy -> modest trail
+OPEN	2019.12.04 09:00	EngulfingEntry	1830082345	226	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.12.04 09:00	EngulfingEntry	1830082345	226	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.721		1.15		0	0.000		0.210	1.000	2	0.111	0.000	0.075	gated: healthy -> modest trail
+EXIT	2019.12.04 09:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.719		1.15		0	0.000		0.210	1.000	2	0.111	0.000	0.049	gated: healthy -> modest trail
+EXIT	2019.12.04 10:00	EngulfingEntry	1830082345	226	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.770		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.966	gated: healthy -> modest trail
+EXIT	2019.12.04 10:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.628	gated: healthy -> modest trail
+EXIT	2019.12.04 11:00	EngulfingEntry	1830082345	226	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.328		0.70		0	0.000		0.072	0.400	4	0.000	0.000	1.190	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.43) -> tighten
+EXIT	2019.12.04 11:00	EngulfingEntry	1592084772	225	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.301		0.70		0	0.000		0.072	0.400	4	0.000	0.000	0.773	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.59) -> tighten
+OPEN	2019.12.04 23:00	PinBarEntry	436231453	229	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.09 05:00	PullbackContinuationEngine	1959552566	231	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.09 12:00	PinBarEntry	1660158760	232	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.10 06:00	PullbackContinuationEngine	1684612643	233	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.10 08:00	PinBarEntry	709980053	234	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.16 21:00	PinBarEntry	1079511707	239	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.16 23:00	PinBarEntry	1668288406	240	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2019.12.19 20:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2019.12.19 20:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.510		1.15		0	0.000		1.156	1.000	2	0.389	0.167	0.115	gated: healthy -> modest trail
+EXIT	2019.12.19 21:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.599		1.15		0	0.000		0.000	0.000	3	0.488	0.333	0.922	gated: healthy -> modest trail
+EXIT	2019.12.19 22:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.496		0.70		0	0.000		0.195	0.400	4	0.000	0.333	1.120	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.19 23:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.459		0.70		0	0.000		0.261	0.400	4	0.421	0.333	1.191	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 01:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.359		0.70		0	0.000		0.272	0.400	4	0.477	0.333	0.463	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 02:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.332		0.70		0	0.000		0.302	0.400	2	0.665	0.333	0.515	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 03:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.756		0.70		0	0.000		0.302	0.600	4	0.000	0.000	0.442	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 04:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.765		0.70		0	0.000		0.324	0.400	3	0.000	0.000	0.534	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 05:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.769		0.70		0	0.000		0.334	0.400	2	0.351	0.000	0.579	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 06:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.761		0.70		0	0.000		0.336	0.600	4	0.000	0.000	0.495	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 07:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.755		1.15		0	0.000		0.336	1.000	2	0.165	0.000	0.430	gated: healthy -> modest trail
+EXIT	2019.12.20 08:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.753		1.15		0	0.000		0.336	0.600	1	0.510	0.000	0.405	gated: healthy -> modest trail
+EXIT	2019.12.20 09:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.756		0.70		0	0.000		0.336	0.400	3	0.000	0.000	0.435	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 10:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.765		0.70		0	0.000		0.336	0.400	1	0.100	0.000	0.534	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 11:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.774		0.70		0	0.000		0.435	0.000	1	0.200	0.000	0.631	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 12:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.736		0.70		0	0.000		0.435	0.600	4	0.000	0.000	0.223	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 13:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.749		0.70		0	0.000		0.435	0.000	1	0.000	0.000	0.364	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 14:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.748		0.70		0	0.000		0.435	0.200	4	0.000	0.000	0.358	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 15:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.724		0.70		0	0.000		0.435	1.000	4	0.100	0.000	0.104	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 16:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.739		1.15		0	0.000		0.435	1.000	2	0.398	0.000	0.256	gated: healthy -> modest trail
+EXIT	2019.12.20 17:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.435	0.400	4	0.000	0.000	0.330	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.29) -> tighten
+EXIT	2019.12.20 18:00	EngulfingEntry	68126870	245	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.751		0.70		0	0.000		0.435	0.400	4	0.222	0.000	0.390	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.29) -> tighten
+OPEN	2020.01.02 14:00	PinBarEntry	1312254176	247	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.02 23:00	PinBarEntry	2052996804	250	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.06 12:00	PinBarEntry	770196697	257	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.06 14:00	PinBarEntry	209908922	258	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.07 10:00	ExpansionEngine	1876139	261	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.09 08:00	PullbackContinuationEngine	2104972896	265	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.22 23:00	PinBarEntry	66131253	268	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.01.30 06:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.01.30 06:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.752		1.15		0	0.000		0.768	0.600	2	0.516	0.000	0.392	gated: healthy -> modest trail
+EXIT	2020.01.30 07:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.771		0.70		0	0.000		0.768	0.400	4	0.000	0.000	0.595	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.11) -> tighten
+EXIT	2020.01.30 08:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.786		0.70		0	0.000		0.755	0.400	4	0.190	0.000	0.751	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.11) -> tighten
+EXIT	2020.01.30 09:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.765		1.15		0	0.000		0.751	0.600	1	0.000	0.000	0.537	gated: healthy -> modest trail
+EXIT	2020.01.30 10:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.553		1.15		0	0.000		0.745	1.000	1	0.100	0.000	0.315	gated: healthy -> modest trail
+EXIT	2020.01.30 11:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.182		0.70		0	0.000		0.745	0.400	4	0.000	0.000	0.476	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.52) -> tighten
+EXIT	2020.01.30 12:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.191		0.70		0	0.000		0.745	0.400	3	0.205	0.000	0.608	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.52) -> tighten
+EXIT	2020.01.30 13:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.187		0.70		0	0.000		0.745	0.600	3	0.000	0.000	0.560	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.52) -> tighten
+EXIT	2020.01.30 14:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.187		0.70		0	0.000		0.745	0.400	4	0.000	0.000	0.555	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.52) -> tighten
+EXIT	2020.01.30 15:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.177		0.70		0	0.000		0.235	0.600	3	0.000	0.000	0.412	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.52) -> tighten
+EXIT	2020.01.30 16:00	EngulfingEntry	1560395076	271	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.203		0.70		0	0.000		0.314	0.400	1	0.000	0.000	0.791	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.52) -> tighten
+OPEN	2020.02.18 19:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.02.18 19:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.547		1.15		0	0.000		0.000	0.000	2	0.456	0.167	0.383	gated: healthy -> modest trail
+EXIT	2020.02.18 20:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.481		0.70		0	0.000		0.165	0.400	4	0.000	0.167	0.554	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.00) -> tighten
+EXIT	2020.02.18 21:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.451		0.70		0	0.000		0.190	0.400	4	0.384	0.167	0.629	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.00) -> tighten
+EXIT	2020.02.18 22:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.458		1.15		0	0.000		0.193	0.600	3	0.000	0.167	0.237	gated: healthy -> modest trail
+EXIT	2020.02.18 23:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.491		1.15		0	0.000		0.193	1.000	3	0.100	0.167	0.152	gated: healthy -> modest trail
+EXIT	2020.02.19 01:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.454		0.70		0	0.000		0.193	0.400	4	0.000	0.167	0.249	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.00) -> tighten
+EXIT	2020.02.19 02:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.741		0.70		0	0.000		0.193	0.400	2	0.435	0.000	0.280	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.00) -> tighten
+EXIT	2020.02.19 03:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.735		1.15		0	0.000		0.213	0.600	3	0.000	0.000	0.222	gated: healthy -> modest trail
+OPEN	2020.02.19 04:00	PinBarEntry	501153769	274	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.02.19 04:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.729		1.15		0	0.000		0.213	1.000	2	0.100	0.000	0.159	gated: healthy -> modest trail
+EXIT	2020.02.19 05:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.730		0.70		0	0.000		0.213	0.400	2	0.000	0.000	0.168	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.04) -> tighten
+EXIT	2020.02.19 06:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.737		0.70		0	0.000		0.213	0.400	3	0.100	0.000	0.236	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.04) -> tighten
+EXIT	2020.02.19 07:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.213	0.600	2	0.000	0.000	0.189	gated: healthy -> modest trail
+EXIT	2020.02.19 08:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.725		1.15		0	0.000		0.213	1.000	1	0.100	0.000	0.116	gated: healthy -> modest trail
+EXIT	2020.02.19 09:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.723		1.15		0	0.000		0.000	0.000	2	0.326	0.000	0.096	gated: healthy -> modest trail
+EXIT	2020.02.19 10:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.716		1.15		0	0.000		0.000	0.000	1	0.300	0.000	0.016	gated: healthy -> modest trail
+EXIT	2020.02.19 11:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.571		1.15		0	0.000		0.000	0.000	1	0.400	0.000	0.139	gated: healthy -> modest trail
+EXIT	2020.02.19 12:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.500		0.70		0	0.000		0.070	0.600	2	0.818	0.167	0.067	gated: mom decayed; not a strong-trend winner (trend=6.0 peak_r=0.35) -> tighten
+EXIT	2020.02.19 13:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.531		0.70		0	0.000		0.000	0.000	3	0.846	0.333	0.004	gated: mom decayed; not a strong-trend winner (trend=6.0 peak_r=0.44) -> tighten
+EXIT	2020.02.19 14:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.464		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.058	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 15:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.334		0.70		0	0.000		0.152	0.400	4	0.100	0.333	0.202	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 16:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.258		0.70		0	0.000		0.268	0.400	4	0.200	0.333	0.118	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 17:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.280		0.70		0	0.000		0.291	0.600	4	0.000	0.333	0.457	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 18:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.291	0.600	4	0.100	0.000	0.312	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 19:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.739		0.70		0	0.000		0.291	0.600	4	0.540	0.000	0.264	gated: mom decayed; not a strong-trend winner (trend=3.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 20:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.737		0.70		0	0.000		0.291	0.600	4	0.723	0.000	0.240	gated: mom decayed; not a strong-trend winner (trend=4.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 21:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.728		1.15		0	0.000		0.291	1.000	3	0.607	0.000	0.147	gated: healthy -> modest trail
+EXIT	2020.02.19 22:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.291	0.400	4	0.000	0.000	0.315	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.47) -> tighten
+EXIT	2020.02.19 23:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.750		1.15		0	0.000		0.000	0.000	1	0.000	0.000	0.466	gated: healthy -> modest trail
+EXIT	2020.02.20 01:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.230		0.70		0	0.000		0.076	0.400	4	0.000	0.000	0.085	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 02:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.161		0.70		0	0.000		0.111	0.400	4	0.100	0.000	0.167	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 03:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.167		0.70		0	0.000		0.171	0.400	4	0.200	0.000	0.254	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 04:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.166		0.70		0	0.000		0.245	0.600	2	0.000	0.000	0.238	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 05:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.166		0.70		0	0.000		0.245	0.400	4	0.000	0.000	0.247	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 06:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.162		0.70		0	0.000		0.245	0.600	4	0.000	0.000	0.180	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 07:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.735		0.70		0	0.000		0.245	0.400	2	0.000	0.000	0.222	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 08:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.736		0.70		0	0.000		0.245	0.400	3	0.494	0.000	0.231	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 09:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.754		0.70		0	0.000		0.245	0.000	1	0.200	0.000	0.413	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 10:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.750		0.70		0	0.000		0.324	0.200	4	0.000	0.000	0.374	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 11:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.739		0.70		0	0.000		0.324	0.600	4	0.100	0.000	0.262	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.57) -> tighten
+EXIT	2020.02.20 12:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.739		1.15		0	0.000		0.324	0.600	2	0.674	0.000	0.256	gated: healthy -> modest trail
+EXIT	2020.02.20 13:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.729		1.15		0	0.000		0.324	0.600	3	0.312	0.000	0.151	gated: healthy -> modest trail
+EXIT	2020.02.20 14:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.710		1.15		0	0.000		0.000	0.000	1	0.400	0.000	0.160	gated: healthy -> modest trail
+EXIT	2020.02.20 15:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.400		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.206	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.96) -> tighten
+EXIT	2020.02.20 16:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.326		0.70		0	0.000		0.000	0.000	4	0.100	0.000	0.279	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.98) -> tighten
+EXIT	2020.02.20 17:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.417		1.15		0	0.000		0.278	0.600	3	0.000	0.000	0.164	gated: healthy -> modest trail
+OPEN	2020.02.20 18:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.02.20 18:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.357		1.15		0	0.000		0.000	0.000	2	0.497	0.000	0.380	gated: healthy -> modest trail
+EXIT	2020.02.20 18:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.341		1.15		0	0.000		0.000	0.000	2	0.497	0.000	0.138	gated: healthy -> modest trail
+EXIT	2020.02.20 19:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.530		1.15		0	0.000		0.000	0.000	1	0.200	0.000	1.537	gated: healthy -> modest trail
+EXIT	2020.02.20 19:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.465		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.559	gated: healthy -> modest trail
+EXIT	2020.02.20 20:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.312		0.70		0	0.000		0.297	0.400	4	0.000	0.000	0.590	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.04) -> tighten
+EXIT	2020.02.20 20:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.287		0.70		0	0.000		0.297	0.400	4	0.000	0.000	0.214	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.28) -> tighten
+EXIT	2020.02.20 21:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.316	0.600	2	0.000	0.000	0.188	gated: healthy -> modest trail
+EXIT	2020.02.20 21:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.721		1.15		0	0.000		0.316	0.600	2	0.000	0.000	0.068	gated: healthy -> modest trail
+EXIT	2020.02.20 22:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.780		1.15		0	0.000		0.316	0.600	3	0.394	0.000	0.694	gated: healthy -> modest trail
+EXIT	2020.02.20 22:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.316	0.600	3	0.394	0.000	0.252	gated: healthy -> modest trail
+EXIT	2020.02.20 23:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.785		0.70		0	0.000		0.316	0.400	4	0.000	0.000	0.747	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.04) -> tighten
+EXIT	2020.02.20 23:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.740		0.70		0	0.000		0.316	0.400	4	0.000	0.000	0.272	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.28) -> tighten
+EXIT	2020.02.21 01:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.787		0.70		0	0.000		0.316	0.400	3	0.418	0.000	0.765	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.04) -> tighten
+EXIT	2020.02.21 01:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.741		0.70		0	0.000		0.316	0.400	3	0.418	0.000	0.278	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.28) -> tighten
+EXIT	2020.02.21 02:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.741		0.70		0	0.000		0.316	1.000	4	0.000	0.000	0.282	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.04) -> tighten
+EXIT	2020.02.21 02:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.724		0.70		0	0.000		0.316	1.000	4	0.000	0.000	0.103	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.28) -> tighten
+EXIT	2020.02.21 03:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.789		0.70		0	0.000		0.316	0.400	4	0.000	0.000	0.788	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.04) -> tighten
+EXIT	2020.02.21 03:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.742		0.70		0	0.000		0.316	0.400	4	0.000	0.000	0.287	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.28) -> tighten
+EXIT	2020.02.21 04:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.756		1.15		0	0.000		0.316	0.600	2	0.000	0.000	0.441	gated: healthy -> modest trail
+EXIT	2020.02.21 04:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.730		1.15		0	0.000		0.316	0.600	2	0.000	0.000	0.160	gated: healthy -> modest trail
+EXIT	2020.02.21 05:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.717		1.15		0	0.000		0.000	0.000	3	0.100	0.000	0.031	gated: healthy -> modest trail
+EXIT	2020.02.21 05:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.715		1.15		0	0.000		0.000	0.000	3	0.100	0.000	0.011	gated: healthy -> modest trail
+EXIT	2020.02.21 06:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.687		1.15		0	0.000		0.000	0.000	2	0.374	0.000	0.906	gated: healthy -> modest trail
+EXIT	2020.02.21 06:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.632		1.15		0	0.000		0.000	0.000	2	0.374	0.000	0.329	gated: healthy -> modest trail
+EXIT	2020.02.21 07:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.505		1.15		0	0.000		0.000	0.000	3	0.541	0.167	0.707	gated: healthy -> modest trail
+EXIT	2020.02.21 07:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.475		1.15		0	0.000		0.000	0.000	3	0.541	0.167	0.257	gated: healthy -> modest trail
+EXIT	2020.02.21 08:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.572		1.15		0	0.000		0.000	0.000	1	0.400	0.333	0.320	gated: healthy -> modest trail
+EXIT	2020.02.21 08:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.558		1.15		0	0.000		0.000	0.000	1	0.400	0.333	0.116	gated: healthy -> modest trail
+EXIT	2020.02.21 09:00	EngulfingEntry	1582729062	279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.724		1.15		0	0.000		0.000	0.000	1	0.500	0.500	1.588	gated: healthy -> modest trail
+EXIT	2020.02.21 09:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.657		1.15		0	0.000		0.000	0.000	1	0.500	0.500	0.577	gated: healthy -> modest trail
+EXIT	2020.02.21 10:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.708		1.15		0	0.000		0.000	0.000	2	0.612	0.667	1.089	gated: healthy -> modest trail
+EXIT	2020.02.21 11:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.603		0.70		0	0.000		0.000	0.000	4	0.000	0.667	0.519	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.13) -> tighten
+EXIT	2020.02.21 12:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.720		1.15		0	0.000		0.147	0.600	3	0.000	0.667	0.986	gated: healthy -> modest trail
+EXIT	2020.02.21 13:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.813		0.70		0	0.000		0.147	0.400	4	0.000	0.000	1.032	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.13) -> tighten
+EXIT	2020.02.21 14:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.722		1.15		0	0.000		0.147	0.600	3	0.000	0.000	0.081	gated: healthy -> modest trail
+EXIT	2020.02.21 15:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.716		1.15		0	0.000		0.000	0.000	1	0.100	0.000	0.807	gated: healthy -> modest trail
+EXIT	2020.02.21 16:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.483		1.15		0	0.000		0.000	0.000	1	0.200	0.167	0.457	gated: healthy -> modest trail
+EXIT	2020.02.21 17:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.537		1.15		0	0.000		0.000	0.000	2	0.717	0.333	0.393	gated: healthy -> modest trail
+EXIT	2020.02.21 18:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.467		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.436	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.96) -> tighten
+EXIT	2020.02.21 19:00	EngulfingEntry	1243599872	273	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.406		0.70		0	0.000		0.241	0.400	4	0.100	0.333	0.607	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.96) -> tighten
+OPEN	2020.02.25 03:00	ExpansionEngine	392046044	288	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.26 10:00	PinBarEntry	816598124	290	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 13:00	PinBarEntry	58949751	292	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 14:00	PinBarEntry	952814979	293	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.02.27 15:00	ExpansionEngine	1886058649	296	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.02 04:00	PinBarEntry	405386893	301	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.05 14:00	MACrossEntry	1922614514	303	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.05 19:00	PinBarEntry	1171439068	307	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.09 04:00	PinBarEntry	65837321	313	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.03.18 14:00	PinBarEntry	257036425	315	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.02 11:00	PinBarEntry	661203854	317	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.06 10:00	PinBarEntry	487010312	320	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.06 15:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.06 15:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.548		1.15		0	0.000		0.000	0.000	3	0.100	0.167	1.206	gated: healthy -> modest trail
+EXIT	2020.04.06 16:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.563		1.15		0	0.000		0.000	0.000	2	0.268	0.167	0.928	gated: healthy -> modest trail
+EXIT	2020.04.06 17:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.542		1.15		0	0.000		0.000	0.000	1	0.300	0.167	0.166	gated: healthy -> modest trail
+EXIT	2020.04.06 18:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.756		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.433	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.30) -> tighten
+EXIT	2020.04.06 19:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.757		0.70		0	0.000		0.145	0.400	4	0.574	0.000	0.447	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.30) -> tighten
+EXIT	2020.04.06 20:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.666		1.15		0	0.000		0.000	0.000	3	0.000	0.000	0.993	gated: healthy -> modest trail
+EXIT	2020.04.06 21:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.564		1.15		0	0.000		0.000	0.000	2	0.135	0.167	0.382	gated: healthy -> modest trail
+EXIT	2020.04.06 22:00	EngulfingEntry	827158396	323	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.767		1.15		0	0.000		0.000	0.000	1	0.467	0.333	4.813	gated: healthy -> modest trail
+OPEN	2020.04.09 14:00	EngulfingEntry	1096806429	330	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.09 14:00	EngulfingEntry	1096806429	330	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.485		1.15		0	0.000		0.496	0.600	2	0.339	0.000	1.069	gated: healthy -> modest trail
+OPEN	2020.04.13 11:00	PullbackContinuationEngine	169026407	332	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.13 19:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.13 19:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.508		1.15		0	0.000		0.000	0.000	2	0.251	0.167	0.047	gated: healthy -> modest trail
+EXIT	2020.04.13 20:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.688		1.15		0	0.000		0.000	0.000	3	0.508	0.333	1.548	gated: healthy -> modest trail
+EXIT	2020.04.13 21:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.727		1.15		0	0.000		0.000	0.000	3	0.674	0.500	1.393	gated: healthy -> modest trail
+EXIT	2020.04.13 22:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.762		1.15		0	0.000		0.000	0.000	3	0.794	0.667	1.260	gated: healthy -> modest trail
+EXIT	2020.04.13 23:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.718		0.70		0	0.000		0.090	0.400	4	0.000	0.667	1.452	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.59) -> tighten
+EXIT	2020.04.14 01:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.610		0.70		0	0.000		0.144	0.400	4	0.263	0.667	0.397	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.59) -> tighten
+EXIT	2020.04.14 02:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.178	0.600	3	0.000	0.000	0.254	gated: healthy -> modest trail
+EXIT	2020.04.14 03:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.739		0.70		0	0.000		0.178	0.400	2	0.000	0.000	0.257	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.59) -> tighten
+EXIT	2020.04.14 04:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.000	0.000	3	0.100	0.000	0.313	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.65) -> tighten
+EXIT	2020.04.14 05:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.823		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.143	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.69) -> tighten
+EXIT	2020.04.14 06:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.723		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.090	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.75) -> tighten
+EXIT	2020.04.14 07:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.725		0.70		0	0.000		0.110	0.400	4	0.493	0.000	0.117	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.75) -> tighten
+EXIT	2020.04.14 08:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.739		0.70		0	0.000		0.187	0.400	3	0.200	0.000	0.265	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.75) -> tighten
+EXIT	2020.04.14 09:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.765		0.70		0	0.000		0.210	0.400	2	0.408	0.000	0.529	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.75) -> tighten
+EXIT	2020.04.14 10:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.775		0.70		0	0.000		0.250	0.400	3	0.480	0.000	0.638	gated: mom decayed; not a strong-trend winner (trend=-5.0 peak_r=0.75) -> tighten
+EXIT	2020.04.14 11:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.729		0.70		0	0.000		0.250	1.000	4	0.000	0.000	0.159	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.75) -> tighten
+EXIT	2020.04.14 12:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.728		0.70		0	0.000		0.000	0.000	2	0.000	0.000	0.142	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.79) -> tighten
+EXIT	2020.04.14 13:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.726		1.15		0	0.000		0.200	0.600	3	0.000	0.000	0.124	gated: healthy -> modest trail
+EXIT	2020.04.14 14:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.721		1.15		0	0.000		0.200	0.600	3	0.100	0.000	0.073	gated: healthy -> modest trail
+EXIT	2020.04.14 15:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.200	0.400	4	0.000	0.000	0.307	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.79) -> tighten
+EXIT	2020.04.14 16:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.698		1.15		0	0.000		0.000	0.000	1	0.000	0.000	0.857	gated: healthy -> modest trail
+OPEN	2020.04.14 17:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.14 17:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.557		1.15		0	0.000		0.000	0.000	2	0.304	0.167	0.803	gated: healthy -> modest trail
+EXIT	2020.04.14 17:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.543		1.15		0	0.000		0.000	0.000	2	0.304	0.167	0.585	gated: healthy -> modest trail
+EXIT	2020.04.14 18:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.348		0.70		0	0.000		0.000	0.000	4	0.000	0.167	1.087	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.66) -> tighten
+EXIT	2020.04.14 18:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.329		0.70		0	0.000		0.000	0.000	4	0.000	0.167	0.792	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.67) -> tighten
+EXIT	2020.04.14 19:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.376		0.70		0	0.000		0.311	0.600	3	0.000	0.167	0.964	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.66) -> tighten
+EXIT	2020.04.14 19:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.359		0.70		0	0.000		0.311	0.600	3	0.000	0.167	0.702	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.67) -> tighten
+EXIT	2020.04.14 20:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.378		0.70		0	0.000		0.311	0.600	3	0.560	0.167	0.954	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.66) -> tighten
+EXIT	2020.04.14 20:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.361		0.70		0	0.000		0.311	0.600	3	0.560	0.167	0.695	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.67) -> tighten
+EXIT	2020.04.14 21:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.418		1.15		0	0.000		0.311	0.600	3	0.200	0.167	0.588	gated: healthy -> modest trail
+EXIT	2020.04.14 21:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.408		1.15		0	0.000		0.311	0.600	3	0.200	0.167	0.429	gated: healthy -> modest trail
+EXIT	2020.04.14 22:00	EngulfingEntry	1738908208	338	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.352		0.70		0	0.000		0.311	0.400	4	0.000	0.167	0.884	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.66) -> tighten
+EXIT	2020.04.14 22:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.336		0.70		0	0.000		0.311	0.400	4	0.000	0.167	0.644	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.67) -> tighten
+EXIT	2020.04.14 23:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.794		0.70		0	0.000		0.382	0.400	2	0.172	0.000	0.840	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 01:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.802		0.70		0	0.000		0.382	0.400	3	0.530	0.000	0.916	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 02:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.810		0.70		0	0.000		0.382	0.000	3	0.577	0.000	1.009	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 03:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.807		0.70		0	0.000		0.382	0.600	4	0.000	0.000	0.975	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 04:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.799		0.70		0	0.000		0.382	0.600	4	0.100	0.000	0.894	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 05:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.819		0.70		0	0.000		0.382	0.000	1	0.000	0.000	1.097	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 06:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.823		0.70		0	0.000		0.387	0.000	2	0.490	0.000	1.141	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 07:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.827		0.70		0	0.000		0.387	0.000	3	0.582	0.000	1.185	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.67) -> tighten
+EXIT	2020.04.15 08:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.745		1.15		0	0.000		0.387	0.600	3	0.000	0.000	0.326	gated: healthy -> modest trail
+EXIT	2020.04.15 09:00	EngulfingEntry	1891930701	334	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.387	0.600	2	0.267	0.000	0.249	gated: healthy -> modest trail
+OPEN	2020.04.16 14:00	MACrossEntry	852513972	343	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.04.16 15:00	EngulfingEntry	1536285559	344	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.16 15:00	EngulfingEntry	1536285559	344	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.590		1.15		0	0.000		0.545	1.000	2	0.314	0.167	0.659	gated: healthy -> modest trail
+EXIT	2020.04.16 16:00	EngulfingEntry	1536285559	344	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.292		0.70		0	0.000		0.545	0.400	4	0.000	0.167	1.377	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.12) -> tighten
+OPEN	2020.04.30 10:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.04.30 10:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.472		0.70		0	0.000		0.000	0.000	2	0.249	0.000	0.573	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.00) -> tighten
+EXIT	2020.04.30 11:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.193		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.639	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.52) -> tighten
+EXIT	2020.04.30 12:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.197		0.70		0	0.000		0.218	0.400	4	0.111	0.000	0.700	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.52) -> tighten
+EXIT	2020.04.30 13:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.206		0.70		0	0.000		0.223	0.400	4	0.200	0.000	0.835	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.52) -> tighten
+EXIT	2020.04.30 14:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.204		0.70		0	0.000		0.265	0.400	4	0.690	0.000	0.814	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.52) -> tighten
+EXIT	2020.04.30 15:00	EngulfingEntry	1620276946	347	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.197		0.70		0	0.000		0.348	0.600	3	0.000	0.000	0.700	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.52) -> tighten
+OPEN	2020.05.06 10:00	PinBarEntry	771493776	349	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.06 11:00	PinBarEntry	1325097830	350	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.05.07 20:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.05.07 20:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.504		1.15		0	0.000		0.000	0.000	2	0.347	0.000	0.324	gated: healthy -> modest trail
+EXIT	2020.05.07 21:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.497		1.15		0	0.000		0.000	0.000	3	0.541	0.000	0.104	gated: healthy -> modest trail
+EXIT	2020.05.07 22:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.469		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.131	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.33) -> tighten
+EXIT	2020.05.07 23:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.743		0.70		0	0.000		0.207	0.400	4	0.100	0.000	0.299	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 01:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.743		0.70		0	0.000		0.207	0.400	4	0.685	0.000	0.305	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 02:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.750		0.70		0	0.000		0.236	0.400	4	0.592	0.000	0.376	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 03:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.751		0.70		0	0.000		0.238	0.400	2	0.879	0.000	0.383	gated: mom decayed; not a strong-trend winner (trend=-5.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 04:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.750		0.70		0	0.000		0.265	0.600	4	0.000	0.000	0.371	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 05:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.737		0.70		0	0.000		0.265	1.000	4	0.100	0.000	0.240	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 06:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.740		0.70		0	0.000		0.265	0.400	2	0.000	0.000	0.274	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 07:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.265	0.400	3	0.100	0.000	0.316	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 08:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.265	0.600	2	0.000	0.000	0.254	gated: healthy -> modest trail
+EXIT	2020.05.08 09:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.265	0.600	3	0.100	0.000	0.232	gated: healthy -> modest trail
+EXIT	2020.05.08 10:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.265	0.600	3	0.200	0.000	0.184	gated: healthy -> modest trail
+EXIT	2020.05.08 11:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.719		1.15		0	0.000		0.265	0.600	1	0.300	0.000	0.049	gated: healthy -> modest trail
+EXIT	2020.05.08 12:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.725		0.70		0	0.000		0.265	0.600	2	0.890	0.000	0.115	gated: mom decayed; not a strong-trend winner (trend=5.0 peak_r=0.33) -> tighten
+EXIT	2020.05.08 13:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.716		1.15		0	0.000		0.000	0.000	3	0.614	0.000	0.017	gated: healthy -> modest trail
+EXIT	2020.05.08 14:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.725		0.70		0	0.000		0.087	0.400	4	0.000	0.000	0.109	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.40) -> tighten
+EXIT	2020.05.08 15:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.730		0.70		0	0.000		0.146	0.400	4	0.265	0.000	0.170	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.40) -> tighten
+EXIT	2020.05.08 16:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.769		0.70		0	0.000		0.409	0.000	1	0.200	0.000	0.577	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.40) -> tighten
+EXIT	2020.05.08 17:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.745		0.70		0	0.000		0.409	0.600	4	0.000	0.000	0.318	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.40) -> tighten
+EXIT	2020.05.08 18:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.752		0.70		0	0.000		0.409	0.400	3	0.000	0.000	0.394	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.40) -> tighten
+EXIT	2020.05.08 19:00	EngulfingEntry	1898906518	353	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.754		0.70		0	0.000		0.409	0.400	3	0.479	0.000	0.413	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.40) -> tighten
+OPEN	2020.05.25 10:00	PinBarEntry	2027280364	355	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.06.01 09:00	EngulfingEntry	1922923618	357	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.06.01 09:00	EngulfingEntry	1922923618	357	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.494		0.70		0	0.000		0.000	0.000	2	0.254	0.000	0.897	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.00) -> tighten
+EXIT	2020.06.01 10:00	EngulfingEntry	1922923618	357	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.223		0.70		0	0.000		0.104	0.400	4	0.000	0.000	1.095	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.01) -> tighten
+EXIT	2020.06.01 11:00	EngulfingEntry	1922923618	357	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.241		0.70		0	0.000		0.221	0.400	4	0.100	0.000	1.364	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.01) -> tighten
+OPEN	2020.08.25 15:00	PinBarEntry	216434674	359	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.08.31 17:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.08.31 17:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.792		1.15		0	0.000		0.336	1.000	2	0.252	0.000	0.818	gated: healthy -> modest trail
+EXIT	2020.08.31 18:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.854		0.70		0	0.000		0.336	0.000	4	0.000	0.000	1.467	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.54) -> tighten
+EXIT	2020.08.31 19:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.793		1.15		0	0.000		0.336	0.600	2	0.000	0.000	0.822	gated: healthy -> modest trail
+EXIT	2020.08.31 20:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.765		1.15		0	0.000		0.336	0.600	2	0.384	0.000	0.530	gated: healthy -> modest trail
+EXIT	2020.08.31 21:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.755		1.15		0	0.000		0.336	0.600	3	0.625	0.000	0.425	gated: healthy -> modest trail
+EXIT	2020.08.31 22:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.772		0.70		0	0.000		0.336	0.400	4	0.000	0.000	0.608	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.64) -> tighten
+EXIT	2020.08.31 23:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.788		0.70		0	0.000		0.336	0.400	3	0.100	0.000	0.771	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.64) -> tighten
+EXIT	2020.09.01 01:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.793		0.70		0	0.000		0.336	0.400	4	0.617	0.000	0.824	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.64) -> tighten
+EXIT	2020.09.01 02:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.807		0.70		0	0.000		0.336	0.000	3	0.543	0.000	0.974	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.64) -> tighten
+EXIT	2020.09.01 03:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.786		0.70		0	0.000		0.336	0.600	4	0.000	0.000	0.757	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.64) -> tighten
+EXIT	2020.09.01 04:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.785		0.70		0	0.000		0.336	0.600	4	0.564	0.000	0.742	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.64) -> tighten
+EXIT	2020.09.01 05:00	EngulfingEntry	599817619	363	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.533		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.028	gated: healthy -> modest trail
+OPEN	2020.09.03 06:00	PinBarEntry	851735234	367	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.07 04:00	PinBarEntry	1008104158	371	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.15 06:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.09.15 06:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.453		0.70		0	0.000		0.634	1.000	2	0.411	0.000	0.417	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.00) -> tighten
+EXIT	2020.09.15 07:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.404		1.15		0	0.000		0.000	0.000	3	0.517	0.167	0.641	gated: healthy -> modest trail
+EXIT	2020.09.15 08:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.547		1.15		0	0.000		0.111	0.600	3	0.639	0.333	0.486	gated: healthy -> modest trail
+EXIT	2020.09.15 09:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.582		1.15		0	0.000		0.000	0.000	1	0.687	0.500	0.282	gated: healthy -> modest trail
+EXIT	2020.09.15 10:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.385		0.70		0	0.000		0.235	0.400	4	0.000	0.500	0.812	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.74) -> tighten
+EXIT	2020.09.15 11:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.304		0.70		0	0.000		0.280	0.400	4	0.466	0.500	0.063	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.74) -> tighten
+EXIT	2020.09.15 12:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.400		0.70		0	0.000		0.280	0.600	3	0.000	0.500	0.674	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.74) -> tighten
+EXIT	2020.09.15 13:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.770		1.15		0	0.000		0.280	0.600	2	0.389	0.000	0.589	gated: healthy -> modest trail
+EXIT	2020.09.15 14:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.693		1.15		0	0.000		0.000	0.000	1	0.200	0.000	1.122	gated: healthy -> modest trail
+EXIT	2020.09.15 15:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.165		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.232	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.10) -> tighten
+EXIT	2020.09.15 16:00	EngulfingEntry	183953965	373	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.171		0.70		0	0.000		0.213	0.400	4	0.488	0.000	0.308	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.10) -> tighten
+OPEN	2020.09.16 11:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.09.16 11:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.805		1.15		0	0.000		0.677	1.000	1	0.100	0.000	0.957	gated: healthy -> modest trail
+EXIT	2020.09.16 12:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.796		1.15		0	0.000		0.677	0.600	2	0.567	0.000	0.857	gated: healthy -> modest trail
+EXIT	2020.09.16 13:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.804		0.70		0	0.000		0.677	0.400	4	0.000	0.000	0.945	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.53) -> tighten
+EXIT	2020.09.16 14:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.789		1.15		0	0.000		0.677	0.600	3	0.000	0.000	0.784	gated: healthy -> modest trail
+EXIT	2020.09.16 15:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.779		0.70		0	0.000		0.677	0.400	4	0.000	0.000	0.683	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.53) -> tighten
+EXIT	2020.09.16 16:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.769		1.15		0	0.000		0.677	1.000	1	0.000	0.000	0.572	gated: healthy -> modest trail
+EXIT	2020.09.16 17:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.817		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.074	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.11) -> tighten
+EXIT	2020.09.16 18:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.802		1.15		0	0.000		0.674	0.600	3	0.000	0.000	0.923	gated: healthy -> modest trail
+EXIT	2020.09.16 19:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.777		1.15		0	0.000		0.674	0.600	3	0.100	0.000	0.656	gated: healthy -> modest trail
+EXIT	2020.09.16 20:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.811		0.70		0	0.000		0.674	0.400	2	0.000	0.000	1.015	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.11) -> tighten
+EXIT	2020.09.16 21:00	EngulfingEntry	1868568049	376	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.844		0.70		0	0.000		0.674	0.000	4	0.100	0.000	1.362	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.11) -> tighten
+OPEN	2020.09.28 08:00	PinBarEntry	976596422	379	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.09.28 11:00	PinBarEntry	497056129	381	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.01 11:00	MACrossEntry	594709791	387	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.01 19:00	PinBarEntry	195852574	390	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.05 13:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.10.05 13:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.231		0.70		0	0.000		1.845	0.000	2	0.368	0.000	1.220	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.00) -> tighten
+EXIT	2020.10.05 14:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.836		0.70		0	0.000		0.851	0.400	4	0.000	0.000	1.274	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.01) -> tighten
+OPEN	2020.10.05 15:00	PinBarEntry	931222534	395	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.10.05 15:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.817		1.15		0	0.000		0.851	1.000	3	0.000	0.000	1.076	gated: healthy -> modest trail
+OPEN	2020.10.05 16:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.10.05 16:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.765		1.15		0	0.000		0.851	1.000	1	0.100	0.000	0.532	gated: healthy -> modest trail
+EXIT	2020.10.05 16:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.768		1.15		0	0.000		0.851	1.000	1	0.100	0.000	0.567	gated: healthy -> modest trail
+EXIT	2020.10.05 17:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.509		0.70		0	0.000		0.851	1.000	2	0.443	0.000	0.285	gated: mom decayed; not a strong-trend winner (trend=3.0 peak_r=0.39) -> tighten
+EXIT	2020.10.05 17:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.510		1.30		0	0.000		0.851	1.000	2	0.443	0.000	0.304	gated: mom decayed BUT strong trend(persist=3.0>=3.0) + winner(peak_r=1.07) -> hold/widen (no clip)
+EXIT	2020.10.05 18:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.487		1.15		0	0.000		0.000	0.000	1	0.300	0.167	0.025	gated: healthy -> modest trail
+EXIT	2020.10.05 18:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.487		1.15		0	0.000		0.000	0.000	1	0.300	0.167	0.027	gated: healthy -> modest trail
+EXIT	2020.10.05 19:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.413		0.70		0	0.000		0.201	0.400	4	0.000	0.167	0.308	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.05 19:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.414		0.70		0	0.000		0.201	0.400	4	0.000	0.167	0.328	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.05 20:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.472		1.15		0	0.000		0.216	0.600	3	0.000	0.167	0.082	gated: healthy -> modest trail
+EXIT	2020.10.05 20:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.472		1.15		0	0.000		0.216	0.600	3	0.000	0.167	0.088	gated: healthy -> modest trail
+EXIT	2020.10.05 21:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.460		0.70		0	0.000		0.216	0.400	4	0.000	0.167	0.344	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.05 21:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.462		0.70		0	0.000		0.216	0.400	4	0.000	0.167	0.367	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.05 22:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.421		0.70		0	0.000		0.216	0.400	4	0.100	0.167	0.494	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.23) -> tighten
+EXIT	2020.10.05 22:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.423		0.70		0	0.000		0.216	0.400	4	0.100	0.167	0.527	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.97) -> tighten
+EXIT	2020.10.05 23:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.340		0.70		0	0.000		0.253	0.400	4	0.200	0.167	0.803	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.23) -> tighten
+EXIT	2020.10.05 23:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.344		0.70		0	0.000		0.253	0.400	4	0.200	0.167	0.858	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 01:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.767		0.70		0	0.000		0.253	0.600	4	0.000	0.000	0.550	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 01:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.770		0.70		0	0.000		0.253	0.600	4	0.000	0.000	0.587	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 02:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.776		0.70		0	0.000		0.253	0.400	3	0.000	0.000	0.646	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 02:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.780		0.70		0	0.000		0.253	0.400	3	0.000	0.000	0.689	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 03:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.774		0.70		0	0.000		0.253	0.600	4	0.000	0.000	0.623	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 03:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.778		0.70		0	0.000		0.253	0.600	4	0.000	0.000	0.665	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 04:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.760		0.70		0	0.000		0.253	1.000	4	0.100	0.000	0.485	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 04:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.764		0.70		0	0.000		0.253	1.000	4	0.100	0.000	0.517	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 05:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.792		0.70		0	0.000		0.293	0.400	1	0.000	0.000	0.819	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 05:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.798		0.70		0	0.000		0.293	0.400	1	0.000	0.000	0.874	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 06:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.801		0.70		0	0.000		0.335	0.400	2	0.458	0.000	0.911	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 06:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.807		0.70		0	0.000		0.335	0.400	2	0.458	0.000	0.973	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 07:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.780		0.70		0	0.000		0.335	0.600	4	0.000	0.000	0.687	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 07:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.784		0.70		0	0.000		0.335	0.600	4	0.000	0.000	0.734	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 08:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.335	0.600	2	0.560	0.000	0.229	gated: healthy -> modest trail
+EXIT	2020.10.06 08:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.335	0.600	2	0.560	0.000	0.245	gated: healthy -> modest trail
+EXIT	2020.10.06 09:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.749		0.70		0	0.000		0.335	0.400	3	0.000	0.000	0.367	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 09:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.752		0.70		0	0.000		0.335	0.400	3	0.000	0.000	0.391	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 10:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.745		0.70		0	0.000		0.335	0.600	4	0.000	0.000	0.322	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 10:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.747		0.70		0	0.000		0.335	0.600	4	0.000	0.000	0.343	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 11:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.764		0.70		0	0.000		0.335	0.000	1	0.000	0.000	0.519	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 11:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.767		0.70		0	0.000		0.335	0.000	1	0.000	0.000	0.554	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 12:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.762		1.15		0	0.000		0.384	0.200	2	0.000	0.000	0.505	gated: healthy -> modest trail
+EXIT	2020.10.06 12:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.766		1.15		0	0.000		0.384	0.200	2	0.000	0.000	0.539	gated: healthy -> modest trail
+EXIT	2020.10.06 13:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.734		0.70		0	0.000		0.384	0.600	4	0.100	0.000	0.208	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.23) -> tighten
+EXIT	2020.10.06 13:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.735		0.70		0	0.000		0.384	0.600	4	0.100	0.000	0.222	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.97) -> tighten
+EXIT	2020.10.06 14:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.728		1.15		0	0.000		0.384	0.600	2	0.582	0.000	0.140	gated: healthy -> modest trail
+EXIT	2020.10.06 14:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.728		1.15		0	0.000		0.384	0.600	2	0.582	0.000	0.149	gated: healthy -> modest trail
+OPEN	2020.10.06 15:00	PinBarEntry	1014042454	404	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.10.06 15:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.727		1.15		0	0.000		0.384	1.000	1	0.300	0.000	0.129	gated: healthy -> modest trail
+EXIT	2020.10.06 15:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.727		1.15		0	0.000		0.384	1.000	1	0.300	0.000	0.138	gated: healthy -> modest trail
+EXIT	2020.10.06 16:00	EngulfingEntry	494515717	398	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.744		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.313	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.26) -> tighten
+EXIT	2020.10.06 16:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.746		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.334	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=2.00) -> tighten
+EXIT	2020.10.06 17:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.752		0.70		0	0.000		0.000	0.000	4	0.455	0.000	0.398	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=2.21) -> tighten
+EXIT	2020.10.06 18:00	EngulfingEntry	2098567260	394	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.793		0.70		0	0.000		0.295	0.000	4	0.200	0.000	0.827	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=2.21) -> tighten
+OPEN	2020.10.12 18:00	PinBarEntry	1594392587	410	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.12 23:00	PinBarEntry	107548001	411	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.21 18:00	PinBarEntry	2140660502	414	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.10.28 05:00	PinBarEntry	1800676313	416	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.03 12:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.11.03 12:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.569		0.70		0	0.000		0.000	0.000	2	0.273	0.000	1.115	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.00) -> tighten
+EXIT	2020.11.03 13:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.239		0.70		0	0.000		0.145	0.400	4	0.000	0.000	1.333	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.04) -> tighten
+EXIT	2020.11.03 14:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.306		0.70		0	0.000		0.145	0.600	3	0.000	0.000	1.126	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.11) -> tighten
+EXIT	2020.11.03 15:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.360		1.15		0	0.000		0.000	0.000	3	0.409	0.000	1.044	gated: healthy -> modest trail
+EXIT	2020.11.03 16:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.475		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.410	gated: healthy -> modest trail
+EXIT	2020.11.03 17:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.285		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.998	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.84) -> tighten
+EXIT	2020.11.03 18:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.464		1.15		0	0.000		0.000	0.000	1	0.000	0.000	0.338	gated: healthy -> modest trail
+EXIT	2020.11.03 19:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.754		0.70		0	0.000		0.135	0.400	4	0.000	0.000	0.420	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.94) -> tighten
+EXIT	2020.11.03 20:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.732		1.15		0	0.000		0.000	0.000	3	0.000	0.000	0.183	gated: healthy -> modest trail
+EXIT	2020.11.03 21:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.758		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.457	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.08) -> tighten
+EXIT	2020.11.03 22:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.751		1.15		0	0.000		0.166	0.600	2	0.000	0.000	0.386	gated: healthy -> modest trail
+EXIT	2020.11.03 23:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.757		0.70		0	0.000		0.166	0.400	4	0.000	0.000	0.449	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.08) -> tighten
+EXIT	2020.11.04 01:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.723		1.15		0	0.000		0.166	1.000	1	0.000	0.000	0.096	gated: healthy -> modest trail
+EXIT	2020.11.04 02:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.657		1.15		0	0.000		0.000	0.000	1	0.100	0.000	0.535	gated: healthy -> modest trail
+EXIT	2020.11.04 03:00	EngulfingEntry	931301583	419	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.219		0.70		0	0.000		0.000	0.000	4	0.000	0.000	1.033	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.65) -> tighten
+OPEN	2020.11.04 08:00	PinBarEntry	1203139497	423	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.16 11:00	PinBarEntry	251993881	427	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.18 06:00	FailedBreakReversal	457690248	429	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.24 10:00	PinBarEntry	388397386	433	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.11.30 07:00	PinBarEntry	69648473	437	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.09 09:00	PinBarEntry	130267591	440	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.21 08:00	EngulfingEntry	1970264840	442	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.12.21 08:00	EngulfingEntry	1970264840	442	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.599		1.15		0	0.000		0.000	0.000	2	0.256	0.167	0.885	gated: healthy -> modest trail
+EXIT	2020.12.21 09:00	EngulfingEntry	1970264840	442	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.406		0.70		0	0.000		0.000	0.000	4	0.000	0.167	0.056	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.47) -> tighten
+OPEN	2020.12.22 13:00	PinBarEntry	105381388	444	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.23 12:00	PinBarEntry	2084256747	446	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.24 05:00	PullbackContinuationEngine	569299350	451	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.29 11:00	PinBarEntry	1413865217	455	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 04:00	PinBarEntry	807635771	458	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2020.12.31 11:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.12.31 11:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.793		1.15		0	0.000		0.511	0.600	2	0.482	0.000	0.827	gated: healthy -> modest trail
+OPEN	2020.12.31 12:00	PinBarEntry	1452901313	461	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2020.12.31 12:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.783		1.15		0	0.000		0.511	0.600	3	0.626	0.000	0.721	gated: healthy -> modest trail
+EXIT	2020.12.31 13:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.803		0.70		0	0.000		0.511	0.400	4	0.000	0.000	0.932	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.30) -> tighten
+EXIT	2020.12.31 14:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.790		1.15		0	0.000		0.511	0.600	2	0.000	0.000	0.799	gated: healthy -> modest trail
+EXIT	2020.12.31 15:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.740		1.15		0	0.000		0.511	0.600	3	0.579	0.000	0.270	gated: healthy -> modest trail
+EXIT	2020.12.31 16:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.511	1.000	1	0.200	0.000	0.251	gated: healthy -> modest trail
+EXIT	2020.12.31 17:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.805		0.70		0	0.000		0.511	0.400	4	0.000	0.000	0.958	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.80) -> tighten
+EXIT	2020.12.31 18:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.733		1.15		0	0.000		0.000	0.000	1	0.000	0.000	0.193	gated: healthy -> modest trail
+EXIT	2020.12.31 19:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.771		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.600	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.90) -> tighten
+EXIT	2020.12.31 20:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.792		0.70		0	0.000		0.318	0.400	3	0.330	0.000	0.815	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.90) -> tighten
+EXIT	2020.12.31 21:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.801		0.70		0	0.000		0.419	0.400	3	0.588	0.000	0.907	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.90) -> tighten
+EXIT	2020.12.31 22:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.759		0.70		0	0.000		0.419	1.000	4	0.000	0.000	0.468	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.90) -> tighten
+EXIT	2020.12.31 23:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.567		0.70		0	0.000		0.000	0.000	1	0.100	0.000	1.295	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.98) -> tighten
+EXIT	2021.01.04 01:00	EngulfingEntry	1191411532	460	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.178		0.70		0	0.000		0.157	0.400	2	0.000	0.000	0.423	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.45) -> tighten
+OPEN	2021.01.04 04:00	PinBarEntry	549295182	468	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 14:00	PinBarEntry	23693294	472	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.04 17:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.01.04 17:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.653		1.15		0	0.000		0.000	0.000	2	0.504	0.500	0.700	gated: healthy -> modest trail
+EXIT	2021.01.04 18:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.769		1.15		0	0.000		0.000	0.000	3	0.615	0.000	0.574	gated: healthy -> modest trail
+EXIT	2021.01.04 19:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.792		0.70		0	0.000		0.121	0.400	4	0.000	0.000	0.811	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.24) -> tighten
+EXIT	2021.01.04 20:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.815		0.70		0	0.000		0.200	0.400	4	0.109	0.000	1.056	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.24) -> tighten
+EXIT	2021.01.04 21:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.720		1.15		0	0.000		0.200	0.600	1	0.000	0.000	0.062	gated: healthy -> modest trail
+EXIT	2021.01.04 22:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.729		0.70		0	0.000		0.200	0.400	4	0.000	0.000	0.158	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.24) -> tighten
+OPEN	2021.01.04 23:00	PinBarEntry	1806798879	476	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.01.04 23:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.720		1.15		0	0.000		0.200	0.600	3	0.000	0.000	0.056	gated: healthy -> modest trail
+EXIT	2021.01.05 01:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.728		0.70		0	0.000		0.200	0.400	2	0.000	0.000	0.148	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.24) -> tighten
+EXIT	2021.01.05 02:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.735		0.70		0	0.000		0.000	0.000	2	0.193	0.000	0.218	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 03:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.761		0.70		0	0.000		0.130	0.400	4	0.200	0.000	0.486	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 04:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.770		0.70		0	0.000		0.187	0.400	2	0.620	0.000	0.581	gated: mom decayed; not a strong-trend winner (trend=-4.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 05:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.762		0.70		0	0.000		0.187	0.600	4	0.000	0.000	0.499	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 06:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.748		0.70		0	0.000		0.187	1.000	4	0.167	0.000	0.356	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 07:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.760		0.70		0	0.000		0.187	0.400	3	0.000	0.000	0.478	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 08:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.770		0.70		0	0.000		0.187	0.400	3	0.156	0.000	0.581	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 09:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.740		1.15		0	0.000		0.187	0.600	3	0.000	0.000	0.270	gated: healthy -> modest trail
+EXIT	2021.01.05 10:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.748		0.70		0	0.000		0.187	0.400	4	0.000	0.000	0.350	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.33) -> tighten
+EXIT	2021.01.05 11:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.726		1.15		0	0.000		0.187	0.600	2	0.000	0.000	0.126	gated: healthy -> modest trail
+EXIT	2021.01.05 12:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.417		0.70		0	0.000		0.000	0.000	1	0.100	0.000	0.358	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.56) -> tighten
+EXIT	2021.01.05 13:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.395		1.15		0	0.000		0.082	0.600	2	0.501	0.167	0.253	gated: healthy -> modest trail
+EXIT	2021.01.05 14:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.578		1.15		0	0.000		0.000	0.000	3	0.333	0.333	0.005	gated: healthy -> modest trail
+EXIT	2021.01.05 15:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.505		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.074	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.74) -> tighten
+EXIT	2021.01.05 16:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.468		1.15		0	0.000		0.000	0.000	3	0.000	0.333	0.045	gated: healthy -> modest trail
+EXIT	2021.01.05 17:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.278		0.70		0	0.000		0.000	0.000	4	0.000	0.333	0.363	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.91) -> tighten
+EXIT	2021.01.05 18:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.255		0.70		0	0.000		0.240	0.400	2	0.359	0.333	0.073	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.91) -> tighten
+EXIT	2021.01.05 19:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.787		0.70		0	0.000		0.240	0.600	4	0.000	0.000	0.759	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.91) -> tighten
+EXIT	2021.01.05 20:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.734		0.70		0	0.000		0.240	0.400	2	0.000	0.000	0.203	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.91) -> tighten
+EXIT	2021.01.05 21:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.725		1.15		0	0.000		0.240	0.600	3	0.000	0.000	0.110	gated: healthy -> modest trail
+EXIT	2021.01.05 22:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.782		1.15		0	0.000		0.000	0.000	2	0.543	0.000	0.706	gated: healthy -> modest trail
+EXIT	2021.01.05 23:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.718		0.70		0	0.000		0.133	0.400	4	0.000	0.000	0.038	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.95) -> tighten
+EXIT	2021.01.06 01:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.738		1.15		0	0.000		0.144	0.600	2	0.000	0.000	0.245	gated: healthy -> modest trail
+EXIT	2021.01.06 02:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.737		1.15		0	0.000		0.000	0.000	3	0.495	0.000	0.236	gated: healthy -> modest trail
+EXIT	2021.01.06 03:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.723		1.15		0	0.000		0.000	0.000	2	0.200	0.000	0.088	gated: healthy -> modest trail
+EXIT	2021.01.06 04:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.755		0.70		0	0.000		0.000	0.000	1	0.000	0.000	0.429	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.14) -> tighten
+EXIT	2021.01.06 05:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.785		0.70		0	0.000		0.403	0.000	2	0.163	0.000	0.741	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.14) -> tighten
+EXIT	2021.01.06 06:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.800		0.70		0	0.000		0.403	0.000	3	0.485	0.000	0.898	gated: mom decayed; not a strong-trend winner (trend=-3.0 peak_r=1.14) -> tighten
+EXIT	2021.01.06 07:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.798		0.70		0	0.000		0.426	0.200	4	0.000	0.000	0.874	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.14) -> tighten
+EXIT	2021.01.06 08:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.804		0.70		0	0.000		0.426	0.000	2	0.000	0.000	0.939	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.14) -> tighten
+EXIT	2021.01.06 09:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.795		0.70		0	0.000		0.426	0.200	4	0.000	0.000	0.846	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.14) -> tighten
+EXIT	2021.01.06 10:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.773		1.15		0	0.000		0.426	1.000	1	0.100	0.000	0.615	gated: healthy -> modest trail
+EXIT	2021.01.06 11:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.716		1.15		0	0.000		0.000	0.000	1	0.200	0.000	0.020	gated: healthy -> modest trail
+EXIT	2021.01.06 12:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.710		1.15		0	0.000		0.000	0.000	2	0.325	0.000	0.183	gated: healthy -> modest trail
+EXIT	2021.01.06 13:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.181		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.276	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.46) -> tighten
+EXIT	2021.01.06 14:00	EngulfingEntry	1013624405	475	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.192		0.70		0	0.000		0.524	0.000	4	0.100	0.000	0.636	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.46) -> tighten
+OPEN	2021.01.11 03:00	PinBarEntry	295643628	483	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.18 11:00	PinBarEntry	1815979471	488	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.18 14:00	PinBarEntry	1168947685	490	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.01.25 06:00	PinBarEntry	655201624	492	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.04 07:00	PinBarEntry	25075451	495	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.18 14:00	PinBarEntry	934945258	499	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.02.25 04:00	PinBarEntry	569946147	502	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.09 11:00	CrashBreakoutEntry	1943048387	506	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.11 08:00	CrashBreakoutEntry	1197367442	508	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.11 11:00	CrashBreakoutEntry	418115965	509	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.17 22:00	CrashBreakoutEntry	1812557976	516	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.18 05:00	CrashBreakoutEntry	1145438290	518	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 10:00	PinBarEntry	1334708142	524	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 13:00	PinBarEntry	2026756877	526	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.30 22:00	PullbackContinuationEngine	750312211	532	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.31 18:00	CrashBreakoutEntry	2078399569	534	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.03.31 19:00	CrashBreakoutEntry	1049636865	535	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.01 18:00	CrashBreakoutEntry	173095613	538	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.01 19:00	CrashBreakoutEntry	699773843	539	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.06 09:00	CrashBreakoutEntry	498943646	544	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 15:00	CrashBreakoutEntry	2062869008	548	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 17:00	CrashBreakoutEntry	872655635	550	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.08 18:00	CrashBreakoutEntry	1526303001	551	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.13 04:00	PullbackContinuationEngine	171490659	558	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 10:00	CrashBreakoutEntry	141891124	561	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 17:00	CrashBreakoutEntry	1091518921	563	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 18:00	CrashBreakoutEntry	660678755	565	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.15 19:00	CrashBreakoutEntry	1470612519	566	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 09:00	CrashBreakoutEntry	1365990905	570	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 10:00	CrashBreakoutEntry	106250612	571	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.21 17:00	CrashBreakoutEntry	1683497188	579	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.26 09:00	PinBarEntry	1313230974	583	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.04.29 05:00	CrashBreakoutEntry	430739	586	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 06:00	PinBarEntry	382505461	590	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 17:00	CrashBreakoutEntry	101505709	592	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.03 18:00	CrashBreakoutEntry	35144409	593	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.06 18:00	CrashBreakoutEntry	1887618524	600	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.06 19:00	CrashBreakoutEntry	1518893038	601	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.10 08:00	PinBarEntry	1814023117	604	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.11 18:00	PinBarEntry	823402979	608	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 05:00	CrashBreakoutEntry	179582815	610	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 06:00	CrashBreakoutEntry	548495017	611	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 07:00	CrashBreakoutEntry	575183567	612	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 09:00	CrashBreakoutEntry	1703681335	613	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.17 10:00	CrashBreakoutEntry	740478206	614	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 05:00	CrashBreakoutEntry	729917113	627	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 09:00	CrashBreakoutEntry	1733941602	629	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.18 16:00	PinBarEntry	1462064070	631	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.19 07:00	MACrossEntry	1945124708	634	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.20 15:00	PinBarEntry	690634178	639	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.05.26 06:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.05.26 06:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.525		1.15		0	0.000		0.000	0.000	2	0.246	0.167	0.374	gated: healthy -> modest trail
+EXIT	2021.05.26 07:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.468		0.70		0	0.000		0.000	0.000	4	0.000	0.167	0.507	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.12) -> tighten
+EXIT	2021.05.26 08:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.515		1.15		0	0.000		0.072	0.600	3	0.000	0.167	0.378	gated: healthy -> modest trail
+EXIT	2021.05.26 09:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.395		0.70		0	0.000		0.138	0.400	4	0.000	0.167	0.708	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.12) -> tighten
+EXIT	2021.05.26 10:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.468		1.15		0	0.000		0.208	0.600	2	0.000	0.167	0.226	gated: healthy -> modest trail
+EXIT	2021.05.26 11:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.520		1.15		0	0.000		0.000	0.000	1	0.100	0.167	0.079	gated: healthy -> modest trail
+EXIT	2021.05.26 12:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.751		0.70		0	0.000		0.131	0.400	4	0.000	0.000	0.382	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.39) -> tighten
+EXIT	2021.05.26 13:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.744		1.15		0	0.000		0.176	0.600	3	0.000	0.000	0.314	gated: healthy -> modest trail
+EXIT	2021.05.26 14:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.176	0.600	3	0.100	0.000	0.226	gated: healthy -> modest trail
+EXIT	2021.05.26 15:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.764		0.70		0	0.000		0.176	0.400	4	0.000	0.000	0.518	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.39) -> tighten
+EXIT	2021.05.26 16:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.734		1.15		0	0.000		0.000	0.000	2	0.000	0.000	0.211	gated: healthy -> modest trail
+EXIT	2021.05.26 17:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.726		0.70		0	0.000		0.341	0.000	1	0.000	0.000	0.123	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.65) -> tighten
+EXIT	2021.05.26 18:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.716		0.70		0	0.000		0.341	0.200	4	0.000	0.000	0.023	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.65) -> tighten
+EXIT	2021.05.26 19:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.819		0.70		0	0.000		0.341	0.600	4	0.100	0.000	1.103	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.65) -> tighten
+EXIT	2021.05.26 20:00	EngulfingEntry	1487749366	644	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.822		0.70		0	0.000		0.341	0.400	2	0.000	0.000	1.130	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.65) -> tighten
+OPEN	2021.06.02 05:00	PinBarEntry	1279273193	646	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.03 14:00	PinBarEntry	1389911827	649	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.14 15:00	PinBarEntry	633622604	652	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.06.16 05:00	PinBarEntry	1400970183	656	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.15 08:00	PinBarEntry	1572523649	658	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.20 06:00	PinBarEntry	2041192081	661	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.22 11:00	PinBarEntry	2112283358	663	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.07.29 04:00	MACrossEntry	888364356	667	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.03 11:00	PinBarEntry	1161724059	671	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.04 07:00	PinBarEntry	1419226382	673	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.04 10:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2021.08.04 10:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.726		1.15		0	0.000		0.538	0.000	2	0.419	0.000	0.120	gated: healthy -> modest trail
+EXIT	2021.08.04 11:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.799		1.15		0	0.000		0.538	0.000	3	0.535	0.000	0.893	gated: healthy -> modest trail
+EXIT	2021.08.04 12:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.854		0.70		0	0.000		0.538	1.000	4	0.000	0.000	1.462	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.16) -> tighten
+EXIT	2021.08.04 13:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.793		0.70		0	0.000		0.538	0.000	4	0.000	0.000	0.828	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.16) -> tighten
+EXIT	2021.08.04 14:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.740		0.70		0	0.000		0.538	0.200	4	0.000	0.000	0.265	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.16) -> tighten
+EXIT	2021.08.04 15:00	EngulfingEntry	254087488	674	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.626		1.15		0	0.000		0.903	1.000	3	0.000	0.000	0.299	gated: healthy -> modest trail
+OPEN	2021.08.05 03:00	PinBarEntry	1849933079	680	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.16 04:00	CrashBreakoutEntry	418177011	682	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.17 11:00	CrashBreakoutEntry	1667251734	686	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.17 12:00	CrashBreakoutEntry	1205983986	687	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.23 17:00	CrashBreakoutEntry	756902225	694	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.23 18:00	CrashBreakoutEntry	1454482039	696	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.25 10:00	PinBarEntry	836777355	701	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.26 09:00	PinBarEntry	1821550767	706	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.30 12:00	PinBarEntry	512037048	709	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.08.31 11:00	MACrossEntry	974688649	711	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.07 23:00	PullbackContinuationEngine	1806155527	713	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.08 15:00	PinBarEntry	507493623	714	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.09 15:00	CrashBreakoutEntry	1460941361	718	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.20 05:00	PullbackContinuationEngine	288966219	721	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.09.21 14:00	PinBarEntry	1017113269	724	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.11 14:00	PinBarEntry	947666802	726	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.13 18:00	CrashBreakoutEntry	192793323	728	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 09:00	CrashBreakoutEntry	1820806318	729	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 10:00	CrashBreakoutEntry	926685292	730	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 11:00	CrashBreakoutEntry	533322070	731	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 12:00	CrashBreakoutEntry	724537064	733	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.14 16:00	CrashBreakoutEntry	25904697	737	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 09:00	CrashBreakoutEntry	1675704408	743	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 10:00	CrashBreakoutEntry	1175438879	744	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 11:00	CrashBreakoutEntry	344569797	746	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 12:00	CrashBreakoutEntry	1004697052	748	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.19 13:00	CrashBreakoutEntry	488587086	749	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.20 16:00	CrashBreakoutEntry	1547252721	759	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 04:00	PinBarEntry	315335803	763	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 07:00	PinBarEntry	182925641	764	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.25 12:00	MACrossEntry	359554722	766	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.10.26 09:00	PinBarEntry	1891442081	769	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.02 13:00	PinBarEntry	1006371815	774	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 06:00	PinBarEntry	47895331	776	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 08:00	PinBarEntry	1803398730	777	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.04 18:00	CrashBreakoutEntry	1082240417	782	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.08 08:00	CrashBreakoutEntry	577989761	786	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.09 22:00	PinBarEntry	1763315862	789	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 16:00	CrashBreakoutEntry	1227041658	791	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 17:00	CrashBreakoutEntry	758696472	793	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 18:00	CrashBreakoutEntry	864231726	795	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.10 19:00	CrashBreakoutEntry	472262416	796	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 08:00	PinBarEntry	1921300780	801	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 10:00	ExpansionEngine	1564995060	802	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.11 14:00	PinBarEntry	2015110190	806	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.15 16:00	PinBarEntry	605228955	811	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.17 14:00	MACrossEntry	289402454	813	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.30 11:00	MACrossEntry	563906008	816	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.11.30 12:00	ExpansionEngine	1190306420	817	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.01 02:00	PinBarEntry	174694130	822	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 04:00	CrashBreakoutEntry	97339623	824	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 05:00	CrashBreakoutEntry	1580775127	825	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 09:00	CrashBreakoutEntry	1154569572	826	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 10:00	CrashBreakoutEntry	342691445	827	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.23 11:00	CrashBreakoutEntry	419882769	828	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.27 17:00	PinBarEntry	1770547642	841	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2021.12.28 13:00	CrashBreakoutEntry	364101375	843	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.12 20:00	PinBarEntry	1653585658	849	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.17 11:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.01.17 11:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.806		0.70		0	0.000		1.063	0.000	2	0.901	0.000	0.958	gated: mom decayed; not a strong-trend winner (trend=6.0 peak_r=0.00) -> tighten
+EXIT	2022.01.17 12:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.820		0.70		0	0.000		1.063	0.200	4	0.000	0.000	1.109	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 13:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.833		0.70		0	0.000		1.063	0.200	4	0.155	0.000	1.241	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 14:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.747		1.15		0	0.000		1.063	0.000	3	0.000	0.000	0.345	gated: healthy -> modest trail
+EXIT	2022.01.17 15:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.772		0.70		0	0.000		1.063	0.600	4	0.000	0.000	0.610	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 16:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.752		0.70		0	0.000		1.063	0.000	4	0.000	0.000	0.401	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 17:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.766		0.70		0	0.000		1.063	0.600	3	0.000	0.000	0.548	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 18:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.789		0.70		0	0.000		1.063	1.000	1	0.100	0.000	0.790	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 19:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.781		0.70		0	0.000		1.063	0.400	4	0.000	0.000	0.699	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 20:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.782		0.70		0	0.000		1.063	0.600	3	0.000	0.000	0.711	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.17 21:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.800		0.70		0	0.000		1.063	1.000	3	0.100	0.000	0.902	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.07) -> tighten
+EXIT	2022.01.18 01:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.792		0.70		0	0.000		1.063	0.400	4	0.000	0.000	0.817	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=0.07) -> tighten
+EXIT	2022.01.18 02:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.786		0.70		0	0.000		1.063	0.400	4	0.217	0.000	0.753	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.07) -> tighten
+EXIT	2022.01.18 03:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.766		1.15		0	0.000		1.063	0.000	1	0.200	0.000	0.543	gated: healthy -> modest trail
+EXIT	2022.01.18 04:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.733		1.15		0	0.000		1.063	0.000	1	0.300	0.000	0.201	gated: healthy -> modest trail
+EXIT	2022.01.18 05:00	EngulfingEntry	1400694950	851	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.738		0.70		0	0.000		1.063	0.200	4	0.000	0.000	0.252	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.07) -> tighten
+OPEN	2022.01.20 16:00	PinBarEntry	391905837	853	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.24 20:00	PinBarEntry	530596519	855	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.25 16:00	EngulfingEntry	235162469	856	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.01.25 16:00	EngulfingEntry	235162469	856	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.722		1.15		0	0.000		0.926	1.000	1	0.100	0.000	0.082	gated: healthy -> modest trail
+OPEN	2022.01.27 04:00	PullbackContinuationEngine	1973237027	863	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.01.31 12:00	PinBarEntry	1971699818	866	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.02 07:00	PinBarEntry	134310676	868	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.08 05:00	PullbackContinuationEngine	1774836703	870	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.09 05:00	PullbackContinuationEngine	2030247743	872	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.10 13:00	PinBarEntry	2119003903	875	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.14 11:00	PinBarEntry	1828480155	879	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 09:00	PinBarEntry	697727711	883	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 15:00	ExpansionEngine	1044717884	888	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.17 18:00	PinBarEntry	1105795602	892	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.21 11:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.02.21 11:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.835		0.70		0	0.000		0.583	1.000	4	0.100	0.000	1.270	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=0.00) -> tighten
+EXIT	2022.02.21 12:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.833		1.15		0	0.000		0.583	0.600	2	0.675	0.000	1.246	gated: healthy -> modest trail
+EXIT	2022.02.21 13:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.823		1.15		0	0.000		0.583	0.600	3	0.689	0.000	1.139	gated: healthy -> modest trail
+EXIT	2022.02.21 14:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.850		0.70		0	0.000		0.583	0.000	4	0.000	0.000	1.425	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.26) -> tighten
+EXIT	2022.02.21 15:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.824		1.15		0	0.000		0.583	0.600	2	0.000	0.000	1.156	gated: healthy -> modest trail
+EXIT	2022.02.21 16:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.837		0.70		0	0.000		0.583	0.400	4	0.000	0.000	1.286	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.26) -> tighten
+EXIT	2022.02.21 17:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.750		0.70		0	0.000		0.583	0.000	3	0.211	0.000	0.377	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.26) -> tighten
+EXIT	2022.02.21 18:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.747		1.15		0	0.000		0.583	0.600	3	0.000	0.000	0.344	gated: healthy -> modest trail
+EXIT	2022.02.21 19:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.736		1.15		0	0.000		0.583	0.600	3	0.100	0.000	0.226	gated: healthy -> modest trail
+EXIT	2022.02.21 20:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.724		1.15		0	0.000		0.583	1.000	1	0.200	0.000	0.101	gated: healthy -> modest trail
+EXIT	2022.02.21 21:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.748		1.15		0	0.000		0.583	1.000	1	0.300	0.000	0.359	gated: healthy -> modest trail
+EXIT	2022.02.22 01:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.757		0.70		0	0.000		0.583	0.400	4	0.000	0.000	0.445	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.31) -> tighten
+EXIT	2022.02.22 02:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.445		0.70		0	0.000		0.000	0.000	3	0.000	0.000	0.049	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 03:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.151		0.70		0	0.000		0.246	0.400	4	0.000	0.000	0.015	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 04:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.225		0.70		0	0.000		0.319	0.600	3	0.000	0.000	0.059	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 05:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.261		0.70		0	0.000		0.319	0.600	3	0.543	0.000	0.472	gated: mom decayed; not a strong-trend winner (trend=2.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 06:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.203		0.70		0	0.000		0.319	0.400	4	0.000	0.000	0.586	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 07:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.194		0.70		0	0.000		0.319	0.400	4	0.294	0.000	0.653	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 08:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.291		0.70		0	0.000		0.319	0.600	1	0.000	0.000	0.413	gated: mom decayed; not a strong-trend winner (trend=1.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 09:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.755		0.70		0	0.000		0.319	0.400	2	0.000	0.000	0.429	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.87) -> tighten
+EXIT	2022.02.22 10:00	EngulfingEntry	36284314	895	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.768		0.70		0	0.000		0.319	0.400	3	0.100	0.000	0.567	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=1.87) -> tighten
+OPEN	2022.02.23 11:00	PinBarEntry	1773739487	899	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.23 19:00	PinBarEntry	876889867	901	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.02.24 06:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.02.24 06:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.598		1.15		0	0.000		0.000	0.000	1	0.100	0.167	1.201	gated: healthy -> modest trail
+EXIT	2022.02.24 07:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.484		1.15		0	0.000		0.000	0.000	2	0.370	0.167	0.827	gated: healthy -> modest trail
+EXIT	2022.02.24 08:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.509		1.15		0	0.000		0.256	0.600	3	0.569	0.167	0.550	gated: healthy -> modest trail
+EXIT	2022.02.24 09:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.756		1.30		0	0.000		0.256	0.600	3	0.808	0.000	0.436	gated: mom decayed BUT strong trend(persist=5.0>=3.0) + winner(peak_r=1.14) -> hold/widen (no clip)
+OPEN	2022.02.24 10:00	PinBarEntry	1141819828	908	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.02.24 10:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.735		1.30		0	0.000		0.256	0.600	3	0.872	0.000	0.215	gated: mom decayed BUT strong trend(persist=6.0>=3.0) + winner(peak_r=1.14) -> hold/widen (no clip)
+EXIT	2022.02.24 11:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.737		0.70		0	0.000		0.256	0.400	4	0.000	0.000	0.237	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.14) -> tighten
+EXIT	2022.02.24 12:00	EngulfingEntry	654526054	906	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.694		1.15		0	0.000		0.000	0.000	1	0.000	0.000	0.378	gated: healthy -> modest trail
+OPEN	2022.03.03 21:00	PinBarEntry	259636027	916	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.03 23:00	PinBarEntry	1475711212	918	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.16 05:00	PinBarEntry	1516187602	925	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.21 22:00	PinBarEntry	771115895	929	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.23 03:00	PinBarEntry	500804463	931	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.24 11:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.03.24 11:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.773		1.15		0	0.000		0.296	1.000	2	0.213	0.000	0.618	gated: healthy -> modest trail
+EXIT	2022.03.24 12:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.813		0.70		0	0.000		0.296	0.400	4	0.000	0.000	1.038	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=0.24) -> tighten
+EXIT	2022.03.24 13:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.815		0.70		0	0.000		0.296	0.400	2	0.578	0.000	1.056	gated: mom decayed; not a strong-trend winner (trend=-2.0 peak_r=0.24) -> tighten
+EXIT	2022.03.24 14:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.775		1.15		0	0.000		0.296	0.600	3	0.000	0.000	0.641	gated: healthy -> modest trail
+EXIT	2022.03.24 15:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.750		1.15		0	0.000		0.000	0.000	1	0.100	0.000	0.476	gated: healthy -> modest trail
+EXIT	2022.03.24 16:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	3	0.183		0.70		0	0.000		0.000	0.000	4	0.000	0.000	0.094	gated: mom decayed; not a strong-trend winner (trend=-1.0 peak_r=1.86) -> tighten
+EXIT	2022.03.24 17:00	EngulfingEntry	1217200409	934	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.388		1.15		0	0.000		0.270	0.600	3	0.000	0.000	0.887	gated: healthy -> modest trail
+OPEN	2022.03.28 06:00	MACrossEntry	335717642	939	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.28 10:00	PinBarEntry	1023567203	941	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.29 14:00	PinBarEntry	633614129	944	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.03.30 12:00	PinBarEntry	1275505904	948	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.11 16:00	EngulfingEntry	1995338929	950	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+EXIT	2022.04.11 16:00	EngulfingEntry	1995338929	950	RM_CURRENT	0	RM_ENG_C_GATED	1	2	4	0.491		1.15		0	0.000		0.000	0.000	2	0.315	0.167	0.807	gated: healthy -> modest trail
+OPEN	2022.04.12 16:00	PinBarEntry	1512811767	952	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.20 04:00	PullbackContinuationEngine	2053200663	954	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.20 09:00	PinBarEntry	662104730	955	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.04.20 15:00	PinBarEntry	163156289	958	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.02 03:00	PinBarEntry	1058781488	963	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.02 05:00	PinBarEntry	1298257623	966	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.05 13:00	PinBarEntry	200839931	971	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.16 05:00	PinBarEntry	1983860900	974	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.16 13:00	PinBarEntry	2016619162	978	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.18 10:00	PinBarEntry	952558931	980	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.19 08:00	PinBarEntry	877833529	982	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.05.31 05:00	FailedBreakReversal	10514244	985	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.06 03:00	PinBarEntry	2119080525	990	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.06 04:00	PinBarEntry	74328397	991	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.07 05:00	FailedBreakReversal	235509992	994	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.06.07 11:00	PinBarEntry	601504504	996	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.04 06:00	PinBarEntry	52930626	998	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.06 12:00	PinBarEntry	1184753587	1002	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.12 03:00	PinBarEntry	215547777	1006	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 11:00	CrashBreakoutEntry	1988730093	1011	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 12:00	CrashBreakoutEntry	908346909	1012	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.18 13:00	CrashBreakoutEntry	1042590293	1014	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 16:00	CrashBreakoutEntry	203543377	1020	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 18:00	CrashBreakoutEntry	283532574	1024	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.21 19:00	CrashBreakoutEntry	1426024552	1025	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 05:00	CrashBreakoutEntry	586213833	1028	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 11:00	CrashBreakoutEntry	1696885885	1029	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 12:00	CrashBreakoutEntry	661855491	1031	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 17:00	CrashBreakoutEntry	242531593	1036	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.07.28 18:00	CrashBreakoutEntry	261170099	1037	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 12:00	CrashBreakoutEntry	1490141791	1040	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 13:00	CrashBreakoutEntry	2014823280	1041	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 14:00	CrashBreakoutEntry	1920477868	1043	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 15:00	CrashBreakoutEntry	309737540	1045	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.04 16:00	CrashBreakoutEntry	638472048	1048	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.08 18:00	CrashBreakoutEntry	893104443	1053	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.09 17:00	CrashBreakoutEntry	1463412061	1056	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.11 07:00	PinBarEntry	1391770732	1059	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.18 05:00	PinBarEntry	490674490	1061	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 11:00	CrashBreakoutEntry	725749973	1064	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 12:00	CrashBreakoutEntry	953632267	1065	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.25 13:00	CrashBreakoutEntry	1136571961	1066	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.08.30 23:00	PullbackContinuationEngine	1269945828	1077	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 13:00	CrashBreakoutEntry	885546539	1080	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 14:00	CrashBreakoutEntry	2025282687	1082	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.08 15:00	CrashBreakoutEntry	1666660318	1083	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 14:00	CrashBreakoutEntry	62576737	1089	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 15:00	CrashBreakoutEntry	722906201	1090	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 16:00	CrashBreakoutEntry	1911606005	1092	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.12 19:00	CrashBreakoutEntry	1731376631	1095	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.15 04:00	PullbackContinuationEngine	1869627122	1101	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.19 09:00	PinBarEntry	1349840899	1104	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.22 09:00	PinBarEntry	237564284	1108	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.09.27 15:00	PinBarEntry	1622536415	1111	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.03 18:00	CrashBreakoutEntry	719252698	1113	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.03 19:00	CrashBreakoutEntry	1268568086	1114	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 09:00	CrashBreakoutEntry	656096894	1117	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 10:00	CrashBreakoutEntry	366671253	1118	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 11:00	CrashBreakoutEntry	1451241595	1120	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 12:00	CrashBreakoutEntry	1307500741	1121	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.04 13:00	CrashBreakoutEntry	1487192031	1122	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.10 09:00	PinBarEntry	334577022	1131	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.11 12:00	PinBarEntry	1731886030	1135	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.12 12:00	PinBarEntry	1987009455	1138	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.12 15:00	PinBarEntry	1910385605	1139	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.17 16:00	CrashBreakoutEntry	120547167	1143	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.17 17:00	CrashBreakoutEntry	217672960	1144	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.19 07:00	PinBarEntry	1288234631	1150	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.19 19:00	PullbackContinuationEngine	215506020	1154	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.25 12:00	PinBarEntry	827767006	1156	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 11:00	CrashBreakoutEntry	344196349	1159	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 12:00	CrashBreakoutEntry	835387906	1160	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 13:00	CrashBreakoutEntry	1303146108	1161	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.10.26 14:00	CrashBreakoutEntry	601011434	1164	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 10:00	CrashBreakoutEntry	77178282	1178	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 12:00	CrashBreakoutEntry	570970907	1180	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 13:00	CrashBreakoutEntry	663719983	1181	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 14:00	CrashBreakoutEntry	1336930995	1183	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.01 15:00	CrashBreakoutEntry	1467282871	1185	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 05:00	PinBarEntry	912511997	1191	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 10:00	PullbackContinuationEngine	749231600	1193	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.03 11:00	ExpansionEngine	1917532296	1195	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.07 12:00	CrashBreakoutEntry	526532657	1201	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.07 13:00	CrashBreakoutEntry	759110003	1202	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 18:00	CrashBreakoutEntry	1588018651	1207	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 19:00	CrashBreakoutEntry	457107383	1208	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 21:00	CrashBreakoutEntry	281401920	1209	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.08 22:00	CrashBreakoutEntry	592520580	1211	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.10 18:00	CrashBreakoutEntry	715585583	1219	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.14 17:00	PinBarEntry	1578836197	1222	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.17 11:00	PinBarEntry	2028661547	1226	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.22 09:00	PinBarEntry	1280656133	1231	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.24 14:00	CrashBreakoutEntry	637911607	1233	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.29 11:00	CrashBreakoutEntry	401068695	1237	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 11:00	CrashBreakoutEntry	1367282318	1241	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 12:00	CrashBreakoutEntry	203527664	1242	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.11.30 14:00	CrashBreakoutEntry	1787114609	1244	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 08:00	PullbackContinuationEngine	1266198975	1252	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 16:00	CrashBreakoutEntry	1480854074	1254	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 17:00	CrashBreakoutEntry	937299428	1257	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 18:00	CrashBreakoutEntry	1755191954	1259	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.01 19:00	CrashBreakoutEntry	2139427024	1260	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.05 03:00	PinBarEntry	1546667175	1272	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.06 07:00	PinBarEntry	1014180439	1276	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.08 08:00	PinBarEntry	438594397	1279	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.08 09:00	PinBarEntry	436310509	1280	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 16:00	CrashBreakoutEntry	1761914866	1289	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 17:00	CrashBreakoutEntry	655351394	1291	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 18:00	CrashBreakoutEntry	322328966	1294	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.13 19:00	CrashBreakoutEntry	1441123049	1295	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.15 06:00	PinBarEntry	1002972190	1302	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 12:00	CrashBreakoutEntry	374595785	1307	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 18:00	CrashBreakoutEntry	605074839	1310	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.20 19:00	CrashBreakoutEntry	1163475311	1311	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 12:00	CrashBreakoutEntry	1655711076	1318	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 14:00	CrashBreakoutEntry	1971786257	1319	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 18:00	CrashBreakoutEntry	678832304	1324	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									
+OPEN	2022.12.27 19:00	CrashBreakoutEntry	1094303750	1326	RM_CURRENT	0	RM_ENG_C_GATED	1	2	0	0.000	1.00	1.00		0									

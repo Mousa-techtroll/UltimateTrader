@@ -891,5 +891,8 @@ input bool   InpAccountSafetyActive = false;  // Enable the broker-authoritative
 //   0 RM_CURRENT | 1 RM_ENG_A | 2 RM_ENG_B | 3 RM_ENG_C | 4 RM_PBC_A | 5 RM_PBC_B | 6 RM_PBC_C
 // Cross-profile pairs (Engulfing entry + PBC exit, or vice-versa) FAIL lab init by design.
 input bool   InpResearchLabEnable  = false;  // ABSOLUTE master for the research entry×exit lab (OFF => byte-identical)
-input int    InpResearchEntryModel = 0;      // entry model id (0=RM_CURRENT; 1..3 Engulfing A/B/C; 4..6 PBC A/B/C)
-input int    InpResearchExitModel  = 0;      // exit  model id (0=RM_CURRENT; 1..3 Engulfing A/B/C; 4..6 PBC A/B/C)
+input int    InpResearchEntryModel = 0;      // entry model id (0=RM_CURRENT; 1..3 Engulfing A/B/C; 4..6 PBC A/B/C; 11 Eng-alloc; 12 PBC-state)
+input int    InpResearchExitModel  = 0;      // exit  model id (0=RM_CURRENT; 1..3 Eng A/B/C; 4..6 PBC A/B/C; 7-10 Eng-C gated/protect/partial/hyst)
+// FORWARD SHADOW: evaluate ALL exit candidates side-by-side per bar + log counterfactuals, act on NONE
+// (trades stay byte-identical to control while every candidate is logged). Needs InpResearchLabEnable.
+input bool   InpResearchShadowAll  = false;  // research forward-shadow: log all exit candidates, act on none

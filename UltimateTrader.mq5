@@ -1407,8 +1407,9 @@ int OnInit()
          if(g_researchLab != NULL) { delete g_researchLab; g_researchLab = NULL; }
          return(INIT_FAILED);
       }
+      g_researchLab.SetShadowAll(InpResearchShadowAll);
       Print("[Init] Research entry×exit lab ACTIVE (entry=", EnumToString(rem),
-            " exit=", EnumToString(rxm), " labver=", RESEARCH_LAB_VERSION, ")");
+            " exit=", EnumToString(rxm), " shadow=", InpResearchShadowAll, " labver=", RESEARCH_LAB_VERSION, ")");
    }
 
    // NEWS FILTER: hybrid event-window engine (live calendar / tester CSV / static fallback).

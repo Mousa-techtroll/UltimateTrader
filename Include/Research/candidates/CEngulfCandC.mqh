@@ -467,7 +467,7 @@ public:
       return p;
    }
 
-private:
+protected:   // wave-2: exposed so the regime-conditioned Eng-C exit variants can reuse the core derivations
    //================= exit-side derivations (read ctx only) ==========
 
    // Origin break: the frozen engulf origin / parent swing has been given back.

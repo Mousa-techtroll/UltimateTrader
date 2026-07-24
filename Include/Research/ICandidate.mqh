@@ -50,6 +50,7 @@ struct SResearchPosCtx
    double   origin_price;  bool origin_ok;          // engulf origin / parent swing low, frozen at entry
    double   peak_recovery; bool peak_recovery_ok;   // lab-owned running post-entry max of recovery_confirmed
    double   entry_basing;  bool entry_basing_ok;    // lab-owned basing_quality latched at first sighting
+   int      deterioration_streak;                   // lab-owned consecutive closed bars the exit flagged deteriorating (for HYSTERESIS)
    // pre-computed feature snapshots NOW
    SPullbackRecoveryFeatures pullback;
    SBreakoutFollowThrough    breakout;
@@ -67,9 +68,11 @@ struct SResearchExitProposal
    string   candidate_id;
    string   reason;
    bool     valid;
+   bool     deteriorating;  // wave-2: this bar shows the exit's raw deterioration signal (lab counts the
+                            // consecutive-bar streak so a HYSTERESIS variant can require sustained deterioration).
 };
 inline void ExitPropInit(SResearchExitProposal &p)
-{ p.action=0; p.pct=0; p.factor=1.0; p.confidence=0; p.candidate_id=""; p.reason=""; p.valid=false; }
+{ p.action=0; p.pct=0; p.factor=1.0; p.confidence=0; p.candidate_id=""; p.reason=""; p.valid=false; p.deteriorating=false; }
 
 // Normalized per-position research metadata — the LAB is its SOLE owner; it is persisted and
 // handed to any independently-selected exit model via SResearchPosCtx (subtype/entry_confidence/
@@ -88,6 +91,8 @@ struct SResearchTradeStamp
    double   origin_price;  bool origin_ok;
    double   peak_recovery; bool peak_recovery_ok;  // running post-entry max of recovery_confirmed (lab-tracked, persisted)
    double   entry_basing;  bool entry_basing_ok;   // basing_quality latched at first exit-eval sighting (persisted)
+   int      deterioration_streak;                  // consecutive closed bars the SELECTED exit flagged deteriorating (lab-tracked)
+   int      shadow_streak[RESEARCH_MODEL_COUNT];   // per-candidate deterioration streaks for the side-by-side SHADOW loop
    double   req_risk_mult;      // requested by the entry model
    double   applied_risk_mult;  // actually applied by the risk gateway
    datetime open_time;

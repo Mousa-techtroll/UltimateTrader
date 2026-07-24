@@ -16,6 +16,9 @@
 #include "candidates/CPbcCandA.mqh"
 #include "candidates/CPbcCandB.mqh"
 #include "candidates/CPbcCandC.mqh"
+// WAVE 2: regime-conditioned Eng-C exit variants + preservation-first entry models
+#include "candidates/CEngulfCandCVariants.mqh"
+#include "candidates/CWave2Entries.mqh"
 
 #define RESEARCH_LAB_VERSION 2
 
@@ -34,6 +37,13 @@ private:
    CPbcCandA_Entry    m_pbcA_e; CPbcCandA_Exit    m_pbcA_x;
    CPbcCandB_Entry    m_pbcB_e; CPbcCandB_Exit    m_pbcB_x;
    CPbcCandC_Entry    m_pbcC_e; CPbcCandC_Exit    m_pbcC_x;
+   // WAVE 2 — Eng-C exit variants (exit-only) + preservation-first entries (entry-only)
+   CEngCGated_Exit    m_engCgated_x;
+   CEngCProtect_Exit  m_engCprotect_x;
+   CEngCPartial_Exit  m_engCpartial_x;
+   CEngCHyst_Exit     m_engChyst_x;
+   CEngulfAllocator_Entry m_engAlloc_e;
+   CPbcState_Entry        m_pbcState_e;
    ICandidateEntry* m_entry[RESEARCH_MODEL_COUNT];
    ICandidateExit*  m_exit[RESEARCH_MODEL_COUNT];
    // INDEPENDENT selectors
@@ -42,6 +52,7 @@ private:
    SResearchTradeStamp     m_stamp[];     // open positions
    SPendingResearchSignal  m_pend[];      // WAIT_FOR_CONFIRM, keyed by signal_id
    int      m_tele; bool m_ready; datetime m_last_bar;
+   bool     m_shadow_all;   // wave-2 forward-shadow: evaluate ALL candidates side-by-side, act on none
 
    int  stampIdx(long t){ for(int i=0;i<ArraySize(m_stamp);i++) if(m_stamp[i].ticket==t) return i; return -1; }
    int  pendIdx(int sid){ for(int i=0;i<ArraySize(m_pend);i++) if(m_pend[i].signal_id==sid) return i; return -1; }
@@ -88,7 +99,7 @@ private:
    }
 
 public:
-   CResearchEntryExitLab(){ m_tele=-1; m_ready=false; m_last_bar=0; m_sel_entry=RM_CURRENT; m_sel_exit=RM_CURRENT; }
+   CResearchEntryExitLab(){ m_tele=-1; m_ready=false; m_last_bar=0; m_sel_entry=RM_CURRENT; m_sel_exit=RM_CURRENT; m_shadow_all=false; }
    ~CResearchEntryExitLab(){ if(m_tele!=-1){ FileClose(m_tele); m_tele=-1; } }
 
    // Compatibility: any entry x any exit WITHIN a family; a cross-family combo (e.g. ENG entry x PBC exit) FAILS.
@@ -105,6 +116,13 @@ public:
       m_entry[RM_PBC_A]=GetPointer(m_pbcA_e); m_exit[RM_PBC_A]=GetPointer(m_pbcA_x);
       m_entry[RM_PBC_B]=GetPointer(m_pbcB_e); m_exit[RM_PBC_B]=GetPointer(m_pbcB_x);
       m_entry[RM_PBC_C]=GetPointer(m_pbcC_e); m_exit[RM_PBC_C]=GetPointer(m_pbcC_x);
+      // WAVE 2: exit-only variants (no entry side) + entry-only models (no exit side)
+      m_exit[RM_ENG_C_GATED]  =GetPointer(m_engCgated_x);
+      m_exit[RM_ENG_C_PROTECT]=GetPointer(m_engCprotect_x);
+      m_exit[RM_ENG_C_PARTIAL]=GetPointer(m_engCpartial_x);
+      m_exit[RM_ENG_C_HYST]   =GetPointer(m_engChyst_x);
+      m_entry[RM_ENG_ALLOC]   =GetPointer(m_engAlloc_e);
+      m_entry[RM_PBC_STATE]   =GetPointer(m_pbcState_e);
       teleOpen(); m_ready=true; return true;
    }
 
@@ -187,6 +205,8 @@ public:
       m_stamp[n].origin_price=origin_price; m_stamp[n].origin_ok=origin_ok;
       m_stamp[n].peak_recovery=0.0; m_stamp[n].peak_recovery_ok=false;   // seeded on first exit sighting
       m_stamp[n].entry_basing=0.0;  m_stamp[n].entry_basing_ok=false;
+      m_stamp[n].deterioration_streak=0;   // wave-2 hysteresis counter
+      ArrayInitialize(m_stamp[n].shadow_streak,0);   // per-candidate shadow streaks
       m_stamp[n].req_risk_mult=v.risk_mult; m_stamp[n].applied_risk_mult=applied_risk_mult;
       m_stamp[n].open_time=TimeCurrent(); m_stamp[n].valid=true;
       PendingResolve(signal_id,PEND_EXECUTED);
@@ -230,7 +250,10 @@ public:
       c.peak_recovery_ok = (si>=0)? m_stamp[si].peak_recovery_ok : false;
       c.entry_basing     = (si>=0)? m_stamp[si].entry_basing     : 0.0;
       c.entry_basing_ok  = (si>=0)? m_stamp[si].entry_basing_ok  : false;
+      c.deterioration_streak = (si>=0)? m_stamp[si].deterioration_streak : 0;   // prior streak (this bar not yet counted)
       p=m_exit[m_sel_exit].EvaluateExit(c);
+      // wave-2: advance/reset the lab-owned deterioration streak from the candidate's raw signal
+      if(si>=0){ if(p.deteriorating) m_stamp[si].deterioration_streak++; else m_stamp[si].deterioration_streak=0; }
       if(m_tele!=-1 && p.action!=0) FileWrite(m_tele,"EXIT",TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES),engine,
         (si>=0)?m_stamp[si].signal_id:0,(int)ticket,
         EnumToString((ENUM_RESEARCH_MODEL)((si>=0)?m_stamp[si].entry_model:RM_CURRENT)),(si>=0)?m_stamp[si].entry_version:0,
@@ -255,6 +278,69 @@ public:
    void PutStamp(const SResearchTradeStamp &s){ int n=ArraySize(m_stamp); ArrayResize(m_stamp,n+1); m_stamp[n]=s; }
    ENUM_RESEARCH_MODEL SelEntry(){ return m_sel_entry; }
    ENUM_RESEARCH_MODEL SelExit(){ return m_sel_exit; }
+   void SetShadowAll(bool on){ m_shadow_all=on; }
+   bool ShadowActive(){ return m_shadow_all; }
+
+   // WAVE-2 FORWARD SHADOW: evaluate EVERY registered exit candidate of this position's family
+   // side-by-side (incl. the original Eng-C = RM_ENG_C), log each proposal + the counterfactual
+   // state (current_r / peak_r / mfe_r / trend / exhaustion / deteriorating), and ACT ON NONE.
+   // The coordinator calls this per open position per bar when the shadow master is on; the real
+   // exit stays RM_CURRENT so trades are byte-identical to the control while all candidates log.
+   void ShadowTick(long ticket,string engine,int direction,double entry_price,double risk_distance,
+                   int bars_since_entry,double current_r,double peak_r,double mfe_r,double mae_r,
+                   double current_price,double impulse_now,bool impulse_now_ok)
+   {
+      if(!m_ready || !m_shadow_all) return;
+      int prof=engineProfile(engine); if(prof<0) return;
+      int si=stampIdx(ticket);
+      SResearchPosCtx c;
+      c.ticket=ticket; c.direction=direction; c.entry_price=entry_price; c.risk_distance=risk_distance;
+      c.bars_since_entry=bars_since_entry; c.current_r=current_r; c.peak_r=peak_r; c.mfe_r=mfe_r; c.mae_r=mae_r;
+      c.current_price=current_price; c.impulse_now=impulse_now; c.impulse_now_ok=impulse_now_ok;
+      c.subtype          = (si>=0)? m_stamp[si].subtype          : 0;
+      c.entry_confidence = (si>=0)? m_stamp[si].entry_confidence : 0.0;
+      c.entry_impulse    = (si>=0)? m_stamp[si].entry_impulse    : 0.0;
+      c.entry_impulse_ok = (si>=0)? m_stamp[si].entry_impulse_ok : false;
+      c.origin_price     = (si>=0)? m_stamp[si].origin_price     : 0.0;
+      c.origin_ok        = (si>=0)? m_stamp[si].origin_ok        : false;
+      m_pullback.GetFeatures(c.pullback); m_breakout.GetFeatures(c.breakout); m_momseq.GetFeatures(c.momseq);
+      c.room=m_room.Evaluate(direction,current_price,risk_distance);
+      if(si>=0 && c.pullback.recovery_confirmed.available)
+      {
+         double rec_now=c.pullback.recovery_confirmed.value;
+         if(!m_stamp[si].peak_recovery_ok){ m_stamp[si].peak_recovery=rec_now; m_stamp[si].peak_recovery_ok=true; }
+         else if(rec_now>m_stamp[si].peak_recovery) m_stamp[si].peak_recovery=rec_now;
+         if(!m_stamp[si].entry_basing_ok && c.pullback.basing_quality.available)
+         { m_stamp[si].entry_basing=c.pullback.basing_quality.value; m_stamp[si].entry_basing_ok=true; }
+      }
+      c.peak_recovery    = (si>=0)? m_stamp[si].peak_recovery    : 0.0;
+      c.peak_recovery_ok = (si>=0)? m_stamp[si].peak_recovery_ok : false;
+      c.entry_basing     = (si>=0)? m_stamp[si].entry_basing     : 0.0;
+      c.entry_basing_ok  = (si>=0)? m_stamp[si].entry_basing_ok  : false;
+      for(int m=0;m<RESEARCH_MODEL_COUNT;m++)
+      {
+         if(m_exit[m]==NULL) continue;
+         if(ResearchModelProfile((ENUM_RESEARCH_MODEL)m)!=prof) continue;
+         c.deterioration_streak = (si>=0)? m_stamp[si].shadow_streak[m] : 0;   // per-candidate streak (HYSTERESIS)
+         SResearchExitProposal sp=m_exit[m].EvaluateExit(c);
+         if(si>=0){ if(sp.deteriorating) m_stamp[si].shadow_streak[m]++; else m_stamp[si].shadow_streak[m]=0; }
+         logShadow(ticket,engine,(ENUM_RESEARCH_MODEL)m,c,sp,(si>=0)?m_stamp[si].signal_id:0);
+      }
+   }
+
+private:
+   void logShadow(long ticket,string engine,ENUM_RESEARCH_MODEL m,const SResearchPosCtx &c,const SResearchExitProposal &sp,int sigid)
+   {
+      if(m_tele==-1) return;
+      double trendval=(c.momseq.momentum_persistence.available)?(double)c.direction*c.momseq.momentum_persistence.value:0.0;
+      FileWrite(m_tele,"SHADOW",TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES),engine,sigid,(int)ticket,
+        EnumToString(m),exitVer(m),"","",RESEARCH_LAB_VERSION,sp.action,DoubleToString(sp.confidence,3),
+        DoubleToString(c.current_r,3),DoubleToString(c.peak_r,3),(sp.deteriorating?1:0),c.subtype,
+        DoubleToString(c.mfe_r,3),DoubleToString(trendval,3),
+        DoubleToString(c.pullback.pullback_depth.value,3),DoubleToString(c.pullback.recovery_confirmed.value,3),
+        DoubleToString(c.momseq.momentum_phase.value,0),DoubleToString(c.momseq.sequence_exhaustion.value,3),
+        DoubleToString(c.breakout.follow_through_persistence.value,3),DoubleToString(c.room.room_R.value,3),san(sp.reason));
+   }
 };
 
 #endif

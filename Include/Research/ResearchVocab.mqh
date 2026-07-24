@@ -14,12 +14,23 @@ enum ENUM_RESEARCH_MODEL
    RM_ENG_C   = 3,   // CEngulfCandC  (confidence/risk-allocation)
    RM_PBC_A   = 4,   // CPbcCandA     (recovery proxy)
    RM_PBC_B   = 5,   // CPbcCandB     (real pullback_recovery)
-   RM_PBC_C   = 6    // CPbcCandC     (entry-timing/subtype)
+   RM_PBC_C   = 6,   // CPbcCandC     (entry-timing/subtype)
+   // --- WAVE 2: regime-conditioned Eng-C exit variants + preservation-first entry models ---
+   RM_ENG_C_GATED   = 7,   // CEngulfCandCGated   (Eng-C exit; suppress CLOSE in strong persistent trends)
+   RM_ENG_C_PROTECT = 8,   // CEngulfCandCProtect (Eng-C exit; tighten/trail winners instead of closing)
+   RM_ENG_C_PARTIAL = 9,   // CEngulfCandCPartial (Eng-C exit; partial-first, full close only on confirmed invalidation)
+   RM_ENG_C_HYST    = 10,  // CEngulfCandCHyst    (Eng-C exit; require sustained deterioration >= N closed bars)
+   RM_ENG_ALLOC     = 11,  // CEngulfAllocator    (Eng ENTRY; preserve baseline-valid, propose down/normal/up/reclass)
+   RM_PBC_STATE     = 12   // CPbcStateModel      (PBC ENTRY; pullback->basing->recovery->continuation state machine)
 };
-#define RESEARCH_MODEL_COUNT 7
+#define RESEARCH_MODEL_COUNT 13
 // which trade-family a model belongs to (0=Engulfing, 1=PBC, -1=none/current)
 inline int ResearchModelProfile(ENUM_RESEARCH_MODEL m)
-{ if(m>=RM_ENG_A && m<=RM_ENG_C) return 0; if(m>=RM_PBC_A && m<=RM_PBC_C) return 1; return -1; }
+{ if(m>=RM_ENG_A && m<=RM_ENG_C) return 0;
+  if(m>=RM_ENG_C_GATED && m<=RM_ENG_ALLOC) return 0;   // wave-2 Engulfing models
+  if(m>=RM_PBC_A && m<=RM_PBC_C) return 1;
+  if(m==RM_PBC_STATE) return 1;
+  return -1; }
 
 // Deterministic string->int32 hash (FNV-1a, folded positive) for keying pending signals + trade
 // stamps off the EA's STRING signal_id. Stable within a run; the SAME string always maps to the
