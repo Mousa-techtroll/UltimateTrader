@@ -51,6 +51,10 @@ struct SResearchPosCtx
    double   peak_recovery; bool peak_recovery_ok;   // lab-owned running post-entry max of recovery_confirmed
    double   entry_basing;  bool entry_basing_ok;    // lab-owned basing_quality latched at first sighting
    int      deterioration_streak;                   // lab-owned consecutive closed bars the exit flagged deteriorating (for HYSTERESIS)
+   // --- persisted policy LIFECYCLE state (lab-filled; a policy reads these to stay exactly-once / monotonic / staged) ---
+   bool     partial_done;                           // a policy bank/partial already taken on this ticket
+   double   sl_locked_r;                            // tightest stop locked so far in R (-99 = none)
+   int      policy_stage;                           // policy lifecycle stage (0=pre)
    // pre-computed feature snapshots NOW
    SPullbackRecoveryFeatures pullback;
    SBreakoutFollowThrough    breakout;
@@ -93,6 +97,11 @@ struct SResearchTradeStamp
    double   entry_basing;  bool entry_basing_ok;   // basing_quality latched at first exit-eval sighting (persisted)
    int      deterioration_streak;                  // consecutive closed bars the SELECTED exit flagged deteriorating (lab-tracked)
    int      shadow_streak[RESEARCH_MODEL_COUNT];   // per-candidate deterioration streaks for the side-by-side SHADOW loop
+   // --- persisted policy LIFECYCLE state (restored on restart via the stamp) ---
+   bool     partial_done;      // a policy bank/partial has already been taken (EXACTLY-ONCE guard)
+   double   sl_locked_r;       // tightest stop locked so far, in R (MONOTONIC tighten guard; -99 = none)
+   int      last_exit_action;  // last applied exit action code (repeat-suppression)
+   int      policy_stage;      // policy lifecycle stage (0=pre; policy-defined thereafter)
    double   req_risk_mult;      // requested by the entry model
    double   applied_risk_mult;  // actually applied by the risk gateway
    datetime open_time;

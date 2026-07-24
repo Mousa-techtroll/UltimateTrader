@@ -23,16 +23,19 @@ enum ENUM_RESEARCH_MODEL
    RM_ENG_ALLOC     = 11,  // CEngulfAllocator    (Eng ENTRY; preserve baseline-valid, propose down/normal/up/reclass)
    RM_PBC_STATE     = 12,  // CPbcStateModel      (PBC ENTRY; pullback->basing->recovery->continuation state machine)
    // --- PLATFORM WAVE: extend to every active signal type (family profiles 2..6). Never renumber. ---
-   RM_CRASH_X_A     = 13   // CCrashCandA_Exit    (Crash EXIT; rubber-band reversion de-risk + fade-invalidation)
+   RM_CRASH_X_A     = 13,  // CCrashCandA_Exit     (Crash EXIT intent: rubber-band FADE — reversion de-risk)
+   RM_CRASH_X_B     = 14,  // CCrashCandB_Exit     (Crash EXIT intent: CONTINUATION — ride the extending crash)
+   RM_CRASH_X_C     = 15,  // CCrashCandC_Exit     (Crash EXIT intent: RECOVERY — exit as the V-bottom bounces)
+   RM_CRASH_ENTRY   = 16   // CCrashEntry          (Crash ENTRY classifier: FADE/CONTINUATION/RECOVERY subtype + risk)
 };
-#define RESEARCH_MODEL_COUNT 14
+#define RESEARCH_MODEL_COUNT 17
 // which trade-family a model belongs to (0=Engulfing, 1=PBC, 2=Crash, ... -1=none/current)
 inline int ResearchModelProfile(ENUM_RESEARCH_MODEL m)
 { if(m>=RM_ENG_A && m<=RM_ENG_C) return 0;
   if(m>=RM_ENG_C_GATED && m<=RM_ENG_ALLOC) return 0;   // wave-2 Engulfing models
   if(m>=RM_PBC_A && m<=RM_PBC_C) return 1;
   if(m==RM_PBC_STATE) return 1;
-  if(m==RM_CRASH_X_A) return 2;                        // Crash family
+  if(m>=RM_CRASH_X_A && m<=RM_CRASH_ENTRY) return 2;    // Crash family (fade/continuation/recovery + classifier)
   return -1; }
 
 // Deterministic string->int32 hash (FNV-1a, folded positive) for keying pending signals + trade

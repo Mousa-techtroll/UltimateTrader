@@ -42,10 +42,16 @@ Engineering note (applies to ALL): compile 0/0; master-OFF AND shadow-ON decisio
 | 5 | PBC_B real-recovery fade | 1 | partial de-risking on recovery collapse (lab-owned peak) | PASS | PASS | NOT_PROMOTED |
 | 6 | PBC_C subtype | 1 | subtype-matched de-risking (scalp bank / runner) | PASS | PASS | NOT_PROMOTED |
 
-## EXIT models (Crash family, profile 2) — PLATFORM WAVE
+## Crash family (profile 2) — PLATFORM WAVE (3 exit intents + entry classifier)
+Lifecycle-hardened (exactly-once partial, monotonic tighten, repeat-suppress, PERSISTED policy stage restored on
+restart). Behavior FULLY verified by synthetic tests (UT_ResearchPolicies: 20/20, every branch incl. fade-invalidation).
+Does NOT duplicate the production §D crash trail-suppressor (that is a trailing-plugin modulation; these are exit proposals).
 | id | Id() | ver | intended objective | ENG | BEH | ECON |
 |---|---|---|---|---|---|---|
-| 13 | CRASH_A_rubberband | 1 | crash-protection: bank into the reversion snap-back, protect the runner on stall, close on fade-invalidation | PASS | PASS (fires on CrashBreakoutEntry: fade-invalid close / reversion-bank partial / stall tighten) | PENDING_FORWARD |
+| 13 | CRASH_A_fade | 1 | rubber-band FADE: bank into the reversion, protect on stall, close on fade-invalidation (default subtype) | PASS | PASS (synthetic 5/5) | PENDING_FORWARD |
+| 14 | CRASH_B_continuation | 1 | CONTINUATION: ride the extending crash wide, bank a big extension, close on a bounce | PASS | PASS (synthetic 5/5) | PENDING_FORWARD |
+| 15 | CRASH_C_recovery | 1 | RECOVERY: exit ahead of the V-bottom bounce (capital protection) | PASS | PASS (synthetic 5/5) | PENDING_FORWARD |
+| 16 | CRASH_entry | 1 | ENTRY classifier: FADE/CONTINUATION/RECOVERY subtype + preservation-first risk allocation | PASS | PASS (synthetic 5/5, never rejects) | PENDING_FORWARD |
 
 ## Reading
 - ALL models: ENGINEERING PASS + BEHAVIOR PASS → they belong in the shared architecture (kept, versioned, off-by-default).

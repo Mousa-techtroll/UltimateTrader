@@ -47,6 +47,7 @@ struct SVirtualLedger
    double   last_r;          // last-seen current_r (ride-case close level)
    int      det_streak;      // per-candidate consecutive deterioration bars (HYSTERESIS)
    int      interventions;   // # of meaningful (non-NOOP/non-WAIT) actions taken on this virtual position
+   bool     partial_done;    // exactly-once partial guard (lifecycle hardening, shadow path)
    bool     closed;          // virtual position fully closed
    bool     valid;
 };
@@ -73,7 +74,10 @@ private:
    CEngCHyst_Exit     m_engChyst_x;
    CEngulfAllocator_Entry m_engAlloc_e;
    CPbcState_Entry        m_pbcState_e;
-   CCrashCandA_Exit       m_crashA_x;   // platform wave: Crash family (profile 2) exit
+   CCrashCandA_Exit       m_crashA_x;   // platform wave: Crash family (profile 2) — 3 exit intents + classifier
+   CCrashCandB_Exit       m_crashB_x;
+   CCrashCandC_Exit       m_crashC_x;
+   CCrashEntry            m_crash_e;
    ICandidateEntry* m_entry[RESEARCH_MODEL_COUNT];
    ICandidateExit*  m_exit[RESEARCH_MODEL_COUNT];
    // INDEPENDENT selectors
@@ -86,6 +90,22 @@ private:
    bool     m_shadow_all;   // wave-2 forward-shadow: evaluate ALL candidates side-by-side, act on none
 
    int  stampIdx(long t){ for(int i=0;i<ArraySize(m_stamp);i++) if(m_stamp[i].ticket==t) return i; return -1; }
+   // Policy LIFECYCLE hardening (reusable across all families): mutate the proposal to guarantee
+   // exactly-once partials, MONOTONIC tightening, and repeat-suppression; advance the persisted stage.
+   // Refs are the caller's persisted state (stamp for the real path, ledger for the shadow path).
+   void enforceLifecycle(SResearchExitProposal &p, bool &partial_done, double &sl_locked_r, int &last_action, int &stage)
+   {
+      if(p.action==2 && partial_done)                                   // exactly-once partial
+      { p.action=0; p.reason="[suppress:partial-once] "+p.reason; }
+      if(p.action==3 && (-p.factor) <= sl_locked_r + 1e-9)              // monotonic tighten (stop -factor R must be strictly tighter)
+      { p.action=0; p.reason="[suppress:tighten-monotonic] "+p.reason; }
+      if(p.action==4 && last_action==4)                                // repeated identical TRAIL widen -> suppress re-widen
+      { p.action=0; p.reason="[suppress:repeat-trail] "+p.reason; }
+      if(p.action==1)      stage=3;                                    // CLOSED
+      else if(p.action==2){ partial_done=true; if(stage<1) stage=1; }  // BANKED
+      else if(p.action==3){ sl_locked_r=-p.factor; if(stage<2) stage=2; } // PROTECTED
+      if(p.action!=0) last_action=p.action;
+   }
    int  pendIdx(int sid){ for(int i=0;i<ArraySize(m_pend);i++) if(m_pend[i].signal_id==sid) return i; return -1; }
    int  engineProfile(string e){ if(StringFind(e,"Engulf")>=0) return 0; if(StringFind(e,"PullbackContinuation")>=0) return 1;
         if(StringFind(e,"Crash")>=0) return 2; return -1; }
@@ -155,7 +175,10 @@ public:
       m_exit[RM_ENG_C_HYST]   =GetPointer(m_engChyst_x);
       m_entry[RM_ENG_ALLOC]   =GetPointer(m_engAlloc_e);
       m_entry[RM_PBC_STATE]   =GetPointer(m_pbcState_e);
-      m_exit[RM_CRASH_X_A]    =GetPointer(m_crashA_x);   // platform wave: Crash exit
+      m_exit[RM_CRASH_X_A]    =GetPointer(m_crashA_x);   // platform wave: Crash exit intents + classifier
+      m_exit[RM_CRASH_X_B]    =GetPointer(m_crashB_x);
+      m_exit[RM_CRASH_X_C]    =GetPointer(m_crashC_x);
+      m_entry[RM_CRASH_ENTRY] =GetPointer(m_crash_e);
       teleOpen(); m_ready=true; return true;
    }
 
@@ -240,6 +263,7 @@ public:
       m_stamp[n].entry_basing=0.0;  m_stamp[n].entry_basing_ok=false;
       m_stamp[n].deterioration_streak=0;   // wave-2 hysteresis counter
       ArrayInitialize(m_stamp[n].shadow_streak,0);   // per-candidate shadow streaks
+      m_stamp[n].partial_done=false; m_stamp[n].sl_locked_r=-99.0; m_stamp[n].last_exit_action=-1; m_stamp[n].policy_stage=0;
       m_stamp[n].req_risk_mult=v.risk_mult; m_stamp[n].applied_risk_mult=applied_risk_mult;
       m_stamp[n].open_time=TimeCurrent(); m_stamp[n].valid=true;
       PendingResolve(signal_id,PEND_EXECUTED);
@@ -267,6 +291,9 @@ public:
       c.entry_impulse_ok = (si>=0)? m_stamp[si].entry_impulse_ok : false;
       c.origin_price     = (si>=0)? m_stamp[si].origin_price     : 0.0;
       c.origin_ok        = (si>=0)? m_stamp[si].origin_ok        : false;
+      c.partial_done     = (si>=0)? m_stamp[si].partial_done     : false;   // persisted policy lifecycle state
+      c.sl_locked_r      = (si>=0)? m_stamp[si].sl_locked_r      : -99.0;
+      c.policy_stage     = (si>=0)? m_stamp[si].policy_stage     : 0;
       m_pullback.GetFeatures(c.pullback); m_breakout.GetFeatures(c.breakout); m_momseq.GetFeatures(c.momseq);
       c.room=m_room.Evaluate(direction,current_price,risk_distance);
       // Lab-owned running post-entry peak of recovery_confirmed + first-sighting basing latch
@@ -287,6 +314,9 @@ public:
       p=m_exit[m_sel_exit].EvaluateExit(c);
       // wave-2: advance/reset the lab-owned deterioration streak from the candidate's raw signal
       if(si>=0){ if(p.deteriorating) m_stamp[si].deterioration_streak++; else m_stamp[si].deterioration_streak=0; }
+      // POLICY LIFECYCLE HARDENING (real path): enforce exactly-once partial, monotonic tighten, repeat-suppress;
+      // update the PERSISTED stage on the stamp so a restart restores the policy lifecycle.
+      if(si>=0) enforceLifecycle(p, m_stamp[si].partial_done, m_stamp[si].sl_locked_r, m_stamp[si].last_exit_action, m_stamp[si].policy_stage);
       if(m_tele!=-1 && p.action!=0) FileWrite(m_tele,"EXIT",TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES),engine,
         (si>=0)?m_stamp[si].signal_id:0,(int)ticket,
         EnumToString((ENUM_RESEARCH_MODEL)((si>=0)?m_stamp[si].entry_model:RM_CURRENT)),(si>=0)?m_stamp[si].entry_version:0,
@@ -311,6 +341,30 @@ public:
    int  StampCount(){ return ArraySize(m_stamp); }
    bool GetStamp(int i,SResearchTradeStamp &out){ if(i<0||i>=ArraySize(m_stamp)) return false; out=m_stamp[i]; return true; }
    void PutStamp(const SResearchTradeStamp &s){ int n=ArraySize(m_stamp); ArrayResize(m_stamp,n+1); m_stamp[n]=s; }
+   // PERSISTENCE (live restart): a POD sidecar of the trade stamps (incl. the policy lifecycle stage) so a
+   // restart restores per-ticket policy state. Loaded ONLY when positions were restored + reconciled to them,
+   // so a fresh tester (no restored positions) never injects stale state -> identity-safe.
+   void SaveStamps()
+   {
+      if(!m_ready) return;
+      int h=FileOpen("UltTrader_ResearchStamps_"+_Symbol+".bin",FILE_WRITE|FILE_BIN|FILE_COMMON);
+      if(h==-1) return;
+      int n=ArraySize(m_stamp); FileWriteInteger(h,n,INT_VALUE);
+      for(int i=0;i<n;i++) FileWriteStruct(h,m_stamp[i]);
+      FileClose(h);
+   }
+   // Restore the stamp for one restored ticket from the sidecar (idempotent; skips if already present or absent).
+   void RestoreStampForTicket(long ticket)
+   {
+      if(!m_ready || stampIdx(ticket)>=0) return;
+      int h=FileOpen("UltTrader_ResearchStamps_"+_Symbol+".bin",FILE_READ|FILE_BIN|FILE_COMMON);
+      if(h==-1) return;
+      int n=FileReadInteger(h,INT_VALUE);
+      for(int i=0;i<n;i++){ SResearchTradeStamp s;
+        if(FileReadStruct(h,s)==sizeof(SResearchTradeStamp) && s.ticket==ticket && s.valid)
+        { int m=ArraySize(m_stamp); ArrayResize(m_stamp,m+1); m_stamp[m]=s; break; } }
+      FileClose(h);
+   }
    ENUM_RESEARCH_MODEL SelEntry(){ return m_sel_entry; }
    ENUM_RESEARCH_MODEL SelExit(){ return m_sel_exit; }
    void SetShadowAll(bool on){ m_shadow_all=on; }
@@ -342,6 +396,9 @@ public:
       c.entry_impulse_ok = (si>=0)? m_stamp[si].entry_impulse_ok : false;
       c.origin_price     = (si>=0)? m_stamp[si].origin_price     : 0.0;
       c.origin_ok        = (si>=0)? m_stamp[si].origin_ok        : false;
+      c.partial_done     = (si>=0)? m_stamp[si].partial_done     : false;   // persisted policy lifecycle state
+      c.sl_locked_r      = (si>=0)? m_stamp[si].sl_locked_r      : -99.0;
+      c.policy_stage     = (si>=0)? m_stamp[si].policy_stage     : 0;
       m_pullback.GetFeatures(c.pullback); m_breakout.GetFeatures(c.breakout); m_momseq.GetFeatures(c.momseq);
       c.room=m_room.Evaluate(direction,current_price,risk_distance);
       if(si>=0 && c.pullback.recovery_confirmed.available)
@@ -381,7 +438,7 @@ private:
       int n=ArraySize(m_vl); ArrayResize(m_vl,n+1);
       m_vl[n].candidate=cand; m_vl[n].ticket=tk; m_vl[n].virtual_sl_r=VLED_INIT_SL_R; m_vl[n].remaining_vol=1.0;
       m_vl[n].realized_r=0.0; m_vl[n].peak_r=0.0; m_vl[n].chandelier_r=VLED_CHANDELIER_R; m_vl[n].last_r=0.0;
-      m_vl[n].det_streak=0; m_vl[n].interventions=0; m_vl[n].closed=false; m_vl[n].valid=true;
+      m_vl[n].det_streak=0; m_vl[n].interventions=0; m_vl[n].partial_done=false; m_vl[n].closed=false; m_vl[n].valid=true;
       return n;
    }
    SResearchExitProposal sp_none(){ SResearchExitProposal p; ExitPropInit(p); return p; }
@@ -395,8 +452,8 @@ private:
       if(sp.action!=0 && sp.action!=5) m_vl[vi].interventions++;   // meaningful intervention (not NOOP/WAIT)
       if(sp.action==1)         // CLOSE_ALL -> bank the remainder at current_r
       { m_vl[vi].realized_r += m_vl[vi].remaining_vol*current_r; m_vl[vi].remaining_vol=0.0; m_vl[vi].closed=true; return; }
-      else if(sp.action==2)    // CLOSE_PARTIAL -> bank pct of the remaining at current_r, keep the runner
-      { double f=sp.pct/100.0; if(f>0.0 && f<=1.0){ m_vl[vi].realized_r += f*m_vl[vi].remaining_vol*current_r; m_vl[vi].remaining_vol*=(1.0-f); } }
+      else if(sp.action==2 && !m_vl[vi].partial_done)    // CLOSE_PARTIAL (exactly-once) -> bank pct, keep the runner
+      { double f=sp.pct/100.0; if(f>0.0 && f<=1.0){ m_vl[vi].realized_r += f*m_vl[vi].remaining_vol*current_r; m_vl[vi].remaining_vol*=(1.0-f); m_vl[vi].partial_done=true; } }
       else if(sp.action==3)    // TIGHTEN_SL -> the candidate's OWN stop at -factor R (monotone up)
       { double s=-sp.factor; if(s>m_vl[vi].virtual_sl_r) m_vl[vi].virtual_sl_r=s; }
       // action 4 TRAIL_SCALE loosens a future trail -> no early exit here; the runner rides to the real outcome.

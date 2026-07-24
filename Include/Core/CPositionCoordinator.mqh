@@ -795,6 +795,10 @@ private:
          LogPrint("WARN: RestoreFromPersisted - FILE position ticket ", pos.ticket,
                   " has InpFileUseTP3 set but tp3<=0 (runner target lost on restore) - "
                   "ladder will degrade to 2-way split");
+
+      // Restore this restored position's research policy stamp (policy lifecycle stage) from the sidecar.
+      // Only fires for genuinely restored positions -> a fresh tester (no restored positions) is identity-safe.
+      if(m_researchLab != NULL) m_researchLab.RestoreStampForTicket(pos.ticket);
    }
 
    double CalculatePositionRiskDollars(const SPosition &pos)
@@ -2852,6 +2856,8 @@ public:
    void SaveOnStateChange()
    {
       SavePositionState();
+      // Persist the research trade stamps (policy lifecycle stage) alongside, for live restart restore.
+      if(m_researchLab != NULL) m_researchLab.SaveStamps();
    }
 
    //+------------------------------------------------------------------+
