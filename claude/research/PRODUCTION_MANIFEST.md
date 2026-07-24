@@ -33,3 +33,6 @@ concentrated, no uptrend underperformance) → min-risk pilot → full. Until th
 
 ## Change log
 - (freeze) All research models default-off; baseline is the shipped book. Forward shadow deployment-ready.
+- (platform wave) Crash/PinBar/Expansion/FailedBreak/MACross families added to CAPABILITY (26 models, 7 families,
+  every active signal type covered). ALL land default-off; master-OFF identity byte-exact on both feeds; ZERO change
+  to the active book. No family is production-promoted — all ECON PENDING_FORWARD. Production config unchanged.

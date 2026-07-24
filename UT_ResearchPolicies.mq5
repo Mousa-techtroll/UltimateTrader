@@ -8,6 +8,10 @@
 //+------------------------------------------------------------------+
 #property strict
 #include "Include/Research/candidates/CCrashCandA.mqh"
+#include "Include/Research/candidates/CPinCand.mqh"
+#include "Include/Research/candidates/CExpCand.mqh"
+#include "Include/Research/candidates/CFbrCand.mqh"
+#include "Include/Research/candidates/CMacCand.mqh"
 
 int g_pass=0, g_fail=0, g_fh=-1;
 
@@ -86,6 +90,45 @@ int OnInit()
    CkI("entry/fade-subtype",                  ec3.reclass_subtype, CRASH_SUB_FADE);
    bool never_reject = (ec1.action!=CAND_REJECT && ec2.action!=CAND_REJECT && ec3.action!=CAND_REJECT);
    CkI("entry/never-rejects",                 never_reject?1:0, 1);
+
+   //================= LONG-side families (dir=+1): origin below (1995); aligned momentum = persist>0 =================
+   const int L=1; const double LE=2000.0, LR=5.0, LORG=1995.0;
+   CPinCandA_Exit pinR; CPinCandB_Exit pinC; CPinEntry pinE;
+   CkA("pin-rev/defers-continuation", pinR.EvaluateExit(PC(L,0.5,0.5,PIN_SUB_CONTINUATION,true,LORG,LE,LR,true,1.0,false,0)).action,0);
+   CkA("pin-rev/invalidation-close",  pinR.EvaluateExit(PC(L,-1.2,0.0,PIN_SUB_REVERSAL,true,LORG,LE,LR,true,1.0,false,0)).action,1);
+   CkA("pin-rev/target-partial",      pinR.EvaluateExit(PC(L,1.6,1.6,PIN_SUB_REVERSAL,true,LORG,LE,LR,true,1.0,false,0)).action,2);
+   CkA("pin-rev/stall-tighten",       pinR.EvaluateExit(PC(L,0.7,0.7,PIN_SUB_REVERSAL,true,LORG,LE,LR,true,0.4,false,0)).action,3);
+   CkA("pin-rev/hold",                pinR.EvaluateExit(PC(L,0.3,0.3,PIN_SUB_REVERSAL,true,LORG,LE,LR,true,1.0,false,0)).action,0);
+   CkA("pin-cont/reverse-tighten",    pinC.EvaluateExit(PC(L,0.7,0.7,PIN_SUB_CONTINUATION,true,LORG,LE,LR,true,-1.5,false,0)).action,3);
+   CkA("pin-cont/ride-trail",         pinC.EvaluateExit(PC(L,0.7,0.7,PIN_SUB_CONTINUATION,true,LORG,LE,LR,true,1.0,false,0)).action,4);
+   { SResearchSignalCtx s=SC(L,true,3.0,false,0,true,3.0); s.impulse=1.0; s.impulse_ok=true; // high conf -> anti-predictive downgrade
+     SCandidateEntry pe=pinE.EvaluateEntry(s);
+     CkI("pin-entry/anti-predictive-downgrade", pe.action, CAND_RISK_DOWNGRADE);
+     CkI("pin-entry/never-reject", (pe.action!=CAND_REJECT)?1:0, 1); }
+
+   CExpCandA_Exit expF; CExpCandB_Exit expX; CExpEntry expE;
+   CkA("exp-ft/invalidation-close",   expF.EvaluateExit(PC(L,-1.2,0.0,EXP_SUB_FOLLOWTHROUGH,true,LORG,LE,LR,true,1.0,false,0)).action,1);
+   CkA("exp-ft/target-partial",       expF.EvaluateExit(PC(L,2.2,2.2,EXP_SUB_FOLLOWTHROUGH,true,LORG,LE,LR,true,1.0,false,0)).action,2);
+   { SResearchPosCtx c=PC(L,0.7,0.7,EXP_SUB_FOLLOWTHROUGH,true,LORG,LE,LR,true,1.0,false,0); c.breakout.follow_through_persistence.available=true; c.breakout.follow_through_persistence.value=0.5;
+     CkA("exp-ft/strong-ride-trail",  expF.EvaluateExit(c).action,4); }
+   CkA("exp-fail/defers-on-ft",       expX.EvaluateExit(PC(L,0.5,0.5,EXP_SUB_FOLLOWTHROUGH,true,LORG,LE,LR,true,1.0,false,0)).action,0);
+   CkA("exp-fail/weak-ft-tighten",    expX.EvaluateExit(PC(L,0.3,0.3,EXP_SUB_FAILRISK,true,LORG,LE,LR,true,1.0,false,0)).action,3);
+   { SResearchSignalCtx s=SC(L,true,1.0,false,0,true,1.0); s.breakout.follow_through_persistence.available=true; s.breakout.follow_through_persistence.value=0.1;
+     CkI("exp-entry/failrisk-downgrade", expE.EvaluateEntry(s).action, CAND_RISK_DOWNGRADE); }
+
+   CFbrCandA_Exit fbr; CFbrEntry fbrE;
+   CkA("fbr/invalidation-close",      fbr.EvaluateExit(PC(L,-1.2,0.0,FBR_SUB_REVERSAL,true,LORG,LE,LR,true,1.0,false,0)).action,1);
+   CkA("fbr/target-partial",          fbr.EvaluateExit(PC(L,1.6,1.6,FBR_SUB_REVERSAL,true,LORG,LE,LR,true,1.0,false,0)).action,2);
+   CkA("fbr/stall-tighten",           fbr.EvaluateExit(PC(L,0.6,0.6,FBR_SUB_REVERSAL,true,LORG,LE,LR,true,0.3,false,0)).action,3);
+   CkI("fbr-entry/never-reject",      (fbrE.EvaluateEntry(SC(L,true,1.0,false,0,true,1.0)).action!=CAND_REJECT)?1:0,1);
+
+   CMacCandA_Exit mac; CMacEntry macE;
+   CkA("mac/origin-close",            mac.EvaluateExit(PC(L,-1.2,0.0,MAC_SUB_TREND,true,LORG,LE,LR,true,2.0,false,0)).action,1);
+   CkA("mac/ride-trail",              mac.EvaluateExit(PC(L,0.7,0.7,MAC_SUB_TREND,true,LORG,LE,LR,true,2.0,false,0)).action,4);
+   CkA("mac/crossback-tighten",       mac.EvaluateExit(PC(L,0.7,0.7,MAC_SUB_TREND,true,LORG,LE,LR,true,-1.0,false,0)).action,3);   // streak 0->1 < 2
+   { SResearchPosCtx c=PC(L,0.7,0.7,MAC_SUB_TREND,true,LORG,LE,LR,true,-1.0,false,0); c.deterioration_streak=1;                     // streak 1->2 >= 2
+     CkA("mac/sustained-crossback-close", mac.EvaluateExit(c).action,1); }
+   CkI("mac-entry/strong-upgrade",    macE.EvaluateEntry(SC(L,true,5.0,false,0,true,1.0)).action, CAND_RISK_UPGRADE);
 
    W(StringFormat("==== UT_ResearchPolicies: %d PASS / %d FAIL ====", g_pass, g_fail));
    if(g_fh!=-1) FileClose(g_fh);

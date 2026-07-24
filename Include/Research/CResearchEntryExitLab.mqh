@@ -19,8 +19,12 @@
 // WAVE 2: regime-conditioned Eng-C exit variants + preservation-first entry models
 #include "candidates/CEngulfCandCVariants.mqh"
 #include "candidates/CWave2Entries.mqh"
-// PLATFORM WAVE: per-signal-type families (Crash first)
+// PLATFORM WAVE: per-signal-type families
 #include "candidates/CCrashCandA.mqh"
+#include "candidates/CPinCand.mqh"
+#include "candidates/CExpCand.mqh"
+#include "candidates/CFbrCand.mqh"
+#include "candidates/CMacCand.mqh"
 
 #define RESEARCH_LAB_VERSION 3   // v3: forward-shadow virtual candidate ledgers
 
@@ -78,6 +82,16 @@ private:
    CCrashCandB_Exit       m_crashB_x;
    CCrashCandC_Exit       m_crashC_x;
    CCrashEntry            m_crash_e;
+   CPinCandA_Exit         m_pinRev_x;   // PinBar family (3)
+   CPinCandB_Exit         m_pinCont_x;
+   CPinEntry              m_pin_e;
+   CExpCandA_Exit         m_expFt_x;    // Expansion family (4)
+   CExpCandB_Exit         m_expFail_x;
+   CExpEntry              m_exp_e;
+   CFbrCandA_Exit         m_fbr_x;      // FailedBreak family (5)
+   CFbrEntry              m_fbr_e;
+   CMacCandA_Exit         m_mac_x;      // MA Cross family (6)
+   CMacEntry              m_mac_e;
    ICandidateEntry* m_entry[RESEARCH_MODEL_COUNT];
    ICandidateExit*  m_exit[RESEARCH_MODEL_COUNT];
    // INDEPENDENT selectors
@@ -108,7 +122,9 @@ private:
    }
    int  pendIdx(int sid){ for(int i=0;i<ArraySize(m_pend);i++) if(m_pend[i].signal_id==sid) return i; return -1; }
    int  engineProfile(string e){ if(StringFind(e,"Engulf")>=0) return 0; if(StringFind(e,"PullbackContinuation")>=0) return 1;
-        if(StringFind(e,"Crash")>=0) return 2; return -1; }
+        if(StringFind(e,"Crash")>=0) return 2; if(StringFind(e,"PinBar")>=0) return 3;
+        if(StringFind(e,"Expansion")>=0) return 4; if(StringFind(e,"FailedBreak")>=0) return 5;
+        if(StringFind(e,"MACross")>=0) return 6; return -1; }
    string san(string s){ StringReplace(s,",",";"); StringReplace(s,"\n"," "); return s; }
    int  entryVer(ENUM_RESEARCH_MODEL m){ return (m!=RM_CURRENT && m_entry[m]!=NULL)? m_entry[m].ModelVersion():0; }
    int  exitVer (ENUM_RESEARCH_MODEL m){ return (m!=RM_CURRENT && m_exit[m]!=NULL)?  m_exit[m].ModelVersion():0; }
@@ -179,6 +195,10 @@ public:
       m_exit[RM_CRASH_X_B]    =GetPointer(m_crashB_x);
       m_exit[RM_CRASH_X_C]    =GetPointer(m_crashC_x);
       m_entry[RM_CRASH_ENTRY] =GetPointer(m_crash_e);
+      m_exit[RM_PIN_X_REV]    =GetPointer(m_pinRev_x);   m_exit[RM_PIN_X_CONT]=GetPointer(m_pinCont_x); m_entry[RM_PIN_ENTRY]=GetPointer(m_pin_e);
+      m_exit[RM_EXP_X_FT]     =GetPointer(m_expFt_x);    m_exit[RM_EXP_X_FAIL]=GetPointer(m_expFail_x); m_entry[RM_EXP_ENTRY]=GetPointer(m_exp_e);
+      m_exit[RM_FBR_X]        =GetPointer(m_fbr_x);      m_entry[RM_FBR_ENTRY]=GetPointer(m_fbr_e);
+      m_exit[RM_MAC_X]        =GetPointer(m_mac_x);      m_entry[RM_MAC_ENTRY]=GetPointer(m_mac_e);
       teleOpen(); m_ready=true; return true;
    }
 

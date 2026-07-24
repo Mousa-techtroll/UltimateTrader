@@ -108,6 +108,18 @@ struct SResearchTradeStamp
    bool     valid;
 };
 
+// Shared family helpers: generic structural-break (price moved against the position through the frozen
+// origin) + direction-aligned momentum (>0 = momentum with the position). Reused across families.
+inline bool RchOriginBroken(const SResearchPosCtx &ctx, int dir)
+{ if(!(ctx.origin_ok && ctx.risk_distance>0.0 && ctx.entry_price>0.0)) return false;
+  double price = ctx.entry_price + (double)dir*ctx.current_r*ctx.risk_distance;
+  return (dir>0) ? (price < ctx.origin_price) : (price > ctx.origin_price); }
+inline double RchDirMom(const SResearchPosCtx &ctx, int dir)
+{ return ctx.momseq.momentum_persistence.available ? (double)dir*ctx.momseq.momentum_persistence.value : 0.0; }
+inline double RchDirMomS(const SResearchSignalCtx &ctx, int dir)
+{ return ctx.momseq.momentum_persistence.available ? (double)dir*ctx.momseq.momentum_persistence.value : 0.0; }
+inline double RchClamp01(double x){ return (x<0.0)?0.0:((x>1.0)?1.0:x); }
+
 class ICandidateEntry
 {
 public:

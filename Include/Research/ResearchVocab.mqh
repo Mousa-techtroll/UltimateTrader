@@ -26,16 +26,34 @@ enum ENUM_RESEARCH_MODEL
    RM_CRASH_X_A     = 13,  // CCrashCandA_Exit     (Crash EXIT intent: rubber-band FADE — reversion de-risk)
    RM_CRASH_X_B     = 14,  // CCrashCandB_Exit     (Crash EXIT intent: CONTINUATION — ride the extending crash)
    RM_CRASH_X_C     = 15,  // CCrashCandC_Exit     (Crash EXIT intent: RECOVERY — exit as the V-bottom bounces)
-   RM_CRASH_ENTRY   = 16   // CCrashEntry          (Crash ENTRY classifier: FADE/CONTINUATION/RECOVERY subtype + risk)
+   RM_CRASH_ENTRY   = 16,  // CCrashEntry          (Crash ENTRY classifier: FADE/CONTINUATION/RECOVERY subtype + risk)
+   // PinBar family (profile 3)
+   RM_PIN_X_REV     = 17,  // CPinCandA_Exit       (PinBar EXIT intent: REVERSAL — reversal-target de-risk)
+   RM_PIN_X_CONT    = 18,  // CPinCandB_Exit       (PinBar EXIT intent: CONTINUATION — trend-pullback preservation)
+   RM_PIN_ENTRY     = 19,  // CPinEntry            (PinBar ENTRY classifier: REVERSAL/CONTINUATION + anti-predictive risk)
+   // Expansion/Breakout family (profile 4)
+   RM_EXP_X_FT      = 20,  // CExpCandA_Exit       (Expansion EXIT intent: FOLLOW-THROUGH — ride the breakout)
+   RM_EXP_X_FAIL    = 21,  // CExpCandB_Exit       (Expansion EXIT intent: FAILED-BREAK — bail on a failed breakout)
+   RM_EXP_ENTRY     = 22,  // CExpEntry            (Expansion ENTRY classifier: FOLLOWTHROUGH/FAILRISK + risk)
+   // FailedBreak/Reversal family (profile 5)
+   RM_FBR_X         = 23,  // CFbrCandA_Exit       (FailedBreak EXIT: reversal-target de-risk + invalidation)
+   RM_FBR_ENTRY     = 24,  // CFbrEntry            (FailedBreak ENTRY classifier: reversal conviction + risk)
+   // MA Cross family (profile 6)
+   RM_MAC_X         = 25,  // CMacCandA_Exit       (MACross EXIT: trend-runner preservation + cross-back hysteresis)
+   RM_MAC_ENTRY     = 26   // CMacEntry            (MACross ENTRY classifier: trend-strength allocation)
 };
-#define RESEARCH_MODEL_COUNT 17
-// which trade-family a model belongs to (0=Engulfing, 1=PBC, 2=Crash, ... -1=none/current)
+#define RESEARCH_MODEL_COUNT 27
+// which trade-family a model belongs to (0=Engulf,1=PBC,2=Crash,3=PinBar,4=Expansion,5=FailedBreak,6=MACross; -1=none)
 inline int ResearchModelProfile(ENUM_RESEARCH_MODEL m)
 { if(m>=RM_ENG_A && m<=RM_ENG_C) return 0;
   if(m>=RM_ENG_C_GATED && m<=RM_ENG_ALLOC) return 0;   // wave-2 Engulfing models
   if(m>=RM_PBC_A && m<=RM_PBC_C) return 1;
   if(m==RM_PBC_STATE) return 1;
-  if(m>=RM_CRASH_X_A && m<=RM_CRASH_ENTRY) return 2;    // Crash family (fade/continuation/recovery + classifier)
+  if(m>=RM_CRASH_X_A && m<=RM_CRASH_ENTRY) return 2;    // Crash
+  if(m>=RM_PIN_X_REV && m<=RM_PIN_ENTRY)   return 3;    // PinBar
+  if(m>=RM_EXP_X_FT && m<=RM_EXP_ENTRY)    return 4;    // Expansion/Breakout
+  if(m>=RM_FBR_X && m<=RM_FBR_ENTRY)       return 5;    // FailedBreak/Reversal
+  if(m>=RM_MAC_X && m<=RM_MAC_ENTRY)       return 6;    // MA Cross
   return -1; }
 
 // Deterministic string->int32 hash (FNV-1a, folded positive) for keying pending signals + trade

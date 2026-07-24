@@ -4,20 +4,27 @@ Objective: a mechanically- and behaviorally-correct entry/exit POLICY platform c
 with explicit policy selection + regime modifiers. Per MODEL_GOVERNANCE.md, models enter the capability set on
 engineering+behavior PASS (default-off); economics choose only the canonical active profile.
 
-## Current coverage (capability)
+## Current coverage (capability) — COMPLETE: every active signal type covered
 - Engulfing (profile 0): entry {A,B,C,allocator}, exit {A,B,C,gated,protect,partial,hyst}.
 - PBC / PullbackContinuation (profile 1): entry {A,B,C,state}, exit {A,B,C}.
-- Shadow-capable (exit virtual ledgers); all default-off; identity byte-exact.
+- Crash (profile 2): entry {classifier}, exit {A_fade, B_continuation, C_recovery} — 3 rubber-band/continuation/recovery intents.
+- PinBar (profile 3): entry {anti-predictive classifier}, exit {A_reversal, B_continuation}.
+- Expansion/Breakout (profile 4): entry {follow-through classifier}, exit {A_followthrough, B_failbreak}.
+- FailedBreak/Reversal (profile 5): entry {classifier}, exit {A_reversal}.
+- MA-Cross (profile 6): entry {trend-strength classifier}, exit {A_trendrunner, hysteresis on cross-back}.
+- Shadow-capable (exit virtual ledgers); all default-off; identity byte-exact; behavior branch-verified (UT 44/44).
+- NOTE: implemented profile numbering (PinBar=3, Expansion=4, FailedBreak=5, MACross=6) differs from this doc's
+  early sketch below; ResearchVocab.mqh ResearchModelProfile is the source of truth. Existing IDs never renumbered.
 
-## Active signal types NOT yet covered (from live portfolio)
-| signal engine | dev-slice positions | priority | notes |
+## Active signal types — coverage status
+| signal engine | dev-slice positions | priority | status |
 |---|---|---|---|
-| CrashBreakoutEntry | 135 | HIGH (biggest) | crash protection / rubber-band fade; adopted §D trail suppressor lives here |
-| PinBarEntry | 110 | HIGH | reversal/continuation pin; anti-predictive A+ (see quality-tier memory) |
-| MACrossEntry | 16 | MED | trend-follow cross; strong-trend runner |
-| ExpansionEngine | 12 | MED | session/expansion breakout |
-| FailedBreakReversal | 3 | LOW | reversal; small sample |
-| sleeves CONT/CREV/TMF | (short-only) | LOW | own gateway; entry-only families |
+| CrashBreakoutEntry | 135 | HIGH (biggest) | DONE — profile 2, 3 exit intents + classifier, synthetic 20/20 |
+| PinBarEntry | 110 | HIGH | DONE — profile 3, reversal/continuation exits + anti-predictive classifier |
+| MACrossEntry | 16 | MED | DONE — profile 6, trend-runner exit (hysteresis) + trend-strength classifier |
+| ExpansionEngine | 12 | MED | DONE — profile 4, followthrough/failbreak exits + classifier |
+| FailedBreakReversal | 3 | LOW | DONE — profile 5, reversal exit + classifier |
+| sleeves CONT/CREV/TMF | (short-only) | LOW | remaining — own gateway; entry-only families (future wave) |
 
 ## Architecture additions (reusable framework)
 1. **Family profiles** — extend ResearchModelProfile + engineProfile: Crash=2, PinBar=3, MACross=4, Expansion=5,
