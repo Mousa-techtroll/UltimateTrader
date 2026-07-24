@@ -12,6 +12,8 @@
 #include "Include/Research/candidates/CExpCand.mqh"
 #include "Include/Research/candidates/CFbrCand.mqh"
 #include "Include/Research/candidates/CMacCand.mqh"
+#include "Include/Research/candidates/CSleeveCand.mqh"
+#include "Include/Research/CResearchEntryExitLab.mqh"   // broker-lifecycle state-machine tests
 
 int g_pass=0, g_fail=0, g_fh=-1;
 
@@ -129,6 +131,118 @@ int OnInit()
    { SResearchPosCtx c=PC(L,0.7,0.7,MAC_SUB_TREND,true,LORG,LE,LR,true,-1.0,false,0); c.deterioration_streak=1;                     // streak 1->2 >= 2
      CkA("mac/sustained-crossback-close", mac.EvaluateExit(c).action,1); }
    CkI("mac-entry/strong-upgrade",    macE.EvaluateEntry(SC(L,true,5.0,false,0,true,1.0)).action, CAND_RISK_UPGRADE);
+
+   //================= SLEEVE families (profiles 7/8/9): short-only (dir=-1), entry-only, never reject =================
+   CSleeveContEntry slvCont; CSleeveCrevEntry slvCrev; CSleeveTmfEntry slvTmf;
+   // CONT: align=dir*persist; dir=-1 so persist=-3 -> align=+3 (aligned down). strong/weak/mid.
+   CkI("slv-cont/strong-upgrade",  slvCont.EvaluateEntry(SC(D,true,-3.0,false,0,true,2.0)).action, CAND_RISK_UPGRADE);
+   CkI("slv-cont/weak-downgrade",  slvCont.EvaluateEntry(SC(D,true, 2.0,false,0,false,0)).action, CAND_RISK_DOWNGRADE);
+   CkI("slv-cont/mid-accept",      slvCont.EvaluateEntry(SC(D,true, 0.0,false,0,false,0)).action, CAND_ACCEPT);
+   CkI("slv-cont/subtype",         slvCont.EvaluateEntry(SC(D,true,-3.0,false,0,true,2.0)).reclass_subtype, SLEEVE_SUB_CONT);
+   // CREV: exhaustion centered at 0.4.
+   CkI("slv-crev/exhausted-upgrade", slvCrev.EvaluateEntry(SC(D,true,-1.0,true,0.9,true,2.0)).action, CAND_RISK_UPGRADE);
+   CkI("slv-crev/fresh-downgrade",   slvCrev.EvaluateEntry(SC(D,true, 2.0,true,0.0,false,0)).action, CAND_RISK_DOWNGRADE);
+   CkI("slv-crev/subtype",           slvCrev.EvaluateEntry(SC(D,true,-1.0,true,0.9,true,2.0)).reclass_subtype, SLEEVE_SUB_CREV);
+   // TMF: context-only, flat; light upgrade only on a decisive down-close body; never downgrade/reject.
+   { SResearchSignalCtx s=SC(D,true,0.0,false,0,false,0); s.breakout.impulse_confirmation.available=true; s.breakout.impulse_confirmation.value=0.8;
+     CkI("slv-tmf/decisive-upgrade", slvTmf.EvaluateEntry(s).action, CAND_RISK_UPGRADE); }
+   CkI("slv-tmf/flat-accept",      slvTmf.EvaluateEntry(SC(D,true,0.0,false,0,false,0)).action, CAND_ACCEPT);
+   bool slv_never_reject = (slvCont.EvaluateEntry(SC(D,true,2.0,false,0,false,0)).action!=CAND_REJECT &&
+                            slvCrev.EvaluateEntry(SC(D,true,2.0,true,0.0,false,0)).action!=CAND_REJECT &&
+                            slvTmf.EvaluateEntry(SC(D,true,0.0,false,0,false,0)).action!=CAND_REJECT);
+   CkI("slv/never-reject",         slv_never_reject?1:0, 1);
+
+   //================= COVERAGE MATRIX: every engine name resolves EXPLICITLY (no silent -1 fall-through) =================
+   CkI("cov/EngulfingEntry",         ResearchEngineResolution("EngulfingEntry"), 0);
+   CkI("cov/PullbackContinuation",   ResearchEngineResolution("PullbackContinuationEngine"), 1);
+   CkI("cov/CrashBreakoutEntry",     ResearchEngineResolution("CrashBreakoutEntry"), 2);
+   CkI("cov/PinBarEntry",            ResearchEngineResolution("PinBarEntry"), 3);
+   CkI("cov/ExpansionEngine",        ResearchEngineResolution("ExpansionEngine"), 4);
+   CkI("cov/FailedBreakReversal",    ResearchEngineResolution("FailedBreakReversal"), 5);
+   CkI("cov/MACrossEntry",           ResearchEngineResolution("MACrossEntry"), 6);
+   CkI("cov/CONT",                   ResearchEngineResolution("CONT"), 7);
+   CkI("cov/CREV",                   ResearchEngineResolution("CREV"), 8);
+   CkI("cov/TMF",                    ResearchEngineResolution("TMF"), 9);
+   CkI("cov/VolatilityBreakout-PT",  ResearchEngineResolution("VolatilityBreakoutEntry"), RPROF_PASSTHROUGH);
+   CkI("cov/Displacement-PT",        ResearchEngineResolution("DisplacementEntry"), RPROF_PASSTHROUGH);
+   CkI("cov/SessionEngine-PT",       ResearchEngineResolution("SessionEngine"), RPROF_PASSTHROUGH);
+   CkI("cov/FileEntry-PT",           ResearchEngineResolution("FileEntry"), RPROF_PASSTHROUGH);
+   CkI("cov/FalseBreakoutFade-NOT5", ResearchEngineResolution("FalseBreakoutFadeEntry"), RPROF_PASSTHROUGH);  // "False"!="Failed"
+   CkI("cov/TrendContinuation-NOT1", ResearchEngineResolution("TrendContinuationEngine"), RPROF_PASSTHROUGH);  // "Trend"!="Pullback"
+   CkI("cov/unknown-flags-gap",      ResearchEngineResolution("SomeBrandNewEngine"), RPROF_UNKNOWN);
+
+   //================= BROKER-LIFECYCLE state machine (task: confirm-gated stages, fault/restart/netting) =================
+   CResearchEntryExitLab lab; lab.SetMagic(777);
+   bool labok = lab.Init(RM_CRASH_ENTRY, RM_CRASH_X_A);
+   CkI("lc/lab-init", labok?1:0, 1);
+   if(labok)
+   {
+      SCandidateEntry ev; CandEntryInit(ev); ev.action=CAND_ACCEPT; ev.reclass_subtype=CRASH_SUB_FADE; ev.confidence=0.6;
+      lab.OnPositionOpened(1001, 11, "CrashBreakoutEntry", ev, 1.0, 0.0, false, 0.0, false);
+      int as,pa,ps,la; bool pd; double slr,lt;
+      // (1) partial FAILURE: proposed -> REJECTED -> partial_done stays false, stage unchanged
+      SResearchExitProposal pp; ExitPropInit(pp); pp.action=2; pp.pct=50; pp.valid=true;
+      lab.MarkExitDispatched(1001, pp);
+      lab.GetStampLifecycle(1001,as,pa,pd,slr,ps,la,lt); CkI("lc/partial-proposed", as, RAS_PROPOSED);
+      lab.ResolveExitAction(1001, RAS_REJECTED);
+      lab.GetStampLifecycle(1001,as,pa,pd,slr,ps,la,lt);
+      CkI("lc/partial-reject-not-done",(pd?1:0),0); CkI("lc/partial-reject-state", as, RAS_REJECTED);
+      // (2) UNKNOWN outcome then LATE deal: proposed -> PENDING -> CONFIRMED (advances partial_done exactly once)
+      lab.MarkExitDispatched(1001, pp); lab.ResolveExitAction(1001, RAS_PENDING);
+      lab.GetStampLifecycle(1001,as,pa,pd,slr,ps,la,lt); CkI("lc/partial-pending-state", as, RAS_PENDING);
+      CkI("lc/partial-pending-not-done",(pd?1:0),0);
+      lab.ResolveExitAction(1001, RAS_CONFIRMED);
+      lab.GetStampLifecycle(1001,as,pa,pd,slr,ps,la,lt);
+      CkI("lc/partial-confirm-done",(pd?1:0),1); CkI("lc/partial-confirm-banked",(ps>=1)?1:0,1);
+      // (3) DUPLICATE (exactly-once): a second partial proposal is now suppressed
+      SResearchExitProposal pp2; ExitPropInit(pp2); pp2.action=2; pp2.pct=50; pp2.valid=true;
+      lab.ProbeSuppression(1001, pp2); CkA("lc/partial-once-suppressed", pp2.action, 0);
+      // (4) STOP tighten: confirm advances sl_locked_r + PROTECTED; monotonic suppression respects it
+      SResearchExitProposal tp; ExitPropInit(tp); tp.action=3; tp.factor=0.5; tp.valid=true;   // stop at -0.5R
+      lab.MarkExitDispatched(1001, tp); lab.ResolveExitAction(1001, RAS_CONFIRMED);
+      lab.GetStampLifecycle(1001,as,pa,pd,slr,ps,la,lt); CkI("lc/tighten-protected",(ps>=2)?1:0,1);
+      SResearchExitProposal ts; ExitPropInit(ts); ts.action=3; ts.factor=0.5; ts.valid=true;   // same -> not tighter
+      lab.ProbeSuppression(1001, ts); CkA("lc/tighten-monotonic-suppress-equal", ts.action, 0);
+      SResearchExitProposal tt; ExitPropInit(tt); tt.action=3; tt.factor=0.3; tt.valid=true;   // -0.3 > -0.5 -> tighter
+      lab.ProbeSuppression(1001, tt); CkA("lc/tighten-allow-tighter", tt.action, 3);
+      // (5) TRAIL repeat-suppression by (action,target): identical suppressed; a new target allowed
+      SResearchExitProposal tr; ExitPropInit(tr); tr.action=4; tr.factor=1.3; tr.valid=true;
+      lab.MarkExitDispatched(1001, tr); lab.ResolveExitAction(1001, RAS_CONFIRMED);
+      SResearchExitProposal trs; ExitPropInit(trs); trs.action=4; trs.factor=1.3; trs.valid=true;
+      lab.ProbeSuppression(1001, trs); CkA("lc/trail-repeat-suppress", trs.action, 0);
+      SResearchExitProposal trn; ExitPropInit(trn); trn.action=4; trn.factor=1.5; trn.valid=true;
+      lab.ProbeSuppression(1001, trn); CkA("lc/trail-new-target-allowed", trn.action, 4);
+      // (6) OUTSTANDING request blocks a new send; RESTART during outstanding -> UNKNOWN (still blocked)
+      SResearchExitProposal ob; ExitPropInit(ob); ob.action=1; ob.valid=true;
+      lab.MarkExitDispatched(1001, ob); lab.ResolveExitAction(1001, RAS_PENDING);
+      SResearchExitProposal ob2; ExitPropInit(ob2); ob2.action=3; ob2.factor=0.2; ob2.valid=true;
+      lab.ProbeSuppression(1001, ob2); CkA("lc/outstanding-blocks-new", ob2.action, 0);
+      lab.MarkOutstandingUnknownOnRestart(1001);
+      lab.GetStampLifecycle(1001,as,pa,pd,slr,ps,la,lt); CkI("lc/restart-unknown", as, RAS_UNKNOWN);
+      // (7) NETTING/HEDGING independence: a second ticket keeps its own clean lifecycle
+      lab.OnPositionOpened(2002, 22, "CrashBreakoutEntry", ev, 1.0, 0.0, false, 0.0, false);
+      lab.GetStampLifecycle(2002,as,pa,pd,slr,ps,la,lt);
+      CkI("lc/second-ticket-clean", as, RAS_NONE); CkI("lc/second-ticket-not-done",(pd?1:0),0);
+      // (8) SIDECAR round-trip: RESTART restores the policy stage through the hardened sidecar; a foreign
+      // account/symbol/magic is REJECTED. Ticket 1001 carries partial_done + PROTECTED stage from above.
+      lab.SaveStamps();
+      CResearchEntryExitLab lab2; lab2.SetMagic(777);
+      if(lab2.Init(RM_CRASH_ENTRY, RM_CRASH_X_A))
+      {
+         lab2.RestoreStampForTicket(1001);
+         int as2,pa2,ps2,la2; bool pd2; double slr2,lt2;
+         CkI("lc/sidecar-restored",         lab2.GetStampLifecycle(1001,as2,pa2,pd2,slr2,ps2,la2,lt2)?1:0, 1);
+         CkI("lc/sidecar-partial-persisted",(pd2?1:0), 1);       // partial_done survived the restart
+         CkI("lc/sidecar-protected-persisted",(ps2>=2)?1:0, 1);  // PROTECTED stage survived the restart
+      }
+      CResearchEntryExitLab lab3; lab3.SetMagic(999);            // foreign EA magic -> sidecar must NOT restore
+      if(lab3.Init(RM_CRASH_ENTRY, RM_CRASH_X_A))
+      {
+         lab3.RestoreStampForTicket(1001);
+         int fa,fp,fps,fla; bool fpd; double fsl,flt;
+         CkI("lc/sidecar-foreign-magic-rejected", lab3.GetStampLifecycle(1001,fa,fp,fpd,fsl,fps,fla,flt)?1:0, 0);
+      }
+   }
 
    W(StringFormat("==== UT_ResearchPolicies: %d PASS / %d FAIL ====", g_pass, g_fail));
    if(g_fh!=-1) FileClose(g_fh);

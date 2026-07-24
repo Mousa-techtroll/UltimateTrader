@@ -798,7 +798,13 @@ private:
 
       // Restore this restored position's research policy stamp (policy lifecycle stage) from the sidecar.
       // Only fires for genuinely restored positions -> a fresh tester (no restored positions) is identity-safe.
-      if(m_researchLab != NULL) m_researchLab.RestoreStampForTicket(pos.ticket);
+      if(m_researchLab != NULL)
+      {
+         m_researchLab.RestoreStampForTicket(pos.ticket);
+         // Restart during an outstanding request: demote a dispatched-but-unconfirmed action to UNKNOWN so
+         // applySuppression blocks a duplicate send until the seam reconciles it against deal history.
+         m_researchLab.MarkOutstandingUnknownOnRestart(pos.ticket);
+      }
    }
 
    double CalculatePositionRiskDollars(const SPosition &pos)
@@ -1491,7 +1497,7 @@ public:
    void SetSnapshotter(CMomentumSnapshotter *snap) { m_snapshotter = snap; }
    void SetExitTelemetry(CExitTelemetry *tel) { m_telemetry = tel; }
    void SetAccountSafety(CAccountSafety *as) { m_accountSafety = as; }
-   void SetResearchLab(CResearchEntryExitLab *lab) { m_researchLab = lab; }
+   void SetResearchLab(CResearchEntryExitLab *lab) { m_researchLab = lab; if(lab != NULL) lab.SetMagic((long)m_magic_number); }
    // REDUCE_AND_PROTECT executor: close reduce_fraction of each open position + move its SL to
    // break-even-or-better. Activation-phase only (InpExitPolicyActive + DLM_REDUCE_AND_PROTECT);
    // never reached at the byte-identity gate. Uses the ladder's local-CTrade pattern. NOTE:
@@ -1583,6 +1589,8 @@ public:
          if(m_positions[i].remaining_lots < 0.0) m_positions[i].remaining_lots = 0.0;
          RegisterPartialClose(m_positions[i], "POLICY_PARTIAL", "EXITPOL:" + reason,
                               vol, prof, px, dt);
+         // BROKER-LIFECYCLE: a settled deal reconciled the partial -> CONFIRM (advances partial_done exactly once).
+         if(m_researchLab != NULL) m_researchLab.ResolveExitAction(m_positions[i].ticket, RAS_CONFIRMED);
          SaveOnStateChange();
       }
       else
@@ -1591,6 +1599,11 @@ public:
          // happened — leave remaining_lots untouched so the next tick re-evaluates against the
          // actual broker state (idempotent). On restart, LoadPositionState->ReconcileWithBroker
          // reconciles the persisted remaining_lots against the live position volume.
+         // BROKER-LIFECYCLE: send-failure -> REJECT (clear outstanding, re-propose next bar); sent-but-
+         // unsettled -> PENDING (outstanding; blocks a duplicate send until reconciled). partial_done
+         // NEVER advances here — only on a settled deal above.
+         if(m_researchLab != NULL)
+            m_researchLab.ResolveExitAction(m_positions[i].ticket, sent ? RAS_PENDING : RAS_REJECTED);
          LogPrint("POLICY_PARTIAL unresolved (sent=", sent, ", no settled exit deal) ticket=",
                   m_positions[i].ticket, " — state unchanged, will re-evaluate");
       }
@@ -4081,6 +4094,19 @@ public:
             iTime(_Symbol, PERIOD_H1, 0) != m_positions[i].last_research_bar)
          {
             m_positions[i].last_research_bar = iTime(_Symbol, PERIOD_H1, 0);
+            // BROKER-LIFECYCLE reconcile (live-async safety net; tester settles synchronously): if a prior
+            // partial is still outstanding (PENDING/UNKNOWN), confirm it once a settled exit deal for this
+            // ticket appears after it was dispatched. The lab's state guard makes a re-confirm a no-op.
+            {
+               int rc_a; double rc_t; datetime rc_since;
+               if(m_researchLab.HasOutstandingExit(m_positions[i].ticket, rc_a, rc_t, rc_since) && rc_a == 2)
+               {
+                  ulong rc_d=0; double rc_pr=0, rc_px=0, rc_vol=0; datetime rc_dt=0;
+                  if(GetLatestExitDeal(m_positions[i].ticket, rc_d, rc_pr, rc_px, rc_dt, rc_vol) &&
+                     rc_vol > 0.0 && rc_dt >= rc_since)
+                     m_researchLab.ResolveExitAction(m_positions[i].ticket, RAS_CONFIRMED);
+               }
+            }
             double rx_risk = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
             if(rx_risk > 0.0)
             {
@@ -4106,22 +4132,31 @@ public:
                   rx_close, 0.0, false);   // impulse_now unavailable (feature-family driven)
                if(rxp.valid)
                {
+                  // BROKER-LIFECYCLE: mark the action as dispatched BEFORE sending, then resolve it against
+                  // the reconciled outcome. The lab advances the persisted policy stage (partial_done /
+                  // sl_locked_r / policy_stage) ONLY on a CONFIRMED resolution — never at proposal time.
                   if(rxp.action == 1)   // CLOSE_ALL
                   {
                      StampExitRequest(m_positions[i], rxp.reason);
-                     ClosePosition(m_positions[i].ticket, "RESEARCH:" + rxp.reason);
+                     m_researchLab.MarkExitDispatched(m_positions[i].ticket, rxp);
+                     bool rx_closed = ClosePosition(m_positions[i].ticket, "RESEARCH:" + rxp.reason);
+                     // success -> outstanding until the deal settles (HandleClosedPosition drops the stamp);
+                     // failure -> reject so the outstanding state clears and next bar may retry.
+                     m_researchLab.ResolveExitAction(m_positions[i].ticket, rx_closed ? RAS_PENDING : RAS_REJECTED);
                      continue;
                   }
                   else if(rxp.action == 2 &&   // CLOSE_PARTIAL (RULE 6: one reduction per bar)
                           m_positions[i].last_reduce_bar != iTime(_Symbol, PERIOD_H1, 0))
                   {
-                     ApplyPolicyPartialClose(i, rxp.pct, rxp.reason);
+                     m_researchLab.MarkExitDispatched(m_positions[i].ticket, rxp);
+                     ApplyPolicyPartialClose(i, rxp.pct, rxp.reason);   // resolves CONFIRMED/PENDING/REJECTED internally
                      continue;
                   }
                   else if(rxp.action == 3)   // TIGHTEN_SL: factor = stop distance as a fraction of R from entry
                   {
                      double rx_newsl = m_positions[i].entry_price - (double)rx_dir * rxp.factor * rx_risk;
                      m_positions[i].policy_sl_proposal = rx_newsl;  // consumed at t==-2 (applied only if tighter)
+                     m_researchLab.MarkExitDispatched(m_positions[i].ticket, rxp);  // resolved after ApplyTrailingPlugins
                   }
                   else if(rxp.action == 4)   // TRAIL_SCALE: widen the future trail (Contract-B; never moves SL back)
                   {
@@ -4129,6 +4164,7 @@ public:
                      rx_trail.action = EX_TRAIL_SCALE; rx_trail.factor = rxp.factor;
                      rx_trail.reason = rxp.reason; rx_trail.confidence = rxp.confidence;
                      m_positions[i].policy_trail_mod = rx_trail;   // consumed at t==-2 in ApplyTrailingPlugins
+                     m_researchLab.MarkExitDispatched(m_positions[i].ticket, rxp);  // resolved after ApplyTrailingPlugins
                   }
                   // rxp.action 0 (NOOP) / 5 (WAIT): hold.
                }
@@ -4137,6 +4173,34 @@ public:
 
          // Apply trailing stop plugins
          ApplyTrailingPlugins(m_positions[i]);
+
+         // BROKER-LIFECYCLE: resolve an outstanding research SL-side action (TIGHTEN / TRAIL) against the
+         // ACTUAL resulting broker stop, now that the trailing machinery has run. A TIGHTEN is CONFIRMED
+         // iff the position's real stop reached at least the proposed level (else the ratchet/clamp held
+         // it, or the policy gate was off -> REJECTED, stage unchanged). A TRAIL modulation is local and
+         // deterministic (chandelier multiplier) -> CONFIRMED. This is what advances sl_locked_r/PROTECTED.
+         if(m_researchLab != NULL &&
+            !m_positions[i].is_sleeve && m_positions[i].signal_source != SIGNAL_SOURCE_FILE)
+         {
+            int rx_pact; double rx_ptgt; datetime rx_psince;
+            if(m_researchLab.HasOutstandingExit(m_positions[i].ticket, rx_pact, rx_ptgt, rx_psince))
+            {
+               if(rx_pact == 4)
+                  m_researchLab.ResolveExitAction(m_positions[i].ticket, RAS_CONFIRMED);
+               else if(rx_pact == 3)
+               {
+                  double rx_risk2 = MathAbs(m_positions[i].entry_price - m_positions[i].original_sl);
+                  bool rx_applied = false;
+                  if(rx_risk2 > 0.0)
+                  {
+                     int    rx_dir2   = (m_positions[i].direction == SIGNAL_LONG) ? 1 : -1;
+                     double rx_sl_r   = (double)rx_dir2 * (m_positions[i].stop_loss - m_positions[i].entry_price) / rx_risk2;
+                     rx_applied = (rx_sl_r >= rx_ptgt - 1e-9);   // real stop reached at least the proposed R level
+                  }
+                  m_researchLab.ResolveExitAction(m_positions[i].ticket, rx_applied ? RAS_CONFIRMED : RAS_REJECTED);
+               }
+            }
+         }
 
          // Check exit strategy plugins
          string plugin_exit_reason = "";

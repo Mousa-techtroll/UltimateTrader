@@ -25,8 +25,12 @@
 #include "candidates/CExpCand.mqh"
 #include "candidates/CFbrCand.mqh"
 #include "candidates/CMacCand.mqh"
+#include "candidates/CSleeveCand.mqh"   // short-only sleeve entry classifiers (profiles 7/8/9)
 
 #define RESEARCH_LAB_VERSION 3   // v3: forward-shadow virtual candidate ledgers
+// Hardened research-stamp sidecar (schema-versioned, signed, per-record CRC, atomic write, identity-gated).
+#define RESEARCH_STAMP_MAGIC   0x55524C53   // 'URLS' — UltimateTrader Research Lab Stamps sidecar signature
+#define RESEARCH_STAMP_SCHEMA  2            // v2 hardened; v1 was an unversioned raw-POD dump (no header/CRC)
 
 // FORWARD-SHADOW VIRTUAL LEDGER — one INDEPENDENT virtual position per (candidate, real ticket).
 // Each candidate's exit path diverges from the real baseline trade once it closes/tightens/partials,
@@ -92,6 +96,9 @@ private:
    CFbrEntry              m_fbr_e;
    CMacCandA_Exit         m_mac_x;      // MA Cross family (6)
    CMacEntry              m_mac_e;
+   CSleeveContEntry       m_slvCont_e;  // sleeve families (7/8/9) — entry-only, short-only
+   CSleeveCrevEntry       m_slvCrev_e;
+   CSleeveTmfEntry        m_slvTmf_e;
    ICandidateEntry* m_entry[RESEARCH_MODEL_COUNT];
    ICandidateExit*  m_exit[RESEARCH_MODEL_COUNT];
    // INDEPENDENT selectors
@@ -102,29 +109,72 @@ private:
    SVirtualLedger          m_vl[];        // forward-shadow: independent virtual position per (candidate, ticket)
    int      m_tele; bool m_ready; datetime m_last_bar;
    bool     m_shadow_all;   // wave-2 forward-shadow: evaluate ALL candidates side-by-side, act on none
+   long     m_magic;        // EA magic number (sidecar identity; set by the coordinator on wiring)
 
    int  stampIdx(long t){ for(int i=0;i<ArraySize(m_stamp);i++) if(m_stamp[i].ticket==t) return i; return -1; }
-   // Policy LIFECYCLE hardening (reusable across all families): mutate the proposal to guarantee
-   // exactly-once partials, MONOTONIC tightening, and repeat-suppression; advance the persisted stage.
-   // Refs are the caller's persisted state (stamp for the real path, ledger for the shadow path).
-   void enforceLifecycle(SResearchExitProposal &p, bool &partial_done, double &sl_locked_r, int &last_action, int &stage)
+   // The target SIGNATURE of a proposed action: -factor for a TIGHTEN (the stop level in R), factor for
+   // a TRAIL widen, pct for a PARTIAL, 0 for a full CLOSE. Two proposals are "the same action" iff the
+   // action code AND this signature match — used for repeat-suppression (task: suppress only identical
+   // policy/action/target, NOT every later trail).
+   double proposalTarget(const SResearchExitProposal &p)
+   { if(p.action==3) return -p.factor; if(p.action==4) return p.factor; if(p.action==2) return p.pct; return 0.0; }
+   bool   isBrokerAction(int a){ return (a==1 || a==2 || a==3 || a==4); }
+   // Little-endian byte packing for the sidecar header (portable, checksum-stable).
+   void uintToBytes(uchar &b[],int o,uint v){ b[o]=(uchar)(v&0xFF); b[o+1]=(uchar)((v>>8)&0xFF); b[o+2]=(uchar)((v>>16)&0xFF); b[o+3]=(uchar)((v>>24)&0xFF); }
+   void longToBytes(uchar &b[],int o,long v){ for(int k=0;k<8;k++) b[o+k]=(uchar)((v>>(8*k))&0xFF); }
+   uint bytesToUint(const uchar &b[],int o){ return ((uint)b[o]) | ((uint)b[o+1]<<8) | ((uint)b[o+2]<<16) | ((uint)b[o+3]<<24); }
+   long bytesToLong(const uchar &b[],int o){ long v=0; for(int k=0;k<8;k++) v |= ((long)b[o+k])<<(8*k); return v; }
+   // Schema-migration hook: on a recognized-but-older schema, translate old records to the current layout
+   // here. Today the ONLY prior format is the unversioned v1 raw-POD dump (no magic -> already ignored by
+   // the magic gate), so a schema mismatch means an unknown/newer file -> discard it and rebuild from live.
+   void migrateOrDiscard(){ FileDelete("UltTrader_ResearchStamps_"+_Symbol+".bin",FILE_COMMON); }
+
+   // READ-ONLY suppression against CONFIRMED lifecycle state + any OUTSTANDING (unconfirmed) request.
+   // Mutates ONLY the proposal — NEVER the persisted stamp. Guarantees exactly-once partials, MONOTONIC
+   // tightening, refined (action,target)-identity repeat-suppression, and no second broker request stacked
+   // on top of an unresolved one. Persisted stage advancement happens elsewhere, on confirmation only.
+   void applySuppression(SResearchExitProposal &p, const SResearchTradeStamp &s)
    {
-      if(p.action==2 && partial_done)                                   // exactly-once partial
-      { p.action=0; p.reason="[suppress:partial-once] "+p.reason; }
-      if(p.action==3 && (-p.factor) <= sl_locked_r + 1e-9)              // monotonic tighten (stop -factor R must be strictly tighter)
-      { p.action=0; p.reason="[suppress:tighten-monotonic] "+p.reason; }
-      if(p.action==4 && last_action==4)                                // repeated identical TRAIL widen -> suppress re-widen
-      { p.action=0; p.reason="[suppress:repeat-trail] "+p.reason; }
-      if(p.action==1)      stage=3;                                    // CLOSED
-      else if(p.action==2){ partial_done=true; if(stage<1) stage=1; }  // BANKED
-      else if(p.action==3){ sl_locked_r=-p.factor; if(stage<2) stage=2; } // PROTECTED
-      if(p.action!=0) last_action=p.action;
+      // Never stack a new broker action on top of an outstanding (dispatched-but-unconfirmed) one.
+      bool outstanding = (s.action_state==RAS_PROPOSED || s.action_state==RAS_PENDING || s.action_state==RAS_UNKNOWN);
+      if(isBrokerAction(p.action) && outstanding)
+      { p.action=0; p.reason="[suppress:outstanding-request] "+p.reason; return; }
+      if(p.action==2 && s.partial_done)                                 // exactly-once partial (CONFIRMED)
+      { p.action=0; p.reason="[suppress:partial-once] "+p.reason; return; }
+      if(p.action==3 && (-p.factor) <= s.sl_locked_r + 1e-9)            // monotonic tighten (must be strictly tighter than CONFIRMED)
+      { p.action=0; p.reason="[suppress:tighten-monotonic] "+p.reason; return; }
+      // Refined repeat-suppression: only an IDENTICAL (action,target) repeat of the last CONFIRMED action.
+      // A later TRAIL that moves the target, or a partial after a trail, is NOT suppressed here.
+      if(isBrokerAction(p.action) && p.action==s.last_exit_action
+         && MathAbs(proposalTarget(p)-s.last_conf_target) <= 1e-9)
+      { p.action=0; p.reason="[suppress:repeat-identical] "+p.reason; }
    }
+   // Record a to-be-dispatched proposal as the outstanding request (state PROPOSED). Does not advance stage.
+   void markProposed(SResearchTradeStamp &s, const SResearchExitProposal &p, datetime now)
+   {
+      if(!isBrokerAction(p.action)) return;
+      s.pending_action=p.action; s.pending_target=proposalTarget(p);
+      s.pending_model=(int)m_sel_exit; s.pending_since=now; s.action_state=RAS_PROPOSED;
+   }
+   // CONFIRM the outstanding action (deal/modify reconciled). Advance the persisted stage EXACTLY ONCE.
+   void confirmAction(SResearchTradeStamp &s)
+   {
+      int a=s.pending_action;
+      if(a==1)      s.policy_stage=3;                                   // CLOSED
+      else if(a==2){ s.partial_done=true; if(s.policy_stage<1) s.policy_stage=1; }        // BANKED
+      else if(a==3){ s.sl_locked_r=s.pending_target; if(s.policy_stage<2) s.policy_stage=2; } // PROTECTED
+      // a==4 TRAIL widen: no stage change.
+      if(a!=0){ s.last_exit_action=a; s.last_conf_target=s.pending_target; }
+      s.action_state=RAS_CONFIRMED; s.pending_action=0; s.pending_target=0.0; s.pending_model=(int)RM_CURRENT;
+   }
+   void rejectAction(SResearchTradeStamp &s)   // send failed / broker rejected -> NO stage advance
+   { s.action_state=RAS_REJECTED; s.pending_action=0; s.pending_target=0.0; s.pending_model=(int)RM_CURRENT; }
+   void pendAction(SResearchTradeStamp &s)     // dispatched, outcome not yet known -> keep identity for reconcile
+   { if(s.action_state==RAS_PROPOSED) s.action_state=RAS_PENDING; }
    int  pendIdx(int sid){ for(int i=0;i<ArraySize(m_pend);i++) if(m_pend[i].signal_id==sid) return i; return -1; }
-   int  engineProfile(string e){ if(StringFind(e,"Engulf")>=0) return 0; if(StringFind(e,"PullbackContinuation")>=0) return 1;
-        if(StringFind(e,"Crash")>=0) return 2; if(StringFind(e,"PinBar")>=0) return 3;
-        if(StringFind(e,"Expansion")>=0) return 4; if(StringFind(e,"FailedBreak")>=0) return 5;
-        if(StringFind(e,"MACross")>=0) return 6; return -1; }
+   // EXPLICIT resolution: 0..9 = a research family/sleeve overlay; RPROF_PASSTHROUGH/UNKNOWN (<0) = no overlay.
+   // The family-match logic only fires on a 0..9 == ResearchModelProfile match, so passthrough/unknown are inert.
+   int  engineProfile(string e){ return ResearchEngineResolution(e); }
    string san(string s){ StringReplace(s,",",";"); StringReplace(s,"\n"," "); return s; }
    int  entryVer(ENUM_RESEARCH_MODEL m){ return (m!=RM_CURRENT && m_entry[m]!=NULL)? m_entry[m].ModelVersion():0; }
    int  exitVer (ENUM_RESEARCH_MODEL m){ return (m!=RM_CURRENT && m_exit[m]!=NULL)?  m_exit[m].ModelVersion():0; }
@@ -167,7 +217,8 @@ private:
    }
 
 public:
-   CResearchEntryExitLab(){ m_tele=-1; m_ready=false; m_last_bar=0; m_sel_entry=RM_CURRENT; m_sel_exit=RM_CURRENT; m_shadow_all=false; }
+   CResearchEntryExitLab(){ m_tele=-1; m_ready=false; m_last_bar=0; m_sel_entry=RM_CURRENT; m_sel_exit=RM_CURRENT; m_shadow_all=false; m_magic=0; }
+   void SetMagic(long m){ m_magic=m; }   // sidecar identity (account+symbol+magic); set by coordinator wiring
    ~CResearchEntryExitLab(){ if(m_tele!=-1){ FileClose(m_tele); m_tele=-1; } }
 
    // Compatibility: any entry x any exit WITHIN a family; a cross-family combo (e.g. ENG entry x PBC exit) FAILS.
@@ -199,6 +250,9 @@ public:
       m_exit[RM_EXP_X_FT]     =GetPointer(m_expFt_x);    m_exit[RM_EXP_X_FAIL]=GetPointer(m_expFail_x); m_entry[RM_EXP_ENTRY]=GetPointer(m_exp_e);
       m_exit[RM_FBR_X]        =GetPointer(m_fbr_x);      m_entry[RM_FBR_ENTRY]=GetPointer(m_fbr_e);
       m_exit[RM_MAC_X]        =GetPointer(m_mac_x);      m_entry[RM_MAC_ENTRY]=GetPointer(m_mac_e);
+      m_entry[RM_SLEEVE_CONT_ENTRY]=GetPointer(m_slvCont_e);   // sleeve entry-only classifiers (no exit side)
+      m_entry[RM_SLEEVE_CREV_ENTRY]=GetPointer(m_slvCrev_e);
+      m_entry[RM_SLEEVE_TMF_ENTRY] =GetPointer(m_slvTmf_e);
       teleOpen(); m_ready=true; return true;
    }
 
@@ -283,7 +337,10 @@ public:
       m_stamp[n].entry_basing=0.0;  m_stamp[n].entry_basing_ok=false;
       m_stamp[n].deterioration_streak=0;   // wave-2 hysteresis counter
       ArrayInitialize(m_stamp[n].shadow_streak,0);   // per-candidate shadow streaks
-      m_stamp[n].partial_done=false; m_stamp[n].sl_locked_r=-99.0; m_stamp[n].last_exit_action=-1; m_stamp[n].policy_stage=0;
+      m_stamp[n].partial_done=false; m_stamp[n].sl_locked_r=-99.0; m_stamp[n].last_exit_action=-1;
+      m_stamp[n].last_conf_target=0.0; m_stamp[n].policy_stage=0;
+      m_stamp[n].action_state=RAS_NONE; m_stamp[n].pending_action=0; m_stamp[n].pending_target=0.0;
+      m_stamp[n].pending_model=(int)RM_CURRENT; m_stamp[n].pending_since=0;
       m_stamp[n].req_risk_mult=v.risk_mult; m_stamp[n].applied_risk_mult=applied_risk_mult;
       m_stamp[n].open_time=TimeCurrent(); m_stamp[n].valid=true;
       PendingResolve(signal_id,PEND_EXECUTED);
@@ -332,11 +389,16 @@ public:
       c.entry_basing_ok  = (si>=0)? m_stamp[si].entry_basing_ok  : false;
       c.deterioration_streak = (si>=0)? m_stamp[si].deterioration_streak : 0;   // prior streak (this bar not yet counted)
       p=m_exit[m_sel_exit].EvaluateExit(c);
-      // wave-2: advance/reset the lab-owned deterioration streak from the candidate's raw signal
+      // wave-2: advance/reset the lab-owned deterioration streak from the candidate's raw signal.
+      // (This is a MARKET observation — consecutive deteriorating bars — not a broker-action state, so it
+      // advances every bar regardless of whether an action is dispatched or confirmed.)
       if(si>=0){ if(p.deteriorating) m_stamp[si].deterioration_streak++; else m_stamp[si].deterioration_streak=0; }
-      // POLICY LIFECYCLE HARDENING (real path): enforce exactly-once partial, monotonic tighten, repeat-suppress;
-      // update the PERSISTED stage on the stamp so a restart restores the policy lifecycle.
-      if(si>=0) enforceLifecycle(p, m_stamp[si].partial_done, m_stamp[si].sl_locked_r, m_stamp[si].last_exit_action, m_stamp[si].policy_stage);
+      // POLICY LIFECYCLE (real path) — proposal generation ONLY: read-only suppression against CONFIRMED
+      // state + any outstanding request. This NEVER mutates the persisted stage. The coordinator records the
+      // action as PROPOSED via MarkExitDispatched() only when it actually dispatches it, and the persisted
+      // stage (partial_done/sl_locked_r/policy_stage) advances LATER via ResolveExitAction(...CONFIRMED),
+      // after the broker/deal reconciles — never here.
+      if(si>=0) applySuppression(p, m_stamp[si]);
       if(m_tele!=-1 && p.action!=0) FileWrite(m_tele,"EXIT",TimeToString(TimeCurrent(),TIME_DATE|TIME_MINUTES),engine,
         (si>=0)?m_stamp[si].signal_id:0,(int)ticket,
         EnumToString((ENUM_RESEARCH_MODEL)((si>=0)?m_stamp[si].entry_model:RM_CURRENT)),(si>=0)?m_stamp[si].entry_version:0,
@@ -357,32 +419,132 @@ public:
       int n=ArraySize(m_stamp); for(int k=i;k<n-1;k++) m_stamp[k]=m_stamp[k+1]; ArrayResize(m_stamp,n-1);
    }
 
+   //=== BROKER-ACTION LIFECYCLE (coordinator seam) — a proposal advances the persisted stage ONLY here ===
+   // The coordinator calls MarkExitDispatched(...) immediately BEFORE it sends the broker action, then
+   // ResolveExitAction(...) with the reconciled outcome (CONFIRMED on a settled deal / applied modify;
+   // REJECTED on a failed send; PENDING when sent but not yet reconciled). Confirmation advances the
+   // persisted lifecycle exactly once; rejection/pending never advance it. No-ops if no stamp / not ready.
+   void MarkExitDispatched(long ticket,const SResearchExitProposal &p)
+   { if(!m_ready) return; int si=stampIdx(ticket); if(si>=0) markProposed(m_stamp[si],p,TimeCurrent()); }
+   void ResolveExitAction(long ticket,ENUM_RESEARCH_ACTION_STATE outcome)
+   {
+      if(!m_ready) return; int si=stampIdx(ticket); if(si<0) return;
+      // only act on an OUTSTANDING (dispatched-but-unconfirmed) action — a stray call is a safe no-op.
+      int st=m_stamp[si].action_state;
+      if(!(st==RAS_PROPOSED || st==RAS_PENDING || st==RAS_UNKNOWN)) return;
+      if(outcome==RAS_CONFIRMED)      confirmAction(m_stamp[si]);
+      else if(outcome==RAS_REJECTED)  rejectAction(m_stamp[si]);
+      else                            pendAction(m_stamp[si]);   // PENDING/UNKNOWN: keep identity for reconcile
+   }
+   // Restart / outstanding-request reconciliation: expose the outstanding action so the coordinator can
+   // resolve it against deal history after a restart during an in-flight request.
+   bool HasOutstandingExit(long ticket,int &action,double &target,datetime &since)
+   {
+      if(!m_ready) return false; int si=stampIdx(ticket); if(si<0) return false;
+      int st=m_stamp[si].action_state;
+      if(!(st==RAS_PROPOSED || st==RAS_PENDING || st==RAS_UNKNOWN)) return false;
+      action=m_stamp[si].pending_action; target=m_stamp[si].pending_target; since=m_stamp[si].pending_since; return true;
+   }
+   // On restart, mark any dispatched-but-unresolved action UNKNOWN so applySuppression blocks a duplicate
+   // send until the coordinator reconciles it via deal history (then calls ResolveExitAction).
+   void MarkOutstandingUnknownOnRestart(long ticket)
+   { if(!m_ready) return; int si=stampIdx(ticket); if(si>=0 && m_stamp[si].action_state==RAS_PENDING) m_stamp[si].action_state=RAS_UNKNOWN; }
+
+   //=== Introspection (telemetry + synthetic tests) — read-only lifecycle snapshot / suppression probe ===
+   bool GetStampLifecycle(long ticket,int &action_state,int &pending_action,bool &partial_done,
+                          double &sl_locked_r,int &policy_stage,int &last_action,double &last_target)
+   {
+      int si=stampIdx(ticket); if(si<0) return false;
+      action_state=m_stamp[si].action_state; pending_action=m_stamp[si].pending_action;
+      partial_done=m_stamp[si].partial_done; sl_locked_r=m_stamp[si].sl_locked_r;
+      policy_stage=m_stamp[si].policy_stage; last_action=m_stamp[si].last_exit_action; last_target=m_stamp[si].last_conf_target;
+      return true;
+   }
+   // Run the SAME read-only suppression EvaluateExit applies, against this ticket's persisted stamp. For tests.
+   bool ProbeSuppression(long ticket,SResearchExitProposal &p)
+   { int si=stampIdx(ticket); if(si<0) return false; applySuppression(p,m_stamp[si]); return true; }
+
    // Persistence hooks (coordinator seam serializes these for restart/netting recovery).
    int  StampCount(){ return ArraySize(m_stamp); }
    bool GetStamp(int i,SResearchTradeStamp &out){ if(i<0||i>=ArraySize(m_stamp)) return false; out=m_stamp[i]; return true; }
    void PutStamp(const SResearchTradeStamp &s){ int n=ArraySize(m_stamp); ArrayResize(m_stamp,n+1); m_stamp[n]=s; }
-   // PERSISTENCE (live restart): a POD sidecar of the trade stamps (incl. the policy lifecycle stage) so a
-   // restart restores per-ticket policy state. Loaded ONLY when positions were restored + reconciled to them,
-   // so a fresh tester (no restored positions) never injects stale state -> identity-safe.
+   // PERSISTENCE (live restart): a HARDENED sidecar of the trade stamps (incl. the policy lifecycle stage +
+   // outstanding-action state) so a restart restores per-ticket policy state. Loaded ONLY when positions were
+   // restored + reconciled to them, so a fresh tester (no restored positions) never injects stale state ->
+   // identity-safe. Format (schema v2): a signed, identity-gated, per-record-CRC'd, ATOMICALLY-written file:
+   //   HEADER: magic | schema | record_size | account | symbol_hash | ea_magic | count | header_crc
+   //   BODY  : { record_crc, StructToCharArray(stamp) } * count
+   // Restore rejects (rebuilds from live) on: wrong magic (incl. any legacy v1 file), schema mismatch,
+   // record_size mismatch (struct layout changed), foreign account/symbol/magic, or any CRC failure.
+   string stampPath(){ return "UltTrader_ResearchStamps_"+_Symbol+".bin"; }
+   long   symHash(){ return (long)ResearchSignalIdHash(_Symbol); }
+
    void SaveStamps()
    {
       if(!m_ready) return;
-      int h=FileOpen("UltTrader_ResearchStamps_"+_Symbol+".bin",FILE_WRITE|FILE_BIN|FILE_COMMON);
+      string tmp=stampPath()+".tmp";
+      int h=FileOpen(tmp,FILE_WRITE|FILE_BIN|FILE_COMMON);
       if(h==-1) return;
-      int n=ArraySize(m_stamp); FileWriteInteger(h,n,INT_VALUE);
-      for(int i=0;i<n;i++) FileWriteStruct(h,m_stamp[i]);
+      int n=ArraySize(m_stamp);
+      int    rsz=sizeof(SResearchTradeStamp);
+      long   acct=(long)AccountInfoInteger(ACCOUNT_LOGIN);
+      // Header, CRC'd as a byte image so a corrupt/foreign header is caught before any record is read.
+      uchar hb[]; ArrayResize(hb,32);
+      uintToBytes(hb,0,(uint)RESEARCH_STAMP_MAGIC);
+      uintToBytes(hb,4,(uint)RESEARCH_STAMP_SCHEMA);
+      uintToBytes(hb,8,(uint)rsz);
+      longToBytes(hb,12,acct);
+      uintToBytes(hb,20,(uint)symHash());
+      uintToBytes(hb,24,(uint)m_magic);
+      uintToBytes(hb,28,(uint)n);
+      uint hcrc=RchCrc32(hb,32);
+      FileWriteArray(h,hb,0,32); FileWriteInteger(h,(int)hcrc,INT_VALUE);
+      for(int i=0;i<n;i++)
+      {
+         uchar rb[]; StructToCharArray(m_stamp[i],rb);
+         uint rcrc=RchCrc32(rb,ArraySize(rb));
+         FileWriteInteger(h,(int)rcrc,INT_VALUE);
+         FileWriteInteger(h,ArraySize(rb),INT_VALUE);
+         FileWriteArray(h,rb,0,ArraySize(rb));
+      }
       FileClose(h);
+      // ATOMIC publish: replace the live file in one rename so a crash mid-write never leaves a torn sidecar.
+      FileDelete(stampPath(),FILE_COMMON);
+      FileMove(tmp,FILE_COMMON,stampPath(),FILE_COMMON|FILE_REWRITE);
    }
    // Restore the stamp for one restored ticket from the sidecar (idempotent; skips if already present or absent).
+   // Fully validates the header + per-record CRC + identity before injecting any state (stale-ticket safe:
+   // only a record whose ticket matches AND is valid is restored).
    void RestoreStampForTicket(long ticket)
    {
       if(!m_ready || stampIdx(ticket)>=0) return;
-      int h=FileOpen("UltTrader_ResearchStamps_"+_Symbol+".bin",FILE_READ|FILE_BIN|FILE_COMMON);
+      int h=FileOpen(stampPath(),FILE_READ|FILE_BIN|FILE_COMMON);
       if(h==-1) return;
-      int n=FileReadInteger(h,INT_VALUE);
-      for(int i=0;i<n;i++){ SResearchTradeStamp s;
-        if(FileReadStruct(h,s)==sizeof(SResearchTradeStamp) && s.ticket==ticket && s.valid)
-        { int m=ArraySize(m_stamp); ArrayResize(m_stamp,m+1); m_stamp[m]=s; break; } }
+      uchar hb[]; ArrayResize(hb,32);
+      if(FileReadArray(h,hb,0,32)!=32){ FileClose(h); return; }
+      uint hcrc_stored=(uint)FileReadInteger(h,INT_VALUE);
+      // Signature + integrity + schema + layout + identity gates. Any failure -> ignore file (rebuild live).
+      if(RchCrc32(hb,32)!=hcrc_stored){ FileClose(h); return; }                        // header corrupt
+      if(bytesToUint(hb,0)!=(uint)RESEARCH_STAMP_MAGIC){ FileClose(h); return; }        // not our sidecar / legacy v1
+      if(bytesToUint(hb,4)!=(uint)RESEARCH_STAMP_SCHEMA){ FileClose(h); migrateOrDiscard(); return; } // schema mismatch
+      if(bytesToUint(hb,8)!=(uint)sizeof(SResearchTradeStamp)){ FileClose(h); return; } // struct layout changed
+      if(bytesToLong(hb,12)!=(long)AccountInfoInteger(ACCOUNT_LOGIN)){ FileClose(h); return; } // foreign account
+      if(bytesToUint(hb,20)!=(uint)symHash()){ FileClose(h); return; }                 // foreign symbol
+      if(bytesToUint(hb,24)!=(uint)m_magic){ FileClose(h); return; }                   // foreign EA magic
+      int n=(int)bytesToUint(hb,28);
+      for(int i=0;i<n && !FileIsEnding(h);i++)
+      {
+         uint rcrc_stored=(uint)FileReadInteger(h,INT_VALUE);
+         int  rlen=FileReadInteger(h,INT_VALUE);
+         if(rlen<=0 || rlen>4096) break;                                               // malformed length -> stop
+         uchar rb[]; ArrayResize(rb,rlen);
+         if(FileReadArray(h,rb,0,rlen)!=rlen) break;
+         if(RchCrc32(rb,rlen)!=rcrc_stored) continue;                                   // corrupt record -> skip
+         if(rlen!=(int)sizeof(SResearchTradeStamp)) continue;
+         SResearchTradeStamp s; CharArrayToStruct(s,rb);
+         if(s.ticket==ticket && s.valid)
+         { int m=ArraySize(m_stamp); ArrayResize(m_stamp,m+1); m_stamp[m]=s; break; }
+      }
       FileClose(h);
    }
    ENUM_RESEARCH_MODEL SelEntry(){ return m_sel_entry; }

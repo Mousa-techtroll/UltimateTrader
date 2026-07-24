@@ -24,7 +24,7 @@ engineering+behavior PASS (default-off); economics choose only the canonical act
 | MACrossEntry | 16 | MED | DONE — profile 6, trend-runner exit (hysteresis) + trend-strength classifier |
 | ExpansionEngine | 12 | MED | DONE — profile 4, followthrough/failbreak exits + classifier |
 | FailedBreakReversal | 3 | LOW | DONE — profile 5, reversal exit + classifier |
-| sleeves CONT/CREV/TMF | (short-only) | LOW | remaining — own gateway; entry-only families (future wave) |
+| sleeves CONT/CREV/TMF | (short-only) | LOW | DONE — profiles 7/8/9, entry-only classifiers (CONT continuation / CREV rally-fade / TMF regime-participation) |
 
 ## Architecture additions (reusable framework)
 1. **Family profiles** — extend ResearchModelProfile + engineProfile: Crash=2, PinBar=3, MACross=4, Expansion=5,

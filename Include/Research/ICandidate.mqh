@@ -98,10 +98,18 @@ struct SResearchTradeStamp
    int      deterioration_streak;                  // consecutive closed bars the SELECTED exit flagged deteriorating (lab-tracked)
    int      shadow_streak[RESEARCH_MODEL_COUNT];   // per-candidate deterioration streaks for the side-by-side SHADOW loop
    // --- persisted policy LIFECYCLE state (restored on restart via the stamp) ---
-   bool     partial_done;      // a policy bank/partial has already been taken (EXACTLY-ONCE guard)
-   double   sl_locked_r;       // tightest stop locked so far, in R (MONOTONIC tighten guard; -99 = none)
-   int      last_exit_action;  // last applied exit action code (repeat-suppression)
-   int      policy_stage;      // policy lifecycle stage (0=pre; policy-defined thereafter)
+   // These advance ONLY on broker/deal CONFIRMATION (RAS_CONFIRMED), never at proposal time.
+   bool     partial_done;      // a policy bank/partial has been CONFIRMED (EXACTLY-ONCE guard)
+   double   sl_locked_r;       // tightest CONFIRMED stop so far, in R (MONOTONIC tighten guard; -99 = none)
+   int      last_exit_action;  // last CONFIRMED exit action code (repeat-suppression, with last_conf_target)
+   double   last_conf_target;  // last CONFIRMED action's target signature (-factor tighten / factor trail / pct partial)
+   int      policy_stage;      // policy lifecycle stage (0=pre; advances on confirmation)
+   // --- outstanding broker-action state (a proposed action becomes confirmed only after reconciliation) ---
+   int      action_state;      // ENUM_RESEARCH_ACTION_STATE of the outstanding exit action
+   int      pending_action;    // outstanding proposed action code (0=none)
+   double   pending_target;    // its target signature (mirrors last_conf_target semantics)
+   int      pending_model;     // ENUM_RESEARCH_MODEL that proposed it
+   datetime pending_since;     // when proposed (timeout / late-deal reconciliation)
    double   req_risk_mult;      // requested by the entry model
    double   applied_risk_mult;  // actually applied by the risk gateway
    datetime open_time;

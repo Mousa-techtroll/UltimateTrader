@@ -89,16 +89,35 @@ streak) before closing so a single-bar wobble does not exit a live trend.
 | 25 | MAC_A_trendrunner | 1 | TREND RUNNER: ride wide on trend, tighten on 1-bar cross-back, close on SUSTAINED cross-back / origin break | PASS | PASS (synthetic 4/4) | PENDING_FORWARD |
 | 26 | MAC_entry | 1 | ENTRY classifier: trend subtype + trend-strength-graded risk (upgrade strong, downgrade weak, never rejects) | PASS | PASS (synthetic 1/1) | PENDING_FORWARD |
 
+## Sleeve families (profiles 7/8/9) — SHORT-ONLY, ENTRY-ONLY (own gateway; exits production-managed)
+Preservation-first (never reject a gateway-valid sleeve signal); allocate risk by the sleeve's own conviction
+feature, matched to its thesis. Off by default (whole sleeve block + research lab both off). Behavior branch-verified.
+| id | Id() | ver | intended objective | ENG | BEH | ECON |
+|---|---|---|---|---|---|---|
+| 27 | SLV_CONT_entry | 1 | CONT trend-continuation short: risk by aligned down-momentum + structural room | PASS | PASS (synthetic 4/4) | PENDING_FORWARD |
+| 28 | SLV_CREV_entry | 1 | CREV counter-reversal rally-fade: risk by rally exhaustion + room (centered) | PASS | PASS (synthetic 3/3) | PENDING_FORWARD |
+| 29 | SLV_TMF_entry | 1 | TMF regime-participation short: flat dose, light upgrade only on a decisive down-close | PASS | PASS (synthetic 2/2) | PENDING_FORWARD |
+
+## Broker-lifecycle hardening (applies to ALL exit models)
+The exit platform is broker-lifecycle correct (see EXECUTION_HARDENING.md): policy stages (partial_done /
+sl_locked_r-PROTECTED / policy_stage) advance ONLY on broker/deal CONFIRMATION via an explicit action-state
+machine (PROPOSED→PENDING/UNKNOWN→CONFIRMED/REJECTED), never at proposal time. Refined (action,target) repeat-
+suppression. Hardened schema-v2 sidecar (magic/CRC/identity/atomic/migration). Crash entry geometry now matches
+its classified thesis (classify-before-geometry). Behavior verified by UT_ResearchPolicies (89/89, incl. 17
+fault/restart/netting cases). Every registered engine resolves explicitly (COVERAGE_MATRIX.md).
+
 ## Reading
 - ALL models: ENGINEERING PASS + BEHAVIOR PASS → they belong in the shared architecture (kept, versioned, off-by-default).
 - ECON: NOT_PROMOTED (historical null / collateral edge) or PENDING_FORWARD (in the forward-shadow queue). NONE is REJECTED_AS_BAD_CODE.
 - Shadow-capability: exit models have full virtual-ledger counterfactuals; entry models are verdict-loggable (an
   entry changes the trade set, so its counterfactual is admission-level, not per-trade P&L on baseline trades — a
   documented distinction, not a gap).
-- COVERAGE: the capability platform now spans EVERY active signal type — Engulfing (0), PBC (1), Crash (2),
-  PinBar (3), Expansion/Breakout (4), FailedBreak/Reversal (5), MA-Cross (6). 26 models (12 entry classifiers +
-  exit intents across 7 families), each versioned, configurable, shadow-capable, default-off. Behavior for the 5
-  platform-wave families is fully branch-verified by UT_ResearchPolicies (44/44).
-- NEXT capability work: optional regime-modifier wrapper (default-identity) over the family profiles; sleeves.
-  All 26 models are ECON PENDING_FORWARD — none is production-promoted; promotion is gated on NEW forward data
-  (see FORWARD_SHADOW_PREREGISTRATION.md), never on historical fit.
+- COVERAGE: the capability platform now spans EVERY registered signal type — 10 profiles: Engulfing (0), PBC (1),
+  Crash (2), PinBar (3), Expansion/Breakout (4), FailedBreak/Reversal (5), MA-Cross (6), plus the short-only
+  sleeves CONT (7), CREV (8), TMF (9). 29 models, each versioned, configurable, shadow-capable, default-off.
+  Every registered production engine resolves EXPLICITLY (family / sleeve / passthrough) — COVERAGE_MATRIX.md.
+  Behavior branch-verified by UT_ResearchPolicies (89/89).
+- NEXT capability work: optional regime-modifier wrapper (default-identity) over the profiles; research overlays
+  for the enabled PASSTHROUGH engines (VolatilityBreakout, Displacement, LiquidityEngine, SessionEngine,
+  RangeEdgeFade) if/when warranted. All 29 models are ECON PENDING_FORWARD — none is production-promoted;
+  promotion is gated on NEW forward data (FORWARD_SHADOW_PREREGISTRATION.md), never on historical fit.

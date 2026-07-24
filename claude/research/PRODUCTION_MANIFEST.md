@@ -36,3 +36,9 @@ concentrated, no uptrend underperformance) → min-risk pilot → full. Until th
 - (platform wave) Crash/PinBar/Expansion/FailedBreak/MACross families added to CAPABILITY (26 models, 7 families,
   every active signal type covered). ALL land default-off; master-OFF identity byte-exact on both feeds; ZERO change
   to the active book. No family is production-promoted — all ECON PENDING_FORWARD. Production config unchanged.
+- (execution hardening + sleeves) Broker-lifecycle correctness: confirm-gated policy stages (advance only on
+  broker/deal reconciliation), explicit action-state machine, refined (action,target) suppression, hardened
+  schema-v2 sidecar (magic/CRC/identity/atomic), Crash classify-before-geometry, explicit engine coverage matrix,
+  + short-only sleeve entry classifiers (profiles 7/8/9). 29 models total. ALL still default-off; master-OFF
+  identity byte-exact both feeds; NONE production-promoted (ECON PENDING_FORWARD). Production config unchanged.
+  See EXECUTION_HARDENING.md / COVERAGE_MATRIX.md.

@@ -187,6 +187,17 @@ public:
       else if(exhausted)                          subtype = CRASH_SUB_RECOVERY;       // low looks exhausted
       e.reclass_subtype = subtype;
 
+      // ENTRY GEOMETRY matched to the classified thesis (classify-before-geometry). The production Crash
+      // plugin locks a single rubber-band-FADE geometry (SL above the extension, TP at the mean reversion).
+      // FADE keeps it. CONTINUATION rides the crash PAST the mean -> deeper target + more stop room, so the
+      // reversion TP does not cap the extension. RECOVERY exits ahead of the bounce -> shorter target. The
+      // multipliers scale the production stop/target distances before risk sizing (identity-safe: off => 1.0).
+      if(subtype == CRASH_SUB_CONTINUATION)
+      { e.geometry_ok = true; e.geom_sl_mult = 1.25; e.geom_tp_mult = 2.20; }   // ride the extension: wider stop, deeper target
+      else if(subtype == CRASH_SUB_RECOVERY)
+      { e.geometry_ok = true; e.geom_sl_mult = 1.00; e.geom_tp_mult = 0.60; }   // exit ahead of the bounce: nearer target
+      // FADE: geometry_ok stays false -> production rubber-band geometry untouched.
+
       // preservation-first: never reject; allocate risk by conviction (aligned momentum + room).
       double conf = 0.5;
       if(mom_ok) conf += 0.2 * ((align > 0.0) ? 1.0 : -0.5);

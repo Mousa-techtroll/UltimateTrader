@@ -269,6 +269,22 @@ public:
             research_applied_mult = research_v.risk_mult;   // requested == applied here (downstream composite cap is a separate bound)
             signal.riskPercent *= research_applied_mult;
          }
+         // SUBTYPE-MATCHED ENTRY GEOMETRY (classify-before-geometry): a research classifier that reclassified
+         // a raw candidate into a distinct thesis (e.g. Crash CONTINUATION/RECOVERY) can scale the production
+         // stop/target distances so the position's geometry matches its thesis. Applied HERE, before risk
+         // sizing (requested_risk_pct is captured below), so lot sizing composes with the new stop. Keeps the
+         // entry direction/price; only the distances scale. Inert (identity-safe) when geometry_ok is false.
+         if(research_v.geometry_ok && signal.entryPrice > 0.0 &&
+            research_v.geom_sl_mult > 0.0 && research_v.geom_tp_mult > 0.0)
+         {
+            double g_stop_dist = MathAbs(signal.entryPrice - signal.stopLoss) * research_v.geom_sl_mult;
+            signal.stopLoss    = signal.entryPrice - (double)r_dir * g_stop_dist;   // short (r_dir<0): stop above entry
+            if(signal.takeProfit1 > 0.0)
+            {
+               double g_tp_dist = MathAbs(signal.takeProfit1 - signal.entryPrice) * research_v.geom_tp_mult;
+               signal.takeProfit1 = signal.entryPrice + (double)r_dir * g_tp_dist;  // short: target below entry
+            }
+         }
       }
 
       double requested_risk_pct = signal.riskPercent;
